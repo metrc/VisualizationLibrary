@@ -4,7 +4,7 @@ The VisualizationTools is a [METRC](metrc.org/)-specific R toolkit that is desig
 
 * **Consistent, data-matrix-driven workflow:** Common variables are available through standardised names and interfaces called *constructs*. These constructs are defined from the data matrix: which allows consistency across REDCap projects and enables analysts to leverage information across studies.
 
-The [VisualizationTools](https://github.com/metrc/VisualizationTools) repository contains only the infrastructure-level (i.e. 'system-level') code for the creation of data visualizations. Study-specific data visualizations can be found in the private [AnalyticCodebase repository](https://github.com/metrc/AnalyticCodebase/).
+The [VisualizationTools](https://github.com/metrc/VisualizationTools) repository contains only the infrastructure-level (i.e. 'system-level') code for the creation of data visualizations. Study-specific data visualizations can be found in the [VisualizationLibrary repository](https://github.com/metrc/VisualizationLibrary/).
 
 ## Overview
 
