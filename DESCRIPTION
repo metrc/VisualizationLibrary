@@ -1,10 +1,10 @@
-Package: AnalyticSystem
+Package: VisualizationLibrary
 Type: Package
-Title: METRC Redcap Analytic Codebase System
+Title: METRC Redcap Visualization Library System
 Version: 0.3.1
 Author: Elias Weston-Farber
 Maintainer: Elias Weston-Farber <eweston4@jhu.edu>
-Description: This is an R package that builds analytic datasets and builds analytic dataset constructing R scripts.
+Description: This is an R package that contains relevant data visualization R scripts.
 License: file LICENSE
 Depends:
   tidyverse,
