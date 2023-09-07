@@ -1,12 +1,10 @@
-# AnalyticSystem
+# VisualizationTools
 
-The AnalyticSystem is a [METRC](metrc.org/)-specific R toolkit that is designed to generate analytic datasets from raw [REDCap](https://projectredcap.org/) data. An analytic dataset is an R environment filled with pre-defined functions and constructs (i.e. variables) which makes it convenient to work with data from a study. Analytic datasets generated from the AnalyticSystem offer the following benefits:
+The VisualizationTools is a [METRC](metrc.org/)-specific R toolkit that is designed to generate data visualizations from raw [REDCap](https://projectredcap.org/) data. An data visualization is an R environment filled with pre-defined functions and constructs (i.e. variables) which makes it convenient to work with data from a study. data visualizations generated from the VisualizationTools offer the following benefits:
 
 * **Consistent, data-matrix-driven workflow:** Common variables are available through standardised names and interfaces called *constructs*. These constructs are defined from the data matrix: which allows consistency across REDCap projects and enables analysts to leverage information across studies.
-* **User-friendly, High-level Functions:** Analytic datasets built with the AnalyticSystem exposes study data as high-level R functions, instead of low-level table-slicing operations. Need to check if a patient is enrolled in PRECISE? Make a call to `precise_enrolled()`, rather than of filtering by half a dozen REDCap fields.
-* **Automated Exporting of REDCap Data:** Instead of having to manually download and format REDCap data, the AnalyticSystem automatically downloads the latest copy of a study, and exposes it as tidy R tables.
 
-The [AnalyticSystem](https://github.com/metrc/AnalyticSystem) repository contains only the infrastructure-level (i.e. 'system-level') code for the creation of analytic datasets. Study-specific analytic datasets can be found in the private [AnalyticCodebase repository](https://github.com/metrc/AnalyticCodebase/).
+The [VisualizationTools](https://github.com/metrc/VisualizationTools) repository contains only the infrastructure-level (i.e. 'system-level') code for the creation of data visualizations. Study-specific data visualizations can be found in the private [AnalyticCodebase repository](https://github.com/metrc/AnalyticCodebase/).
 
 ## Overview
 
@@ -42,9 +40,9 @@ Rscript -e "install.packages('devtools', dependencies=TRUE)"
 
 Now your R environment should be properly setup with devtools.
 
-### Installing R Packages that AnalyticSystem depends on
+### Installing R Packages that VisualizationTools depends on
 
-Next, we must install the R packages which AnalyticSystem depends on. These packages are:
+Next, we must install the R packages which VisualizationTools depends on. These packages are:
 
 * [tidyverse](https://www.tidyverse.org/): R Packages for Data Science.
 * [httr](https://httr.r-lib.org/) R Library to work with URLs and HTTP.
@@ -66,46 +64,46 @@ Next, run the following to install the R packages.
 sudo Rscript -e "install.packages(c('tidyverse', 'httr', 'feather', 'googlesheets4', 'igraph', 'writexl', 'readr'), dependencies=TRUE)"
 ```
 
-Now all of the R package dependencies for AnalyticSystem should be installed.
+Now all of the R package dependencies for VisualizationTools should be installed.
 
-### Cloning the AnalyticSystem Repository
+### Cloning the VisualizationTools Repository
 
-In order to begin development on the AnalyticSystem, you must switch to the `dev` branch of this repository.
+In order to begin development on the VisualizationTools, you must switch to the `dev` branch of this repository.
 
 ```bash
-git clone https://github.com/metrc/AnalyticSystem.git
-cd AnalyticSystem
+git clone https://github.com/metrc/VisualizationTools.git
+cd VisualizationTools
 git switch dev
 git pull
 ```
 
 Now you should have an up-to-date version of the development branch.
 
-### Building & Installing the AnalyticSystem Package Manually
+### Building & Installing the VisualizationTools Package Manually
 
-Before building and installing the AnalyticSystem from source, we must first run R-Check on the package to ensure it is free of errors. This step is especially important if you are developing on the AnalyticSystem from source:
-
-```bash
-R CMD check AnalyticSystem/
-```
-
-Once R-Check passes, it is time to build the AnalyticSystem package. This will create a `.tar.gz` archive file which can be then installed.
+Before building and installing the VisualizationTools from source, we must first run R-Check on the package to ensure it is free of errors. This step is especially important if you are developing on the VisualizationTools from source:
 
 ```bash
-R CMD build AnalyticSystem/
+R CMD check VisualizationTools/
 ```
 
-If the build passes successfully, you should have a `.tar.gz` archive with the version number of the package. This file may look like `AnalyticSystem_0.1.1.tar.gz`. In order to install it, simply run `R CMD INSTALL <package_name>`. Note that the command is case-sensitivie.
+Once R-Check passes, it is time to build the VisualizationTools package. This will create a `.tar.gz` archive file which can be then installed.
 
 ```bash
-R CMD INSTALL AnalyticSystem_0.1.1.tar.gz
+R CMD build VisualizationTools/
 ```
 
-Now this version of the AnalyticSystem package should be installed and available for use within R.
+If the build passes successfully, you should have a `.tar.gz` archive with the version number of the package. This file may look like `VisualizationTools_0.1.1.tar.gz`. In order to install it, simply run `R CMD INSTALL <package_name>`. Note that the command is case-sensitivie.
+
+```bash
+R CMD INSTALL VisualizationTools_0.1.1.tar.gz
+```
+
+Now this version of the VisualizationTools package should be installed and available for use within R.
 
 ## Continuous Integration Pipelines
 
-In order to ensure stability, all commits will be built by [Github Actions](https://docs.github.com/en/actions). The GA workflows for AnalyticSystem can be found in the [`.github/workflows/`](./github/workflows/) directory. For more information regarding the Github Actions workflows, please see the AnalyticSystem Github Actions [documentation](.github/workflows/README.md).
+In order to ensure stability, all commits will be built by [Github Actions](https://docs.github.com/en/actions). The GA workflows for VisualizationTools can be found in the [`.github/workflows/`](./github/workflows/) directory. For more information regarding the Github Actions workflows, please see the VisualizationTools Github Actions [documentation](.github/workflows/README.md).
 
 ## `.gitmessage.txt` Configuration
 This project aims to follow the Linux Kernel commit message policy. For ease of use, a commit message template is provided at `gitmessage.txt`. In order to enable this commit message template locally (only for this repository), set `gitmessage.txt` as the [`commit.template`](https://www.git-scm.com/book/en/v2/Customizing-Git-Git-Configuration#_commit_template) in your git config:
