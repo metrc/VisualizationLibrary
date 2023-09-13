@@ -1,10 +1,10 @@
-Package: VisualizationLibrary
+Package: VisualizationTools
 Type: Package
-Title: METRC Redcap Visualization Library System
-Version: 0.3.1
+Title: METRC Visualization Tools
+Version: 0.10.1
 Author: Elias Weston-Farber
 Maintainer: Elias Weston-Farber <eweston4@jhu.edu>
-Description: This is an R package that contains relevant data visualization R scripts.
+Description: This is an R package that contains relevant data visualization tools.
 License: file LICENSE
 Depends:
   tidyverse
