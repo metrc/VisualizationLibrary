@@ -1,13 +1,14 @@
-Package: VisualizationTools
+Package: VisualizationLibrary
 Type: Package
-Title: METRC Visualization Tools
+Title: METRC Visualization Library
 Version: 0.10.1
 Author: Elias Weston-Farber
 Maintainer: Elias Weston-Farber <eweston4@jhu.edu>
-Description: This is an R package that contains relevant data visualization tools.
+Description: This is an R package that builds visualizations from analytic datasets for the METRC organization.
 License: file LICENSE
 Depends:
-  tidyverse
+  tidyverse,
+  kableExtra
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
