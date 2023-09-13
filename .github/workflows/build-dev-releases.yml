@@ -60,12 +60,12 @@ jobs:
         
         if [[ ${{ github.ref_name }} != "main" ]]; then
           # If the branch name is not main, we set a pre-release field in the SemVer
-          echo "tag_name=${{ env.package_version }}-${{ github.ref_name }}-build-${{ github.run_number }}" >> "$GITHUB_ENV"
-          echo "tag_name=${{ env.package_version }}-${{ github.ref_name }}-build-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${{ env.package_version }}-${{ github.ref_name }}-build-$(printf '%05d' ${{ github.run_number }})" >> "$GITHUB_ENV"
+          echo "tag_name=${{ env.package_version }}-${{ github.ref_name }}-build-$(printf '%05d' ${{ github.run_number }})" >> "$GITHUB_OUTPUT"
         else
           # Otherwise for main releases on "main", we omit the pre-release field.
-          echo "tag_name=${{ env.package_version }}-build-${{ github.run_number }}" >> "$GITHUB_ENV"
-          echo "tag_name=${{ env.package_version }}-build-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${{ env.package_version }}-build-$(printf '%05d' ${{ github.run_number }})" >> "$GITHUB_ENV"
+          echo "tag_name=${{ env.package_version }}-build-$(printf '%05d' ${{ github.run_number }})" >> "$GITHUB_OUTPUT"
         fi
         echo ${{ env.tag_name }}
 
