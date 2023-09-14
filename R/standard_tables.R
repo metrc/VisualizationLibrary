@@ -51,12 +51,7 @@ enrollment_status_by_site <- function(analytic){
     arrange(desc(`Days Certified`), desc(Screened))
   
   table_raw<- kable(table_raw, align='l', padding='2l') %>% 
-    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 4)) %>%
-    kable_styling("striped", full_width = F, position="left")
-  table_raw <- str_replace_all(table_raw, 'table table-striped"', 'table-basic" border=1 frame=hsides rules=rows')
-  table_raw <- str_replace_all(table_raw, '#ddd', 'black')
-  table_raw<- gsub('([a-z])\\.','\\1 ',table_raw)
-  
+    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 4)) 
   return(table_raw)
 }
 
