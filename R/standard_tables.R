@@ -50,8 +50,9 @@ enrollment_status_by_site <- function(analytic){
     mutate_all(~ifelse(is.na(.), 0, .)) %>% 
     arrange(desc(`Days Certified`), desc(Screened))
   
-  table_raw<- kable(table_raw, align='l', padding='2l') %>% 
-    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 4)) 
-  return(table_raw)
+  table<- kable(table_raw, align='l', padding='2l') %>% 
+    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 4)) %>%
+    kable_styling("striped", full_width = F, position="left")
+  return(table)
 }
 
