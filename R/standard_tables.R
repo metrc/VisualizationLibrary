@@ -113,7 +113,9 @@ visit_status_for_followup_by_form <- function(analytic){
     filter(Status!='Complete: In window') %>%
     bind_rows(summed_completes) %>% 
     mutate(Status = ifelse(Status == 'Complete: Out of Window', "Out of Window", Status)) %>% 
-    mutate(Form = toupper(Form)) 
+    mutate(Form = toupper(Form)) %>%
+    rename("6 Weeks"=`6wk`, "3 Months"=`3mo`, "6 Months"=`6mo`, "12 Months"=`12mo`) %>%
+    select(Form, Status, `6 Weeks`, `3 Months`, `6 Months`, `12 Months`)
   
   bound_df <- bind_rows(output, df_expected, df_injury_expected) %>% 
     ungroup()
