@@ -204,3 +204,95 @@ injury_ankle_plateau_characteristics <- function(analytic){
   
   return(table_raw)
 }
+
+#' Baseline Characteristics Percent 
+#'
+#' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military
+#'
+#' @param analytic This is the analytic data set that must include enrolled, age, age_group, sex, age, race, education, military
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' baseline_characteristics_percent()
+#' }
+baseline_characteristics_percent <- function(analytic){
+  df <- analytic %>% 
+    select(enrolled, age_group, age, all_of(constructs)) %>% 
+    filter(enrolled) %>% 
+    rename(sex = !!sym(sex)) %>% 
+    rename(race = !!sym(race)) %>% 
+    rename(education = !!sym(education)) %>% 
+    rename(military = !!sym(military)) %>% 
+    mutate(age = as.numeric(age))
+  
+  total <- sum(df$enrolled)
+  
+  sex_df <- df %>% 
+    mutate(sex = replace_na(sex, "Missing")) %>% 
+    group_by(sex) %>% 
+    count(sex) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = sex) 
+  
+  age_df <- df %>% 
+    summarize( type = 'Mean (SD)', percentage = mean(age, na.rm = TRUE)) %>% 
+    mutate(percentage = as.character(percentage))
+  
+  
+  age_group_df <- df %>% 
+    mutate(age_group = replace_na(age_group, "Missing")) %>% 
+    group_by(age_group) %>% 
+    count(age_group) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = age_group)
+  
+  education_df <- df %>% 
+    mutate(education = replace_na(education, "Missing")) %>% 
+    group_by(education) %>% 
+    count(education) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = education)
+  
+  race_df <- df %>% 
+    mutate(race = replace_na(race, "Missing")) %>% 
+    group_by(race) %>% 
+    count(race) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = race)
+  
+  military_df <- df %>% 
+    mutate(military = ifelse(is.na(military), "Missing", military)) %>% 
+    group_by(military) %>% 
+    count(military) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = military)
+  
+  df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) 
+  
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+  
+  
+  vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
+    add_header_above(header) %>%  
+    pack_rows(index = c('Sex' = nrow(sex_df), 'Age' = (nrow(age_df) + nrow(age_group_df)), 'Race' = nrow(race_df), 
+                        'Education' = nrow(education_df), 'Military' = nrow(military_df))) %>% 
+    kable_styling("striped", full_width = F, position="left") 
+  
+ return(vis) 
+} 
+
