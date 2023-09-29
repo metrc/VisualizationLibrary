@@ -4,10 +4,24 @@
 \alias{baseline_characteristics_percent}
 \title{Baseline Characteristics Percent}
 \usage{
-baseline_characteristics_percent(analytic)
+baseline_characteristics_percent(
+  analytic,
+  sex = "sex",
+  race = "race_ethnicity",
+  education = "education_level",
+  military = "military_status"
+)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include enrolled, age, age_group, sex, age, race, education, military}
+\item{analytic}{This is the analytic data set that must include enrolled, age, age_group}
+
+\item{sex}{is a meta construct that is required that defaults to "sex"}
+
+\item{race}{is a meta construct that is required that defaults to "race_ethnicity"}
+
+\item{education}{is a meta construct that is required that defaults to "education_level"}
+
+\item{military}{is a meta construct that is required that defaults to "military_status"}
 }
 \value{
 nothing
