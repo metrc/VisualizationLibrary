@@ -141,3 +141,66 @@ visit_status_for_followup_by_form <- function(analytic){
   return(table_raw)
 }
 
+
+#' Injury characteristics for OTA classification and Schatzker Type injuries
+#'
+#' @description This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
+#' injuries
+#'
+#' @param analytic This is the analytic data set that must include injury_type, ankle_ota_class, schatzker_type, enrolled
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' injury_ankle_plateau_characteristics()
+#' }
+injury_ankle_plateau_characteristics <- function(analytic){
+  
+  df <- analytic %>% 
+    select(injury_type, ankle_ota_class, schatzker_type, enrolled) %>%  filter(enrolled == TRUE)
+  
+  summary_totals <- df %>%
+    filter(injury_type == "plateau" & is.na(ankle_ota_class) | injury_type == "ankle" & is.na(schatzker_type)) %>%
+    group_by(injury_type, ankle_ota_class, schatzker_type) %>%
+    summarise(Total = n()) %>%
+    ungroup() %>% 
+    mutate(ankle_ota_class = ifelse(injury_type == "ankle" & is.na(ankle_ota_class) & is.na(schatzker_type), "Missing", ankle_ota_class)) %>% 
+    mutate(schatzker_type = ifelse(injury_type == "plateau" & is.na(ankle_ota_class) & is.na(schatzker_type), "Missing", schatzker_type)) %>% 
+    select(-injury_type) %>% 
+    mutate(Name = ifelse(!is.na(ankle_ota_class), ankle_ota_class, schatzker_type)) %>% 
+    mutate(Category = ifelse(!is.na(ankle_ota_class), "O", "T")) %>% 
+    select(-ankle_ota_class, -schatzker_type)
+  
+  injury_type_total <- df %>% 
+    group_by(injury_type) %>% 
+    summarise(Total = n()) %>%
+    ungroup() %>% 
+    rename(Name = injury_type) %>% 
+    mutate(Category = ifelse(Name == "ankle", "A", "P")) 
+  
+  summary_table <- bind_rows(injury_type_total, summary_totals) %>% 
+    arrange(Category) %>% 
+    mutate(Name = ifelse(Name == "ankle", "Number of Ankles", 
+                         ifelse(Name == "plateau", "Number of Plateaus", Name)))
+  
+  ota_number <- summary_table %>% 
+    filter(Category == "O") %>% 
+    nrow()
+  
+  schatzer_number <- summary_table %>% 
+    filter(Category == "T") %>% 
+    nrow()
+  
+  df_table <- summary_table %>% 
+    select(-Category)
+  
+  index_vec <- c(" "= 1,"OTA Classification"= ota_number, " "= 1, "Tibial Plateau"=schatzer_number) 
+  
+  table_raw<- kable(df_table, align='l', padding='2l', col.names = NULL) %>%
+    pack_rows(index = index_vec) %>% 
+    kable_styling("striped", full_width = F, position="left")
+  
+  return(table_raw)
+}
