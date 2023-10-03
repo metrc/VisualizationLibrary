@@ -215,7 +215,11 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #'
 #' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military
 #'
-#' @param analytic This is the analytic data set that must include enrolled, age, age_group, sex, age, race, education, military
+#' @param analytic This is the analytic data set that must include enrolled, age, age_group
+#' @param sex is a meta construct that is required that defaults to "sex"
+#' @param race is a meta construct that is required that defaults to "race_ethnicity"
+#' @param education is a meta construct that is required that defaults to "education_level"
+#' @param military is a meta construct that is required that defaults to "military_status"
 #'
 #' @return nothing
 #' @export
@@ -224,7 +228,8 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #' \dontrun{
 #' baseline_characteristics_percent()
 #' }
-baseline_characteristics_percent <- function(analytic){
+baseline_characteristics_percent <- function(analytic, sex="sex", race="race_ethnicity", education="education_level", military="military_status"){
+  constructs <- c(sex, race, education, military)
   df <- analytic %>% 
     select(enrolled, age_group, age, all_of(constructs)) %>% 
     filter(enrolled) %>% 
