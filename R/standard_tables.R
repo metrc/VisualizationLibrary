@@ -186,9 +186,7 @@ injury_ankle_plateau_characteristics <- function(analytic){
     arrange(Category) %>% 
     mutate(Name = ifelse(Name == "ankle", "Number of Ankles", 
                          ifelse(Name == "plateau", "Number of Plateaus", Name))) %>% 
-    mutate(percentage = paste("(", round((Total / total_sum) * 100, 2), "%", ")", sep = "")) %>% 
-    mutate(Total = paste(Total, percentage, sep = "")) %>% 
-    select(-percentage)
+    mutate(Total = format_count_percent(Total, total_sum, decimals = 2))
   
   ota_number <- summary_table %>% 
     filter(Category == "O") %>% 
