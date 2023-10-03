@@ -180,10 +180,15 @@ injury_ankle_plateau_characteristics <- function(analytic){
     rename(Name = injury_type) %>% 
     mutate(Category = ifelse(Name == "ankle", "A", "P")) 
   
+  total_sum <- sum(injury_type_total$Total)
+  
   summary_table <- bind_rows(injury_type_total, summary_totals) %>% 
     arrange(Category) %>% 
     mutate(Name = ifelse(Name == "ankle", "Number of Ankles", 
-                         ifelse(Name == "plateau", "Number of Plateaus", Name)))
+                         ifelse(Name == "plateau", "Number of Plateaus", Name))) %>% 
+    mutate(percentage = paste("(", round((Total / total_sum) * 100, 2), "%", ")", sep = "")) %>% 
+    mutate(Total = paste(Total, percentage, sep = "")) %>% 
+    select(-percentage)
   
   ota_number <- summary_table %>% 
     filter(Category == "O") %>% 
@@ -192,6 +197,7 @@ injury_ankle_plateau_characteristics <- function(analytic){
   schatzer_number <- summary_table %>% 
     filter(Category == "T") %>% 
     nrow()
+  
   
   df_table <- summary_table %>% 
     select(-Category)
