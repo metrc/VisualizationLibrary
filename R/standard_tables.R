@@ -429,3 +429,53 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   return(vis)
 }
 
+#' Number of patients Ineligible by Top 5 reasons of Exclusion
+#'
+#' @description This function visualizes the number of patients Ineligible by Top 5 reasons of Exclusion criteria
+#'
+#' @param analytic This is the analytic data set that must include facilitycode,  screened, ineligible, ineligibility_reasons
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ineligibility_by_reasons()
+#' }
+ineligibility_by_reasons <- function(analytic){
+  
+  
+  df <- analytic %>% 
+    select(study_id, facilitycode,  screened, ineligible, ineligibility_reasons) %>% 
+    filter(screened == TRUE) 
+  
+  reasons <- df %>%  select(study_id, facilitycode, ineligibility_reasons) %>% 
+    column_unzipper('ineligibility_reasons', sep = '; ') %>% 
+    boolean_column_counter() %>% 
+    pivot_longer(everything()) %>% 
+    arrange(desc(value)) %>% 
+    slice(1:5) %>% 
+    pull(name) 
+  
+  total <- df %>% 
+    mutate(ineligibility_reasons = ifelse(ineligibility_reasons %in% reasons, ineligibility_reasons,'Other Reasons')) %>% 
+    column_unzipper('ineligibility_reasons', sep = '; ') %>% 
+    boolean_column_counter() %>% 
+    mutate(Site = 'Total') %>% 
+    select(Site, screened, ineligible, all_of(reasons), `Other Reasons`)
+  
+  
+  sites <- df %>% 
+    mutate(ineligibility_reasons = ifelse(ineligibility_reasons %in% reasons, ineligibility_reasons,'Other Reasons')) %>% 
+    column_unzipper('ineligibility_reasons', sep = '; ') %>% 
+    boolean_column_counter(groups = 'facilitycode') %>% 
+    rename(Site = facilitycode) %>% 
+    select(Site, screened, ineligible, all_of(reasons), `Other Reasons`)
+  
+  output <- bind_rows(total, sites) %>% 
+    rename(Screened = screened,
+           Ineligible = ineligible) %>% 
+    arrange(desc(Screened))
+  
+  return(output)
+}
