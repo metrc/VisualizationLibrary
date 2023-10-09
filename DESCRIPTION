@@ -8,7 +8,10 @@ Description: This is an R package that builds visualizations from analytic datas
 License: file LICENSE
 Depends:
   tidyverse,
-  kableExtra
+  kableExtra,
+  VisualizationTools
+Remotes:
+  metrc/VisualizationTools@*release
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
