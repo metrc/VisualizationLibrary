@@ -9,6 +9,9 @@ License: file LICENSE
 Depends:
   tidyverse,
   kableExtra,
+  DiagrammeR,
+  DiagrammeRsvg,
+  htmltools,
   VisualizationTools
 Remotes:
   metrc/VisualizationTools@*release
