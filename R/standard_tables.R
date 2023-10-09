@@ -483,3 +483,59 @@ ineligibility_by_reasons <- function(analytic){
   
   return(vis)
 }
+
+
+#' AO Gustillo Tscherne Injury Characteristics
+#'
+#' @description This function visualizes the injury characteristics
+#'
+#' @param analytic This is the analytic data set that must include enrolled, 
+#' injury_gustilo, injury_tscherne, injury_ao_class
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ao_gustillo_tscherne_characteristics()
+#' }
+ao_gustillo_tscherne_injury_characteristics <- function(analytic){
+  pull <- analytic %>% 
+    filter(enrolled) %>%
+    select(injury_gustilo, injury_tscherne, injury_ao_class)
+  
+  inj_gust <- pull %>% 
+    count(injury_gustilo) %>%
+    pivot_longer(-n) %>%
+    mutate(value=ifelse(!is.na(value), paste('Gustilo Type', value), value)) %>%
+    mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
+    select(-name)
+  
+  inj_ao <- pull %>% 
+    count(injury_ao_class) %>%
+    pivot_longer(-n) %>%
+    mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
+    select(-name)
+  
+  inj_tsch <- pull %>% 
+    count(injury_tscherne) %>%
+    pivot_longer(-n) %>%
+    mutate(value=ifelse(!is.na(value), paste('Tscherne Gotzen Grade', value), value)) %>%
+    mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
+    select(-name)
+  
+  combined <- bind_rows(inj_tsch, inj_gust, inj_ao) %>%
+    relocate(n, .after=value) %>%
+    rename('Fracture Type'=value, 'n='=n)
+  
+  output<- kable(combined, align='l', padding='2l') %>% 
+    kable_styling("condensed", position="left") %>%
+    pack_rows("Closed Fracture", 1, nrow(inj_tsch)) %>%
+    pack_rows("Open Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)) %>%
+    pack_rows("AO Class", nrow(inj_gust)+nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)+nrow(inj_ao)) %>%
+    kable_styling("striped", full_width = F, position="left")
+  
+  return(output)
+}
+
+
