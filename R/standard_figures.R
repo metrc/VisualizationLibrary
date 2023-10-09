@@ -4,10 +4,8 @@
 #' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, 
-#' consented, randomized, discontinued, ineligible, refused, late_ineligible, and the meta construct columns
-#' @param active is a meta construct that is required
-#' @param completed is a meta construct that is required
-#' @param not_enrolled_other is a meta construct that is required
+#' consented, randomized, discontinued, refused, late_ineligible, and the meta construct columns
+#' @param not_enrolled_other is a meta construct that is NULL by default
 #' @param completed_str is the text for the completed box that defaults to 'Completed 12-month visit'
 #'
 #' @return nothing
@@ -17,22 +15,50 @@
 #' \dontrun{
 #' dsmb_consort_diagram()
 #' }
-dsmb_consort_diagram <- function(analytic, active, completed, not_enrolled_other, completed_str="Completed 12-month visit"){
+dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_str="Completed 12-month visit"){
   
   analytic <- analytic %>% 
     filter(screened == TRUE) 
   
   Screened <- sum(analytic$screened, na.rm=TRUE)
   Eligible <- sum(analytic$eligible, na.rm=TRUE)
-  Consented <- sum(analytic$consented, na.rm=TRUE)
-  Randomized <- sum(analytic$randomized, na.rm=TRUE)
-  Active <- sum(analytic[[active]], na.rm=TRUE)
-  Discontinued <- sum(analytic$discontinued, na.rm=TRUE)
-  Completed <- sum(analytic[[completed]], na.rm=TRUE)
-  Ineligible <- sum(analytic$ineligible, na.rm=TRUE)
-  Refused <- sum(analytic$refused, na.rm=TRUE)
-  Late_Ineligible <- sum(analytic$late_ineligible, na.rm=TRUE)
-  Not_Enrolled_Other <- sum(analytic[[not_enrolled_other]], na.rm=TRUE)
+  Consented <- sum(analytic %>% 
+                     filter(eligible) %>% 
+                     pull(consented), na.rm=TRUE)
+  Refused <- sum(analytic %>% 
+                     filter(eligible) %>% 
+                     pull(refused), na.rm=TRUE)
+  Late_Ineligible <- sum(analytic %>% 
+                           filter(eligible) %>% 
+                           filter(consented) %>% 
+                           pull(late_ineligible), na.rm=TRUE)
+  Randomized <- sum(analytic %>% 
+                      filter(eligible) %>% 
+                      filter(consented) %>% 
+                      pull(randomized), na.rm=TRUE)
+  Active <- sum(analytic %>% 
+                  filter(eligible) %>% 
+                  filter(consented) %>% 
+                  filter(randomized) %>% 
+                  pull(active), na.rm=TRUE)
+  Discontinued <- sum(analytic %>% 
+                        filter(eligible) %>% 
+                        filter(consented) %>% 
+                        filter(randomized) %>% 
+                        pull(discontinued), na.rm=TRUE)
+  Completed <- sum(analytic %>% 
+                        filter(eligible) %>% 
+                        filter(consented) %>% 
+                        filter(randomized) %>% 
+                        pull(completed), na.rm=TRUE)
+  Ineligible <- Screened - Eligible
+  if(is.null(not_enrolled_other)){
+    Not_Enrolled_Other <- Eligible - Consented - Refused
+  } else{
+    temp <- analytic %>% 
+      filter(eligible)
+    Not_Enrolled_Other <- sum(temp[[not_enrolled_other]], na.rm=TRUE)
+  }
   
   consort_diagram <- grViz(paste0('
     digraph g {
