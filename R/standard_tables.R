@@ -476,6 +476,10 @@ ineligibility_by_reasons <- function(analytic){
     rename(Screened = screened,
            Ineligible = ineligible) %>% 
     arrange(desc(Screened))
+
+  vis <- kable(output, align='l', padding='2l', col.names = NULL) %>%
+    add_header_above(c(" " = 3, "Top 5 Ineligibility Reasons" = 5, " " = 1)) %>%  
+    kable_styling("striped", full_width = F, position="left") 
   
-  return(output)
+  return(vis)
 }
