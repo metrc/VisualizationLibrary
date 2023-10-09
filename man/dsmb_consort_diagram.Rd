@@ -6,21 +6,15 @@
 \usage{
 dsmb_consort_diagram(
   analytic,
-  active,
-  completed,
-  not_enrolled_other,
+  not_enrolled_other = NULL,
   completed_str = "Completed 12-month visit"
 )
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, eligible, 
-consented, randomized, discontinued, ineligible, refused, late_ineligible, and the meta construct columns}
+consented, randomized, discontinued, refused, late_ineligible, and the meta construct columns}
 
-\item{active}{is a meta construct that is required}
-
-\item{completed}{is a meta construct that is required}
-
-\item{not_enrolled_other}{is a meta construct that is required}
+\item{not_enrolled_other}{is a meta construct that is NULL by default}
 
 \item{completed_str}{is the text for the completed box that defaults to 'Completed 12-month visit'}
 }
