@@ -93,6 +93,13 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       
     }
   '))
-  
-  return(htmltools::HTML(export_svg(consort_diagram)))
+  svg_content <- DiagrammeRsvg::export_svg(consort_diagram)
+  temp_svg_path <- tempfile(fileext = ".svg")
+  writeLines(svg_content, temp_svg_path)
+  temp_png_path <- tempfile(fileext = ".png")
+  rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 1000, height = 1000)
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram">', image_data)
+  file.remove(c(temp_svg_path, temp_png_path))
+  return(img_tag)
 }
