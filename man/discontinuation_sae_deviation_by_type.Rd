@@ -7,7 +7,7 @@
 discontinuation_sae_deviation_by_type(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include enrolled, study_discontinuation, 
+\item{analytic}{This is the analytic data set that must include screened, study_discontinuation, 
 deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported}
 }
 \value{

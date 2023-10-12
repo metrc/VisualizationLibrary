@@ -308,7 +308,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
 #'
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #'
-#' @param analytic This is the analytic data set that must include enrolled, study_discontinuation, 
+#' @param analytic This is the analytic data set that must include screened, study_discontinuation, 
 #' deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported
 #'
 #' @return nothing
@@ -320,8 +320,8 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
 #' }
 discontinuation_sae_deviation_by_type <- function(analytic){
   df <- analytic %>% 
-    select(enrolled, study_discontinuation, deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported) %>% 
-    filter(enrolled == TRUE) %>% 
+    select(screened, study_discontinuation, deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported) %>% 
+    filter(screened == TRUE) %>% 
     mutate(na_count = rowSums(is.na(select(., 
                                            study_discontinuation,
                                            deviation_screen_consent,
@@ -414,12 +414,28 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   header <- c(1,1)
   names(header)<-cnames
   
+  if(n_dsc>0){
+    dsc_indents <- seq(n_dsc) + 1 + n_disc + 1 + 1 + 1
+  } else{
+    dsc_indents <- NA
+  }
+  
+  if(n_dp>0){
+    dp_indents <- seq(n_dp) + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1
+  } else{
+    dp_indents <- NA
+  }
+  
+  if(n_da>0){
+    da_indents <- seq(n_da) + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1
+  } else{
+    da_indents <- NA
+  }
+  
+  
   vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
     add_header_above(header) %>%  
-    add_indent(c(seq(n_disc) + 1, seq(1 + n_dsc + 1 + n_dp + 1 + n_da) + 1 + n_disc + 2)) %>% 
-    add_indent(na.omit(c(ifelse(rep(n_dsc,n_dsc)>0,seq(n_dsc) + 1 + n_disc + 1 + 1 + 1,NA),
-                 ifelse(rep(n_dp,n_dp)>0, seq(n_dp) + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1,NA),
-                 ifelse(rep(n_da,n_da)>0, seq(n_da) + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1,NA)))) %>% 
+    add_indent(c(seq(n_disc) + 1, seq(1 + n_dsc + 1 + n_dp + 1 + n_da) + 1 + n_disc + 2, na.omit(c(dsc_indents, dp_indents, da_indents)))) %>% 
     row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
     row_spec(1+ n_disc, extra_css = "border-bottom: 1px solid") %>% 
     row_spec(1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
