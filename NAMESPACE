@@ -2,6 +2,7 @@
 
 export(ao_gustillo_tscherne_injury_characteristics)
 export(baseline_characteristics_percent)
+export(certification_date_data)
 export(discontinuation_sae_deviation_by_type)
 export(dsmb_consort_diagram)
 export(enrollment_status_by_site)
