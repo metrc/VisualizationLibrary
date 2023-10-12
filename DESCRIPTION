@@ -8,6 +8,7 @@ Description: This is an R package that builds visualizations from analytic datas
 License: file LICENSE
 Depends:
   tidyverse,
+  janitor,
   kableExtra,
   DiagrammeR,
   DiagrammeRsvg,

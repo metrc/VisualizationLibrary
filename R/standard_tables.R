@@ -48,7 +48,10 @@ enrollment_status_by_site <- function(analytic){
   table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
     left_join(df_3rd, by = 'Facility') %>% 
     mutate_all(~ifelse(is.na(.), 0, .)) %>% 
-    arrange(desc(`Days Certified`), desc(Screened))
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total)
   
   table<- kable(table_raw, align='l', padding='2l') %>% 
     add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 4)) %>%
@@ -226,8 +229,20 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #' \dontrun{
 #' baseline_characteristics_percent()
 #' }
-baseline_characteristics_percent <- function(analytic, sex="sex", race="race_ethnicity", education="education_level", military="military_status"){
+baseline_characteristics_percent <- function(analytic, sex="sex", race="race_ethnicity", education="education_level", military="military_status",
+                                             sex_levels=c("Female","Male", "Missing"), 
+                                             race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
+                                             education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don’t Know", "Missing"), 
+                                             military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
+  
   constructs <- c(sex, race, education, military)
+  
+  sex_default <- tibble(type=sex_levels)
+  race_default <- tibble(type=race_levels)
+  education_default <- tibble(type=education_levels)
+  military_default <- tibble(type=military_levels)
+  
+  
   df <- analytic %>% 
     select(enrolled, age_group, age, all_of(constructs)) %>% 
     filter(enrolled) %>% 
@@ -246,7 +261,11 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
     rename(number = n) %>% 
     mutate(percentage = format_count_percent(number, total)) %>% 
     select(-number) %>% 
-    rename(type = sex) 
+    rename(type = sex) %>% 
+    full_join(sex_default) %>% 
+    mutate(order = factor(type, sex_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
   
   age_df <- df %>% 
     summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))
@@ -268,7 +287,11 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
     rename(number = n) %>% 
     mutate(percentage = format_count_percent(number, total)) %>% 
     select(-number) %>% 
-    rename(type = education)
+    rename(type = education) %>% 
+    full_join(education_default) %>% 
+    mutate(order = factor(type, education_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
   
   race_df <- df %>% 
     mutate(race = replace_na(race, "Missing")) %>% 
@@ -277,7 +300,11 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
     rename(number = n) %>% 
     mutate(percentage = format_count_percent(number, total)) %>% 
     select(-number) %>% 
-    rename(type = race)
+    rename(type = race) %>% 
+    full_join(race_default) %>% 
+    mutate(order = factor(type, race_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
   
   military_df <- df %>% 
     mutate(military = ifelse(is.na(military), "Missing", military)) %>% 
@@ -286,9 +313,14 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
     rename(number = n) %>% 
     mutate(percentage = format_count_percent(number, total)) %>% 
     select(-number) %>% 
-    rename(type = military)
+    rename(type = military) %>% 
+    full_join(military_default) %>% 
+    mutate(order = factor(type, military_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
   
-  df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) 
+  df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) %>% 
+    mutate()
   
   cnames <- c(' ', paste('n = ', total))
   header <- c(1,1)
@@ -319,6 +351,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
 #' discontinuation_sae_deviation_by_type()
 #' }
 discontinuation_sae_deviation_by_type <- function(analytic){
+  total <- sum(analytic$screened, na.rm=T)
   df <- analytic %>% 
     select(screened, study_discontinuation, deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported) %>% 
     filter(screened == TRUE) %>% 
@@ -331,8 +364,6 @@ discontinuation_sae_deviation_by_type <- function(analytic){
     filter(na_count != 5) %>%
     select(-na_count) %>% 
     mutate(sae_reported = ifelse(sae_reported == TRUE, 'SAE', sae_reported))
-  
-  total <- sum(df$enrolled)
   
   totals_df <- df %>%
     mutate(total_disc = ifelse(!is.na(study_discontinuation), TRUE, FALSE)) %>% 
@@ -348,11 +379,11 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   total_da <- sum(totals_df$total_da)
   total_sae <- sum(totals_df$total_sae)
   
-  vec_disc <- c(format_count_percent(total_disc, total))
-  vec_protocol_deviations <- c(format_count_percent(total_dsc + total_dp + total_da, total))
-  vec_dsc <- c(format_count_percent(total_dsc, total))
-  vec_dp <- c(format_count_percent(total_dp, total))
-  vec_da <- c(format_count_percent(total_da, total))
+  vec_disc <- c(format_count_percent(total_disc, total, decimals = 2))
+  vec_protocol_deviations <- c(format_count_percent(total_dsc + total_dp + total_da, total, decimals = 2))
+  vec_dsc <- c(format_count_percent(total_dsc, total, decimals = 2))
+  vec_dp <- c(format_count_percent(total_dp, total, decimals = 2))
+  vec_da <- c(format_count_percent(total_da, total, decimals = 2))
   
   
   disc <- tibble(type = "Discontinuous", percentage = vec_disc)
@@ -366,7 +397,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
     select(study_discontinuation) %>% 
     filter(!is.na(study_discontinuation)) %>% 
     count(study_discontinuation) %>% 
-    mutate(percentage = format_count_percent(n, total)) %>% 
+    mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
     select(-n) %>% 
     rename(type = study_discontinuation)
   
@@ -374,7 +405,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
     select(deviation_screen_consent) %>% 
     filter(!is.na(deviation_screen_consent)) %>% 
     count(deviation_screen_consent) %>% 
-    mutate(percentage = format_count_percent(n, total)) %>% 
+    mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
     select(-n) %>% 
     rename(type = deviation_screen_consent)
   
@@ -382,7 +413,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
     select(deviation_procedural) %>% 
     filter(!is.na(deviation_procedural)) %>% 
     count(deviation_procedural) %>% 
-    mutate(percentage = format_count_percent(n, total)) %>% 
+    mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
     select(-n) %>% 
     rename(type = deviation_procedural)
   
@@ -390,7 +421,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
     select(deviation_administrative) %>% 
     filter(!is.na(deviation_administrative)) %>% 
     count(deviation_administrative) %>% 
-    mutate(percentage = format_count_percent(n, total)) %>% 
+    mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
     select(-n) %>% 
     rename(type = deviation_administrative)
   
@@ -398,7 +429,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
     select(sae_reported) %>% 
     filter(!is.na(sae_reported)) %>% 
     count(sae_reported) %>% 
-    mutate(percentage = format_count_percent(n, total)) %>% 
+    mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
     select(-n) %>% 
     rename(type = sae_reported)
   
