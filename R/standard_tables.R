@@ -539,3 +539,35 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
 }
 
 
+#' Sites Days Certified
+#'
+#' @description Returns a table with all the sites and the number of days they
+#' were certified for the study, calculated from a beginning date
+#'
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' sites_days_certified()
+#' }
+sites_days_certified <- function(){
+  pull <- get_associated_data('site_data') %>%
+    select(site, certification_date) 
+  
+  today <- Sys.Date()
+  
+  data <- pull%>%
+    mutate(certification_date = as.Date(certification_date)) %>%
+    mutate(days_certified = today-certification_date) %>%
+    select(-certification_date) %>%
+    rename(Site=site, 'Days Certified'=days_certified)
+  
+  output<- kable(data, align='l', padding='2l') %>% 
+    kable_styling("condensed", position="left") %>%
+    kable_styling("striped", full_width = F, position="left")
+  
+  return(output)
+}
+
