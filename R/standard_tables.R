@@ -613,7 +613,7 @@ certification_date_data <- function(analytic){
   
   cols <- c('Facility', 'Local (or sIRB)  Approval Date', 'DoD Approval Date',
             'Certified by MCC to Start Screening', 
-            paste0(c('Days Number of Days Certified (as of ', date_today, ')')))
+            paste0('Days Number of Days Certified (as of ', date_today, ')'))
   
   site_data <- df %>%
     separate(sites_certification_dates, cols, sep = ';')
