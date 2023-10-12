@@ -15,6 +15,9 @@ Depends:
   rsvg,
   base64enc,
   VisualizationTools
+Suggests:
+  ggplot2,
+  scales
 Remotes:
   metrc/VisualizationTools@*release
 Encoding: UTF-8
