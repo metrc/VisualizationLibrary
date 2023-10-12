@@ -222,9 +222,9 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #' @param education is a meta construct that is required that defaults to "education_level"
 #' @param military is a meta construct that is required that defaults to "military_status"
 #' @param sex_levels sets default values and orders for sex meta construct
-#' @param race sets default values and orders for race meta construct
-#' @param education sets default values and orders for education meta construct
-#' @param military sets default values and orders for military meta construct
+#' @param race_levels sets default values and orders for race meta construct
+#' @param education_levels sets default values and orders for education meta construct
+#' @param military_levels sets default values and orders for military meta construct
 #'
 #' @return nothing
 #' @export
