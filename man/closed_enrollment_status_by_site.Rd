@@ -18,7 +18,7 @@ nothing
 This function visualizes the enrollment totals for each site
 }
 \examples{
-dontrun{
+\dontrun{
 closed_enrollment_status_by_site()
 }
 }

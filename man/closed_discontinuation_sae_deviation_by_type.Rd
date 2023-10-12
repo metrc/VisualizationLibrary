@@ -17,7 +17,7 @@ nothing
 This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 }
 \examples{
-dontrun{
+\dontrun{
 closed_discontinuation_sae_deviation_by_type()
 }
 }
