@@ -23,13 +23,19 @@ baseline_characteristics_percent(
 
 \item{sex}{is a meta construct that is required that defaults to "sex"}
 
-\item{race}{sets default values and orders for race meta construct}
+\item{race}{is a meta construct that is required that defaults to "race_ethnicity"}
 
-\item{education}{sets default values and orders for education meta construct}
+\item{education}{is a meta construct that is required that defaults to "education_level"}
 
-\item{military}{sets default values and orders for military meta construct}
+\item{military}{is a meta construct that is required that defaults to "military_status"}
 
 \item{sex_levels}{sets default values and orders for sex meta construct}
+
+\item{race_levels}{sets default values and orders for race meta construct}
+
+\item{education_levels}{sets default values and orders for education meta construct}
+
+\item{military_levels}{sets default values and orders for military meta construct}
 }
 \value{
 nothing
