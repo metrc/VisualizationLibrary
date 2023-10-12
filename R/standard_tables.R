@@ -586,3 +586,39 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
 }
 
 
+#' Status of IRB Approvals and Certification by Site
+#'
+#' @description This function returns a list of sites and their dates of 
+#' local, DOD, and METRC certifications
+#'
+#' @param analytic This is the analytic data set that must include sites_certification_dates
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' ineligibility_by_reasons()
+#' }
+certification_date_data <- function(analytic){
+  df <- analytic %>% 
+    select(sites_certification_dates) %>%
+    unique()
+  
+  date_today <- Sys.Date()
+  
+  cols <- c('Facility', 'Local (or sIRB)  Approval Date', 'DoD Approval Date',
+            'Certified by MCC to Start Screening', 
+            paste0(c('Days Number of Days Certified (as of ', date_today, ')')))
+  
+  site_data <- df %>%
+    separate(sites_certification_dates, cols, sep = ';')
+  
+  vis <- kable(site_data, align='l', padding='2l') %>% 
+    kable_styling("striped", full_width = F, position="left") 
+  return(vis)
+}
+
+
+
+
