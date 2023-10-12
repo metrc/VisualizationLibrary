@@ -120,22 +120,19 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
 #' cumulative_percentage_ankle_injuries()
 #' }
 cumulative_percentage_ankle_injuries <- function(analytic){
-  
-  crf_dt <- get_data(c('study_id', 'crf02_dt'))
-  
-  df <- analytic %>%  select(study_id, injury_type, enrolled) %>% 
+
+  df <- analytic %>%  select(study_id, injury_type, enrolled, consent_date) %>% 
     filter(enrolled = TRUE) %>% 
     filter(!is.na(injury_type)) %>% 
-    left_join(crf_dt, by = 'study_id') %>% 
-    filter(!is.na(crf02_dt)) %>% 
+    filter(!is.na(consent_date)) %>% 
     filter(injury_type == "ankle")
   
-  df$crf02_dt <- ymd(df$crf02_dt)
+  df$consent_date <- ymd(df$consent_date)
   
   yyyy_mm <- df %>% mutate(
-    year = year(crf02_dt),
-    month = month(crf02_dt),
-    year_month = format(crf02_dt, "%Y-%m")
+    year = year(consent_date),
+    month = month(consent_date),
+    year_month = format(consent_date, "%Y-%m")
   ) %>% 
     group_by(year_month) %>%
     summarise(Total = n()) %>%
@@ -167,7 +164,7 @@ cumulative_percentage_ankle_injuries <- function(analytic){
 #' Cumulative percentage for Tibial Plateau injuries
 #'
 #' @description This function visualizes the Cumulative percentage for number of patients with Plateau injuries 
-#' over the period of Year-Months(YYYY-MM, crf02_dt) out of 526
+#' over the period of Year-Months(YYYY-MM, consent_date) out of 526
 #'
 #' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled
 #'
@@ -179,24 +176,21 @@ cumulative_percentage_ankle_injuries <- function(analytic){
 #' cumulative_percentage_plateau_injuries()
 #' }
 cumulative_percentage_plateau_injuries <- function(analytic){
-  
-  crf_dt <- get_data(c('study_id', 'crf02_dt'))
-  
-  df <- analytic %>%  select(study_id, injury_type, enrolled) %>% 
+
+  df <- analytic %>%  select(study_id, injury_type, enrolled, consent_date) %>% 
     filter(enrolled = TRUE) %>% 
-    filter(!is.na(injury_type)) %>% 
-    left_join(crf_dt, by = 'study_id') %>% 
-    filter(!is.na(crf02_dt)) %>% 
+    filter(!is.na(injury_type)) %>%
+    filter(!is.na(consent_date)) %>% 
     filter(injury_type == "plateau")
   
   
   
-  df$crf02_dt <- ymd(df$crf02_dt)
+  df$consent_date <- ymd(df$consent_date)
   
   yyyy_mm <- df %>% mutate(
-    year = year(crf02_dt),
-    month = month(crf02_dt),
-    year_month = format(crf02_dt, "%Y-%m")
+    year = year(consent_date),
+    month = month(consent_date),
+    year_month = format(consent_date, "%Y-%m")
   ) %>% 
     group_by(year_month) %>%
     summarise(Total = n()) %>%
@@ -238,13 +232,10 @@ cumulative_percentage_plateau_injuries <- function(analytic){
 #' }
 enrollment_by_injury_and_site <- function(analytic){
   
-  crf_dt <- get_data(c('study_id', 'crf02_dt'))
-  
-  df <- analytic %>%  select(study_id, injury_type, enrolled, facilitycode) %>% 
+  df <- analytic %>%  select(study_id, injury_type, enrolled, facilitycode, consent_date) %>% 
     filter(enrolled = TRUE) %>% 
     filter(!is.na(injury_type)) %>% 
-    left_join(crf_dt, by = 'study_id') %>% 
-    filter(!is.na(crf02_dt)) %>% 
+    filter(!is.na(consent_date)) %>% 
     group_by(facilitycode, injury_type) %>%
     summarise(EnrolledPatients = n()) 
   
