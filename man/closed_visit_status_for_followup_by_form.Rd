@@ -20,7 +20,7 @@ nothing
 This function visualizes the expected visits for each timepoint for MRR, CFU, PFU, BPI, AOS, KOOS forms
 }
 \examples{
-dontrun{
+\dontrun{
 closed_visit_status_for_followup_by_form()
 }
 }

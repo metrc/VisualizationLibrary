@@ -17,7 +17,7 @@ This function visualizes the Injury characteristics for OTA classification and S
 injuries
 }
 \examples{
-dontrun{
+\dontrun{
 closed_injury_ankle_plateau_characteristics()
 }
 }

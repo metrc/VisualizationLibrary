@@ -13,7 +13,7 @@
 #' @export
 #'
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' closed_enrollment_status_by_site()
 #' }
 closed_enrollment_status_by_site <- function(analytic){
@@ -109,7 +109,7 @@ closed_enrollment_status_by_site <- function(analytic){
 #' @export
 #'
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' closed_visit_status_for_followup_by_form()
 #' }
 closed_visit_status_for_followup_by_form <- function(analytic){
@@ -140,7 +140,7 @@ closed_visit_status_for_followup_by_form <- function(analytic){
 #' @export
 #'
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' closed_injury_ankle_plateau_characteristics()
 #' }
 closed_injury_ankle_plateau_characteristics <- function(analytic){
@@ -404,7 +404,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="r
 #' @export
 #'
 #' @examples
-#' dontrun{
+#' \dontrun{
 #' closed_discontinuation_sae_deviation_by_type()
 #' }
 closed_discontinuation_sae_deviation_by_type <- function(analytic){
