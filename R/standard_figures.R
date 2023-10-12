@@ -103,3 +103,156 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
   file.remove(c(temp_svg_path, temp_png_path))
   return(img_tag)
 }
+
+
+#' Cumulative percentage for ankle injuries
+#'
+#' @description This function visualizes the Cumulative percentage for number of patients with ankle injuries over the period
+#' of Year-Months(YYYY-MM) out of 526
+#'
+#' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' cumulative_percentage_ankle_injuries()
+#' }
+cumulative_percentage_ankle_injuries <- function(analytic){
+
+  df <- analytic %>%  select(study_id, injury_type, enrolled, consent_date) %>% 
+    filter(enrolled = TRUE) %>% 
+    filter(!is.na(injury_type)) %>% 
+    filter(!is.na(consent_date)) %>% 
+    filter(injury_type == "ankle")
+  
+  df$consent_date <- ymd(df$consent_date)
+  
+  yyyy_mm <- df %>% mutate(
+    year = year(consent_date),
+    month = month(consent_date),
+    year_month = format(consent_date, "%Y-%m")
+  ) %>% 
+    group_by(year_month) %>%
+    summarise(Total = n()) %>%
+    ungroup() %>% 
+    arrange(year_month) %>%
+    mutate(
+      cumulative_value = cumsum(Total),
+      cumulative_percentage = (cumulative_value / 526) * 100)
+  
+  
+  g <- ggplot(yyyy_mm, aes(x = factor(year_month), y = cumulative_percentage / 100)) +
+    geom_bar(stat = "identity", fill = "yellow", color = "black", size = 0.3) +
+    labs(title = "Cumulative Percentage Enrollment for Ankles fracture type(of 526)", x = "Month", y = "Cumulative Percent") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +  # Rotate labels vertically
+    scale_y_continuous(labels = scales::percent_format(scale = 1))
+  
+  
+  temp_png_path <- tempfile(fileext = ".png")
+  ggsave(temp_png_path, plot = g, width = 1000, height = 1000, units = 'px')
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Percentage Enrollment for Ankle injury">', image_data)
+  file.remove(temp_png_path)
+  
+  return(img_tag)
+}
+
+
+#' Cumulative percentage for Tibial Plateau injuries
+#'
+#' @description This function visualizes the Cumulative percentage for number of patients with Plateau injuries 
+#' over the period of Year-Months(YYYY-MM, consent_date) out of 526
+#'
+#' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' cumulative_percentage_plateau_injuries()
+#' }
+cumulative_percentage_plateau_injuries <- function(analytic){
+
+  df <- analytic %>%  select(study_id, injury_type, enrolled, consent_date) %>% 
+    filter(enrolled = TRUE) %>% 
+    filter(!is.na(injury_type)) %>%
+    filter(!is.na(consent_date)) %>% 
+    filter(injury_type == "plateau")
+  
+  
+  
+  df$consent_date <- ymd(df$consent_date)
+  
+  yyyy_mm <- df %>% mutate(
+    year = year(consent_date),
+    month = month(consent_date),
+    year_month = format(consent_date, "%Y-%m")
+  ) %>% 
+    group_by(year_month) %>%
+    summarise(Total = n()) %>%
+    ungroup() %>% 
+    arrange(year_month) %>%
+    mutate(
+      cumulative_value = cumsum(Total),
+      cumulative_percentage = (cumulative_value / 100) * 100)
+  
+  
+  g <- ggplot(yyyy_mm, aes(x = factor(year_month), y = cumulative_percentage / 100)) +
+    geom_bar(stat = "identity", fill = "blue", color = "black", size = 0.3) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 0, vjust = 1)) +
+    scale_y_continuous(labels = scales::percent_format(scale = 1) +
+                         scale_y_continuous(breaks = seq(0, 100, by = 10), labels = seq(0, 100, by = 10)))
+                       
+   temp_png_path <- tempfile(fileext = ".png")
+   ggsave(temp_png_path, plot = g, width = 1000, height = 1000, units = 'px')
+   image_data <- base64enc::base64encode(temp_png_path)
+   img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Percentage Enrollment for Plateau injury">', image_data)
+   file.remove(temp_png_path)
+   return(img_tag)
+   
+}
+
+#' Enrollment of subjects for ankle and plateau injuries by each site
+#'
+#' @description This function visualizes the enrollment by each site for each injury_type
+#'
+#' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled, facilitycode
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' enrollment_by_injury_and_site()
+#' }
+enrollment_by_injury_and_site <- function(analytic){
+  
+  df <- analytic %>%  select(study_id, injury_type, enrolled, facilitycode, consent_date) %>% 
+    filter(enrolled = TRUE) %>% 
+    filter(!is.na(injury_type)) %>% 
+    filter(!is.na(consent_date)) %>% 
+    group_by(facilitycode, injury_type) %>%
+    summarise(EnrolledPatients = n()) 
+  
+  g <- ggplot(df, aes(x = facilitycode, y = EnrolledPatients, fill = injury_type)) +
+    geom_bar(stat = "identity", color = "black", size = 0.5, width = 0.8) +
+    labs(title = "Number of patients enrolled by site and fracture type", x = "Site", y = "Number enrolled") +
+    scale_fill_manual(values = c( "ankle" = "yellow", "plateau" = "blue")) +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "top",  # Center the legend at the top
+          legend.title = element_blank())
+  
+  temp_png_path <- tempfile(fileext = ".png")
+  ggsave(temp_png_path, plot = g, width = 1000, height = 1000, units = 'px')
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Enrollment by each injury type and site">', image_data)
+  file.remove(temp_png_path)
+  
+  return(img_tag)
+}
