@@ -3,6 +3,7 @@
 export(ao_gustillo_tscherne_injury_characteristics)
 export(baseline_characteristics_percent)
 export(certification_date_data)
+export(complications_by_severity_relatedness)
 export(cumulative_percentage_ankle_injuries)
 export(cumulative_percentage_plateau_injuries)
 export(discontinuation_sae_deviation_by_type)
