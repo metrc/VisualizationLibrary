@@ -13,7 +13,7 @@ complications_by_severity_relatedness(analytic)
 nothing
 }
 \description{
-This function visualizes the complications by severity and relatedness for Closed report
+This function visualizes the complications by severity and relatedness for dsmb report
 }
 \examples{
 \dontrun{
