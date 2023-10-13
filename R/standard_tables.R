@@ -627,7 +627,7 @@ certification_date_data <- function(analytic){
 
 #' Complications by severity and relatedness
 #'
-#' @description This function visualizes the complications by severity and relatedness for Closed report
+#' @description This function visualizes the complications by severity and relatedness for dsmb report
 #'
 #' @param analytic This is the analytic data set that must include study_id, complication_data
 #'
@@ -793,9 +793,6 @@ complications_by_severity_relatedness <- function(analytic){
   output <- bind_rows(output_overall, df_grade4, df_grade3, df_grade1_2, df_unknown) %>% 
     mutate(across(everything(), ~replace(., is.na(.), "-"))) %>% 
     select(complications, everything())
-  
-  install.packages("knitr")
-  library(knitr)
   
   index_vec <- c(" " = 1, "Grade 4" = 9, "Grade 3"= 9,"Grade 2,1"= 9, "Grade Unknown"= 9)
   subindex_vec <- c(" " = 1, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6,
