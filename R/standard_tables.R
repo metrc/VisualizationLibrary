@@ -662,6 +662,13 @@ complications_by_severity_relatedness <- function(analytic){
     summarise(Total = n()) %>%
     ungroup() %>% 
     pivot_wider(names_from = relatedness, values_from = Total) %>% 
+    bind_rows(tibble(
+      "Definitely related"= vector(mode="integer"),
+      "Probably related" = vector(mode="integer"),
+      "Possibly related" = vector(mode="integer"),
+      "Unlikely related" = vector(mode="integer"),
+      "Unrelated" = vector(mode="integer"),
+      "Don't know" = vector(mode="integer"))) %>% 
     rename(Definitely= "Definitely related",
            Probably = "Probably related",
            Possibly = "Possibly related",
@@ -710,7 +717,7 @@ complications_by_severity_relatedness <- function(analytic){
            Unknown = paste0(Unknown_c, "[", Unknown_id, "]"), 
            Total = paste0(Total_c, "[", Total_id, "]")) %>% 
     select(-ends_with("_id"), -ends_with("_c")) %>% 
-    mutate(across(everything(), ~ str_replace_all(., "0\\[0\\]", "-")))
+    mutate_all(str_replace_all, "0\\[0\\]", "-")
   
   
   
@@ -721,85 +728,38 @@ complications_by_severity_relatedness <- function(analytic){
            Unlikely = paste0(Unlikely_c, "[", Unlikely_id, "]"),
            Unrelated = paste0(Unrelated_c, "[", Unrelated_id, "]"),
            Unknown = paste0(Unknown_c, "[", Unknown_id, "]")) %>% 
+    mutate(Total = paste0(Definitely_c+Probably_c+Possibly_c+Unlikely_c+Unrelated_c+Unknown_c,
+                          "[",Definitely_id+Probably_id+Possibly_id+Unlikely_id+Unrelated_id+Unknown_id,"]")) %>% 
     select(-ends_with("_id"), -ends_with("_c")) %>% 
     mutate(complications = "Overall")
   
   severity_categories <- c('Grade 2,1', 'Grade 3', 'Grade 4', 'Grade Unknown')
-  df_severity <- data.frame(
-    complications = severity_categories,
-    Definitely = rep("-", length(severity_categories)),
-    Probably = rep("-", length(severity_categories)),
-    Possibly = rep("-", length(severity_categories)),
-    Unlikely= rep("-", length(severity_categories)),
-    Unrelated = rep("-", length(severity_categories)),
-    Unknown = rep("-", length(severity_categories))
-  )
-  
-  all_categories <- unique(output_complication$complications) 
   level_order <- c("Superficial", "Deep - Involving Bone", "Deep - Not Involving Bone",
                    "Wound Dehiscence", "Wound Seroma/Hematoma", "Fixation failure", "Malunion", "Peri-implant Fracture",
                    "Other")
   
-  df_grade1_2 <- output_complication %>% 
-    filter(severity == "Grade 2,1") %>% 
-    select(-severity, - Total) %>% 
-    arrange(factor(complications, levels = level_order))
+  df_template <- tibble(
+    severity = c(severity_categories),
+  ) %>% group_by(severity) %>% 
+    summarise(complications = level_order) %>% 
+    ungroup()
   
+  output_complication <- left_join(df_template, output_complication)%>% 
+    mutate_all(replace_na, "-")
   
-  df_grade3 <- output_complication %>% 
-    filter(severity == "Grade 3") %>% 
-    select(-severity, -Total)
-  
-  missing_categories <- setdiff(all_categories, df_grade3$complications)
-  
-  df_grade3 <- data.frame(
-    complications = missing_categories,
-    Definitely = rep("-", length(missing_categories)),
-    Probably = rep("-", length(missing_categories)),
-    Possibly = rep("-", length(missing_categories)),
-    Unlikely = rep("-", length(missing_categories)),
-    Unrelated = rep("-", length(missing_categories)),
-    Unknown = rep("-", length(missing_categories))
-  ) %>% 
-    rbind(df_grade3) %>% 
-    arrange(factor(complications, levels = level_order))
-  
-  
-  df_grade4 <- data.frame(
-    complications_list = all_categories,
-    Definitely = rep("-", length(all_categories)),
-    Probably = rep("-", length(all_categories)),
-    Possibly = rep("-", length(all_categories)),
-    Unlikely= rep("-", length(all_categories)),
-    Unrelated = rep("-", length(all_categories)),
-    Unknown = rep("-", length(all_categories))
-  ) %>% 
-    rename(complications = complications_list) %>% 
-    arrange(factor(complications, levels = level_order))
-  
-  
-  df_unknown <- data.frame(
-    all_categories = all_categories,
-    Definitely = rep("-", length(all_categories)),
-    Probably = rep("-", length(all_categories)),
-    Possibly = rep("-", length(all_categories)),
-    Unlikely= rep("-", length(all_categories)),
-    Unrelated = rep("-", length(all_categories)),
-    Unknown = rep("-", length(all_categories))
-  ) %>% 
-    rename(complications = all_categories) %>% 
-    arrange(factor(complications, levels = level_order))
-  
-  output <- bind_rows(output_overall, df_grade4, df_grade3, df_grade1_2, df_unknown) %>% 
+  output <- bind_rows(output_overall, output_complication) %>% 
     mutate(across(everything(), ~replace(., is.na(.), "-"))) %>% 
-    select(complications, everything())
+    select(complications, everything()) %>% 
+    select(-severity)
+  
+  colnames(output)[1] <- " "
   
   index_vec <- c(" " = 1, "Grade 4" = 9, "Grade 3"= 9,"Grade 2,1"= 9, "Grade Unknown"= 9)
   subindex_vec <- c(" " = 1, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6,
                     "Infection" = 3, " " = 6)
   table_raw<- kable(output, align='l', padding='2l') %>%  
     pack_rows(index = index_vec) %>% 
-    pack_rows(index = subindex_vec ,label_row_css = "padding-left: 2em;") %>% 
+    pack_rows(index = subindex_vec ,label_row_css = "padding-left: 2em;", bold = FALSE) %>% 
     row_spec(1, extra_css = "border-bottom: 1px solid") %>% 
     kable_styling("striped", full_width = F, position="left") 
   

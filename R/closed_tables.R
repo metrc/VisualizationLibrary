@@ -560,3 +560,171 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
   return(vis)
 }
 
+
+#' Closed Complications by severity and relatedness
+#'
+#' @description This function visualizes the complications by severity and relatedness for dsmb report
+#'
+#' @param analytic This is the analytic data set that must include study_id, complication_data
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_complications_by_severity_relatedness()
+#' }
+closed_complications_by_severity_relatedness <- function(analytic){
+  
+  inner_closed_complications_by_severity_relatedness <- function(analytic){
+    comp <- analytic %>%  select(study_id, complication_data) %>% 
+      filter(!is.na(complication_data))
+    
+    
+    unzipped_comp <- comp %>%
+      separate_rows(complication_data, sep = ";new_row: ") %>%
+      separate(complication_data, into = c("redcap_event_name", "visit_date", "complications", 
+                                           "first_complication_note", "another_complication_note", "diagnosis_date", 
+                                           "relatedness", "severity", "treatment_related", "new_or_previous_diagnosis",
+                                           "form_notes"), sep = '\\|')  %>% 
+      select(study_id, severity, relatedness, complications) %>% 
+      mutate(severity = case_when(
+        severity %in% c('Mild', 'Moderate') ~ "Grade 2,1",
+        severity == "Severe and Undesirable" ~ "Grade 3",
+        severity == "Life-threatening or disabling" ~ "Grade 4",
+        severity == "Fatal" ~ "Unknown",
+        TRUE ~ NA_character_
+      )) %>% 
+      group_by(study_id, relatedness, severity,complications) %>%
+      summarise(Total = n()) %>%
+      ungroup() %>% 
+      pivot_wider(names_from = relatedness, values_from = Total) %>% 
+      bind_rows(tibble(
+        "Definitely related"= vector(mode="integer"),
+        "Probably related" = vector(mode="integer"),
+        "Possibly related" = vector(mode="integer"),
+        "Unlikely related" = vector(mode="integer"),
+        "Unrelated" = vector(mode="integer"),
+        "Don't know" = vector(mode="integer"))) %>% 
+      rename(Definitely= "Definitely related",
+             Probably = "Probably related",
+             Possibly = "Possibly related",
+             Unlikely = "Unlikely related",
+             Unrelated = "Unrelated",
+             Unknown = "Don't know") %>% 
+      mutate(complications = recode(complications,
+                                    "Superficial-infection" = "Superficial",
+                                    "Deep-Infection" = "Deep - Involving Bone", 
+                                    "Deep-Infection, Not Involving Bone" = "Deep - Not Involving Bone"))
+    
+    total_complications <- unzipped_comp %>% 
+      group_by(severity, complications) %>% 
+      summarise(Definitely_c = sum(Definitely, na.rm = T), Possibly_c = sum(Possibly, na.rm = T), 
+                Probably_c = sum(Probably, na.rm = T), Unlikely_c = sum(Unlikely, na.rm = T), 
+                Unrelated_c = sum(Unrelated, na.rm = T), Unknown_c = sum(Unknown, na.rm = T), 
+                Total_c = n()) %>% 
+      ungroup() 
+    
+    comp_sums <- sapply(total_complications[, c("Definitely_c", "Possibly_c", "Probably_c", "Unlikely_c", "Unrelated_c", "Unknown_c")], sum)
+    
+    summary_comp_sums <- data.frame(t(comp_sums)) 
+    
+    total_ids <- unzipped_comp %>% 
+      mutate_all(replace_na, 0) %>% 
+      group_by(severity, complications) %>% 
+      summarise(Definitely_id = length(unique(study_id[Definitely > 0])) , Possibly_id = length(unique(study_id[Possibly > 0])) , 
+                Probably_id = length(unique(study_id[Probably > 0])) , Unlikely_id = length(unique(study_id[Unlikely > 0])) , 
+                Unrelated_id = length(unique(study_id[Unrelated > 0])) , Unknown_id = length(unique(study_id[Unknown > 0])) , 
+                Total_id = length(unique(study_id))) %>% 
+      ungroup()
+    
+    
+    id_sums <- sapply(total_ids[, c("Definitely_id", "Possibly_id", "Probably_id", "Unlikely_id", "Unrelated_id", "Unknown_id")], sum)
+    
+    summary_id_sums <- data.frame(t(id_sums)) 
+    
+    
+    output_complication <- full_join(total_complications, total_ids) %>% 
+      mutate_all(replace_na, 0) %>% 
+      mutate(Definitely = paste0(Definitely_c, "[", Definitely_id, "]"),
+             Probably = paste0(Probably_c, "[", Probably_id, "]"),
+             Possibly = paste0(Possibly_c, "[", Possibly_id, "]"),
+             Unlikely = paste0(Unlikely_c, "[", Unlikely_id, "]"),
+             Unrelated = paste0(Unrelated_c, "[", Unrelated_id, "]"),
+             Unknown = paste0(Unknown_c, "[", Unknown_id, "]"), 
+             Total = paste0(Total_c, "[", Total_id, "]")) %>% 
+      select(-ends_with("_id"), -ends_with("_c")) %>% 
+      mutate_all(str_replace_all, "0\\[0\\]", "-")
+    
+    
+    
+    output_overall <- cross_join(summary_comp_sums, summary_id_sums) %>% 
+      mutate(Definitely = paste0(Definitely_c, "[", Definitely_id, "]"),
+             Probably = paste0(Probably_c, "[", Probably_id, "]"),
+             Possibly = paste0(Possibly_c, "[", Possibly_id, "]"),
+             Unlikely = paste0(Unlikely_c, "[", Unlikely_id, "]"),
+             Unrelated = paste0(Unrelated_c, "[", Unrelated_id, "]"),
+             Unknown = paste0(Unknown_c, "[", Unknown_id, "]")) %>% 
+      mutate(Total = paste0(Definitely_c+Probably_c+Possibly_c+Unlikely_c+Unrelated_c+Unknown_c,
+                            "[",Definitely_id+Probably_id+Possibly_id+Unlikely_id+Unrelated_id+Unknown_id,"]")) %>% 
+      select(-ends_with("_id"), -ends_with("_c")) %>% 
+      mutate(complications = "Overall")
+    
+    severity_categories <- c('Grade 2,1', 'Grade 3', 'Grade 4', 'Grade Unknown')
+    level_order <- c("Superficial", "Deep - Involving Bone", "Deep - Not Involving Bone",
+                     "Wound Dehiscence", "Wound Seroma/Hematoma", "Fixation failure", "Malunion", "Peri-implant Fracture",
+                     "Other")
+    
+    df_template <- tibble(
+      severity = c(severity_categories),
+    ) %>% group_by(severity) %>% 
+      summarise(complications = level_order) %>% 
+      ungroup()
+    
+    output_complication <- left_join(df_template, output_complication)%>% 
+      mutate_all(replace_na, "-")
+    
+    output <- bind_rows(output_overall, output_complication) %>% 
+      mutate(across(everything(), ~replace(., is.na(.), "-"))) %>% 
+      select(complications, everything())
+    
+    if(sum(df_template$severity!=output_complication$severity) > 0 | 
+       sum(df_template$complications!=output_complication$complications) >0 ){
+      stop("bad complications alignment")
+    }
+    
+    return(output)
+  }
+  
+  df_full <- analytic
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  table_a <- inner_closed_complications_by_severity_relatedness(df_a)
+  table_b <- inner_closed_complications_by_severity_relatedness(df_b)
+  table_full <- inner_closed_complications_by_severity_relatedness(df_full)
+  
+  output <- cbind(table_a %>% select(-severity), 
+                  table_b %>% select(-severity, -complications), 
+                  table_full %>% select(-severity, -complications))
+    
+  
+  colnames(output)[1] <- " "
+  
+  index_vec <- c(" " = 1, "Grade 4" = 9, "Grade 3"= 9,"Grade 2,1"= 9, "Grade Unknown"= 9)
+  subindex_vec <- c(" " = 1, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6,
+                    "Infection" = 3, " " = 6)
+  table_raw<- kable(output, align='l', padding='2l') %>%  
+    pack_rows(index = index_vec) %>% 
+    pack_rows(index = subindex_vec ,label_row_css = "padding-left: 2em;", bold = FALSE) %>% 
+    add_header_above(c(" " = 1, "Group A" = 7, "Group B" = 7, "All" = 7)) %>%
+    row_spec(1, extra_css = "border-bottom: 1px solid") %>% 
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(table_raw)
+}
+
