@@ -504,7 +504,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
                         table_full, by="type") %>% 
     mutate_all(replace_na, "0 (0%)")
   
-  vis <- kable(df_final, align='l', padding='2l', col.names = c(paste0("n=",total), "Group A", "Group B", "Total")) %>%
+  vis <- kable(df_table, align='l', padding='2l', col.names = c(paste0("n=",total), "Group A", "Group B", "Total")) %>%
     add_indent(c(seq(n_disc) + 1, 1 + n_disc + 1 + 1 + seq(1+n_dsc+1+n_dp+1+n_da))) %>% 
     add_indent(1 + n_disc + 1 + 1 + 1 + seq(n_dsc)) %>% 
     add_indent(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp)) %>% 
