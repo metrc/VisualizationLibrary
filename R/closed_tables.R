@@ -220,7 +220,7 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
   index_vec <- c(" "= 1,"OTA Classification"= ota_number, " "= 1, "Tibial Plateau"=schatzer_number) 
   
   table_raw<- kable(df_table, align='l', padding='2l', col.names = NULL) %>%
-    pack_rows(index = index_vec) %>% 
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left")
   
   return(table_raw)
@@ -391,7 +391,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="r
   vis <- kable(table_final, align='l', padding='2l', 
                col.names = c(" ","Group A", "Group B", "Total")) %>% 
     pack_rows(index = c('Sex' = sex_n, 'Age' = 1 + age_n, 'Race' = race_n, 
-                        'Education' = education_n, 'Military' = military_n)) %>% 
+                        'Education' = education_n, 'Military' = military_n),
+              label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
  return(vis) 
@@ -724,8 +725,8 @@ closed_complications_by_severity_relatedness <- function(analytic){
   subindex_vec <- c(" " = 1, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6,
                     "Infection" = 3, " " = 6)
   table_raw<- kable(output, align='l', padding='2l') %>%  
-    pack_rows(index = index_vec) %>% 
-    pack_rows(index = subindex_vec ,label_row_css = "padding-left: 2em;", bold = FALSE) %>% 
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+    pack_rows(index = subindex_vec,label_row_css = "text-align:left;padding-left: 2em;", bold = FALSE) %>% 
     add_header_above(c(" " = 1, "Group A" = 7, "Group B" = 7, "All" = 7)) %>%
     row_spec(1, extra_css = "border-bottom: 1px solid") %>% 
     kable_styling("striped", full_width = F, position="left") 
@@ -771,6 +772,10 @@ closed_appendix_A_SAEs <- function(analytic){
       "<b>Outcome</b>: ", sae_outcome, "<br /> ",
       "<b>Description</b>: ", sae_describe, "<br /> ",
       "<br />")) 
+  
+  if (nrow(unzipped_sae) == 0) {
+    output_df <- paste0("None at this time.")
+  }
   
   output_text <- output_df %>% pull(text) %>% 
     paste(collapse = "<br />\n")
@@ -844,6 +849,10 @@ closed_appendix_C_discontinuations <- function(analytic){
       "<b>Reason for discontinuation</b>: ", discontinuation_reason, "<br /> ",
       "<br />")) 
   
+  if (nrow(unzipped_discontinuation) == 0) {
+    output_df <- paste0("None at this time.")
+  }
+  
   output_text <- output_df %>% pull(text) %>% 
     paste(collapse = "<br />\n")
   
@@ -882,6 +891,10 @@ closed_appendix_D_protocol_deviation <- function(analytic){
       "<b>Deviation type</b>: ", protocol_deviation, "<br /> ",
       "<b>Description</b>: ", deviation_description, "<br /> ",
       "<br />")) 
+  
+  if (nrow(unzipped_protocol_deviation) == 0) {
+    output_df <- paste0("None at this time.")
+  }
   
   output_text <- output_df %>% pull(text) %>% 
     paste(collapse = "<br />\n")
