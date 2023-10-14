@@ -526,8 +526,8 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
   table_b <- inner_closed_discontinuation_sae_deviation_by_type(df_b)
   table_full <- inner_closed_discontinuation_sae_deviation_by_type(df_full)
   
-  cnames <- c(' ', paste('n = ', total))
-  header <- c(1,1)
+  cnames <- c(paste('n = ', total),' ',' ', ' ')
+  header <- c(1,1,1,1)
   names(header)<-cnames
   
   if(n_dsc>0){
