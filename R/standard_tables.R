@@ -354,126 +354,75 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
 #' }
 discontinuation_sae_deviation_by_type <- function(analytic){
   total <- sum(analytic$enrolled, na.rm=T)
-  df <- analytic %>% 
-    select(enrolled, enrolled_discontinuation_reason, deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported) %>% 
+  discontinuation_df <- analytic %>% 
+    select(enrolled, enrolled_discontinuation_reason) %>% 
     filter(enrolled == TRUE) %>% 
-    mutate(na_count = rowSums(is.na(select(., 
-                                           enrolled_discontinuation_reason,
-                                           deviation_screen_consent,
-                                           deviation_procedural,
-                                           deviation_administrative,
-                                           sae_reported)))) %>%
-    filter(na_count != 5) %>%
-    select(-na_count) %>% 
-    mutate(sae_reported = ifelse(sae_reported == TRUE, 'SAE', sae_reported))
+    count(enrolled_discontinuation_reason) %>%
+    rename(type=enrolled_discontinuation_reason) %>% 
+    filter(!is.na(type))
   
-  totals_df <- df %>%
-    mutate(total_disc = ifelse(!is.na(enrolled_discontinuation_reason), TRUE, FALSE)) %>% 
-    mutate(total_dsc = ifelse(!is.na(deviation_screen_consent), TRUE, FALSE)) %>% 
-    mutate(total_dp = ifelse(!is.na(deviation_procedural), TRUE, FALSE)) %>% 
-    mutate(total_da = ifelse(!is.na(deviation_administrative), TRUE, FALSE)) %>% 
-    mutate(total_sae = ifelse(!is.na(sae_reported), TRUE, FALSE)) %>% 
-    select(total_disc, total_dsc, total_dp, total_da, total_sae)
+  discontinuation_df_tot <- tibble(type="Discontinuations", n=sum(discontinuation_df$n))
   
-  total_disc <- sum(totals_df$total_disc)
-  total_dsc <- sum(totals_df$total_dsc)
-  total_dp <- sum(totals_df$total_dp)
-  total_da <- sum(totals_df$total_da)
-  total_sae <- sum(totals_df$total_sae)
-  
-  vec_disc <- c(format_count_percent(total_disc, total, decimals = 2))
-  vec_protocol_deviations <- c(format_count_percent(total_dsc + total_dp + total_da, total, decimals = 2))
-  vec_dsc <- c(format_count_percent(total_dsc, total, decimals = 2))
-  vec_dp <- c(format_count_percent(total_dp, total, decimals = 2))
-  vec_da <- c(format_count_percent(total_da, total, decimals = 2))
+  sae_df <- analytic %>% 
+    select(study_id, enrolled, sae_reported) %>% 
+    filter(enrolled & sae_reported) %>% 
+    mutate(sae_reported = "SAE") %>% 
+    count(sae_reported) %>%
+    rename(type=sae_reported) %>% 
+    filter(!is.na(type))
   
   
-  disc <- tibble(type = "Discontinued", percentage = vec_disc)
-  protocol_deviations <- tibble(type = 'Protocol Deviations', percentage = vec_protocol_deviations)
-  sc <- tibble(type = 'Screen and Consent', percentage = vec_dsc)
-  dp <- tibble(type = 'Procedural', percentage = vec_dp)
-  da <- tibble(type = 'Administrative/Other', percentage = vec_da)
+  deviation_sc_df <- analytic %>% 
+    select(study_id, enrolled, deviation_screen_consent) %>% 
+    filter(enrolled == TRUE) %>% 
+    count(deviation_screen_consent) %>%
+    rename(type=deviation_screen_consent) %>% 
+    filter(!is.na(type))
   
   
-  enrolled_discontinuation_df <- df %>% 
-    select(enrolled_discontinuation_reason) %>% 
-    filter(!is.na(enrolled_discontinuation_reason)) %>% 
-    count(enrolled_discontinuation_reason) %>% 
-    mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
-    select(-n) %>% 
-    rename(type = enrolled_discontinuation_reason)
-  
-  deviation_screen_consent_df <- df %>% 
-    select(deviation_screen_consent) %>% 
-    filter(!is.na(deviation_screen_consent)) %>% 
-    count(deviation_screen_consent) %>% 
-    mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
-    select(-n) %>% 
-    rename(type = deviation_screen_consent)
-  
-  deviation_procedural_df <- df %>% 
-    select(deviation_procedural) %>% 
-    filter(!is.na(deviation_procedural)) %>% 
-    count(deviation_procedural) %>% 
-    mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
-    select(-n) %>% 
-    rename(type = deviation_procedural)
-  
-  deviation_administrative_df <- df %>% 
-    select(deviation_administrative) %>% 
-    filter(!is.na(deviation_administrative)) %>% 
-    count(deviation_administrative) %>% 
-    mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
-    select(-n) %>% 
-    rename(type = deviation_administrative)
-  
-  sae_reported_df <- df %>% 
-    select(sae_reported) %>% 
-    filter(!is.na(sae_reported)) %>% 
-    count(sae_reported) %>% 
-    mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
-    select(-n) %>% 
-    rename(type = sae_reported)
-  
-  df_final <- rbind(disc, enrolled_discontinuation_df, sae_reported_df, protocol_deviations, sc, deviation_screen_consent_df, 
-                    dp, deviation_procedural_df, da, deviation_administrative_df) 
-  
-  n_disc <- nrow(enrolled_discontinuation_df)
-  n_dsc <- nrow(deviation_screen_consent_df)
-  n_dp <- nrow(deviation_procedural_df)
-  n_da <- nrow(deviation_administrative_df)
-  
-  cnames <- c(' ', paste('n = ', total))
-  header <- c(1,1)
-  names(header)<-cnames
-  
-  if(n_dsc>0){
-    dsc_indents <- seq(n_dsc) + 1 + n_disc + 1 + 1 + 1
-  } else{
-    dsc_indents <- NA
-  }
-  
-  if(n_dp>0){
-    dp_indents <- seq(n_dp) + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1
-  } else{
-    dp_indents <- NA
-  }
-  
-  if(n_da>0){
-    da_indents <- seq(n_da) + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1
-  } else{
-    da_indents <- NA
-  }
+  deviation_p_df <- analytic %>% 
+    select(study_id, enrolled, deviation_procedural) %>% 
+    filter(enrolled == TRUE) %>% 
+    count(deviation_procedural) %>%
+    rename(type=deviation_procedural) %>% 
+    filter(!is.na(type))
   
   
-  vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
-    add_header_above(header) %>%  
-    add_indent(c(seq(n_disc) + 1, seq(1 + n_dsc + 1 + n_dp + 1 + n_da) + 1 + n_disc + 2, na.omit(c(dsc_indents, dp_indents, da_indents)))) %>% 
+  deviation_a_df <- analytic %>% 
+    select(study_id, enrolled, deviation_administrative) %>% 
+    filter(enrolled == TRUE) %>% 
+    count(deviation_administrative) %>%
+    rename(type=deviation_administrative) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = str_replace(type,"Other: .+","Other"))
+  
+  deviation_sc_tot <- tibble(type="Screen and Consent",n=sum(deviation_sc_df$n))
+  deviation_p_tot <- tibble(type="Procedural",n=sum(deviation_p_df$n))
+  deviation_a_tot <- tibble(type="Administrative/Other",n=sum(deviation_a_df$n))
+  deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
+  
+  
+  df_final <- bind_rows(discontinuation_df_tot, discontinuation_df, sae_df, deviation_df_tot, 
+                        deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
+    mutate(n = format_count_percent(n, total, decimals=2))
+  
+  
+  n_disc <- nrow(discontinuation_df)
+  n_dsc <- nrow(deviation_sc_df)
+  n_dp <- nrow(deviation_p_df)
+  n_da <- nrow(deviation_a_df)
+  
+  vis <- kable(df_final, align='l', padding='2l', col.names = c(" ", paste0("n=",total))) %>%
+    add_indent(c(seq(n_disc) + 1, 1 + n_disc + 1 + 1 + seq(1+n_dsc+1+n_dp+1+n_da))) %>% 
+    add_indent(1 + n_disc + 1 + 1 + 1 + seq(n_dsc)) %>% 
+    add_indent(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp)) %>% 
+    add_indent(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da)) %>% 
     row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
     row_spec(1+ n_disc, extra_css = "border-bottom: 1px solid") %>% 
     row_spec(1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
     row_spec(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
     kable_styling("striped", full_width = F, position="left") 
+  
   
   return(vis)
 }
