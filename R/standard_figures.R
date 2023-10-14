@@ -4,7 +4,7 @@
 #' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, 
-#' consented, randomized, discontinued, refused, late_ineligible, and the meta construct columns
+#' consented, randomized, enrolled, enrolled_discontinuation, refused, late_ineligible, and the meta construct columns
 #' @param not_enrolled_other is a meta construct that is NULL by default
 #' @param completed_str is the text for the completed box that defaults to 'Completed 12-month visit'
 #'
@@ -28,28 +28,40 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
   Refused <- sum(analytic %>% 
                      filter(eligible) %>% 
                      pull(refused), na.rm=TRUE)
-  Late_Ineligible <- sum(analytic %>% 
+  Disconintued_Pre <- sum(analytic %>% 
                            filter(eligible) %>% 
                            filter(consented) %>% 
-                           pull(late_ineligible), na.rm=TRUE)
+                           pull(discontinued_pre_randomization), na.rm=TRUE)
   Randomized <- sum(analytic %>% 
                       filter(eligible) %>% 
                       filter(consented) %>% 
                       pull(randomized), na.rm=TRUE)
+  Late_Ineligible <- sum(analytic %>% 
+                           filter(eligible) %>% 
+                           filter(consented) %>% 
+                           pull(late_ineligible), na.rm=TRUE)
+  Enrolled <- sum(analytic %>% 
+                    filter(eligible) %>% 
+                    filter(consented) %>% 
+                    filter(randomized) %>% 
+                    pull(enrolled), na.rm=TRUE)
   Active <- sum(analytic %>% 
                   filter(eligible) %>% 
                   filter(consented) %>% 
                   filter(randomized) %>% 
+                  filter(enrolled) %>% 
                   pull(active), na.rm=TRUE)
   Discontinued <- sum(analytic %>% 
                         filter(eligible) %>% 
                         filter(consented) %>% 
-                        filter(randomized) %>% 
-                        pull(discontinued), na.rm=TRUE)
+                        filter(randomized) %>%
+                        filter(enrolled) %>% 
+                        pull(enrolled_discontinuation), na.rm=TRUE)
   Completed <- sum(analytic %>% 
                         filter(eligible) %>% 
                         filter(consented) %>% 
-                        filter(randomized) %>% 
+                        filter(randomized)  %>% 
+                        filter(enrolled) %>% 
                         pull(completed), na.rm=TRUE)
   Ineligible <- Screened - Eligible
   if(is.null(not_enrolled_other)){
@@ -67,15 +79,19 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       start [style="rounded,filled", fillcolor="#ccccff", pos="6,12!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
       elig [style="rounded,filled", fillcolor="#ccccff", pos="6,10!", shape = box, width=2.4, height=1, label = "Eligible (n=',Eligible,')"];
       cons [style="rounded,filled", fillcolor="#ccccff", pos="6,8!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
+      pre_rand [style="rounded,filled", fillcolor="#ccccff", pos="10,8!", shape = box, width=2.4, height=1, label = "Discontinued\nPre-Randomization\n(n=',Disconintued_Pre,')"];
+
       rand [style="rounded,filled", fillcolor="#ccccff", pos="6,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
+      late_inelig [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "Late Ineligible (n=',Late_Ineligible,')"];
       
-      active [style="rounded,filled", fillcolor="#ccccff", pos="2,2!", shape = box, width=2.4, height=1, label = "Active (n=',Active,')"];
-      discon [style="rounded,filled", fillcolor="#ccccff", pos="6,2!", shape = box, width=2.4, height=1, label = "Discontinued (n=',Discontinued,')"];
-      compl [style="rounded,filled", fillcolor="#ccccff", pos="10,2!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',Completed,')"];
+      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Enrolled (n=',Randomized,')"];
+      discon [style="rounded,filled", fillcolor="#ccccff", pos="6,1!", shape = box, width=2.4, height=1, label = "Discontinued (n=',Discontinued,')"];
+
+      active [style="rounded,filled", fillcolor="#ccccff", pos="2,1!", shape = box, width=2.4, height=1, label = "Active (n=',Active,')"];
+      compl [style="rounded,filled", fillcolor="#ccccff", pos="10,1!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',Completed,')"];
       
       ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,12!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
       refused [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Refused (n=',Refused,')"];
-      late_inelig [style="rounded,filled", fillcolor="#ccccff", pos="10,8!", shape = box, width=2.4, height=1, label = "Late Ineligible (n=',Late_Ineligible,')"];
       
       not_enrolled [style="rounded,filled", fillcolor="#ccccff", pos="2,10!", shape = box, width=2.4, height=1, label = "Not Enrolled Other (n=',Not_Enrolled_Other,')"];
       
@@ -86,10 +102,12 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       elig -> refused
       elig -> not_enrolled
       cons -> rand
-      cons -> late_inelig
-      rand -> active
-      rand -> discon
-      rand -> compl
+      cons -> pre_rand
+      rand -> enrolled
+      rand -> late_inelig
+      enrolled -> active
+      enrolled -> discon
+      enrolled -> compl
       
     }
   '))
@@ -97,9 +115,9 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
   temp_svg_path <- tempfile(fileext = ".svg")
   writeLines(svg_content, temp_svg_path)
   temp_png_path <- tempfile(fileext = ".png")
-  rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 1000, height = 1000)
+  rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 2000, height = 2000)
   image_data <- base64enc::base64encode(temp_png_path)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram">', image_data)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="width: 75vw;">', image_data)
   file.remove(c(temp_svg_path, temp_png_path))
   return(img_tag)
 }
@@ -140,21 +158,21 @@ cumulative_percentage_ankle_injuries <- function(analytic){
     arrange(year_month) %>%
     mutate(
       cumulative_value = cumsum(Total),
-      cumulative_percentage = (cumulative_value / 526) * 100)
+      cumulative_percentage = (cumulative_value / 526))
   
   
-  g <- ggplot(yyyy_mm, aes(x = factor(year_month), y = cumulative_percentage / 100)) +
+  g <- ggplot(yyyy_mm, aes(x = factor(year_month), y = cumulative_percentage)) +
     geom_bar(stat = "identity", fill = "yellow", color = "black", size = 0.3) +
-    labs(title = "Cumulative Percentage Enrollment for Ankles fracture type(of 526)", x = "Month", y = "Cumulative Percent") +
+    labs(title = "Cumulative Percentage Enrollment for Ankles fracture type (of 526)", x = "Month", y = "Cumulative Percent") +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +  # Rotate labels vertically
-    scale_y_continuous(labels = scales::percent_format(scale = 1))
+    scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0,1))
   
   
   temp_png_path <- tempfile(fileext = ".png")
-  ggsave(temp_png_path, plot = g, width = 1000, height = 1000, units = 'px')
+  ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
   image_data <- base64enc::base64encode(temp_png_path)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Percentage Enrollment for Ankle injury">', image_data)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Percentage Enrollment for Ankle injury" style="width: 75vw;">', image_data)
   file.remove(temp_png_path)
   
   return(img_tag)
@@ -164,7 +182,7 @@ cumulative_percentage_ankle_injuries <- function(analytic){
 #' Cumulative percentage for Tibial Plateau injuries
 #'
 #' @description This function visualizes the Cumulative percentage for number of patients with Plateau injuries 
-#' over the period of Year-Months(YYYY-MM, consent_date) out of 526
+#' over the period of Year-Months(YYYY-MM, consent_date) out of 100
 #'
 #' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled
 #'
@@ -183,8 +201,6 @@ cumulative_percentage_plateau_injuries <- function(analytic){
     filter(!is.na(consent_date)) %>% 
     filter(injury_type == "plateau")
   
-  
-  
   df$consent_date <- ymd(df$consent_date)
   
   yyyy_mm <- df %>% mutate(
@@ -198,21 +214,23 @@ cumulative_percentage_plateau_injuries <- function(analytic){
     arrange(year_month) %>%
     mutate(
       cumulative_value = cumsum(Total),
-      cumulative_percentage = (cumulative_value / 100) * 100)
+      cumulative_percentage = (cumulative_value / 100))
   
   
-  g <- ggplot(yyyy_mm, aes(x = factor(year_month), y = cumulative_percentage / 100)) +
+  g <- ggplot(yyyy_mm, aes(x = factor(year_month), y = cumulative_percentage)) +
     geom_bar(stat = "identity", fill = "blue", color = "black", size = 0.3) +
+    labs(title = "Cumulative Percentage Enrollment for Ankles fracture type (of 526)", x = "Month", y = "Cumulative Percent") +
     theme_minimal() +
-    theme(axis.text.x = element_text(angle = 0, vjust = 1)) +
-    scale_y_continuous(labels = scales::percent_format(scale = 1) +
-                         scale_y_continuous(breaks = seq(0, 100, by = 10), labels = seq(0, 100, by = 10)))
-                       
-   temp_png_path <- tempfile(fileext = ".png")
-   ggsave(temp_png_path, plot = g, width = 1000, height = 1000, units = 'px')
-   image_data <- base64enc::base64encode(temp_png_path)
-   img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Percentage Enrollment for Plateau injury">', image_data)
-   file.remove(temp_png_path)
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +  # Rotate labels vertically
+    scale_y_continuous(labels = scales::percent_format(), limits = c(0,1))
+  
+  
+  temp_png_path <- tempfile(fileext = ".png")
+  ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Percentage Enrollment for Plateau injury" style="width: 75vw;">', image_data)
+  file.remove(temp_png_path)
+  
    return(img_tag)
    
 }
@@ -249,9 +267,9 @@ enrollment_by_injury_and_site <- function(analytic){
           legend.title = element_blank())
   
   temp_png_path <- tempfile(fileext = ".png")
-  ggsave(temp_png_path, plot = g, width = 1000, height = 1000, units = 'px')
+  ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
   image_data <- base64enc::base64encode(temp_png_path)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Enrollment by each injury type and site">', image_data)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Enrollment by each injury type and site" style="width: 75vw;">', image_data)
   file.remove(temp_png_path)
   
   return(img_tag)

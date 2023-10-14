@@ -14,7 +14,7 @@ baseline_characteristics_percent(
   race_levels = c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other",
     "Missing"),
   education_levels = c("Less than High School", "GED or High School Diploma",
-    "More than High School", "Refused / Don’t Know", "Missing"),
+    "More than High School", "Refused / Don’t know", "Missing"),
   military_levels = c("Active Military", "Active Reserves", "Not Active Duty", "Missing")
 )
 }

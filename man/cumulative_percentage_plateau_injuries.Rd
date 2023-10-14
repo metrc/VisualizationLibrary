@@ -14,7 +14,7 @@ nothing
 }
 \description{
 This function visualizes the Cumulative percentage for number of patients with Plateau injuries 
-over the period of Year-Months(YYYY-MM, consent_date) out of 526
+over the period of Year-Months(YYYY-MM, consent_date) out of 100
 }
 \examples{
 \dontrun{
