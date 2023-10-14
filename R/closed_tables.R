@@ -733,3 +733,160 @@ closed_complications_by_severity_relatedness <- function(analytic){
   return(table_raw)
 }
 
+
+
+
+#' Appendix A: Listing of Serious Adverse Events(SAEs) for closed report
+#'
+#' @description This function visualizes appendix for all the serious adverse events noted for the patients
+#'
+#' @param analytic This is the analytic data set that must include study_id, sae_data
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_appendix_A_SAEs()
+#' }
+closed_appendix_A_SAEs <- function(analytic){
+  
+  df <- analytic %>% 
+    select(study_id, sae_data) %>% 
+    filter(!is.na(sae_data))
+  
+  unzipped_sae <- df %>%
+    separate(sae_data, into = c("facilitycode", "consent_date", "sae_dt_event", "age", "sae_relatedness_injury", 
+                                "sae_relatedness_treatment", "sae_outcome", "sae_describe"), sep='\\|') 
+  
+  
+  output_df <- unzipped_sae %>% 
+    mutate(text = paste0(
+      "<b>Participant ID</b>: ", study_id, "-", facilitycode, "<br /> ",
+      "<b>Date Enrolled</b>: ", consent_date, "<br /> ",
+      "<b>Date of SAE</b>: ", sae_dt_event, "<br /> ",
+      "<b>Age</b>: ", age, "<br /> ",
+      "<b>Related to Injury(per Site)</b>: ", sae_relatedness_injury, "<br /> ",
+      "<b>Related to Treatment (per Medical Monitor)</b>: ", sae_relatedness_treatment, "<br /> ",
+      "<b>Outcome</b>: ", sae_outcome, "<br /> ",
+      "<b>Description</b>: ", sae_describe, "<br /> ",
+      "<br />")) 
+  
+  output_text <- output_df %>% pull(text) %>% 
+    paste(collapse = "<br />\n")
+  
+  return(output_text)
+}
+
+
+#' Appendix B: Listing of any Death for closed report
+#'
+#' @description This function visualizes any death occurred during the study time period.
+#'
+#' @param analytic This is the analytic data set that must include study_id, sae_data, death_date
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_appendix_B_deaths()
+#' }
+closed_appendix_B_deaths <- function(analytic){
+  
+  df <- analytic %>% 
+    select(study_id, sae_data, death_date) 
+  
+  unzipped_death <- df %>%
+    separate(sae_data, into = c("facilitycode", "consent_date", "sae_dt_event", "age", "sae_relatedness_injury", 
+                                "sae_relatedness_treatment", "sae_outcome", "sae_describe"), sep='\\|') %>% 
+    filter(sae_outcome == "Death" | !is.na(death_date))
+  
+  if (nrow(unzipped_death) == 0) {
+    output_df <- paste0("None at this time.")
+  }
+  
+  output_text <- output_df %>% 
+    paste(collapse = "<br />\n")
+  
+  return(output_text)
+}
+
+#' Appendix C: Listing of any Discontinuations for closed report
+#'
+#' @description This function visualizes any discontinuations occurred during the study time period.
+#'
+#' @param analytic This is the analytic data set that must include study_id, discontinuation_data
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_appendix_C_discontinuations()
+#' }
+closed_appendix_C_discontinuations <- function(analytic){
+  
+  df <- analytic %>% 
+    select(study_id, discontinuation_data) %>% 
+    filter(!is.na(discontinuation_data))
+  
+  unzipped_discontinuation <- df %>%
+    separate(discontinuation_data, into = c("facilitycode", "consent_date", "discontinue_date", "age", 
+                                            "discontinuation_reason"), sep='\\|') 
+  
+  output_df <- unzipped_discontinuation %>% 
+    mutate(text = paste0(
+      "<b>Participant ID</b>: ", study_id, "-", facilitycode, "<br /> ",
+      "<b>Date Enrolled</b>: ", consent_date, "<br /> ",
+      "<b>Date discontinued</b>: ", discontinue_date, "<br /> ",
+      "<b>Age</b>: ", age, "<br /> ",
+      "<b>Reason for discontinuation</b>: ", discontinuation_reason, "<br /> ",
+      "<br />")) 
+  
+  output_text <- output_df %>% pull(text) %>% 
+    paste(collapse = "<br />\n")
+  
+  return(output_text)
+}
+
+#' Appendix D: Listing of any protocol deviations for closed report
+#'
+#' @description This function visualizes any protocol deviations occurred during the study time period.
+#'
+#' @param analytic This is the analytic data set that must include study_id, protocol_deviation_data
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_appendix_D_protocol_deviation()
+#' }
+closed_appendix_D_protocol_deviation <- function(analytic){
+  
+  df <- analytic %>% 
+    select(study_id, protocol_deviation_data) %>% 
+    filter(!is.na(protocol_deviation_data))
+  
+  unzipped_protocol_deviation <- df %>% 
+    separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
+    separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "deviation_date", "protocol_deviation", 
+                                               "deviation_description"), sep='\\|') 
+  
+  output_df <- unzipped_protocol_deviation %>% 
+    mutate(text = paste0(
+      "<b>Participant ID</b>: ", study_id, "-", facilitycode, "<br /> ",
+      "<b>Date Enrolled</b>: ", consent_date, "<br /> ",
+      "<b>Date of deviation</b>: ", deviation_date, "<br /> ",
+      "<b>Deviation type</b>: ", protocol_deviation, "<br /> ",
+      "<b>Description</b>: ", deviation_description, "<br /> ",
+      "<br />")) 
+  
+  output_text <- output_df %>% pull(text) %>% 
+    paste(collapse = "<br />\n")
+  
+  return(output_text)
+}
+
+
