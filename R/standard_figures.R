@@ -117,7 +117,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
   temp_png_path <- tempfile(fileext = ".png")
   rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 2000, height = 2000)
   image_data <- base64enc::base64encode(temp_png_path)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" width="95%%">', image_data)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" width="75%%">', image_data)
   file.remove(c(temp_svg_path, temp_png_path))
   return(img_tag)
 }
@@ -172,7 +172,7 @@ cumulative_percentage_ankle_injuries <- function(analytic){
   temp_png_path <- tempfile(fileext = ".png")
   ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
   image_data <- base64enc::base64encode(temp_png_path)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Percentage Enrollment for Ankle injury" width="95%%">', image_data)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Percentage Enrollment for Ankle injury" width="75%%">', image_data)
   file.remove(temp_png_path)
   
   return(img_tag)
@@ -228,7 +228,7 @@ cumulative_percentage_plateau_injuries <- function(analytic){
   temp_png_path <- tempfile(fileext = ".png")
   ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
   image_data <- base64enc::base64encode(temp_png_path)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Percentage Enrollment for Plateau injury" width="95%%">', image_data)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Percentage Enrollment for Plateau injury" width="75%%">', image_data)
   file.remove(temp_png_path)
   
    return(img_tag)
@@ -269,7 +269,7 @@ enrollment_by_injury_and_site <- function(analytic){
   temp_png_path <- tempfile(fileext = ".png")
   ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
   image_data <- base64enc::base64encode(temp_png_path)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Enrollment by each injury type and site" width="95%%">', image_data)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Enrollment by each injury type and site" width="75%%">', image_data)
   file.remove(temp_png_path)
   
   return(img_tag)
