@@ -356,7 +356,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   total <- sum(analytic$enrolled, na.rm=T)
   df <- analytic %>% 
     select(enrolled, enrolled_discontinuation, deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported) %>% 
-    filter(screened == TRUE) %>% 
+    filter(enrolled == TRUE) %>% 
     mutate(na_count = rowSums(is.na(select(., 
                                            enrolled_discontinuation,
                                            deviation_screen_consent,
