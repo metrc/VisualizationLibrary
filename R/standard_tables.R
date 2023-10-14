@@ -134,7 +134,7 @@ visit_status_for_followup_by_form <- function(analytic){
     rename("Form Completion"=Status)
   
   table_raw<- kable(df_for_table, align='l', padding='2l') %>%
-    pack_rows(index = index_vec) %>% 
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     add_indent(c(3,7,11,15,20,25)) %>% 
     kable_styling("striped", full_width = F, position='left') %>% 
     row_spec(c(0,1,18,23), extra_css = "border-bottom: 1px solid;")
@@ -204,7 +204,7 @@ injury_ankle_plateau_characteristics <- function(analytic){
   index_vec <- c(" "= 1,"OTA Classification"= ota_number, " "= 1, "Tibial Plateau"=schatzer_number) 
   
   table_raw<- kable(df_table, align='l', padding='2l', col.names = NULL) %>%
-    pack_rows(index = index_vec) %>% 
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left")
   
   return(table_raw)
@@ -332,7 +332,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
   vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
     add_header_above(header) %>%  
     pack_rows(index = c('Sex' = nrow(sex_df), 'Age' = (nrow(age_df) + nrow(age_group_df)), 'Race' = nrow(race_df), 
-                        'Education' = nrow(education_df), 'Military' = nrow(military_df))) %>% 
+                        'Education' = nrow(education_df), 'Military' = nrow(military_df)), label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
  return(vis) 
@@ -579,9 +579,9 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
   
   output<- kable(combined, align='l', padding='2l') %>% 
     kable_styling("condensed", position="left") %>%
-    pack_rows("Closed Fracture", 1, nrow(inj_tsch)) %>%
-    pack_rows("Open Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)) %>%
-    pack_rows("AO Class", nrow(inj_gust)+nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)+nrow(inj_ao)) %>%
+    pack_rows("Closed Fracture", 1, nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows("Open Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows("AO Class", nrow(inj_gust)+nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)+nrow(inj_ao), label_row_css = "text-align:left") %>%
     kable_styling("striped", full_width = F, position="left")
   
   return(output)
@@ -756,8 +756,8 @@ complications_by_severity_relatedness <- function(analytic){
   subindex_vec <- c(" " = 1, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6,
                     "Infection" = 3, " " = 6)
   table_raw<- kable(output, align='l', padding='2l') %>%  
-    pack_rows(index = index_vec) %>% 
-    pack_rows(index = subindex_vec ,label_row_css = "padding-left: 2em;", bold = FALSE) %>% 
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+    pack_rows(index = subindex_vec,label_row_css = "text-align:left;padding-left: 2em;", bold = FALSE) %>% 
     row_spec(1, extra_css = "border-bottom: 1px solid") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
