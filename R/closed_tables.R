@@ -471,7 +471,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     da <- tibble(type = 'Administrative/Other', percentage = vec_da)
     
     
-    enrolled_discontinuation_reason_df <- df %>% 
+    enrolled_discontinuation_df <- df %>% 
       select(enrolled_discontinuation_reason) %>% 
       filter(!is.na(enrolled_discontinuation_reason)) %>% 
       count(enrolled_discontinuation_reason) %>% 
