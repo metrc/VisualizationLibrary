@@ -804,9 +804,7 @@ closed_appendix_A_SAEs <- function(analytic){
   
   output_text <- output_df %>% pull(text) %>% 
     paste(collapse = "<br />\n")
-  
-  output_text <- paste('<strong><span style="font-size: larger;">Appendix A: Listing of SAEs</span></strong><br />\n', output_text)
-  
+    
   return(output_text)
 }
 
@@ -840,9 +838,7 @@ closed_appendix_B_deaths <- function(analytic){
   
   output_text <- output_df %>% 
     paste(collapse = "<br />\n")
-  
-  output_text <- paste('<strong><span style="font-size: larger;">Appendix B: Listing of Death</span></strong><br />\n', output_text)
-  
+    
   return(output_text)
 }
 
@@ -880,9 +876,7 @@ closed_appendix_C_discontinuations <- function(analytic){
   
   output_text <- output_df %>% pull(text) %>% 
     paste(collapse = "<br />\n")
-  
-  output_text <- paste('<strong><span style="font-size: larger;">Appendix C: Listing of Discontinuations</span></strong><br />\n', output_text)
-  
+    
   return(output_text)
 }
 
@@ -921,8 +915,6 @@ closed_appendix_D_protocol_deviation <- function(analytic){
   
   output_text <- output_df %>% pull(text) %>% 
     paste(collapse = "<br />\n")
-  
-  output_text <- paste('<strong><span style="font-size: larger;">Appendix D: Listing of Protocol Deviations</span></strong><br />\n', output_text)
-  
+    
   return(output_text)
 }
