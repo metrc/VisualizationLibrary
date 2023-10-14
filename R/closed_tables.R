@@ -636,8 +636,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
     df_template <- tibble(
       severity = c(severity_categories),
     ) %>% group_by(severity) %>% 
-      summarise(complications = level_order) %>% 
-      ungroup()
+      reframe(complications = level_order)
     
     output_complication <- left_join(df_template, output_complication)%>% 
       mutate_all(replace_na, "-")
