@@ -6,8 +6,8 @@
 #' @description This function visualizes the enrollment totals for each site
 #'
 #' @param analytic This is the analytic data set that must include treatment_arm screened, 
-#' eligible, refused, consented, enrolled, not_consented, early_withdraw, days_site_certified, 
-#' facilitycode, late_ineligible, inappropriate_enrollment, late_refusal
+#' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, days_site_certified, 
+#' facilitycode, late_ineligible
 #'
 #' @return nothing
 #' @export
@@ -18,27 +18,29 @@
 #' }
 closed_enrollment_status_by_site <- function(analytic){
   df_a <- analytic %>% 
-    select(treatment_arm, screened, eligible, refused, consented, enrolled, not_consented, early_withdraw, days_site_certified, 
-           facilitycode, late_ineligible, inappropriate_enrollment, late_refusal) %>% 
+    select(treatment_arm, screened, eligible, refused, consented, enrolled, not_consented, 
+           discontinued_pre_randomization, days_site_certified, 
+           facilitycode, late_ineligible) %>% 
     filter(treatment_arm=="Group A") %>% 
     select(-treatment_arm)
   
   df_b <- analytic %>% 
-    select(treatment_arm, screened, eligible, refused, consented, enrolled, not_consented, early_withdraw, days_site_certified, 
-           facilitycode, late_ineligible, inappropriate_enrollment, late_refusal) %>% 
+    select(treatment_arm, screened, eligible, refused, consented, enrolled, not_consented, 
+           discontinued_pre_randomization, days_site_certified, 
+           facilitycode, late_ineligible) %>% 
     filter(treatment_arm=="Group B") %>% 
     select(-treatment_arm)
   
   df_full <- analytic %>% 
-    select(screened, eligible, refused, consented, enrolled, not_consented, early_withdraw, days_site_certified, 
-           facilitycode, late_ineligible, inappropriate_enrollment, late_refusal)
+    select(screened, eligible, refused, consented, enrolled, not_consented, 
+           discontinued_pre_randomization, days_site_certified, 
+           facilitycode, late_ineligible)
   
   inner_closed_enrollment_status_by_site <- function(input_df){
-    df <- input_df %>% 
+    df <- analytic %>% 
+      select(screened, eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, days_site_certified, 
+             facilitycode, late_ineligible) %>% 
       mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-      mutate(disc_post = ifelse(late_ineligible == TRUE | inappropriate_enrollment == TRUE, TRUE, FALSE)) %>% 
-      select(-late_ineligible, -inappropriate_enrollment) %>% 
-      rename(disc_pre = early_withdraw) %>% 
       mutate(days_site_certified = as.numeric(Sys.Date() - as.Date(days_site_certified))) %>% 
       rename(Facility = facilitycode) %>% 
       rename(not_enrolled = not_consented) %>% 
@@ -57,8 +59,9 @@ closed_enrollment_status_by_site <- function(analytic){
     df_3rd <- df %>% 
       filter(eligible == TRUE & consented == TRUE) %>% 
       group_by(Facility) %>% 
-      summarize("Discontinued Pre-Randomization" = sum(disc_pre),"Discontinued Post-Randomization" = sum(disc_post), 
-                "Late Refused" = sum(late_refusal), "Eligible and Enrolled" = sum(enrolled)) 
+      summarize("Discontinued Pre-Randomization" = sum(discontinued_pre_randomization),
+                "Late Ineligible" = sum(late_ineligible), 
+                "Enrolled" = sum(enrolled)) 
     
     table_out <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
       left_join(df_3rd, by = 'Facility') %>% 
@@ -83,10 +86,10 @@ closed_enrollment_status_by_site <- function(analytic){
               colnames(table_full)[3:ncol(table_full)])
   
   table<- kable(table_raw, align='l', padding='2l', col.names = col_ns) %>% 
-    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 4,
-                       " " = 2, "Among Eligible" = 3, "Among Consented" = 4,
-                       " " = 2, "Among Eligible" = 3, "Among Consented" = 4)) %>%
-    add_header_above(c(" " = 2, "Group A" = 9, "Group B" = 9, "All" = 9)) %>%
+    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3,
+                       " " = 2, "Among Eligible" = 3, "Among Consented" = 3,
+                       " " = 2, "Among Eligible" = 3, "Among Consented" = 3)) %>%
+    add_header_above(c(" " = 2, "Group A" = 8, "Group B" = 8, "All" = 8)) %>%
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
@@ -245,7 +248,7 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
 closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="race_ethnicity", education="education_level", military="military_status",
                                                     sex_levels=c("Female","Male", "Missing"), 
                                                     race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
-                                                    education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don’t Know", "Missing"), 
+                                                    education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don’t know", "Missing"), 
                                                     military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
   
   constructs <- c(sex, race, education, military)
@@ -397,7 +400,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="r
 #'
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #'
-#' @param analytic This is the analytic data set that must include treatment_arm screened, study_discontinuation, 
+#' @param analytic This is the analytic data set that must include treatment_arm enrolled, enrolled_discontinuation, 
 #' deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported
 #'
 #' @return nothing
@@ -421,15 +424,15 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
   n_dsc <- -1
   n_dp <- -1
   n_da <- -1
-  total <- sum(analytic$screened, na.rm=T)
+  total <- sum(analytic$enrolled, na.rm=T)
   
   inner_closed_discontinuation_sae_deviation_by_type <- function(analytic){
   
     df <- analytic %>% 
-      select(screened, study_discontinuation, deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported) %>% 
-      filter(screened == TRUE) %>% 
+      select(enrolled, enrolled_discontinuation, deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported) %>% 
+      filter(enrolled == TRUE) %>% 
       mutate(na_count = rowSums(is.na(select(., 
-                                             study_discontinuation,
+                                             enrolled_discontinuation,
                                              deviation_screen_consent,
                                              deviation_procedural,
                                              deviation_administrative,
@@ -439,7 +442,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       mutate(sae_reported = ifelse(sae_reported == TRUE, 'SAE', sae_reported))
     
     totals_df <- df %>%
-      mutate(total_disc = ifelse(!is.na(study_discontinuation), TRUE, FALSE)) %>% 
+      mutate(total_disc = ifelse(!is.na(enrolled_discontinuation), TRUE, FALSE)) %>% 
       mutate(total_dsc = ifelse(!is.na(deviation_screen_consent), TRUE, FALSE)) %>% 
       mutate(total_dp = ifelse(!is.na(deviation_procedural), TRUE, FALSE)) %>% 
       mutate(total_da = ifelse(!is.na(deviation_administrative), TRUE, FALSE)) %>% 
@@ -466,13 +469,13 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     da <- tibble(type = 'Administrative/Other', percentage = vec_da)
     
     
-    study_discontinuation_df <- df %>% 
-      select(study_discontinuation) %>% 
-      filter(!is.na(study_discontinuation)) %>% 
-      count(study_discontinuation) %>% 
+    enrolled_discontinuation_df <- df %>% 
+      select(enrolled_discontinuation) %>% 
+      filter(!is.na(enrolled_discontinuation)) %>% 
+      count(enrolled_discontinuation) %>% 
       mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
       select(-n) %>% 
-      rename(type = study_discontinuation)
+      rename(type = enrolled_discontinuation)
     
     deviation_screen_consent_df <- df %>% 
       select(deviation_screen_consent) %>% 
@@ -506,10 +509,10 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       select(-n) %>% 
       rename(type = sae_reported)
     
-    df_final <- rbind(disc, study_discontinuation_df, sae_reported_df, protocol_deviations, sc, deviation_screen_consent_df, 
+    df_final <- rbind(disc, enrolled_discontinuation_df, sae_reported_df, protocol_deviations, sc, deviation_screen_consent_df, 
                       dp, deviation_procedural_df, da, deviation_administrative_df) 
     
-    n_disc <<- nrow(study_discontinuation_df)
+    n_disc <<- nrow(enrolled_discontinuation_df)
     n_dsc <<- nrow(deviation_screen_consent_df)
     n_dp <<- nrow(deviation_procedural_df)
     n_da <<- nrow(deviation_administrative_df)
