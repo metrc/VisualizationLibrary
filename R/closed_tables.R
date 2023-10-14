@@ -162,6 +162,8 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
     select(injury_type, ankle_ota_class, schatzker_type, enrolled) %>%  
     filter(enrolled == TRUE)
   
+  ota_number <- -1
+  schatzer_numbe <- -1
   inner_closed_injury_ankle_plateau_characteristics <- function(df){
     summary_totals <- df %>%
       filter(injury_type == "plateau" & is.na(ankle_ota_class) | injury_type == "ankle" & is.na(schatzker_type)) %>%
@@ -190,11 +192,11 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
                            ifelse(Name == "plateau", "Number of Plateaus", Name))) %>% 
       mutate(Total = format_count_percent(Total, total_sum, decimals = 2))
     
-    ota_number <- summary_table %>% 
+    ota_number <<- summary_table %>% 
       filter(Category == "O") %>% 
       nrow()
     
-    schatzer_number <- summary_table %>% 
+    schatzer_number <<- summary_table %>% 
       filter(Category == "T") %>% 
       nrow()
     
@@ -551,7 +553,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     mutate_all(replace_na, "0 (0%)")
   
   
-  vis <- kable(df_final, align='l', padding='2l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
+  vis <- kable(df_table, align='l', padding='2l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
     add_header_above(header) %>%  
     add_indent(c(seq(n_disc) + 1, seq(1 + n_dsc + 1 + n_dp + 1 + n_da) + 1 + n_disc + 2, na.omit(c(dsc_indents, dp_indents, da_indents)))) %>% 
     row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
