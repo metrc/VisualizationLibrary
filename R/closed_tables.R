@@ -774,7 +774,7 @@ closed_appendix_A_SAEs <- function(analytic){
       "<br />")) 
   
   if (nrow(unzipped_sae) == 0) {
-    output_df <- paste0("None at this time.")
+    return(paste0("<br />\nNone at this time.<br />\n"))
   }
   
   output_text <- output_df %>% pull(text) %>% 
@@ -808,7 +808,7 @@ closed_appendix_B_deaths <- function(analytic){
     filter(sae_outcome == "Death" | !is.na(death_date))
   
   if (nrow(unzipped_death) == 0) {
-    output_df <- paste0("None at this time.")
+    return(paste0("<br />\nNone at this time.<br />\n"))
   }
   
   output_text <- output_df %>% 
@@ -850,7 +850,7 @@ closed_appendix_C_discontinuations <- function(analytic){
       "<br />")) 
   
   if (nrow(unzipped_discontinuation) == 0) {
-    output_df <- paste0("None at this time.")
+    return(paste0("<br />\nNone at this time.<br />\n"))
   }
   
   output_text <- output_df %>% pull(text) %>% 
@@ -893,7 +893,7 @@ closed_appendix_D_protocol_deviation <- function(analytic){
       "<br />")) 
   
   if (nrow(unzipped_protocol_deviation) == 0) {
-    output_df <- paste0("None at this time.")
+    return(paste0("<br />\nNone at this time.<br />\n"))
   }
   
   output_text <- output_df %>% pull(text) %>% 
