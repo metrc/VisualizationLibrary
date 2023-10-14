@@ -234,7 +234,7 @@ injury_ankle_plateau_characteristics <- function(analytic){
 baseline_characteristics_percent <- function(analytic, sex="sex", race="race_ethnicity", education="education_level", military="military_status",
                                              sex_levels=c("Female","Male", "Missing"), 
                                              race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
-                                             education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don’t know", "Missing"), 
+                                             education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
                                              military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
   
   constructs <- c(sex, race, education, military)
@@ -342,7 +342,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
 #'
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #'
-#' @param analytic This is the analytic data set that must include enrolled, enrolled_discontinuation, 
+#' @param analytic This is the analytic data set that must include enrolled, enrolled_discontinuation_reason, 
 #' deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported
 #'
 #' @return nothing
@@ -355,10 +355,10 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
 discontinuation_sae_deviation_by_type <- function(analytic){
   total <- sum(analytic$enrolled, na.rm=T)
   df <- analytic %>% 
-    select(enrolled, enrolled_discontinuation, deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported) %>% 
+    select(enrolled, enrolled_discontinuation_reason, deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported) %>% 
     filter(enrolled == TRUE) %>% 
     mutate(na_count = rowSums(is.na(select(., 
-                                           enrolled_discontinuation,
+                                           enrolled_discontinuation_reason,
                                            deviation_screen_consent,
                                            deviation_procedural,
                                            deviation_administrative,
@@ -368,7 +368,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
     mutate(sae_reported = ifelse(sae_reported == TRUE, 'SAE', sae_reported))
   
   totals_df <- df %>%
-    mutate(total_disc = ifelse(!is.na(enrolled_discontinuation), TRUE, FALSE)) %>% 
+    mutate(total_disc = ifelse(!is.na(enrolled_discontinuation_reason), TRUE, FALSE)) %>% 
     mutate(total_dsc = ifelse(!is.na(deviation_screen_consent), TRUE, FALSE)) %>% 
     mutate(total_dp = ifelse(!is.na(deviation_procedural), TRUE, FALSE)) %>% 
     mutate(total_da = ifelse(!is.na(deviation_administrative), TRUE, FALSE)) %>% 
@@ -395,13 +395,13 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   da <- tibble(type = 'Administrative/Other', percentage = vec_da)
   
   
-  enrolled_discontinuation_df <- df %>% 
-    select(enrolled_discontinuation) %>% 
-    filter(!is.na(enrolled_discontinuation)) %>% 
-    count(enrolled_discontinuation) %>% 
+  enrolled_discontinuation_reason_df <- df %>% 
+    select(enrolled_discontinuation_reason) %>% 
+    filter(!is.na(enrolled_discontinuation_reason)) %>% 
+    count(enrolled_discontinuation_reason) %>% 
     mutate(percentage = format_count_percent(n, total, decimals = 2)) %>% 
     select(-n) %>% 
-    rename(type = enrolled_discontinuation)
+    rename(type = enrolled_discontinuation_reason)
   
   deviation_screen_consent_df <- df %>% 
     select(deviation_screen_consent) %>% 
