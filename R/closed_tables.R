@@ -430,12 +430,13 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
   total <- sum(analytic$enrolled, na.rm=T)
   
   inner_closed_discontinuation_sae_deviation_by_type <- function(analytic){
-      discontinuation_df <- analytic %>% 
+    discontinuation_df <- analytic %>% 
       select(enrolled, enrolled_discontinuation_reason) %>% 
       filter(enrolled == TRUE) %>% 
       count(enrolled_discontinuation_reason) %>%
       rename(type=enrolled_discontinuation_reason) %>% 
-      filter(!is.na(type))
+      filter(!is.na(type)) %>% 
+      mutate(type = as.character(type))
     
     discontinuation_df_tot <- tibble(type="Discontinuations", n=sum(discontinuation_df$n))
     
@@ -445,7 +446,8 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       mutate(sae_reported = "SAE") %>% 
       count(sae_reported) %>%
       rename(type=sae_reported) %>% 
-      filter(!is.na(type))
+      filter(!is.na(type)) %>% 
+      mutate(type = as.character(type))
     
     
     deviation_sc_df <- analytic %>% 
@@ -453,7 +455,8 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       filter(enrolled == TRUE) %>% 
       count(deviation_screen_consent) %>%
       rename(type=deviation_screen_consent) %>% 
-      filter(!is.na(type))
+      filter(!is.na(type)) %>% 
+      mutate(type = as.character(type))
     
     
     deviation_p_df <- analytic %>% 
@@ -461,7 +464,8 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       filter(enrolled == TRUE) %>% 
       count(deviation_procedural) %>%
       rename(type=deviation_procedural) %>% 
-      filter(!is.na(type))
+      filter(!is.na(type)) %>% 
+      mutate(type = as.character(type))
     
     
     deviation_a_df <- analytic %>% 
@@ -470,7 +474,8 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       count(deviation_administrative) %>%
       rename(type=deviation_administrative) %>% 
       filter(!is.na(type)) %>% 
-      mutate(type = str_replace(type,"Other: .+","Other"))
+      mutate(type = str_replace(type,"Other: .+","Other")) %>% 
+      mutate(type = as.character(type))
     
     deviation_sc_tot <- tibble(type="Screen and Consent",n=sum(deviation_sc_df$n))
     deviation_p_tot <- tibble(type="Procedural",n=sum(deviation_p_df$n))
