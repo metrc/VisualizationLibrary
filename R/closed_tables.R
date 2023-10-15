@@ -483,8 +483,16 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
     
     
-    df_final <- bind_rows(discontinuation_df_tot, discontinuation_df, sae_df, deviation_df_tot, 
-                          deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
+    df_final <- bind_rows(discontinuation_df_tot %>% mutate(group=as.numeric(rep(1,length(type)))), 
+                          discontinuation_df %>% mutate(group=as.numeric(rep(2,length(type)))),
+                          sae_df %>% mutate(group=as.numeric(rep(3,length(type)))),
+                          deviation_df_tot %>% mutate(group=as.numeric(rep(4,length(type)))), 
+                          deviation_sc_tot %>% mutate(group=as.numeric(rep(5,length(type)))),
+                          deviation_sc_df %>% mutate(group=as.numeric(rep(6,length(type)))),
+                          deviation_p_tot %>% mutate(group=as.numeric(rep(7,length(type)))),
+                          deviation_p_df %>% mutate(group=as.numeric(rep(8,length(type)))), 
+                          deviation_a_tot %>% mutate(group=as.numeric(rep(9,length(type)))), 
+                          deviation_a_df %>% mutate(group=as.numeric(rep(10,length(type))))) %>% 
       mutate(n = format_count_percent(n, total, decimals=2))
     
     
@@ -498,10 +506,14 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
   
   table_a <- inner_closed_discontinuation_sae_deviation_by_type(df_a)
   table_b <- inner_closed_discontinuation_sae_deviation_by_type(df_b)
-  table_full <- inner_closed_discontinuation_sae_deviation_by_type(df_full)
+  table_full <- inner_closed_discontinuation_sae_deviation_by_type(df_full) 
+  table_full <- table_full %>% 
+    mutate(o = seq(nrow(table_full)))
   
-  df_table <- full_join(full_join(table_a, table_b, by="type"), 
-                        table_full, by="type") %>% 
+  df_table <- full_join(full_join(table_a, table_b, by=c("type","group")), 
+                        table_full, by=c("type","group")) %>% 
+    arrange(o) %>% 
+    select(-o,-group) %>% 
     mutate_all(replace_na, "0 (0%)")
   
   vis <- kable(df_table, align='l', padding='2l', col.names = c(paste0("n=",total), "Group A", "Group B", "Total")) %>%
