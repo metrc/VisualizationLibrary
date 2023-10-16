@@ -424,7 +424,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   if(n_dp > 0){
     indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp))
   }
-  if(n_a > 0){
+  if(n_da > 0){
     indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
   }
   
