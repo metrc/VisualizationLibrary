@@ -6,8 +6,8 @@
 #' @description This function visualizes the enrollment totals for each site
 #'
 #' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, consented, enrolled, not_consented, early_withdraw, days_site_certified, 
-#' facilitycode, late_ineligible, inappropriate_enrollment, late_refusal
+#' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, days_site_certified, 
+#' facilitycode, late_ineligible
 #'
 #' @return nothing
 #' @export
@@ -18,12 +18,9 @@
 #' }
 enrollment_status_by_site <- function(analytic){
   df <- analytic %>% 
-    select(screened, eligible, refused, consented, enrolled, not_consented, early_withdraw, days_site_certified, 
-           facilitycode, late_ineligible, inappropriate_enrollment, late_refusal) %>% 
+    select(screened, eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, days_site_certified, 
+           facilitycode, late_ineligible) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-    mutate(disc_post = ifelse(late_ineligible == TRUE | inappropriate_enrollment == TRUE, TRUE, FALSE)) %>% 
-    select(-late_ineligible, -inappropriate_enrollment) %>% 
-    rename(disc_pre = early_withdraw) %>% 
     mutate(days_site_certified = as.numeric(Sys.Date() - as.Date(days_site_certified))) %>% 
     rename(Facility = facilitycode) %>% 
     rename(not_enrolled = not_consented) %>% 
@@ -42,16 +39,20 @@ enrollment_status_by_site <- function(analytic){
   df_3rd <- df %>% 
     filter(eligible == TRUE & consented == TRUE) %>% 
     group_by(Facility) %>% 
-    summarize("Discontinued Pre-Randomization" = sum(disc_pre),"Discontinued Post-Randomization" = sum(disc_post), 
-              "Late Refused" = sum(late_refusal), "Eligible and Enrolled" = sum(enrolled)) 
+    summarize("Discontinued Pre-Randomization" = sum(discontinued_pre_randomization),
+              "Late Ineligible" = sum(late_ineligible), 
+              "Enrolled" = sum(enrolled)) 
   
   table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
     left_join(df_3rd, by = 'Facility') %>% 
     mutate_all(~ifelse(is.na(.), 0, .)) %>% 
-    arrange(desc(`Days Certified`), desc(Screened))
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total)
   
   table<- kable(table_raw, align='l', padding='2l') %>% 
-    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 4)) %>%
+    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3)) %>%
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
@@ -133,7 +134,7 @@ visit_status_for_followup_by_form <- function(analytic){
     rename("Form Completion"=Status)
   
   table_raw<- kable(df_for_table, align='l', padding='2l') %>%
-    pack_rows(index = index_vec) %>% 
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     add_indent(c(3,7,11,15,20,25)) %>% 
     kable_styling("striped", full_width = F, position='left') %>% 
     row_spec(c(0,1,18,23), extra_css = "border-bottom: 1px solid;")
@@ -203,7 +204,7 @@ injury_ankle_plateau_characteristics <- function(analytic){
   index_vec <- c(" "= 1,"OTA Classification"= ota_number, " "= 1, "Tibial Plateau"=schatzer_number) 
   
   table_raw<- kable(df_table, align='l', padding='2l', col.names = NULL) %>%
-    pack_rows(index = index_vec) %>% 
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left")
   
   return(table_raw)
@@ -218,6 +219,10 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #' @param race is a meta construct that is required that defaults to "race_ethnicity"
 #' @param education is a meta construct that is required that defaults to "education_level"
 #' @param military is a meta construct that is required that defaults to "military_status"
+#' @param sex_levels sets default values and orders for sex meta construct
+#' @param race_levels sets default values and orders for race meta construct
+#' @param education_levels sets default values and orders for education meta construct
+#' @param military_levels sets default values and orders for military meta construct
 #'
 #' @return nothing
 #' @export
@@ -226,8 +231,20 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #' \dontrun{
 #' baseline_characteristics_percent()
 #' }
-baseline_characteristics_percent <- function(analytic, sex="sex", race="race_ethnicity", education="education_level", military="military_status"){
+baseline_characteristics_percent <- function(analytic, sex="sex", race="race_ethnicity", education="education_level", military="military_status",
+                                             sex_levels=c("Female","Male", "Missing"), 
+                                             race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
+                                             education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
+                                             military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
+  
   constructs <- c(sex, race, education, military)
+  
+  sex_default <- tibble(type=sex_levels)
+  race_default <- tibble(type=race_levels)
+  education_default <- tibble(type=education_levels)
+  military_default <- tibble(type=military_levels)
+  
+  
   df <- analytic %>% 
     select(enrolled, age_group, age, all_of(constructs)) %>% 
     filter(enrolled) %>% 
@@ -246,7 +263,11 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
     rename(number = n) %>% 
     mutate(percentage = format_count_percent(number, total)) %>% 
     select(-number) %>% 
-    rename(type = sex) 
+    rename(type = sex) %>% 
+    full_join(sex_default) %>% 
+    mutate(order = factor(type, sex_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
   
   age_df <- df %>% 
     summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))
@@ -268,7 +289,11 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
     rename(number = n) %>% 
     mutate(percentage = format_count_percent(number, total)) %>% 
     select(-number) %>% 
-    rename(type = education)
+    rename(type = education) %>% 
+    full_join(education_default) %>% 
+    mutate(order = factor(type, education_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
   
   race_df <- df %>% 
     mutate(race = replace_na(race, "Missing")) %>% 
@@ -277,7 +302,11 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
     rename(number = n) %>% 
     mutate(percentage = format_count_percent(number, total)) %>% 
     select(-number) %>% 
-    rename(type = race)
+    rename(type = race) %>% 
+    full_join(race_default) %>% 
+    mutate(order = factor(type, race_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
   
   military_df <- df %>% 
     mutate(military = ifelse(is.na(military), "Missing", military)) %>% 
@@ -286,9 +315,14 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
     rename(number = n) %>% 
     mutate(percentage = format_count_percent(number, total)) %>% 
     select(-number) %>% 
-    rename(type = military)
+    rename(type = military) %>% 
+    full_join(military_default) %>% 
+    mutate(order = factor(type, military_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
   
-  df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) 
+  df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) %>% 
+    mutate_all(replace_na, "0 (0%)") 
   
   cnames <- c(' ', paste('n = ', total))
   header <- c(1,1)
@@ -298,7 +332,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
   vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
     add_header_above(header) %>%  
     pack_rows(index = c('Sex' = nrow(sex_df), 'Age' = (nrow(age_df) + nrow(age_group_df)), 'Race' = nrow(race_df), 
-                        'Education' = nrow(education_df), 'Military' = nrow(military_df))) %>% 
+                        'Education' = nrow(education_df), 'Military' = nrow(military_df)), label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
  return(vis) 
@@ -309,7 +343,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #' This was originally made for Union
 #'
-#' @param analytic This is the analytic data set that must include screened, study_discontinuation, 
+#' @param analytic This is the analytic data set that must include enrolled, enrolled_discontinuation_reason, 
 #' deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported
 #'
 #' @return nothing
@@ -320,128 +354,81 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
 #' discontinuation_sae_deviation_by_type()
 #' }
 discontinuation_sae_deviation_by_type <- function(analytic){
-  df <- analytic %>% 
-    select(screened, study_discontinuation, deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported) %>% 
-    filter(screened == TRUE) %>% 
-    mutate(na_count = rowSums(is.na(select(., 
-                                           study_discontinuation,
-                                           deviation_screen_consent,
-                                           deviation_procedural,
-                                           deviation_administrative,
-                                           sae_reported)))) %>%
-    filter(na_count != 5) %>%
-    select(-na_count) %>% 
-    mutate(sae_reported = ifelse(sae_reported == TRUE, 'SAE', sae_reported))
+  total <- sum(analytic$enrolled, na.rm=T)
+  discontinuation_df <- analytic %>% 
+    select(enrolled, enrolled_discontinuation_reason) %>% 
+    filter(enrolled == TRUE) %>% 
+    count(enrolled_discontinuation_reason) %>%
+    rename(type=enrolled_discontinuation_reason) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = as.character(type))
   
-  total <- sum(df$enrolled)
+  discontinuation_df_tot <- tibble(type="Discontinuations", n=sum(discontinuation_df$n))
   
-  totals_df <- df %>%
-    mutate(total_disc = ifelse(!is.na(study_discontinuation), TRUE, FALSE)) %>% 
-    mutate(total_dsc = ifelse(!is.na(deviation_screen_consent), TRUE, FALSE)) %>% 
-    mutate(total_dp = ifelse(!is.na(deviation_procedural), TRUE, FALSE)) %>% 
-    mutate(total_da = ifelse(!is.na(deviation_administrative), TRUE, FALSE)) %>% 
-    mutate(total_sae = ifelse(!is.na(sae_reported), TRUE, FALSE)) %>% 
-    select(total_disc, total_dsc, total_dp, total_da, total_sae)
-  
-  total_disc <- sum(totals_df$total_disc)
-  total_dsc <- sum(totals_df$total_dsc)
-  total_dp <- sum(totals_df$total_dp)
-  total_da <- sum(totals_df$total_da)
-  total_sae <- sum(totals_df$total_sae)
-  
-  vec_disc <- c(format_count_percent(total_disc, total))
-  vec_protocol_deviations <- c(format_count_percent(total_dsc + total_dp + total_da, total))
-  vec_dsc <- c(format_count_percent(total_dsc, total))
-  vec_dp <- c(format_count_percent(total_dp, total))
-  vec_da <- c(format_count_percent(total_da, total))
+  sae_df <- analytic %>% 
+    select(study_id, enrolled, sae_reported) %>% 
+    filter(enrolled & sae_reported) %>% 
+    mutate(sae_reported = "SAE") %>% 
+    count(sae_reported) %>%
+    rename(type=sae_reported) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = as.character(type))
   
   
-  disc <- tibble(type = "Discontinuous", percentage = vec_disc)
-  protocol_deviations <- tibble(type = 'Protocol Deviations', percentage = vec_protocol_deviations)
-  sc <- tibble(type = 'Screen and Consent', percentage = vec_dsc)
-  dp <- tibble(type = 'Procedural', percentage = vec_dp)
-  da <- tibble(type = 'Administrative/Other', percentage = vec_da)
+  deviation_sc_df <- analytic %>% 
+    select(study_id, enrolled, deviation_screen_consent) %>% 
+    filter(enrolled == TRUE) %>% 
+    count(deviation_screen_consent) %>%
+    rename(type=deviation_screen_consent) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = as.character(type))
   
   
-  study_discontinuation_df <- df %>% 
-    select(study_discontinuation) %>% 
-    filter(!is.na(study_discontinuation)) %>% 
-    count(study_discontinuation) %>% 
-    mutate(percentage = format_count_percent(n, total)) %>% 
-    select(-n) %>% 
-    rename(type = study_discontinuation)
-  
-  deviation_screen_consent_df <- df %>% 
-    select(deviation_screen_consent) %>% 
-    filter(!is.na(deviation_screen_consent)) %>% 
-    count(deviation_screen_consent) %>% 
-    mutate(percentage = format_count_percent(n, total)) %>% 
-    select(-n) %>% 
-    rename(type = deviation_screen_consent)
-  
-  deviation_procedural_df <- df %>% 
-    select(deviation_procedural) %>% 
-    filter(!is.na(deviation_procedural)) %>% 
-    count(deviation_procedural) %>% 
-    mutate(percentage = format_count_percent(n, total)) %>% 
-    select(-n) %>% 
-    rename(type = deviation_procedural)
-  
-  deviation_administrative_df <- df %>% 
-    select(deviation_administrative) %>% 
-    filter(!is.na(deviation_administrative)) %>% 
-    count(deviation_administrative) %>% 
-    mutate(percentage = format_count_percent(n, total)) %>% 
-    select(-n) %>% 
-    rename(type = deviation_administrative)
-  
-  sae_reported_df <- df %>% 
-    select(sae_reported) %>% 
-    filter(!is.na(sae_reported)) %>% 
-    count(sae_reported) %>% 
-    mutate(percentage = format_count_percent(n, total)) %>% 
-    select(-n) %>% 
-    rename(type = sae_reported)
-  
-  df_final <- rbind(disc, study_discontinuation_df, sae_reported_df, protocol_deviations, sc, deviation_screen_consent_df, 
-                    dp, deviation_procedural_df, da, deviation_administrative_df) 
-  
-  n_disc <- nrow(study_discontinuation_df)
-  n_dsc <- nrow(deviation_screen_consent_df)
-  n_dp <- nrow(deviation_procedural_df)
-  n_da <- nrow(deviation_administrative_df)
-  
-  cnames <- c(' ', paste('n = ', total))
-  header <- c(1,1)
-  names(header)<-cnames
-  
-  if(n_dsc>0){
-    dsc_indents <- seq(n_dsc) + 1 + n_disc + 1 + 1 + 1
-  } else{
-    dsc_indents <- NA
-  }
-  
-  if(n_dp>0){
-    dp_indents <- seq(n_dp) + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1
-  } else{
-    dp_indents <- NA
-  }
-  
-  if(n_da>0){
-    da_indents <- seq(n_da) + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1
-  } else{
-    da_indents <- NA
-  }
+  deviation_p_df <- analytic %>% 
+    select(study_id, enrolled, deviation_procedural) %>% 
+    filter(enrolled == TRUE) %>% 
+    count(deviation_procedural) %>%
+    rename(type=deviation_procedural) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = as.character(type))
   
   
-  vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
-    add_header_above(header) %>%  
-    add_indent(c(seq(n_disc) + 1, seq(1 + n_dsc + 1 + n_dp + 1 + n_da) + 1 + n_disc + 2, na.omit(c(dsc_indents, dp_indents, da_indents)))) %>% 
+  deviation_a_df <- analytic %>% 
+    select(study_id, enrolled, deviation_administrative) %>% 
+    filter(enrolled == TRUE) %>% 
+    count(deviation_administrative) %>%
+    rename(type=deviation_administrative) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = str_replace(type,"Other: .+","Other")) %>% 
+    mutate(type = as.character(type))
+  
+  deviation_sc_tot <- tibble(type="Screen and Consent",n=sum(deviation_sc_df$n))
+  deviation_p_tot <- tibble(type="Procedural",n=sum(deviation_p_df$n))
+  deviation_a_tot <- tibble(type="Administrative/Other",n=sum(deviation_a_df$n))
+  deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
+  
+  
+  df_final <- bind_rows(discontinuation_df_tot, discontinuation_df, sae_df, deviation_df_tot, 
+                        deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
+    mutate(n = format_count_percent(n, total, decimals=2))
+  
+  
+  n_disc <- nrow(discontinuation_df)
+  n_dsc <- nrow(deviation_sc_df)
+  n_dp <- nrow(deviation_p_df)
+  n_da <- nrow(deviation_a_df)
+  
+  vis <- kable(df_final, align='l', padding='2l', col.names = c(" ", paste0("n=",total))) %>%
+    add_indent(c(seq(n_disc) + 1, 1 + n_disc + 1 + 1 + seq(1+n_dsc+1+n_dp+1+n_da))) %>% 
+    add_indent(1 + n_disc + 1 + 1 + 1 + seq(n_dsc)) %>% 
+    add_indent(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp)) %>% 
+    add_indent(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da)) %>% 
     row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
     row_spec(1+ n_disc, extra_css = "border-bottom: 1px solid") %>% 
     row_spec(1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
     row_spec(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
     kable_styling("striped", full_width = F, position="left") 
+  
   
   return(vis)
 }
@@ -693,9 +680,9 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
   
   output<- kable(combined, align='l', padding='2l') %>% 
     kable_styling("condensed", position="left") %>%
-    pack_rows("Closed Fracture", 1, nrow(inj_tsch)) %>%
-    pack_rows("Open Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)) %>%
-    pack_rows("AO Class", nrow(inj_gust)+nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)+nrow(inj_ao)) %>%
+    pack_rows("Closed Fracture", 1, nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows("Open Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows("AO Class", nrow(inj_gust)+nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)+nrow(inj_ao), label_row_css = "text-align:left") %>%
     kable_styling("striped", full_width = F, position="left")
   
   return(output)
@@ -737,4 +724,142 @@ certification_date_data <- function(analytic){
 
 
 
-
+#' Complications by severity and relatedness
+#'
+#' @description This function visualizes the complications by severity and relatedness for dsmb report
+#'
+#' @param analytic This is the analytic data set that must include study_id, complication_data
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' complications_by_severity_relatedness()
+#' }
+complications_by_severity_relatedness <- function(analytic){
+  
+  comp <- analytic %>%  select(study_id, complication_data) %>% 
+    filter(!is.na(complication_data))
+  
+  
+  unzipped_comp <- comp %>%
+    separate_rows(complication_data, sep = ";new_row: ") %>%
+    separate(complication_data, into = c("redcap_event_name", "visit_date", "complications", 
+                                         "first_complication_note", "another_complication_note", "diagnosis_date", 
+                                         "relatedness", "severity", "treatment_related", "new_or_previous_diagnosis",
+                                         "form_notes"), sep = '\\|')  %>% 
+    select(study_id, severity, relatedness, complications) %>% 
+    mutate(severity = case_when(
+      severity %in% c('Mild', 'Moderate') ~ "Grade 2,1",
+      severity == "Severe and Undesirable" ~ "Grade 3",
+      severity == "Life-threatening or disabling" ~ "Grade 4",
+      severity == "Fatal" ~ "Unknown",
+      TRUE ~ NA_character_
+    )) %>% 
+    group_by(study_id, relatedness, severity,complications) %>%
+    summarise(Total = n()) %>%
+    ungroup() %>% 
+    pivot_wider(names_from = relatedness, values_from = Total) %>% 
+    bind_rows(tibble(
+      "Definitely related"= vector(mode="integer"),
+      "Probably related" = vector(mode="integer"),
+      "Possibly related" = vector(mode="integer"),
+      "Unlikely related" = vector(mode="integer"),
+      "Unrelated" = vector(mode="integer"),
+      "Don't know" = vector(mode="integer"))) %>% 
+    rename(Definitely= "Definitely related",
+           Probably = "Probably related",
+           Possibly = "Possibly related",
+           Unlikely = "Unlikely related",
+           Unrelated = "Unrelated",
+           Unknown = "Don't know") %>% 
+    mutate(complications = recode(complications,
+                                  "Superficial-infection" = "Superficial",
+                                  "Deep-Infection" = "Deep - Involving Bone", 
+                                  "Deep-Infection, Not Involving Bone" = "Deep - Not Involving Bone"))
+  
+  total_complications <- unzipped_comp %>% 
+    group_by(severity, complications) %>% 
+    summarise(Definitely_c = sum(Definitely, na.rm = T), Possibly_c = sum(Possibly, na.rm = T), 
+              Probably_c = sum(Probably, na.rm = T), Unlikely_c = sum(Unlikely, na.rm = T), 
+              Unrelated_c = sum(Unrelated, na.rm = T), Unknown_c = sum(Unknown, na.rm = T), 
+              Total_c = n()) %>% 
+    ungroup() 
+  
+  comp_sums <- sapply(total_complications[, c("Definitely_c", "Possibly_c", "Probably_c", "Unlikely_c", "Unrelated_c", "Unknown_c")], sum)
+  
+  summary_comp_sums <- data.frame(t(comp_sums)) 
+  
+  total_ids <- unzipped_comp %>% 
+    mutate_all(replace_na, 0) %>% 
+    group_by(severity, complications) %>% 
+    summarise(Definitely_id = length(unique(study_id[Definitely > 0])) , Possibly_id = length(unique(study_id[Possibly > 0])) , 
+              Probably_id = length(unique(study_id[Probably > 0])) , Unlikely_id = length(unique(study_id[Unlikely > 0])) , 
+              Unrelated_id = length(unique(study_id[Unrelated > 0])) , Unknown_id = length(unique(study_id[Unknown > 0])) , 
+              Total_id = length(unique(study_id))) %>% 
+    ungroup()
+  
+  
+  id_sums <- sapply(total_ids[, c("Definitely_id", "Possibly_id", "Probably_id", "Unlikely_id", "Unrelated_id", "Unknown_id")], sum)
+  
+  summary_id_sums <- data.frame(t(id_sums)) 
+  
+  
+  output_complication <- full_join(total_complications, total_ids) %>% 
+    mutate_all(replace_na, 0) %>% 
+    mutate(Definitely = paste0(Definitely_c, "[", Definitely_id, "]"),
+           Probably = paste0(Probably_c, "[", Probably_id, "]"),
+           Possibly = paste0(Possibly_c, "[", Possibly_id, "]"),
+           Unlikely = paste0(Unlikely_c, "[", Unlikely_id, "]"),
+           Unrelated = paste0(Unrelated_c, "[", Unrelated_id, "]"),
+           Unknown = paste0(Unknown_c, "[", Unknown_id, "]"), 
+           Total = paste0(Total_c, "[", Total_id, "]")) %>% 
+    select(-ends_with("_id"), -ends_with("_c")) %>% 
+    mutate_all(str_replace_all, "0\\[0\\]", "-")
+  
+  
+  
+  output_overall <- cross_join(summary_comp_sums, summary_id_sums) %>% 
+    mutate(Definitely = paste0(Definitely_c, "[", Definitely_id, "]"),
+           Probably = paste0(Probably_c, "[", Probably_id, "]"),
+           Possibly = paste0(Possibly_c, "[", Possibly_id, "]"),
+           Unlikely = paste0(Unlikely_c, "[", Unlikely_id, "]"),
+           Unrelated = paste0(Unrelated_c, "[", Unrelated_id, "]"),
+           Unknown = paste0(Unknown_c, "[", Unknown_id, "]")) %>% 
+    mutate(Total = paste0(Definitely_c+Probably_c+Possibly_c+Unlikely_c+Unrelated_c+Unknown_c,
+                          "[",Definitely_id+Probably_id+Possibly_id+Unlikely_id+Unrelated_id+Unknown_id,"]")) %>% 
+    select(-ends_with("_id"), -ends_with("_c")) %>% 
+    mutate(complications = "Overall")
+  
+  severity_categories <- c('Grade 2,1', 'Grade 3', 'Grade 4', 'Grade Unknown')
+  level_order <- c("Superficial", "Deep - Involving Bone", "Deep - Not Involving Bone",
+                   "Wound Dehiscence", "Wound Seroma/Hematoma", "Fixation failure", "Malunion", "Peri-implant Fracture",
+                   "Other")
+  
+  df_template <- tibble(
+    severity = c(severity_categories),
+  ) %>% group_by(severity) %>% 
+    reframe(complications = level_order)
+  
+  output_complication <- left_join(df_template, output_complication)%>% 
+    mutate_all(replace_na, "-")
+  
+  output <- bind_rows(output_overall, output_complication) %>% 
+    mutate(across(everything(), ~replace(., is.na(.), "-"))) %>% 
+    select(complications, everything()) %>% 
+    select(-severity)
+  
+  colnames(output)[1] <- " "
+  
+  index_vec <- c(" " = 1, "Grade 4" = 9, "Grade 3"= 9,"Grade 2,1"= 9, "Grade Unknown"= 9)
+  subindex_vec <- c(" " = 1, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6,
+                    "Infection" = 3, " " = 6)
+  table_raw<- kable(output, align='l', padding='2l') %>%  
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+    pack_rows(index = subindex_vec,label_row_css = "text-align:left;padding-left: 2em;", bold = FALSE) %>% 
+    row_spec(1, extra_css = "border-bottom: 1px solid") %>% 
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(table_raw)
+}
