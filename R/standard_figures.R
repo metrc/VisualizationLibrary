@@ -4,7 +4,7 @@
 #' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, 
-#' consented, randomized, enrolled, enrolled_discontinuation, refused, late_ineligible, and the meta construct columns
+#' consented, randomized, enrolled, active, enrolled_discontinuation, refused, late_ineligible, and the meta construct column
 #' @param not_enrolled_other is a meta construct that is NULL by default
 #' @param completed_str is the text for the completed box that defaults to 'Completed 12-month visit'
 #'
