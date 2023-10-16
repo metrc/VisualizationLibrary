@@ -8,12 +8,16 @@ Description: This is an R package that builds visualizations from analytic datas
 License: file LICENSE
 Depends:
   tidyverse,
+  janitor,
   kableExtra,
   DiagrammeR,
   DiagrammeRsvg,
   rsvg,
   base64enc,
   VisualizationTools
+Suggests:
+  ggplot2,
+  scales
 Remotes:
   metrc/VisualizationTools@*release
 Encoding: UTF-8
