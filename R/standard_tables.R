@@ -367,7 +367,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   
   sae_df <- analytic %>% 
     select(study_id, enrolled, sae_reported) %>% 
-    filter(enrolled & sae_reported) %>% 
+    filter(enrolled & sae_reported>0) %>% 
     mutate(sae_reported = "SAE") %>% 
     count(sae_reported) %>%
     rename(type=sae_reported) %>% 
@@ -418,11 +418,20 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   n_dp <- nrow(deviation_p_df)
   n_da <- nrow(deviation_a_df)
   
+  indents_vec <- vector()
+  if(n_dsc > 0){
+    indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + seq(n_dsc))
+  }
+  if(n_dp > 0){
+    indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp))
+  }
+  if(n_da > 0){
+    indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
+  }
+  
   vis <- kable(df_final, align='l', padding='2l', col.names = c(" ", paste0("n=",total))) %>%
     add_indent(c(seq(n_disc) + 1, 1 + n_disc + 1 + 1 + seq(1+n_dsc+1+n_dp+1+n_da))) %>% 
-    add_indent(1 + n_disc + 1 + 1 + 1 + seq(n_dsc)) %>% 
-    add_indent(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp)) %>% 
-    add_indent(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da)) %>% 
+    add_indent(indents_vec) %>% 
     row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
     row_spec(1+ n_disc, extra_css = "border-bottom: 1px solid") %>% 
     row_spec(1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
