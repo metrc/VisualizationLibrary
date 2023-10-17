@@ -84,7 +84,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       rand [style="rounded,filled", fillcolor="#ccccff", pos="6,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
       late_inelig [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "Late Ineligible (n=',Late_Ineligible,')"];
       
-      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Enrolled (n=',Randomized,')"];
+      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Enrolled (n=',Enrolled,')"];
       discon [style="rounded,filled", fillcolor="#ccccff", pos="6,1!", shape = box, width=2.4, height=1, label = "Discontinued (n=',Discontinued,')"];
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="2,1!", shape = box, width=2.4, height=1, label = "Active (n=',Active,')"];
