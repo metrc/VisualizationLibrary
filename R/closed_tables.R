@@ -442,7 +442,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     
     sae_df <- analytic %>% 
       select(study_id, enrolled, sae_reported) %>% 
-      filter(enrolled & sae_reported) %>% 
+      filter(enrolled & sae_reported>0) %>% 
       mutate(sae_reported = "SAE") %>% 
       count(sae_reported) %>%
       rename(type=sae_reported) %>% 
