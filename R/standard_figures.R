@@ -4,7 +4,7 @@
 #' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, 
-#' consented, randomized, enrolled, enrolled_discontinuation, refused, late_ineligible, and the meta construct columns
+#' consented, randomized, enrolled, active, enrolled_discontinuation, refused, late_ineligible, and the meta construct column
 #' @param not_enrolled_other is a meta construct that is NULL by default
 #' @param completed_str is the text for the completed box that defaults to 'Completed 12-month visit'
 #'
@@ -84,7 +84,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       rand [style="rounded,filled", fillcolor="#ccccff", pos="6,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
       late_inelig [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "Late Ineligible (n=',Late_Ineligible,')"];
       
-      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Enrolled (n=',Randomized,')"];
+      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Enrolled (n=',Enrolled,')"];
       discon [style="rounded,filled", fillcolor="#ccccff", pos="6,1!", shape = box, width=2.4, height=1, label = "Discontinued (n=',Discontinued,')"];
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="2,1!", shape = box, width=2.4, height=1, label = "Active (n=',Active,')"];
