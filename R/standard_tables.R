@@ -367,7 +367,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position='left')
   
-  output <- paste0("<h3>Ankle</h3><br />",table_raw_ankle, "<h3>Plateau</h3><br />",table_raw_Plateau)
+  output <- paste0("<h3>Ankle</h3><br />",table_raw_ankle, "<h3>Plateau</h3><br />",table_raw_plateau)
 
   return(output)
 }
