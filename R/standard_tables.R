@@ -97,7 +97,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_ankle <- analytic %>% 
     filter(injury_type=="ankle") %>% 
-    select(cfu_status_6wk, cfu_status_3mo, cfu_status_6mo, cfu_status_12mo) %>% 
+    select(cfu_status_6wk, cfu_status_3mo, cfu_status_6mo) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(str_detect(value,"Complete"),"Complete",value)) %>% 
     group_by(name, value) %>%
@@ -109,21 +109,21 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_expected_ankle <- analytic %>% 
     filter(injury_type=="ankle") %>% 
-    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected) %>% 
-    summarise("12 Months"= sum(twelvemonth_visit_expected, na.rm = TRUE), "3 Months"= sum(threemonth_visit_expected, na.rm = TRUE),
+    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected) %>% 
+    summarise("3 Months"= sum(threemonth_visit_expected, na.rm = TRUE),
               "6 Months"= sum(sixmonth_visit_expected, na.rm = TRUE),  "6 Weeks"= sum(sixweek_visit_expected, na.rm = TRUE)) %>% 
     pivot_longer(everything())  %>% 
     rename(n=value) %>% 
     mutate(value="Expected")
     
-  df1_shell_ankle <- tibble(name=c("6 Weeks", "3 Months", "6 Months", "12 Months")) %>% 
+  df1_shell_ankle <- tibble(name=c("6 Weeks", "3 Months", "6 Months")) %>% 
     group_by(name) %>% 
     reframe(value=c("Complete", "Incomplete", "Missing", "Expected")) %>% 
     ungroup()
     
   df_one_ankle <- left_join(df1_shell_ankle, bind_rows(df1_expected_ankle, df1_ankle)) %>% 
     mutate(value = factor(value, c("Expected", "Complete", "Incomplete", "Missing"))) %>% 
-    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months"))) %>% 
     arrange(name, value) %>% 
     mutate(n = replace_na(n, 0)) %>% 
     rename("Complete Visits"=value) %>% 
@@ -133,17 +133,15 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df2_ankle_expected <- analytic %>% 
     filter(injury_type=="ankle") %>% 
-    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected, 
-           radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo, radiographs_taken_12mo) %>% 
+    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, 
+           radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo) %>% 
     mutate(radiographs_taken_6wk = ifelse(sixweek_visit_expected,
                                           ifelse(is.na(radiographs_taken_6wk),"Missing",radiographs_taken_6wk),NA)) %>% 
     mutate(radiographs_taken_3mo = ifelse(threemonth_visit_expected,
                                           ifelse(is.na(radiographs_taken_3mo),"Missing",radiographs_taken_3mo),NA)) %>% 
     mutate(radiographs_taken_6mo = ifelse(sixmonth_visit_expected,
                                           ifelse(is.na(radiographs_taken_6mo),"Missing",radiographs_taken_6mo),NA)) %>% 
-    mutate(radiographs_taken_12mo = ifelse(twelvemonth_visit_expected,
-                                           ifelse(is.na(radiographs_taken_12mo),"Missing",radiographs_taken_12mo),NA)) %>% 
-    select(-sixweek_visit_expected, -threemonth_visit_expected, -sixmonth_visit_expected, -twelvemonth_visit_expected) %>% 
+    select(-sixweek_visit_expected, -threemonth_visit_expected, -sixmonth_visit_expected) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(str_detect(value,"Yes|YES"),"Yes",value)) %>% 
     group_by(name, value) %>%
@@ -162,38 +160,35 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     mutate(expected=n) %>% 
     select(name, expected)
   
-  df2_shell_ankle <- tibble(name=c("6 Weeks", "3 Months", "6 Months", "12 Months")) %>% 
+  df2_shell_ankle <- tibble(name=c("6 Weeks", "3 Months", "6 Months")) %>% 
     group_by(name) %>% 
     reframe(value=c("Yes", "No", "Missing", " ")) %>% 
     ungroup()
   
   df_two_ankle <- left_join(df2_shell_ankle, df2_ankle) %>% 
     mutate(value = factor(value, c("Yes", "No", "Missing", " "))) %>% 
-    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months"))) %>% 
     arrange(name, value) %>% 
     mutate(n = ifelse(value!=" " & is.na(n)," 0 ( 0%)",n)) %>% 
     mutate(n = ifelse(value==" "," ",n)) %>% 
     rename("Radiographs"=value, n2=n)
   
   df3_ankle <- analytic %>% 
-    select(injury_type, sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected, 
+    select(injury_type, sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, 
            ankle_talar_tilt_degrees_6wk, ankle_sagital_disp_6wk, ankle_coronal_plane_disp_6wk, 
            ankle_talar_tilt_degrees_3mo, ankle_sagital_disp_3mo, ankle_coronal_plane_disp_3mo, 
-           ankle_talar_tilt_degrees_6mo, ankle_sagital_disp_6mo, ankle_coronal_plane_disp_6mo, 
-           ankle_talar_tilt_degrees_12mo, ankle_sagital_disp_12mo, ankle_coronal_plane_disp_12mo) %>% 
+           ankle_talar_tilt_degrees_6mo, ankle_sagital_disp_6mo, ankle_coronal_plane_disp_6mo) %>% 
     filter(injury_type=="ankle") %>% 
     select(-injury_type) %>% 
     mutate(
       ankle_6_weeks = rowSums(is.na(select(., ends_with("6wk"))))<3,
       ankle_3_months = rowSums(is.na(select(., ends_with("3mo"))))<3,
-      ankle_6_months = rowSums(is.na(select(., ends_with("6mo"))))<3,
-      ankle_12_months = rowSums(is.na(select(., ends_with("12mo"))))<3
+      ankle_6_months = rowSums(is.na(select(., ends_with("6mo"))))<3
     ) %>% 
     select(-ends_with("wk"),-ends_with("mo")) %>% 
     mutate(ankle_6_weeks = ifelse(sixweek_visit_expected, ankle_6_weeks,NA)) %>% 
     mutate(ankle_3_months = ifelse(threemonth_visit_expected, ankle_3_months,NA)) %>% 
     mutate(ankle_6_months = ifelse(sixmonth_visit_expected, ankle_6_months,NA)) %>% 
-    mutate(ankle_12_months = ifelse(twelvemonth_visit_expected, ankle_12_months,NA)) %>% 
     select(-ends_with("expected")) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(value,"Completed","Not Completed")) %>% 
@@ -206,21 +201,21 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     mutate(n = format_count_percent(n, expected)) %>% 
     select(-expected)
 
-  df3_shell_ankle <- tibble(name=c("6 Weeks", "3 Months", "6 Months", "12 Months")) %>% 
+  df3_shell_ankle <- tibble(name=c("6 Weeks", "3 Months", "6 Months")) %>% 
     group_by(name) %>% 
     reframe(value=c("Completed","Not Completed", "  "," ")) %>% 
     ungroup()
   
   df_three_ankle <- left_join(df3_shell_ankle, df3_ankle) %>% 
     mutate(value = factor(value, c("Completed","Not Completed", "  "," "))) %>% 
-    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months"))) %>% 
     arrange(name, value) %>% 
     mutate(n = ifelse(value==" "|value=="  ","",n)) %>% 
     rename("X-ray Measurements"=value, n3=n)
   
   df_ankle <- cbind(df_one_ankle %>% select(-name), df_two_ankle %>% select(-name), df_three_ankle %>% select(-name))
   
-  index_vec <- c("6 Weeks"=4,"3 Months"=4, "6 Months"=4, "12 Months"=4)
+  index_vec <- c("6 Weeks"=4,"3 Months"=4, "6 Months"=4)
   
   table_raw_ankle<- kable(df_ankle, align='l', padding='2l', col.names = str_replace(colnames(df),"^n.|^n"," ")) %>%
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
@@ -230,7 +225,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_plateau <- analytic %>% 
     filter(injury_type=="plateau") %>% 
-    select(cfu_status_6wk, cfu_status_3mo, cfu_status_6mo, cfu_status_12mo) %>% 
+    select(cfu_status_6wk, cfu_status_3mo, cfu_status_6mo) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(str_detect(value,"Complete"),"Complete",value)) %>% 
     group_by(name, value) %>%
@@ -242,21 +237,21 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_expected_plateau <- analytic %>% 
     filter(injury_type=="plateau") %>% 
-    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected) %>% 
-    summarise("12 Months"= sum(twelvemonth_visit_expected, na.rm = TRUE), "3 Months"= sum(threemonth_visit_expected, na.rm = TRUE),
+    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected) %>% 
+    summarise("3 Months"= sum(threemonth_visit_expected, na.rm = TRUE),
               "6 Months"= sum(sixmonth_visit_expected, na.rm = TRUE),  "6 Weeks"= sum(sixweek_visit_expected, na.rm = TRUE)) %>% 
     pivot_longer(everything())  %>% 
     rename(n=value) %>% 
     mutate(value="Expected")
   
-  df1_shell_plateau <- tibble(name=c("6 Weeks", "3 Months", "6 Months", "12 Months")) %>% 
+  df1_shell_plateau <- tibble(name=c("6 Weeks", "3 Months", "6 Months")) %>% 
     group_by(name) %>% 
     reframe(value=c("Complete", "Incomplete", "Missing", "Expected")) %>% 
     ungroup()
   
   df_one_plateau <- left_join(df1_shell_plateau, bind_rows(df1_expected_plateau, df1_plateau)) %>% 
     mutate(value = factor(value, c("Expected", "Complete", "Incomplete", "Missing"))) %>% 
-    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months"))) %>% 
     arrange(name, value) %>% 
     mutate(n = replace_na(n, 0)) %>% 
     rename("Complete Visits"=value) %>% 
@@ -266,7 +261,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df2_plateau_expected <- analytic %>% 
     filter(injury_type=="plateau") %>% 
-    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected, 
+    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, 
            radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo, radiographs_taken_12mo) %>% 
     mutate(radiographs_taken_6wk = ifelse(sixweek_visit_expected,
                                           ifelse(is.na(radiographs_taken_6wk),"Missing",radiographs_taken_6wk),NA)) %>% 
@@ -274,9 +269,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
                                           ifelse(is.na(radiographs_taken_3mo),"Missing",radiographs_taken_3mo),NA)) %>% 
     mutate(radiographs_taken_6mo = ifelse(sixmonth_visit_expected,
                                           ifelse(is.na(radiographs_taken_6mo),"Missing",radiographs_taken_6mo),NA)) %>% 
-    mutate(radiographs_taken_12mo = ifelse(twelvemonth_visit_expected,
-                                           ifelse(is.na(radiographs_taken_12mo),"Missing",radiographs_taken_12mo),NA)) %>% 
-    select(-sixweek_visit_expected, -threemonth_visit_expected, -sixmonth_visit_expected, -twelvemonth_visit_expected) %>% 
+       select(-sixweek_visit_expected, -threemonth_visit_expected, -sixmonth_visit_expected) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(str_detect(value,"Yes|YES"),"Yes",value)) %>% 
     group_by(name, value) %>%
@@ -295,14 +288,14 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     mutate(expected=n) %>% 
     select(name, expected)
   
-  df2_shell_plateau <- tibble(name=c("6 Weeks", "3 Months", "6 Months", "12 Months")) %>% 
+  df2_shell_plateau <- tibble(name=c("6 Weeks", "3 Months", "6 Months")) %>% 
     group_by(name) %>% 
     reframe(value=c("Yes", "No", "Missing", " ")) %>% 
     ungroup()
   
   df_two_plateau <- left_join(df2_shell_plateau, df2_plateau) %>% 
     mutate(value = factor(value, c("Yes", "No", "Missing", " "))) %>% 
-    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months"))) %>% 
     arrange(name, value) %>% 
     mutate(n = ifelse(value!=" " & is.na(n)," 0 ( 0%)",n)) %>% 
     mutate(n = ifelse(value==" "," ",n)) %>% 
@@ -318,23 +311,18 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
            plat_art_step_off_lateral_3mo, plat_femur_tibia_deg_3mo,
            plat_tib_fib_overlap_6wk, plat_sagittal_pl_alignment_6wk, plat_patella_centered_6wk, 
            plat_medial_prox_tibia_deg_6wk, plat_medial_lateral_diff_6wk, plat_condylar_width_6wk, plat_art_step_off_medial_6wk, 
-           plat_art_step_off_lateral_6wk, plat_femur_tibia_deg_6wk,
-           plat_tib_fib_overlap_12mo, plat_sagittal_pl_alignment_12mo, plat_patella_centered_12mo, 
-           plat_medial_prox_tibia_deg_12mo, plat_medial_lateral_diff_12mo, plat_condylar_width_12mo, plat_art_step_off_medial_12mo, 
-           plat_art_step_off_lateral_12mo, plat_femur_tibia_deg_12mo) %>% 
+           plat_art_step_off_lateral_6wk, plat_femur_tibia_deg_6wk) %>% 
     filter(injury_type=="plateau") %>% 
     select(-injury_type) %>% 
     mutate(
       plateau_6_weeks = rowSums(is.na(select(., ends_with("6wk"))))<3,
       plateau_3_months = rowSums(is.na(select(., ends_with("3mo"))))<3,
       plateau_6_months = rowSums(is.na(select(., ends_with("6mo"))))<3,
-      plateau_12_months = rowSums(is.na(select(., ends_with("12mo"))))<3
     ) %>% 
     select(-ends_with("wk"),-ends_with("mo")) %>% 
     mutate(plateau_6_weeks = ifelse(sixweek_visit_expected, plateau_6_weeks,NA)) %>% 
     mutate(plateau_3_months = ifelse(threemonth_visit_expected, plateau_3_months,NA)) %>% 
     mutate(plateau_6_months = ifelse(sixmonth_visit_expected, plateau_6_months,NA)) %>% 
-    mutate(plateau_12_months = ifelse(twelvemonth_visit_expected, plateau_12_months,NA)) %>% 
     select(-ends_with("expected")) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(value,"Completed","Not Completed")) %>% 
@@ -347,21 +335,21 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     mutate(n = format_count_percent(n, expected)) %>% 
     select(-expected)
   
-  df3_shell_plateau <- tibble(name=c("6 Weeks", "3 Months", "6 Months", "12 Months")) %>% 
+  df3_shell_plateau <- tibble(name=c("6 Weeks", "3 Months", "6 Months")) %>% 
     group_by(name) %>% 
     reframe(value=c("Completed","Not Completed", "  "," ")) %>% 
     ungroup()
   
   df_three_plateau <- left_join(df3_shell_plateau, df3_plateau) %>% 
     mutate(value = factor(value, c("Completed","Not Completed", "  "," "))) %>% 
-    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months"))) %>% 
     arrange(name, value) %>% 
     mutate(n = ifelse(value==" "|value=="  ","",n)) %>% 
     rename("X-ray Measurements"=value, n3=n)
   
   df_plateau <- cbind(df_one_plateau %>% select(-name), df_two_plateau %>% select(-name), df_three_plateau %>% select(-name))
   
-  index_vec <- c("6 Weeks"=4,"3 Months"=4, "6 Months"=4, "12 Months"=4)
+  index_vec <- c("6 Weeks"=4,"3 Months"=4, "6 Months"=4)
   
   table_raw_plateau<- kable(df_plateau, align='l', padding='2l', col.names = str_replace(colnames(df),"^n.|^n"," ")) %>%
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
