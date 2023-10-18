@@ -147,11 +147,7 @@ cumulative_percentage_ankle_injuries <- function(analytic){
   
   df$consent_date <- ymd(df$consent_date)
   
-  yyyy_mm <- df %>% mutate(
-    year = year(consent_date),
-    month = month(consent_date),
-    year_month = format(consent_date, "%Y-%m")
-  ) %>% 
+  yyyy_mm <- df %>% mutate(year_month = str_remove(consent_date, '...$')) %>% 
     group_by(year_month) %>%
     summarise(Total = n()) %>%
     ungroup() %>% 
@@ -203,11 +199,8 @@ cumulative_percentage_plateau_injuries <- function(analytic){
   
   df$consent_date <- ymd(df$consent_date)
   
-  yyyy_mm <- df %>% mutate(
-    year = year(consent_date),
-    month = month(consent_date),
-    year_month = format(consent_date, "%Y-%m")
-  ) %>% 
+  yyyy_mm <- df %>% 
+    mutate(year_month = str_remove(consent_date, '...$')) %>% 
     group_by(year_month) %>%
     summarise(Total = n()) %>%
     ungroup() %>% 
@@ -270,6 +263,91 @@ enrollment_by_injury_and_site <- function(analytic){
   ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
   image_data <- base64enc::base64encode(temp_png_path)
   img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Enrollment by each injury type and site" style="max-width: 100%%; width: 80%%;">', image_data)
+  file.remove(temp_png_path)
+  
+  return(img_tag)
+}
+
+
+#' Enrollment of subjects by each site
+#'
+#' @description This function visualizes the enrollment by each site for each patient
+#'
+#' @param analytic This is the analytic data set that must include study_id, enrolled, facilitycode
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' enrollment_by_site()
+#' }
+enrollment_by_site <- function(analytic){
+  
+  df <- analytic %>%  select(study_id, enrolled, facilitycode, consent_date) %>% 
+    filter(enrolled = TRUE) %>% 
+    filter(!is.na(consent_date)) %>% 
+    group_by(facilitycode) %>%
+    summarise(EnrolledPatients = n()) 
+  
+  g <- ggplot(df, aes(x = facilitycode, y = EnrolledPatients)) +
+    geom_bar(stat = "identity", fill = 'blue3', color = 'black', size = 0.5, width = 0.8) +
+    labs(title = "Number of patients enrolled by site", x = "Site", y = "Number enrolled") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "top",  # Center the legend at the top
+          legend.title = element_blank())
+  
+  temp_png_path <- tempfile(fileext = ".png")
+  ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Enrollment by site" style="max-width: 100%%; width: 80%%;">', image_data)
+  file.remove(temp_png_path)
+  
+  return(img_tag)
+}
+
+#' Cumulative enrollment
+#'
+#' @description This function visualizes the Cumulative number of patients enrolled
+#'
+#' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date 
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' cumulative_enrolled()
+#' }
+cumulative_enrolled <- function(analytic){
+  
+  df <- analytic %>%  select(study_id, enrolled, consent_date) %>% 
+    filter(!is.na(consent_date)) %>% 
+    filter(enrolled == TRUE) 
+  
+  df$consent_date <- ymd(df$consent_date)
+  
+  yyyy_mm <- df %>% 
+    mutate(year_month = str_remove(consent_date, '...$')) %>% 
+    group_by(year_month) %>%
+    summarise(Total = n()) %>%
+    ungroup() %>% 
+    arrange(year_month) %>%
+    mutate(cumulative_value = cumsum(Total))
+  
+  
+  g <- ggplot(yyyy_mm) +
+    geom_bar(aes(x = factor(year_month), y = Total, group = 1), stat = "identity", fill = "blue3", color = "black", size = 0.3) +
+    geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +  # Add the 'data' argument
+    labs(title = "Cumulative Enrollment with Discrete Enrollment by Month", x = "Month", y = "Enrolled") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+  
+  temp_png_path <- tempfile(fileext = ".png")
+  ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Enrollment with Discrete Enrollment by Month" style="max-width: 100%%; width: 80%%;">', image_data)
   file.remove(temp_png_path)
   
   return(img_tag)
