@@ -1049,7 +1049,8 @@ certification_date_data <- function(analytic){
             paste0('Days Number of Days Certified (as of ', as.character(date_today), ')'))
   
   site_data <- df %>%
-    separate(sites_certification_dates, cols, sep = ';')
+    separate(sites_certification_dates, cols, sep = ';') %>%
+    filter(!is.na(Facility))
   
   vis <- kable(site_data, align='l', padding='2l') %>% 
     kable_styling("striped", full_width = F, position="left") 
