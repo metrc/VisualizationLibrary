@@ -200,7 +200,7 @@ dsmb_nsaid_consort_diagram <- function(analytic, not_enrolled_other=NULL){
       rand [style="rounded,filled", fillcolor="#ccccff", pos="6,6!", shape = box, width=2.4, height=1, label = "Consented and Randomized (n=',Randomized,')"];
       
       enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',Enrolled,')"];
-      discon [style="rounded,filled", fillcolor="#ccccff", pos="6,1!", shape = box, width=2.4, height=1, label = "Early Discontinuation (n=',Early_Discontinuation,')"];
+      discon [style="rounded,filled", fillcolor="#ccccff", pos="10,4!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (n=',Early_Discontinuation,')"];
 
       compl [style="rounded,filled", fillcolor="#ccccff", pos="10,1!", shape = box, width=2.4, height=1, label = "Definitive Fixation Complete (n=',Definitive_Fixation_Complete,')"];
       
