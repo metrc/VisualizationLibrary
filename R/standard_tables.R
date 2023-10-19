@@ -970,6 +970,11 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
     mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
     select(-name)
   
+  total <- inj_gust %>%
+    mutate(n=as.numeric(n)) %>%
+    pull(n) %>%
+    sum()
+  
   inj_ao <- pull %>% 
     count(injury_ao_class) %>%
     pivot_longer(-n) %>%
@@ -980,17 +985,37 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
     count(injury_tscherne) %>%
     pivot_longer(-n) %>%
     mutate(value=ifelse(!is.na(value), paste('Tscherne Gotzen Grade', value), value)) %>%
-    mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
+    mutate(value=ifelse(is.na(value), 'Tscherne Unknown', value)) %>%
     select(-name)
   
-  combined <- bind_rows(inj_tsch, inj_gust, inj_ao) %>%
+  combined <- bind_rows(inj_gust, inj_tsch, inj_ao) %>%
     relocate(n, .after=value) %>%
-    rename('Fracture Type'=value, 'n='=n)
+    rename('Fracture Type'=value, 'n=enrolled'=n)
   
-  output<- kable(combined, align='l', padding='2l') %>% 
+  total_closed <- combined %>%
+    filter(`Fracture Type`=='Gustilo Type Closed') %>%
+    pull(enrolled)
+  known_closed <- inj_tsch %>%
+    filter(value!='Tscherne Unknown') %>%
+    mutate(n=as.numeric(n)) %>%
+    pull(n) %>%
+    sum()
+  
+  out <- combined %>%
+    mutate('n=enrolled'=ifelse(`Fracture Type`=='Tscherne Unknown', 
+                       total_closed-known_closed, 
+                       `n=enrolled`)) %>%
+    mutate('n=enrolled'=ifelse(str_detect(`Fracture Type`, 'Tscherne'), 
+                       format_count_percent(`n=enrolled`, total_closed),
+                       format_count_percent(`n=enrolled`, total))) %>%
+    mutate(`Fracture Type`=ifelse(`Fracture Type`=='Tscherne Unknown', 
+                                  'Unknown', 
+                                  `Fracture Type`))
+  
+  output<- kable(out, align='l', padding='2l') %>% 
     kable_styling("condensed", position="left") %>%
-    pack_rows("Closed Fracture", 1, nrow(inj_tsch), label_row_css = "text-align:left") %>%
-    pack_rows("Open Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows("Open Fracture", 1, nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows("Closed Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
     pack_rows("AO Class", nrow(inj_gust)+nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)+nrow(inj_ao), label_row_css = "text-align:left") %>%
     kable_styling("striped", full_width = F, position="left")
   
