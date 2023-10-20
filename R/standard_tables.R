@@ -704,6 +704,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
 #' Number of Discontinued Participants, SAEs, and Protocol Deviations by type
 #'
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
+#' This was originally made for Union
 #'
 #' @param analytic This is the analytic data set that must include enrolled, enrolled_discontinuation_reason, 
 #' deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported
@@ -804,6 +805,152 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   return(vis)
 }
 
+
+#' Number of Adjudications and Discontinuations by type
+#'
+#' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
+#' This was originally made for NSAID
+#'
+#' @param analytic This is the analytic data set that must include screened; inappropriate_enrollment; 
+#' late_ineligible; late_refusal; withdrawn_patient; withdrawn_physician; pending_adjudication; 
+#' dead; sae_reported; deviation_screen_consent; deviation_procedural; deviation_administrative
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' adjudications_and_discontinuations_by_type()
+#' }
+adjudications_and_discontinuations_by_type <- function(analytic){
+  df <- analytic %>% 
+    filter(screened == TRUE) %>% 
+    select(inappropriate_enrollment, late_ineligible, late_refusal, withdrawn_patient, withdrawn_physician, #pending_adjudication, 
+           dead, sae_reported, deviation_screen_consent, deviation_procedural, deviation_administrative) %>% 
+    
+    mutate(na_count = rowSums(is.na(select(., 
+                                           study_discontinuation,
+                                           deviation_screen_consent,
+                                           deviation_procedural,
+                                           deviation_administrative,
+                                           sae_reported)))) %>%
+    filter(na_count != 5) %>%
+    select(-na_count) %>% 
+    mutate(sae_reported = ifelse(sae_reported == TRUE, 'SAE', sae_reported))
+  
+  total <- sum(df$enrolled)
+  
+  totals_df <- df %>%
+    mutate(total_disc = ifelse(!is.na(study_discontinuation), TRUE, FALSE)) %>% 
+    mutate(total_dsc = ifelse(!is.na(deviation_screen_consent), TRUE, FALSE)) %>% 
+    mutate(total_dp = ifelse(!is.na(deviation_procedural), TRUE, FALSE)) %>% 
+    mutate(total_da = ifelse(!is.na(deviation_administrative), TRUE, FALSE)) %>% 
+    mutate(total_sae = ifelse(!is.na(sae_reported), TRUE, FALSE)) %>% 
+    select(total_disc, total_dsc, total_dp, total_da, total_sae)
+  
+  total_disc <- sum(totals_df$total_disc)
+  total_dsc <- sum(totals_df$total_dsc)
+  total_dp <- sum(totals_df$total_dp)
+  total_da <- sum(totals_df$total_da)
+  total_sae <- sum(totals_df$total_sae)
+  
+  vec_disc <- c(format_count_percent(total_disc, total))
+  vec_protocol_deviations <- c(format_count_percent(total_dsc + total_dp + total_da, total))
+  vec_dsc <- c(format_count_percent(total_dsc, total))
+  vec_dp <- c(format_count_percent(total_dp, total))
+  vec_da <- c(format_count_percent(total_da, total))
+  
+  
+  disc <- tibble(type = "Discontinuous", percentage = vec_disc)
+  protocol_deviations <- tibble(type = 'Protocol Deviations', percentage = vec_protocol_deviations)
+  sc <- tibble(type = 'Screen and Consent', percentage = vec_dsc)
+  dp <- tibble(type = 'Procedural', percentage = vec_dp)
+  da <- tibble(type = 'Administrative/Other', percentage = vec_da)
+  
+  
+  study_discontinuation_df <- df %>% 
+    select(study_discontinuation) %>% 
+    filter(!is.na(study_discontinuation)) %>% 
+    count(study_discontinuation) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    select(-n) %>% 
+    rename(type = study_discontinuation)
+  
+  deviation_screen_consent_df <- df %>% 
+    select(deviation_screen_consent) %>% 
+    filter(!is.na(deviation_screen_consent)) %>% 
+    count(deviation_screen_consent) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    select(-n) %>% 
+    rename(type = deviation_screen_consent)
+  
+  deviation_procedural_df <- df %>% 
+    select(deviation_procedural) %>% 
+    filter(!is.na(deviation_procedural)) %>% 
+    count(deviation_procedural) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    select(-n) %>% 
+    rename(type = deviation_procedural)
+  
+  deviation_administrative_df <- df %>% 
+    select(deviation_administrative) %>% 
+    filter(!is.na(deviation_administrative)) %>% 
+    count(deviation_administrative) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    select(-n) %>% 
+    rename(type = deviation_administrative)
+  
+  sae_reported_df <- df %>% 
+    select(sae_reported) %>% 
+    filter(!is.na(sae_reported)) %>% 
+    count(sae_reported) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    select(-n) %>% 
+    rename(type = sae_reported)
+  
+  df_final <- rbind(disc, study_discontinuation_df, sae_reported_df, protocol_deviations, sc, deviation_screen_consent_df, 
+                    dp, deviation_procedural_df, da, deviation_administrative_df) 
+  
+  n_disc <- nrow(study_discontinuation_df)
+  n_dsc <- nrow(deviation_screen_consent_df)
+  n_dp <- nrow(deviation_procedural_df)
+  n_da <- nrow(deviation_administrative_df)
+  
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+  
+  if(n_dsc>0){
+    dsc_indents <- seq(n_dsc) + 1 + n_disc + 1 + 1 + 1
+  } else{
+    dsc_indents <- NA
+  }
+  
+  if(n_dp>0){
+    dp_indents <- seq(n_dp) + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1
+  } else{
+    dp_indents <- NA
+  }
+  
+  if(n_da>0){
+    da_indents <- seq(n_da) + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1
+  } else{
+    da_indents <- NA
+  }
+  
+  
+  vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
+    add_header_above(header) %>%  
+    add_indent(c(seq(n_disc) + 1, seq(1 + n_dsc + 1 + n_dp + 1 + n_da) + 1 + n_disc + 2, na.omit(c(dsc_indents, dp_indents, da_indents)))) %>% 
+    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1+ n_disc, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(vis)
+}
+
 #' Number of patients Ineligible by Top 5 reasons of Exclusion
 #'
 #' @description This function visualizes the number of patients Ineligible by Top 5 reasons of Exclusion criteria
@@ -886,6 +1033,11 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
     mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
     select(-name)
   
+  total <- inj_gust %>%
+    mutate(n=as.numeric(n)) %>%
+    pull(n) %>%
+    sum()
+  
   inj_ao <- pull %>% 
     count(injury_ao_class) %>%
     pivot_longer(-n) %>%
@@ -896,17 +1048,37 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
     count(injury_tscherne) %>%
     pivot_longer(-n) %>%
     mutate(value=ifelse(!is.na(value), paste('Tscherne Gotzen Grade', value), value)) %>%
-    mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
+    mutate(value=ifelse(is.na(value), 'Tscherne Unknown', value)) %>%
     select(-name)
   
-  combined <- bind_rows(inj_tsch, inj_gust, inj_ao) %>%
+  combined <- bind_rows(inj_gust, inj_tsch, inj_ao) %>%
     relocate(n, .after=value) %>%
-    rename('Fracture Type'=value, 'n='=n)
+    rename('Fracture Type'=value, 'n=enrolled'=n)
   
-  output<- kable(combined, align='l', padding='2l') %>% 
+  total_closed <- combined %>%
+    filter(`Fracture Type`=='Gustilo Type Closed') %>%
+    pull(enrolled)
+  known_closed <- inj_tsch %>%
+    filter(value!='Tscherne Unknown') %>%
+    mutate(n=as.numeric(n)) %>%
+    pull(n) %>%
+    sum()
+  
+  out <- combined %>%
+    mutate('n=enrolled'=ifelse(`Fracture Type`=='Tscherne Unknown', 
+                       total_closed-known_closed, 
+                       `n=enrolled`)) %>%
+    mutate('n=enrolled'=ifelse(str_detect(`Fracture Type`, 'Tscherne'), 
+                       format_count_percent(`n=enrolled`, total_closed),
+                       format_count_percent(`n=enrolled`, total))) %>%
+    mutate(`Fracture Type`=ifelse(`Fracture Type`=='Tscherne Unknown', 
+                                  'Unknown', 
+                                  `Fracture Type`))
+  
+  output<- kable(out, align='l', padding='2l') %>% 
     kable_styling("condensed", position="left") %>%
-    pack_rows("Closed Fracture", 1, nrow(inj_tsch), label_row_css = "text-align:left") %>%
-    pack_rows("Open Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows("Open Fracture", 1, nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows("Closed Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
     pack_rows("AO Class", nrow(inj_gust)+nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)+nrow(inj_ao), label_row_css = "text-align:left") %>%
     kable_styling("striped", full_width = F, position="left")
   
@@ -937,10 +1109,11 @@ certification_date_data <- function(analytic){
   
   cols <- c('Facility', 'Local (or sIRB)  Approval Date', 'DoD Approval Date',
             'Certified by MCC to Start Screening', 
-            paste0('Days Number of Days Certified (as of ', date_today, ')'))
+            paste0('Days Number of Days Certified (as of ', as.character(date_today), ')'))
   
   site_data <- df %>%
-    separate(sites_certification_dates, cols, sep = ';')
+    separate(sites_certification_dates, cols, sep = ';') %>%
+    filter(!is.na(Facility))
   
   vis <- kable(site_data, align='l', padding='2l') %>% 
     kable_styling("striped", full_width = F, position="left") 

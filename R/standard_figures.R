@@ -16,7 +16,6 @@
 #' dsmb_consort_diagram()
 #' }
 dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_str="Completed 12-month visit"){
-  
   analytic <- analytic %>% 
     filter(screened == TRUE) 
   
@@ -112,6 +111,112 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
     }
   '))
   svg_content <- DiagrammeRsvg::export_svg(consort_diagram)
+  temp_svg_path <- tempfile(fileext = ".svg")
+  writeLines(svg_content, temp_svg_path)
+  temp_png_path <- tempfile(fileext = ".png")
+  rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 2000, height = 2000)
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 80%%;">', image_data)
+  file.remove(c(temp_svg_path, temp_png_path))
+  return(img_tag)
+}
+
+
+#' DSMB NSAID Consort Diagram
+#'
+#' @description This function visualizes the categorical percentages of Study Status
+#' for the NSAID study
+#'
+#' @param analytic This is the analytic data set that must include screened, eligible, 
+#' consented, randomized, enrolled, active, enrolled_discontinuation, refused, late_ineligible, and the meta construct column
+#' @param not_enrolled_other is a meta construct that is NULL by default
+#' @param completed_str is the text for the completed box that defaults to 'Completed 12-month visit'
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' dsmb_nsaid_consort_diagram()
+#' }
+dsmb_nsaid_consort_diagram <- function(analytic, not_enrolled_other=NULL){
+  analytic <- analytic %>% 
+    filter(screened == TRUE) 
+  
+  Screened <- sum(analytic$screened, na.rm=TRUE)
+  Eligible <- sum(analytic$eligible, na.rm=TRUE)
+  Ineligible <- Screened - Eligible
+  
+  Consented <- sum(analytic %>% 
+                     filter(eligible) %>% 
+                     pull(consented), na.rm=TRUE)
+  Refused <- sum(analytic %>% 
+                   filter(eligible) %>% 
+                   pull(refused), na.rm=TRUE)
+  if(is.null(not_enrolled_other)){
+    Not_Enrolled_Other <- Eligible - Consented - Refused
+  } else{
+    temp <- analytic %>% 
+      filter(eligible)
+    Not_Enrolled_Other <- sum(temp[[not_enrolled_other]], na.rm=TRUE)
+  }
+
+  
+  Randomized <- sum(analytic %>% 
+                      filter(eligible) %>% 
+                      filter(consented) %>% 
+                      pull(randomized), na.rm=TRUE)
+  
+  Enrolled <- sum(analytic %>% 
+                    filter(eligible) %>% 
+                    filter(consented) %>% 
+                    filter(randomized) %>% 
+                    pull(enrolled), na.rm=TRUE)
+  Early_Discontinuation <- sum(analytic %>% 
+                        filter(eligible) %>% 
+                        filter(consented) %>% 
+                        filter(randomized) %>%
+                        filter(enrolled) %>% 
+                        pull(enrolled_discontinuation), na.rm=TRUE)
+  Definitive_Fixation_Complete <- sum(analytic %>% 
+                        filter(eligible) %>% 
+                        filter(consented) %>% 
+                        filter(randomized) %>%
+                        filter(enrolled) %>% 
+                        pull(dfsurg_completed), na.rm=TRUE)
+  
+
+  
+  NSAID_consort_diagram <- grViz(paste0('
+    digraph g {
+      graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
+      
+      screened [style="rounded,filled", fillcolor="#ccccff", pos="6,12!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
+      ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,12!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
+      eligible [style="rounded,filled", fillcolor="#ccccff", pos="6,10!", shape = box, width=2.4, height=1, label = "Eligible (n=',Eligible,')"];
+      
+      refused [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Not Enrolled\nRefused (n=',Refused,')\nNot Enrolled: Other (n=',Not_Enrolled_Other,')"];
+
+      rand [style="rounded,filled", fillcolor="#ccccff", pos="6,6!", shape = box, width=2.4, height=1, label = "Consented and Randomized (n=',Randomized,')"];
+      
+      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',Enrolled,')"];
+      discon [style="rounded,filled", fillcolor="#ccccff", pos="10,4!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (n=',Early_Discontinuation,')"];
+
+      compl [style="rounded,filled", fillcolor="#ccccff", pos="10,1!", shape = box, width=2.4, height=1, label = "Definitive Fixation Complete (n=',Definitive_Fixation_Complete,')"];
+      
+      
+      # Relationships
+      screened -> eligible
+      screened -> ineligible
+      eligible -> rand
+      rand -> discon
+      eligible -> refused
+      rand -> enrolled
+      enrolled -> compl
+      
+    }
+  '))
+  svg_content <- DiagrammeRsvg::export_svg(NSAID_consort_diagram)
   temp_svg_path <- tempfile(fileext = ".svg")
   writeLines(svg_content, temp_svg_path)
   temp_png_path <- tempfile(fileext = ".png")
