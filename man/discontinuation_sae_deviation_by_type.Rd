@@ -15,6 +15,7 @@ nothing
 }
 \description{
 This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
+This was originally made for Union
 }
 \examples{
 \dontrun{
