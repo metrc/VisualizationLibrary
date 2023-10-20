@@ -59,6 +59,69 @@ enrollment_status_by_site <- function(analytic){
 
 
 
+#' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled (Variable Discontinued)
+#'
+#' @description This function visualizes the enrollment totals for each site
+#'
+#' @param analytic This is the analytic data set that must include screened, 
+#' eligible, refused, consented, enrolled, not_consented, days_site_certified, facilitycode
+#' @param discontinued meta construct for discontinued
+#' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' enrollment_status_by_site_var_discontinued()
+#' }
+enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontined", discontinued_colname="Discontinued"){
+  df <- analytic %>% 
+    select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, days_site_certified, 
+           facilitycode, all_of(discontinued))
+  
+  colnames(df)[11] <- "discontinued"
+  
+  df <- df %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    mutate(days_site_certified = as.numeric(Sys.Date() - as.Date(days_site_certified))) %>% 
+    rename(Facility = facilitycode) %>% 
+    filter(!is.na(Facility))
+  
+  
+  df_1st <- df %>% 
+    group_by(Facility) %>% 
+    summarize('Days Certified' = days_site_certified[1], Screened = sum(screened), Eligible = sum(eligible))
+  
+  df_2nd <- df %>% 
+    filter(eligible == TRUE) %>% 
+    group_by(Facility) %>% 
+    summarize(Refused = sum(refused), 'Not Consented' = sum(not_consented), Consented = sum(consented))
+  
+  df_3rd <- df %>% 
+    filter(eligible == TRUE & consented == TRUE) %>% 
+    group_by(Facility) %>% 
+    summarize("Not Randomized" = sum(not_randomized),
+              "Randomized" = sum(randomized),
+              !!discontinued_colname := sum(discontinued),
+              "Enrolled" = sum(enrolled)) 
+  
+  table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
+    left_join(df_3rd, by = 'Facility') %>% 
+    mutate_all(~ifelse(is.na(.), 0, .)) %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total)
+  
+  table<- kable(table_raw, align='l', padding='2l') %>% 
+    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 2, "Among Randomized"=2)) %>%
+    kable_styling("striped", full_width = F, position="left")
+  return(table)
+}
+
+
+
 
 
 #' Ankle and Plateau X-Ray and Measurement Status
