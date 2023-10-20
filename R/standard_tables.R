@@ -1053,11 +1053,11 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
   
   combined <- bind_rows(inj_gust, inj_tsch, inj_ao) %>%
     relocate(n, .after=value) %>%
-    rename('Fracture Type'=value, 'n=enrolled'=n)
+    rename('Fracture Type'=value)
   
   total_closed <- combined %>%
     filter(`Fracture Type`=='Gustilo Type Closed') %>%
-    pull(enrolled)
+    pull(n)
   known_closed <- inj_tsch %>%
     filter(value!='Tscherne Unknown') %>%
     mutate(n=as.numeric(n)) %>%
@@ -1065,17 +1065,16 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
     sum()
   
   out <- combined %>%
-    mutate('n=enrolled'=ifelse(`Fracture Type`=='Tscherne Unknown', 
-                       total_closed-known_closed, 
-                       `n=enrolled`)) %>%
-    mutate('n=enrolled'=ifelse(str_detect(`Fracture Type`, 'Tscherne'), 
-                       format_count_percent(`n=enrolled`, total_closed),
-                       format_count_percent(`n=enrolled`, total))) %>%
+    mutate(n=ifelse(`Fracture Type`=='Tscherne Unknown', 
+                       total_closed-known_closed, n)) %>%
+    mutate(n=ifelse(str_detect(`Fracture Type`, 'Tscherne'), 
+                       format_count_percent(n, total_closed),
+                       format_count_percent(n, total))) %>%
     mutate(`Fracture Type`=ifelse(`Fracture Type`=='Tscherne Unknown', 
                                   'Unknown', 
-                                  `Fracture Type`))
+                                  `Fracture Type`)) 
   
-  output<- kable(out, align='l', padding='2l') %>% 
+  output<- kable(out, align='l', padding='2l', col.names = c("Fracture Type", paste0("n=",total))) %>% 
     kable_styling("condensed", position="left") %>%
     pack_rows("Open Fracture", 1, nrow(inj_tsch), label_row_css = "text-align:left") %>%
     pack_rows("Closed Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
