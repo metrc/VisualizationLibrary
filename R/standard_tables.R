@@ -130,7 +130,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #'
 #' @param analytic This is the analytic data set that must include sixweek_visit_expected, 
 #' threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected, injury_type,
-#' radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo, radiographs_taken_12mo,
+#' radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo,
 #' plat_tib_fib_overlap_6mo, plat_sagittal_pl_alignment_6mo, plat_patella_centered_6mo, 
 #' plat_medial_prox_tibia_deg_6mo, plat_medial_lateral_diff_6mo, plat_condylar_width_6mo, plat_art_step_off_medial_6mo, 
 #' plat_art_step_off_lateral_6mo, plat_femur_tibia_deg_6mo,
@@ -325,7 +325,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   df2_plateau_expected <- analytic %>% 
     filter(injury_type=="plateau") %>% 
     select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, 
-           radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo, radiographs_taken_12mo) %>% 
+           radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo) %>% 
     mutate(radiographs_taken_6wk = ifelse(sixweek_visit_expected,
                                           ifelse(is.na(radiographs_taken_6wk),"Missing",radiographs_taken_6wk),NA)) %>% 
     mutate(radiographs_taken_3mo = ifelse(threemonth_visit_expected,
