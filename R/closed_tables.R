@@ -944,3 +944,62 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 }
 
 
+
+
+
+#' Closed Nonunion surgery outcome
+#'
+#' @description This function visualizes the Nonunion surgery outcome
+#'
+#' @param analytic This is the analytic data set that must include enrolled, 
+#' followup_due_3mo, followup_due_12mo, nonunion_90day,  nonunion_1yr, treatment_arm
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_nonunion_surgery_outcome()
+#' }
+closed_nonunion_surgery_outcome <- function(analytic){
+  df <- analytic %>% 
+    select(enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr) %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    filter(enrolled) %>% 
+    boolean_column_counter() %>% 
+    mutate(nonunion_90day = format_count_percent(nonunion_90day, followup_due_3mo),
+           nonunion_1yr = format_count_percent(nonunion_1yr, followup_due_12mo)) %>% 
+    mutate(Treatment = "Total") %>% 
+    select(Treatment, enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr)
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A") %>% 
+    select(enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr) %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    filter(enrolled) %>% 
+    boolean_column_counter() %>% 
+    mutate(nonunion_90day = format_count_percent(nonunion_90day, followup_due_3mo),
+           nonunion_1yr = format_count_percent(nonunion_1yr, followup_due_12mo)) %>% 
+    mutate(Treatment = "Group A") %>% 
+    select(Treatment, enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr)
+    
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B") %>% 
+    select(enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr) %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    filter(enrolled) %>% 
+    boolean_column_counter() %>% 
+    mutate(nonunion_90day = format_count_percent(nonunion_90day, followup_due_3mo),
+           nonunion_1yr = format_count_percent(nonunion_1yr, followup_due_12mo)) %>% 
+    mutate(Treatment = "Group B") %>% 
+    select(Treatment, enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr)
+  
+  df <- rbind(df, df_a, df_b)
+  
+  colname <- c("Treatment", "Enrolled", "Expected Three Month", "90 Day Non-Union", "Expected Twelve Month", "1 Year Non-Union")
+  
+  table<- kable(df, align='l', padding='2l', col.names = colname) %>% 
+    kable_styling("striped", full_width = F, position="left")
+  return(table)
+}
+
