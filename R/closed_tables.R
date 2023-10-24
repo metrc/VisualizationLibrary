@@ -875,3 +875,72 @@ closed_appendix_D_protocol_deviation <- function(analytic){
 }
 
 
+
+#' Crossover Monitoring by Site Closed
+#'
+#' @description This function visualizes the crossovers by site in hospital and at discharge
+#'
+#' @param analytic This is the analytic data set that must include enrolled, dfsurg_completed, 
+#' ih_dischrg_date, ih_crossover, dc_crossover, facilitycode, and treatment_arm
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_ih_and_dc_crossover_monitoring_by_site()
+#' }
+closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
+  
+  df <- analytic %>% 
+    filter(enrolled == TRUE)
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A") %>% 
+    filter(enrolled == TRUE)
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B") %>% 
+    filter(enrolled == TRUE)
+  
+  inner_closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic_df){
+    
+    df <- analytic_df %>% 
+      select(facilitycode, enrolled, dfsurg_completed, ih_dischrg_date, ih_crossover, dc_crossover) %>% 
+      mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+      rename(Facility = facilitycode) %>% 
+      filter(enrolled) %>% 
+      mutate(ih_dischrg_date = !is.na(ih_dischrg_date)) %>% 
+      group_by(Facility) %>% 
+      summarize('Enrolled' = sum(enrolled),
+                "Definitive Fixation Complete" = sum(dfsurg_completed), 
+                "Discharged from Index Hospitalization" = sum(ih_dischrg_date),
+                "Inpatient Crossover" = sum(ih_crossover),
+                "Discharge Crossover" = sum(dc_crossover))
+    
+    
+    table_raw <- df %>% 
+      adorn_totals("row") %>% 
+      mutate(is_total=Facility=="Total") %>% 
+      arrange(desc(is_total), Facility) %>% 
+      select(-is_total)
+    
+    return(table_raw)
+  }
+  
+  table_a <- inner_closed_ih_and_dc_crossover_monitoring_by_site(df_a)
+  table_b <- inner_closed_ih_and_dc_crossover_monitoring_by_site(df_b)
+  table_full <- inner_closed_ih_and_dc_crossover_monitoring_by_site(df)
+  
+  df_table <- full_join(full_join(table_a, table_b, by="Facility"), 
+                        table_full, by="Facility")
+  
+
+  table_raw<- kable(df_table, align='l', padding='2l', col.names = str_remove(colnames(df_table),"\\.x|\\.y")) %>%
+    add_header_above(c(" " = 1, "Group A" = 5, "Group B" = 5, "All" = 5)) %>%
+    kable_styling("striped", full_width = F, position="left")
+  
+  return(table_raw)
+}
+
+
