@@ -1335,3 +1335,76 @@ nonunion_surgery_outcome <- function(analytic){
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
+
+
+#' Expected and followup visits for NSAIDs
+#'
+#' @description This function visualizes the Expected and followup visits completeness, incompleteness, missingness, 
+#' for NSAIDs
+#'
+#' @param analytic This is the analytic data set that must include threemonth_followup_complete, sixmonth_followup_complete, twelvemonth_followup_complete, threemonth_followup_incomplete,
+#' sixmonth_followup_incomplete, twelvemonth_followup_incomplete, threemonth_followup_missing, 
+#' sixmonth_followup_missing, twelvemonth_followup_missing, sixmonth_followup_late, threemonth_followup_late,
+#' twelvemonth_followup_late, expected_3mo_followup, expected_6mo_followup, expected_12mo_followup
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' expected_followup_visits_nsaids()
+#' }
+expected_followup_visits_nsaids <- function(analytic){
+  
+  df <- analytic %>% 
+    select(threemonth_followup_complete, sixmonth_followup_complete, twelvemonth_followup_complete, threemonth_followup_incomplete,
+           sixmonth_followup_incomplete, twelvemonth_followup_incomplete, threemonth_followup_missing, 
+           sixmonth_followup_missing, twelvemonth_followup_missing, sixmonth_followup_late, threemonth_followup_late,
+           twelvemonth_followup_late) 
+  
+  
+  df_expected <- analytic %>% 
+    select(expected_3mo_followup, expected_6mo_followup, expected_12mo_followup) %>% 
+    summarise("12 Months"= sum(expected_12mo_followup, na.rm = TRUE), "3 Months"= sum(expected_3mo_followup, na.rm = TRUE),
+              "6 Months"= sum(expected_6mo_followup, na.rm = TRUE)) %>% 
+    mutate(Form = "Expected") %>% 
+    mutate(Status = "Enrolled") 
+  
+  df_early <- analytic %>% 
+    select(threemonth_followup_early, sixmonth_followup_early, twelvemonth_followup_early) %>% 
+    summarise("12 Months"= sum(twelvemonth_followup_early, na.rm = TRUE), "3 Months"= sum(threemonth_followup_early, na.rm = TRUE),
+              "6 Months"= sum(sixmonth_followup_early, na.rm = TRUE)) %>% 
+    mutate(Form = "Early") %>% 
+    mutate(Status = "Expected") 
+  
+  output <- count_split_cols_long_and_wide(df, '_followup_') %>%
+    rename(Form=prefix, Status=level) %>% 
+    mutate(incomplete = ifelse(is.na(incomplete), 0, incomplete)) %>% 
+    filter(Status == TRUE) %>% 
+    pivot_longer(
+      cols = c(complete, incomplete, late, missing),
+      names_to = "New_Column_Name",
+      values_to = "Value"
+    ) %>% 
+    pivot_wider(names_from = Form, values_from = Value) %>% 
+    rename(Form = New_Column_Name,
+           `3 Months` = threemonth,
+           `6 Months` = sixmonth,
+           `12 Months` = twelvemonth) %>% 
+    mutate(Form = recode(Form, "complete" = "Complete", "incomplete" = "Incomplete", "late" = "Late", "missing" = "Missing"))
+  
+  
+  
+  bound_df <- bind_rows(df_expected,output, df_early) %>% 
+    ungroup()
+  
+  df_table_raw <- reorder_rows(bound_df, list('Form'=c("Expected", 'complete', 'incomplete', 'late', 'missing', 'Early'))) %>%
+    mutate_if(is.numeric, replace_na, 0) 
+  
+  df_for_table <- df_table_raw %>% 
+    ungroup() %>% 
+    select(-Status) %>% 
+    select(Form, `3 Months`, `6 Months`, `12 Months`)
+  
+  return(df_for_table)
+}
