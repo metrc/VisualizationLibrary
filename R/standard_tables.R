@@ -101,8 +101,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
   df_3rd <- df %>% 
     filter(eligible == TRUE & consented == TRUE) %>% 
     group_by(Facility) %>% 
-    summarize("Not Randomized" = sum(not_randomized),
-              "Randomized" = sum(randomized),
+    summarize("Randomized" = sum(randomized),
               !!discontinued_colname := sum(discontinued),
               "Enrolled" = sum(enrolled)) 
   
@@ -115,7 +114,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
     select(-is_total)
   
   table<- kable(table_raw, align='l', padding='2l') %>% 
-    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 2, "Among Randomized"=2)) %>%
+    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3)) %>%
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
