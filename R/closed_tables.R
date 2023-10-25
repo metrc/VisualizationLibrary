@@ -915,7 +915,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
       summarize('Enrolled' = sum(enrolled),
                 "Definitive Fixation Complete" = sum(dfsurg_completed), 
                 "Discharged from Index Hospitalization" = sum(ih_dischrg_date),
-                "Discharged on Radomization Date" = sum(hopkins_ih_dischrg_date_on_time_zero),
+                "Discharged on Radomization Date" = sum(ih_dischrg_date_on_time_zero),
                 "Inpatient Crossover" = sum(ih_crossover),
                 "Discharge Crossover" = sum(dc_crossover))
     
