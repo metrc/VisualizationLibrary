@@ -881,7 +881,7 @@ closed_appendix_D_protocol_deviation <- function(analytic){
 #' @description This function visualizes the crossovers by site in hospital and at discharge
 #'
 #' @param analytic This is the analytic data set that must include enrolled, dfsurg_completed, 
-#' ih_dischrg_date, ih_crossover, dc_crossover, facilitycode, and treatment_arm
+#' ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero, facilitycode, and treatment_arm
 #'
 #' @return nothing
 #' @export
@@ -906,7 +906,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   inner_closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic_df){
     
     df <- analytic_df %>% 
-      select(facilitycode, enrolled, dfsurg_completed, ih_dischrg_date, ih_crossover, dc_crossover) %>% 
+      select(facilitycode, enrolled, dfsurg_completed, ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero) %>% 
       mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
       rename(Facility = facilitycode) %>% 
       filter(enrolled) %>% 
@@ -915,9 +915,9 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
       summarize('Enrolled' = sum(enrolled),
                 "Definitive Fixation Complete" = sum(dfsurg_completed), 
                 "Discharged from Index Hospitalization" = sum(ih_dischrg_date),
+                "Discharged on Radomization Date" = sum(hopkins_ih_dischrg_date_on_time_zero),
                 "Inpatient Crossover" = sum(ih_crossover),
                 "Discharge Crossover" = sum(dc_crossover))
-    
     
     table_raw <- df %>% 
       adorn_totals("row") %>% 
@@ -937,7 +937,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   
 
   table_raw<- kable(df_table, align='l', padding='2l', col.names = str_remove(colnames(df_table),"\\.x|\\.y")) %>%
-    add_header_above(c(" " = 1, "Group A" = 5, "Group B" = 5, "All" = 5)) %>%
+    add_header_above(c(" " = 1, "Group A" = 6, "Group B" = 6, "All" = 6)) %>%
     kable_styling("striped", full_width = F, position="left")
   
   return(table_raw)

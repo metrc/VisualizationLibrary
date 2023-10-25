@@ -1268,7 +1268,7 @@ complications_by_severity_relatedness <- function(analytic){
 #' @description This function visualizes the crossovers by site in hospital and at discharge
 #'
 #' @param analytic This is the analytic data set that must include enrolled, dfsurg_completed, 
-#' ih_dischrg_date, ih_crossover, dc_crossover, and facilitycode
+#' ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero, and facilitycode
 #'
 #' @return nothing
 #' @export
@@ -1279,7 +1279,7 @@ complications_by_severity_relatedness <- function(analytic){
 #' }
 ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   df <- analytic %>% 
-    select(facilitycode, enrolled, dfsurg_completed, ih_dischrg_date, ih_crossover, dc_crossover) %>% 
+    select(facilitycode, enrolled, dfsurg_completed, ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
     rename(Facility = facilitycode) %>% 
     filter(enrolled) %>% 
@@ -1288,6 +1288,7 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
     summarize('Enrolled' = sum(enrolled),
               "Definitive Fixation Complete" = sum(dfsurg_completed), 
               "Discharged from Index Hospitalization" = sum(ih_dischrg_date),
+              "Discharged on Radomization Date" = sum(hopkins_ih_dischrg_date_on_time_zero),
               "Inpatient Crossover" = sum(ih_crossover),
               "Discharge Crossover" = sum(dc_crossover))
   
@@ -1299,7 +1300,6 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
     select(-is_total)
   
   table<- kable(table_raw, align='l', padding='2l') %>% 
-    #add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3)) %>%
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
