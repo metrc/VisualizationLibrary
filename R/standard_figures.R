@@ -139,7 +139,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
 #' \dontrun{
 #' dsmb_nsaid_consort_diagram()
 #' }
-dsmb_nsaid_consort_diagram <- function(analytic, not_enrolled_other=NULL){
+dsmb_nsaid_consort_diagram <- function(analytic, not_consented=NULL){
   analytic <- analytic %>% 
     filter(screened == TRUE) 
   
@@ -154,13 +154,17 @@ dsmb_nsaid_consort_diagram <- function(analytic, not_enrolled_other=NULL){
                    filter(eligible) %>% 
                    pull(refused), na.rm=TRUE)
   if(is.null(not_enrolled_other)){
-    Not_Enrolled_Other <- Eligible - Consented - Refused
+    Not_Consented <- Eligible - Consented - Refused
   } else{
     temp <- analytic %>% 
       filter(eligible)
-    Not_Enrolled_Other <- sum(temp[[not_enrolled_other]], na.rm=TRUE)
+    Not_Consented <- sum(temp[[not_consented]], na.rm=TRUE)
   }
 
+  
+  Consented <- sum(analytic %>% 
+                      filter(eligible) %>% 
+                      pull(consented), na.rm=TRUE)
   
   Randomized <- sum(analytic %>% 
                       filter(eligible) %>% 
@@ -195,9 +199,11 @@ dsmb_nsaid_consort_diagram <- function(analytic, not_enrolled_other=NULL){
       ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,12!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
       eligible [style="rounded,filled", fillcolor="#ccccff", pos="6,10!", shape = box, width=2.4, height=1, label = "Eligible (n=',Eligible,')"];
       
-      refused [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Not Enrolled\nRefused (n=',Refused,')\nNot Enrolled: Other (n=',Not_Enrolled_Other,')"];
+      refused [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Not Consented (n=',Not_Consented,')\nRefused (n=',Refused,')"];
 
-      rand [style="rounded,filled", fillcolor="#ccccff", pos="6,6!", shape = box, width=2.4, height=1, label = "Consented and Randomized (n=',Randomized,')"];
+      cons [style="rounded,filled", fillcolor="#ccccff", pos="6,8!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
+
+      rand [style="rounded,filled", fillcolor="#ccccff", pos="6,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
       
       enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',Enrolled,')"];
       discon [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (n=',Early_Discontinuation,')"];
@@ -208,7 +214,8 @@ dsmb_nsaid_consort_diagram <- function(analytic, not_enrolled_other=NULL){
       # Relationships
       screened -> eligible
       screened -> ineligible
-      eligible -> rand
+      eligible -> cons
+      cons -> rand
       rand -> discon
       eligible -> refused
       rand -> enrolled
