@@ -26,7 +26,7 @@ First, ensure that you have R available on your system. In order to install R, n
 
 Now that we have the R environment, we must install the R devtools package, The R devtools includes all the programs and components that are needed to develop and build R packages from source. 
 
-To begin, we must first install some system-level tools that R devtools depends upon. These libraries are often used for compiling software:
+To begin, we must first install some system-level tools that R devtools depends upon. These libraries are often used for compiling R software:
 
 ```bash
 sudo apt install build-essential libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libharfbuzz-dev libjpeg-dev libpng-dev libssl-dev libtiff5-dev libxml2-dev
