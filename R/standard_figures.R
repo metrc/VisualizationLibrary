@@ -128,9 +128,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
 #' for the NSAID study
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, 
-#' consented, randomized, enrolled, active, enrolled_discontinuation, refused, late_ineligible, and the meta construct column
-#' @param not_enrolled_other is a meta construct that is NULL by default
-#' @param completed_str is the text for the completed box that defaults to 'Completed 12-month visit'
+#' consented, not_consented, randomized, enrolled, enrolled_discontinuation, refused, dfsurg_completed, and the meta construct column
 #'
 #' @return nothing
 #' @export
@@ -139,7 +137,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
 #' \dontrun{
 #' dsmb_nsaid_consort_diagram()
 #' }
-dsmb_nsaid_consort_diagram <- function(analytic, not_consented=NULL){
+dsmb_nsaid_consort_diagram <- function(analytic){
   analytic <- analytic %>% 
     filter(screened == TRUE) 
   
@@ -153,15 +151,9 @@ dsmb_nsaid_consort_diagram <- function(analytic, not_consented=NULL){
   Refused <- sum(analytic %>% 
                    filter(eligible) %>% 
                    pull(refused), na.rm=TRUE)
-  if(is.null(not_enrolled_other)){
-    Not_Consented <- Eligible - Consented - Refused
-  } else{
-    temp <- analytic %>% 
-      filter(eligible)
-    Not_Consented <- sum(temp[[not_consented]], na.rm=TRUE)
-  }
-
-  
+  Not_Consented <- sum(analytic %>% 
+                         filter(eligible) %>% 
+                         pull(not_consented), na.rm=TRUE)
   Consented <- sum(analytic %>% 
                       filter(eligible) %>% 
                       pull(consented), na.rm=TRUE)
