@@ -8,7 +8,7 @@ closed_ih_and_dc_crossover_monitoring_by_site(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, dfsurg_completed, 
-ih_dischrg_date, ih_crossover, dc_crossover, facilitycode, and treatment_arm}
+ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero, facilitycode, and treatment_arm}
 }
 \value{
 nothing
