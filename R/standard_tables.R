@@ -1408,3 +1408,49 @@ expected_followup_visits_nsaids <- function(analytic){
   
   return(df_for_table)
 }
+
+
+
+#' Expected, completed, missing, out of window visits using crf08b form for NSAIDs
+#'
+#' @description This function visualizes the expected visits for each timepoint for CRF08B form
+#'
+#' @param analytic This is the analytic data set that must include crf08b_status_3mo, crf08b_status_6mo, 
+#' crf08b_status_12mo, followup_due_3mo, followup_due_6mo, followup_due_12mo, enrolled
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' visit_status_for_followup_nsaids()
+#' }
+visit_status_for_followup_nsaids <- function(analytic){
+
+    df <- analytic %>% 
+      select(crf08b_status_3mo, crf08b_status_6mo, crf08b_status_12mo)
+    
+    df_expected <- analytic %>% 
+      select(followup_due_3mo, followup_due_6mo, followup_due_12mo, enrolled) %>% 
+      filter(enrolled == TRUE) %>% select(-enrolled) %>% 
+      summarise("12 Months"= sum(followup_due_12mo, na.rm = TRUE), "3 Months"= sum(followup_due_3mo, na.rm = TRUE),
+                "6 Months"= sum(followup_due_6mo, na.rm = TRUE)) %>% 
+      mutate(Form = "Enrolled") %>% 
+      mutate(Status = "Expected") 
+    
+    
+    output <- count_split_cols_long_and_wide(df, '_status_') %>%
+      rename(Form=prefix, Status=level) %>% 
+      rename("3 Months"=`3mo`, "6 Months"=`6mo`, "12 Months"=`12mo`) %>%
+      select(Form, Status, `3 Months`, `6 Months`, `12 Months`)
+    
+    bound_df <- bind_rows(df_expected, output) %>% 
+      ungroup() %>% 
+      select(-Form)
+    
+    df_table <- reorder_rows(bound_df, list('Status'=c('Expected', 'Complete', 'Missing', 'Not started'))) %>%
+      mutate_if(is.numeric, replace_na, 0) %>% 
+      select(Status, `3 Months`, `6 Months`, `12 Months`)
+    
+  return(df_table)
+}
