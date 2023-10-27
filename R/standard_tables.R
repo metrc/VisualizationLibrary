@@ -101,8 +101,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
   df_3rd <- df %>% 
     filter(eligible == TRUE & consented == TRUE) %>% 
     group_by(Facility) %>% 
-    summarize("Not Randomized" = sum(not_randomized),
-              "Randomized" = sum(randomized),
+    summarize("Randomized" = sum(randomized),
               !!discontinued_colname := sum(discontinued),
               "Enrolled" = sum(enrolled)) 
   
@@ -115,7 +114,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
     select(-is_total)
   
   table<- kable(table_raw, align='l', padding='2l') %>% 
-    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 2, "Among Randomized"=2)) %>%
+    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3)) %>%
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
@@ -168,7 +167,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     filter(!is.na(value)) %>%
     ungroup() %>% 
     mutate(name = str_replace(str_replace(str_remove(name, "cfu_status_"),"mo", " Months"),"wk", " Weeks"))
-    
+  
   
   df1_expected_ankle <- analytic %>% 
     filter(injury_type=="ankle") %>% 
@@ -178,12 +177,12 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     pivot_longer(everything())  %>% 
     rename(n=value) %>% 
     mutate(value="Expected")
-    
+  
   df1_shell_ankle <- tibble(name=c("6 Weeks", "3 Months", "6 Months")) %>% 
     group_by(name) %>% 
     reframe(value=c("Complete", "Incomplete", "Missing", "Expected")) %>% 
     ungroup()
-    
+  
   df_one_ankle <- left_join(df1_shell_ankle, bind_rows(df1_expected_ankle, df1_ankle)) %>% 
     mutate(value = factor(value, c("Expected", "Complete", "Incomplete", "Missing"))) %>% 
     mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months"))) %>% 
@@ -263,7 +262,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     left_join(df2_ankle_expected) %>% 
     mutate(n = format_count_percent(n, expected)) %>% 
     select(-expected)
-
+  
   df3_shell_ankle <- tibble(name=c("6 Weeks", "3 Months", "6 Months")) %>% 
     group_by(name) %>% 
     reframe(value=c("Completed","Not Completed", "  "," ")) %>% 
@@ -332,7 +331,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
                                           ifelse(is.na(radiographs_taken_3mo),"Missing",radiographs_taken_3mo),NA)) %>% 
     mutate(radiographs_taken_6mo = ifelse(sixmonth_visit_expected,
                                           ifelse(is.na(radiographs_taken_6mo),"Missing",radiographs_taken_6mo),NA)) %>% 
-       select(-sixweek_visit_expected, -threemonth_visit_expected, -sixmonth_visit_expected) %>% 
+    select(-sixweek_visit_expected, -threemonth_visit_expected, -sixmonth_visit_expected) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(str_detect(value,"Yes|YES"),"Yes",value)) %>% 
     group_by(name, value) %>%
@@ -419,7 +418,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     kable_styling("striped", full_width = F, position='left')
   
   output <- paste0("<h3>Ankle</h3><br />",table_raw_ankle, "<h3>Plateau</h3><br />",table_raw_plateau)
-
+  
   return(output)
 }
 
@@ -698,7 +697,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
                         'Education' = nrow(education_df), 'Military' = nrow(military_df)), label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
- return(vis) 
+  return(vis) 
 } 
 
 #' Number of Discontinued Participants, SAEs, and Protocol Deviations by type
@@ -998,7 +997,7 @@ ineligibility_by_reasons <- function(analytic){
     rename(Screened = screened,
            Ineligible = ineligible) %>% 
     arrange(desc(Screened))
-
+  
   vis <- kable(output, align='l', padding='2l') %>%
     add_header_above(c(" " = 3, "Top 5 Ineligibility Reasons" = 5, " " = 1)) %>%  
     kable_styling("striped", full_width = F, position="left") 
@@ -1066,10 +1065,10 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
   
   out <- combined %>%
     mutate(n=ifelse(`Fracture Type`=='Tscherne Unknown', 
-                       total_closed-known_closed, n)) %>%
+                    total_closed-known_closed, n)) %>%
     mutate(n=ifelse(str_detect(`Fracture Type`, 'Tscherne'), 
-                       format_count_percent(n, total_closed),
-                       format_count_percent(n, total))) %>%
+                    format_count_percent(n, total_closed),
+                    format_count_percent(n, total))) %>%
     mutate(`Fracture Type`=ifelse(`Fracture Type`=='Tscherne Unknown', 
                                   'Unknown', 
                                   `Fracture Type`)) 
@@ -1269,7 +1268,7 @@ complications_by_severity_relatedness <- function(analytic){
 #' @description This function visualizes the crossovers by site in hospital and at discharge
 #'
 #' @param analytic This is the analytic data set that must include enrolled, dfsurg_completed, 
-#' ih_dischrg_date, ih_crossover, dc_crossover, and facilitycode
+#' ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero, and facilitycode
 #'
 #' @return nothing
 #' @export
@@ -1280,7 +1279,7 @@ complications_by_severity_relatedness <- function(analytic){
 #' }
 ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   df <- analytic %>% 
-    select(facilitycode, enrolled, dfsurg_completed, ih_dischrg_date, ih_crossover, dc_crossover) %>% 
+    select(facilitycode, enrolled, dfsurg_completed, ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
     rename(Facility = facilitycode) %>% 
     filter(enrolled) %>% 
@@ -1289,10 +1288,11 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
     summarize('Enrolled' = sum(enrolled),
               "Definitive Fixation Complete" = sum(dfsurg_completed), 
               "Discharged from Index Hospitalization" = sum(ih_dischrg_date),
+              "Discharged on Radomization Date" = sum(ih_dischrg_date_on_time_zero),
               "Inpatient Crossover" = sum(ih_crossover),
               "Discharge Crossover" = sum(dc_crossover))
   
- 
+  
   table_raw <- df %>% 
     adorn_totals("row") %>% 
     mutate(is_total=Facility=="Total") %>% 
@@ -1300,7 +1300,6 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
     select(-is_total)
   
   table<- kable(table_raw, align='l', padding='2l') %>% 
-    #add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3)) %>%
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
@@ -1337,120 +1336,120 @@ nonunion_surgery_outcome <- function(analytic){
 }
 
 
-#' Expected and followup visits for NSAIDs
+#' Crossover Monitoring by Site
 #'
-#' @description This function visualizes the Expected and followup visits completeness, incompleteness, missingness, 
-#' for NSAIDs
+#' @description This function visualizes the crossovers by site in hospital and at discharge
 #'
-#' @param analytic This is the analytic data set that must include threemonth_followup_complete, sixmonth_followup_complete, twelvemonth_followup_complete, threemonth_followup_incomplete,
-#' sixmonth_followup_incomplete, twelvemonth_followup_incomplete, threemonth_followup_missing, 
-#' sixmonth_followup_missing, twelvemonth_followup_missing, sixmonth_followup_late, threemonth_followup_late,
-#' twelvemonth_followup_late, expected_3mo_followup, expected_6mo_followup, expected_12mo_followup
+#' @param analytic This is the analytic data set that must include enrolled, dfsurg_completed, 
+#' ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero, and facilitycode
 #'
 #' @return nothing
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' expected_followup_visits_nsaids()
+#' ih_and_dc_crossover_monitoring_by_site()
 #' }
-expected_followup_visits_nsaids <- function(analytic){
-  
+ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   df <- analytic %>% 
-    select(threemonth_followup_complete, sixmonth_followup_complete, twelvemonth_followup_complete, threemonth_followup_incomplete,
-           sixmonth_followup_incomplete, twelvemonth_followup_incomplete, threemonth_followup_missing, 
-           sixmonth_followup_missing, twelvemonth_followup_missing, sixmonth_followup_late, threemonth_followup_late,
-           twelvemonth_followup_late) 
+    select(facilitycode, enrolled, dfsurg_completed, ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero) %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    rename(Facility = facilitycode) %>% 
+    filter(enrolled) %>% 
+    mutate(ih_dischrg_date = !is.na(ih_dischrg_date)) %>% 
+    group_by(Facility) %>% 
+    summarize('Enrolled' = sum(enrolled),
+              "Definitive Fixation Complete" = sum(dfsurg_completed), 
+              "Discharged from Index Hospitalization" = sum(ih_dischrg_date),
+              "Discharged on Radomization Date" = sum(ih_dischrg_date_on_time_zero),
+              "Inpatient Crossover" = sum(ih_crossover),
+              "Discharge Crossover" = sum(dc_crossover))
   
   
-  df_expected <- analytic %>% 
-    select(expected_3mo_followup, expected_6mo_followup, expected_12mo_followup) %>% 
-    summarise("12 Months"= sum(expected_12mo_followup, na.rm = TRUE), "3 Months"= sum(expected_3mo_followup, na.rm = TRUE),
-              "6 Months"= sum(expected_6mo_followup, na.rm = TRUE)) %>% 
-    mutate(Form = "Expected") %>% 
-    mutate(Status = "Enrolled") 
+  table_raw <- df %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total)
   
-  df_early <- analytic %>% 
-    select(threemonth_followup_early, sixmonth_followup_early, twelvemonth_followup_early) %>% 
-    summarise("12 Months"= sum(twelvemonth_followup_early, na.rm = TRUE), "3 Months"= sum(threemonth_followup_early, na.rm = TRUE),
-              "6 Months"= sum(sixmonth_followup_early, na.rm = TRUE)) %>% 
-    mutate(Form = "Early") %>% 
-    mutate(Status = "Expected") 
-  
-  output <- count_split_cols_long_and_wide(df, '_followup_') %>%
-    rename(Form=prefix, Status=level) %>% 
-    mutate(incomplete = ifelse(is.na(incomplete), 0, incomplete)) %>% 
-    filter(Status == TRUE) %>% 
-    pivot_longer(
-      cols = c(complete, incomplete, late, missing),
-      names_to = "New_Column_Name",
-      values_to = "Value"
-    ) %>% 
-    pivot_wider(names_from = Form, values_from = Value) %>% 
-    rename(Form = New_Column_Name,
-           `3 Months` = threemonth,
-           `6 Months` = sixmonth,
-           `12 Months` = twelvemonth) %>% 
-    mutate(Form = recode(Form, "complete" = "Complete", "incomplete" = "Incomplete", "late" = "Late", "missing" = "Missing"))
-  
-  
-  
-  bound_df <- bind_rows(df_expected,output, df_early) %>% 
-    ungroup()
-  
-  df_table_raw <- reorder_rows(bound_df, list('Form'=c("Expected", 'complete', 'incomplete', 'late', 'missing', 'Early'))) %>%
-    mutate_if(is.numeric, replace_na, 0) 
-  
-  df_for_table <- df_table_raw %>% 
-    ungroup() %>% 
-    select(-Status) %>% 
-    select(Form, `3 Months`, `6 Months`, `12 Months`)
-  
-  return(df_for_table)
+  table<- kable(table_raw, align='l', padding='2l') %>% 
+    kable_styling("striped", full_width = F, position="left")
+  return(table)
 }
 
 
-
-#' Expected, completed, missing, out of window visits using crf08b form for NSAIDs
+#' Expected visit status for 3 Months, 6 Months, and 12 Months followup
 #'
-#' @description This function visualizes the expected visits for each timepoint for CRF08B form
+#' @description This function uses status constructs but treats early, late and complete as mutually exclusive.
+#' Therefore, complete is renamed to "On Time" and all three of them combined to Complete.
 #'
-#' @param analytic This is the analytic data set that must include crf08b_status_3mo, crf08b_status_6mo, 
-#' crf08b_status_12mo, followup_due_3mo, followup_due_6mo, followup_due_12mo, enrolled
+#' @param analytic This is the analytic data set that must include followup_due_3mo, followup_due_6mo, 
+#' followup_due_12mo, followup_status_3mo, followup_status_6mo, followup_status_12mo
 #'
 #' @return nothing
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' visit_status_for_followup_nsaids()
+#' expected_and_followup_visit()
 #' }
-visit_status_for_followup_nsaids <- function(analytic){
-
-    df <- analytic %>% 
-      select(crf08b_status_3mo, crf08b_status_6mo, crf08b_status_12mo)
-    
-    df_expected <- analytic %>% 
-      select(followup_due_3mo, followup_due_6mo, followup_due_12mo, enrolled) %>% 
-      filter(enrolled == TRUE) %>% select(-enrolled) %>% 
-      summarise("12 Months"= sum(followup_due_12mo, na.rm = TRUE), "3 Months"= sum(followup_due_3mo, na.rm = TRUE),
-                "6 Months"= sum(followup_due_6mo, na.rm = TRUE)) %>% 
-      mutate(Form = "Enrolled") %>% 
-      mutate(Status = "Expected") 
-    
-    
-    output <- count_split_cols_long_and_wide(df, '_status_') %>%
-      rename(Form=prefix, Status=level) %>% 
-      rename("3 Months"=`3mo`, "6 Months"=`6mo`, "12 Months"=`12mo`) %>%
-      select(Form, Status, `3 Months`, `6 Months`, `12 Months`)
-    
-    bound_df <- bind_rows(df_expected, output) %>% 
-      ungroup() %>% 
-      select(-Form)
-    
-    df_table <- reorder_rows(bound_df, list('Status'=c('Expected', 'Complete', 'Missing', 'Not started'))) %>%
-      mutate_if(is.numeric, replace_na, 0) %>% 
-      select(Status, `3 Months`, `6 Months`, `12 Months`)
-    
-  return(df_table)
+expected_and_followup_visit <- function(analytic){
+  df_expected <- analytic %>% 
+    select(followup_due_3mo, followup_due_6mo, followup_due_12mo) %>% 
+    summarize("Status" = "Expected", "3 Month" = sum(followup_due_3mo, na.rm = TRUE), "6 Month" = sum(followup_due_6mo, na.rm = TRUE),
+              "12 Month" = sum(followup_due_12mo, na.rm = TRUE))
+  
+  df_complete <- analytic %>% 
+    select(followup_status_3mo, followup_status_6mo, followup_status_12mo) %>% 
+    mutate(followup_status_3mo = followup_status_3mo == "Complete" | followup_status_3mo == "Early" | followup_status_3mo == "Late") %>% 
+    mutate(followup_status_6mo = followup_status_6mo == "Complete" | followup_status_6mo == "Early" | followup_status_6mo == "Late") %>% 
+    mutate(followup_status_12mo = followup_status_12mo == "Complete" | followup_status_12mo == "Early" | followup_status_12mo == "Late") %>% 
+    summarize("Status" = "Complete", "3 Month" = sum(followup_status_3mo, na.rm = TRUE), "6 Month" = sum(followup_status_6mo, na.rm = TRUE),
+              "12 Month" = sum(followup_status_12mo, na.rm = TRUE))
+  
+  df_3mo <- analytic %>% 
+    filter(!is.na(followup_status_3mo)) %>% 
+    select(followup_status_3mo) %>% 
+    mutate(followup_status_3mo = ifelse(followup_status_3mo == "Complete", "On Time", followup_status_3mo)) %>% 
+    group_by(followup_status_3mo) %>%
+    count() %>% 
+    rename("3 Month" = n, 
+           "Status" = followup_status_3mo) 
+  
+  
+  df_6mo <- analytic %>% 
+    filter(!is.na(followup_status_6mo)) %>% 
+    select(followup_status_6mo) %>% 
+    mutate(followup_status_6mo = ifelse(followup_status_6mo == "Complete", "On Time", followup_status_6mo)) %>% 
+    group_by(followup_status_6mo) %>%
+    count() %>% 
+    rename("6 Month" = n, 
+           "Status" = followup_status_6mo) 
+  
+  
+  df_12mo <- analytic %>% 
+    filter(!is.na(followup_status_12mo)) %>% 
+    select(followup_status_12mo) %>% 
+    mutate(followup_status_12mo = ifelse(followup_status_12mo == "Complete", "On Time", followup_status_12mo)) %>% 
+    group_by(followup_status_12mo) %>%
+    count() %>% 
+    rename("12 Month" = n, 
+           "Status" = followup_status_12mo) 
+  
+  
+  level_order <- c('Early', 'On Time', 'Late', 'Missing', 'Not Started')
+  
+  bound_df <- full_join(df_3mo, df_6mo) %>% full_join(df_12mo) %>% 
+    mutate(Status = factor(Status, level_order)) %>% 
+    arrange(Status) %>% 
+    mutate_if(is.numeric, replace_na, 0) 
+  
+  df_new <- bind_rows(df_expected, df_complete, bound_df) %>% 
+    filter(Status != "Due")
+  
+  table_raw<- kable(df_new, align='l', padding='2l') %>%
+    add_indent(c(3,4,5)) %>% 
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(table_raw)
 }
