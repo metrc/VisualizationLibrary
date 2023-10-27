@@ -5,6 +5,8 @@
 \title{Crossover Monitoring by Site}
 \usage{
 ih_and_dc_crossover_monitoring_by_site(analytic)
+
+ih_and_dc_crossover_monitoring_by_site(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, dfsurg_completed, 
@@ -12,11 +14,18 @@ ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero, and f
 }
 \value{
 nothing
+
+nothing
 }
 \description{
 This function visualizes the crossovers by site in hospital and at discharge
+
+This function visualizes the crossovers by site in hospital and at discharge
 }
 \examples{
+\dontrun{
+ih_and_dc_crossover_monitoring_by_site()
+}
 \dontrun{
 ih_and_dc_crossover_monitoring_by_site()
 }
