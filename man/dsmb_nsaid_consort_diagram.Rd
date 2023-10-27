@@ -4,15 +4,11 @@
 \alias{dsmb_nsaid_consort_diagram}
 \title{DSMB NSAID Consort Diagram}
 \usage{
-dsmb_nsaid_consort_diagram(analytic, not_enrolled_other = NULL)
+dsmb_nsaid_consort_diagram(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, eligible, 
-consented, randomized, enrolled, active, enrolled_discontinuation, refused, late_ineligible, and the meta construct column}
-
-\item{not_enrolled_other}{is a meta construct that is NULL by default}
-
-\item{completed_str}{is the text for the completed box that defaults to 'Completed 12-month visit'}
+consented, not_consented, randomized, enrolled, enrolled_discontinuation, refused, dfsurg_completed, and the meta construct column}
 }
 \value{
 nothing
