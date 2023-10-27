@@ -18,84 +18,49 @@
 #' }
 closed_enrollment_status_by_site <- function(analytic){
   df_a <- analytic %>% 
-    select(treatment_arm, screened, eligible, refused, consented, enrolled, not_consented, 
-           discontinued_pre_randomization, days_site_certified, 
-           facilitycode, late_ineligible) %>% 
-    filter(treatment_arm=="Group A") %>% 
-    select(-treatment_arm)
+    filter(treatment_arm=="Group A")
   
   df_b <- analytic %>% 
-    select(treatment_arm, screened, eligible, refused, consented, enrolled, not_consented, 
-           discontinued_pre_randomization, days_site_certified, 
-           facilitycode, late_ineligible) %>% 
-    filter(treatment_arm=="Group B") %>% 
-    select(-treatment_arm)
+    filter(treatment_arm=="Group B")
   
-  df_full <- analytic %>% 
-    select(screened, eligible, refused, consented, enrolled, not_consented, 
-           discontinued_pre_randomization, days_site_certified, 
-           facilitycode, late_ineligible)
-  
-  inner_closed_enrollment_status_by_site <- function(input_df){
-    df <- analytic %>% 
-      select(screened, eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, days_site_certified, 
-             facilitycode, late_ineligible) %>% 
-      mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-      mutate(days_site_certified = as.numeric(Sys.Date() - as.Date(days_site_certified))) %>% 
-      rename(Facility = facilitycode) %>% 
-      rename(not_enrolled = not_consented) %>% 
-      filter(!is.na(Facility))
-    
-    
-    df_1st <- df %>% 
-      group_by(Facility) %>% 
-      summarize('Days Certified' = days_site_certified[1], Screened = sum(screened), Eligible = sum(eligible))
-    
-    df_2nd <- df %>% 
-      filter(eligible == TRUE) %>% 
-      group_by(Facility) %>% 
-      summarize(Refused = sum(refused), 'Not Enrolled for Other Reasons' = sum(not_enrolled), Consented = sum(consented))
-    
-    df_3rd <- df %>% 
-      filter(eligible == TRUE & consented == TRUE) %>% 
-      group_by(Facility) %>% 
-      summarize("Discontinued Pre-Randomization" = sum(discontinued_pre_randomization),
-                "Late Ineligible" = sum(late_ineligible), 
-                "Enrolled" = sum(enrolled)) 
-    
-    table_out <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
-      left_join(df_3rd, by = 'Facility') %>% 
-      mutate_all(~ifelse(is.na(.), 0, .)) %>% 
-      arrange(desc(`Days Certified`), desc(Screened))
-    return(table_out)
-  }
-    
-  table_a <- inner_closed_enrollment_status_by_site(df_a)
-  table_b <- inner_closed_enrollment_status_by_site(df_b)
-  table_full <- inner_closed_enrollment_status_by_site(df_full)
-  
-  table_raw <- full_join(full_join(table_a, table_b, by=c("Facility", "Days Certified")), 
-                         table_full, by=c("Facility", "Days Certified")) %>% 
-    adorn_totals("row") %>% 
-    mutate(is_total=Facility=="Total") %>% 
-    arrange(desc(is_total), Facility) %>% 
-    select(-is_total)
-  
-  col_ns <- c(colnames(table_full),
-              colnames(table_full)[3:ncol(table_full)],
-              colnames(table_full)[3:ncol(table_full)])
-  
-  table<- kable(table_raw, align='l', padding='2l', col.names = col_ns) %>% 
-    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3,
-                       " " = 2, "Among Eligible" = 3, "Among Consented" = 3,
-                       " " = 2, "Among Eligible" = 3, "Among Consented" = 3)) %>%
-    add_header_above(c(" " = 2, "Group A" = 8, "Group B" = 8, "All" = 8)) %>%
-    kable_styling("striped", full_width = F, position="left")
-  return(table)
+  out <- paste0("<h4>Group A</h4><br />",
+                enrollment_status_by_site(df_a),
+                "<h4>Group B</h4><br />",
+                enrollment_status_by_site(df_b))
+  return(out)
 }
 
 
 
+#' Closed Number of Subjects Screened, Eligible, Enrolled and Not Enrolled (Variable Discontinued)
+#'
+#' @description This function visualizes the enrollment totals for each site
+#'
+#' @param analytic This is the analytic data set that must include screened, 
+#' eligible, refused, consented, enrolled, not_consented, days_site_certified, facilitycode
+#' @param discontinued meta construct for discontinued
+#' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_enrollment_status_by_site_var_discontinued ()
+#' }
+closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontined", discontinued_colname="Discontinued"){
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  out <- paste0("<h4>Group A</h4><br />",
+                enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname),
+                "<h4>Group B</h4><br />",
+                enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname))
+  return(out)
+}
 
 
 #' Closed Expected, completed, missing, out of window visits by each form
@@ -1003,3 +968,143 @@ closed_nonunion_surgery_outcome <- function(analytic){
   return(table)
 }
 
+
+
+
+#' Closed AO Gustillo Tscherne Injury Characteristics
+#'
+#' @description This function visualizes the injury characteristics
+#'
+#' @param analytic This is the analytic data set that must include enrolled, 
+#' injury_gustilo, injury_tscherne, injury_ao_class, treatment_arm
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_ao_gustillo_tscherne_characteristics()
+#' }
+closed_ao_gustillo_tscherne_injury_characteristics <- function(analytic){
+  
+  
+  df <- analytic %>% 
+    filter(enrolled == TRUE)
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A") %>% 
+    filter(enrolled == TRUE)
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B") %>% 
+    filter(enrolled == TRUE)
+  
+  inj_tsch <- NULL
+  inj_gust <- NULL
+  inj_ao <- NULL
+  
+  closed_ao_gustillo_tscherne_injury_characteristics <- function(analytic_df){
+  
+    pull <- analytic_df %>% 
+      filter(enrolled) %>%
+      select(injury_gustilo, injury_tscherne, injury_ao_class)
+    
+    inj_gust <<- pull %>% 
+      count(injury_gustilo) %>%
+      pivot_longer(-n) %>%
+      mutate(value=ifelse(!is.na(value), paste('Gustilo Type', value), value)) %>%
+      mutate(value=ifelse(is.na(value), 'Unknown 1', value)) %>%
+      select(-name)
+    
+    total <- inj_gust %>%
+      mutate(n=as.numeric(n)) %>%
+      pull(n) %>%
+      sum()
+    
+    inj_ao <<- pull %>% 
+      count(injury_ao_class) %>%
+      pivot_longer(-n) %>%
+      mutate(value=ifelse(is.na(value), 'Unknown 2', value)) %>%
+      select(-name)
+    
+    inj_tsch <<- pull %>% 
+      count(injury_tscherne) %>%
+      pivot_longer(-n) %>%
+      mutate(value=ifelse(!is.na(value), paste('Tscherne Gotzen Grade', value), value)) %>%
+      mutate(value=ifelse(is.na(value), 'Tscherne Unknown', value)) %>%
+      select(-name)
+    
+    combined <- bind_rows(inj_gust, inj_tsch, inj_ao) %>%
+      relocate(n, .after=value) %>%
+      rename('Fracture Type'=value)
+    
+    total_closed <- combined %>%
+      filter(`Fracture Type`=='Gustilo Type Closed') %>%
+      pull(n)
+    known_closed <- inj_tsch %>%
+      filter(value!='Tscherne Unknown') %>%
+      mutate(n=as.numeric(n)) %>%
+      pull(n) %>%
+      sum()
+    
+    out <- combined %>%
+      mutate(n=ifelse(`Fracture Type`=='Tscherne Unknown', 
+                      total_closed-known_closed, n)) %>%
+      mutate(n=ifelse(str_detect(`Fracture Type`, 'Tscherne'), 
+                      format_count_percent(n, total_closed),
+                      format_count_percent(n, total))) %>%
+      mutate(`Fracture Type`=ifelse(`Fracture Type`=='Tscherne Unknown', 
+                                    'Unknown', 
+                                    `Fracture Type`)) 
+    
+  }
+  
+  table_a <- closed_ao_gustillo_tscherne_injury_characteristics(df_a)
+  table_b <- closed_ao_gustillo_tscherne_injury_characteristics(df_b)
+  table_full <- closed_ao_gustillo_tscherne_injury_characteristics(df)
+  
+  df_table <- full_join(full_join(table_a, table_b, by="Fracture Type"), 
+                        table_full, by="Fracture Type") %>% 
+    mutate("Fracture Type" = str_replace(`Fracture Type`,"Unknown [0-9]", "Unknown"))
+  
+  output<- kable(df_table, align='l', padding='2l', col.names = c("Fracture Type", "Group A", "Group B", "Total")) %>% 
+    kable_styling("condensed", position="left") %>%
+    pack_rows("Open Fracture", 1, nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows("Closed Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows("AO Class", nrow(inj_gust)+nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)+nrow(inj_ao), label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = F, position="left")
+  
+  return(output)
+}
+
+
+#' Closed Expected visit status for 3 Months, 6 Months, and 12 Months followup
+#'
+#' @description This function uses status constructs but treats early, late and complete as mutually exclusive.
+#' Therefore, complete is renamed to "On Time" and all three of them combined to Complete.
+#'
+#' @param analytic This is the analytic data set that must include followup_due_3mo, followup_due_6mo, 
+#' followup_due_12mo, followup_status_3mo, followup_status_6mo, followup_status_12mo
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_expected_and_followup_visit()
+#' }
+closed_expected_and_followup_visit <- function(analytic){
+
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  out <- paste0("<h4>Group A</h4><br />",
+                expected_and_followup_visit(df_a),
+                "<h4>Group B</h4><br />",
+                expected_and_followup_visit(df_b))
+    
+  return(out)
+}
