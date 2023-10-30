@@ -48,8 +48,16 @@ enrollment_status_by_site <- function(analytic){
     mutate_all(~ifelse(is.na(.), 0, .)) %>% 
     adorn_totals("row") %>% 
     mutate(is_total=Facility=="Total") %>% 
+    mutate(`Days Certified`=ifelse(is_total,NA,`Days Certified`)) %>% 
     arrange(desc(is_total), Facility) %>% 
-    select(-is_total)
+    select(-is_total) %>% 
+    mutate(`Discontinued Pre-Randomization` = format_count_percent(`Discontinued Pre-Randomization`, Consented)) %>% 
+    mutate(`Late Ineligible` = format_count_percent(`Late Ineligible`, Consented)) %>% 
+    mutate(Enrolled = format_count_percent(Enrolled, Consented)) %>% 
+    mutate(Consented = format_count_percent(Consented, Eligible)) %>% 
+    mutate(Refused = format_count_percent(Refused, Eligible)) %>% 
+    mutate(`Not Enrolled for Other Reasons` = format_count_percent(`Not Enrolled for Other Reasons`, Eligible)) %>% 
+    mutate(Eligible = format_count_percent(Eligible, Screened))
   
   table<- kable(table_raw, align='l', padding='2l') %>% 
     add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3)) %>%
@@ -75,7 +83,7 @@ enrollment_status_by_site <- function(analytic){
 #' \dontrun{
 #' enrollment_status_by_site_var_discontinued()
 #' }
-enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontined", discontinued_colname="Discontinued"){
+enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued"){
   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, days_site_certified, 
            facilitycode, all_of(discontinued))
@@ -110,8 +118,16 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
     mutate_all(~ifelse(is.na(.), 0, .)) %>% 
     adorn_totals("row") %>% 
     mutate(is_total=Facility=="Total") %>% 
+    mutate(`Days Certified`=ifelse(is_total,NA,`Days Certified`)) %>% 
     arrange(desc(is_total), Facility) %>% 
-    select(-is_total)
+    select(-is_total) %>% 
+    mutate(!!discontinued_colname := format_count_percent(!!sym(discontinued_colname), Consented)) %>% 
+    mutate(Randomized = format_count_percent(Randomized, Consented)) %>% 
+    mutate(Enrolled = format_count_percent(Enrolled, Consented)) %>% 
+    mutate(Consented = format_count_percent(Consented, Eligible)) %>% 
+    mutate(Refused = format_count_percent(Refused, Eligible)) %>% 
+    mutate(`Not Consented` = format_count_percent(`Not Consented`, Eligible)) %>% 
+    mutate(Eligible = format_count_percent(Eligible, Screened))
   
   table<- kable(table_raw, align='l', padding='2l') %>% 
     add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3)) %>%
@@ -544,12 +560,17 @@ injury_ankle_plateau_characteristics <- function(analytic){
     mutate(Category = ifelse(Name == "ankle", "A", "P")) 
   
   total_sum <- sum(injury_type_total$Total)
+  total_ank <- injury_type_total$Total[injury_type_total$Name=="ankle"]
+  total_plat <- injury_type_total$Total[injury_type_total$Name!="ankle"]
   
   summary_table <- bind_rows(injury_type_total, summary_totals) %>% 
     arrange(Category) %>% 
     mutate(Name = ifelse(Name == "ankle", "Number of Ankles", 
                          ifelse(Name == "plateau", "Number of Plateaus", Name))) %>% 
-    mutate(Total = format_count_percent(Total, total_sum, decimals = 2))
+    mutate(Total = format_count_percent(Total, ifelse(Category=="O", 
+                                                      total_ank,
+                                                      ifelse(Category=="T", 
+                                                             total_plat,total_sum)), decimals = 2))
   
   ota_number <- summary_table %>% 
     filter(Category == "O") %>% 
@@ -563,9 +584,10 @@ injury_ankle_plateau_characteristics <- function(analytic){
   df_table <- summary_table %>% 
     select(-Category)
   
-  index_vec <- c(" "= 1,"OTA Classification"= ota_number, " "= 1, "Tibial Plateau"=schatzer_number) 
+  index_vec <- c("OTA Classification"= ota_number+1, "Tibial Plateau"=schatzer_number+1) 
   
   table_raw<- kable(df_table, align='l', padding='2l', col.names = NULL) %>%
+    add_indent(c(seq(ota_number)+1, seq(schatzer_number)+1+ota_number+1)) %>% 
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left")
   
@@ -996,7 +1018,8 @@ ineligibility_by_reasons <- function(analytic){
   output <- bind_rows(total, sites) %>% 
     rename(Screened = screened,
            Ineligible = ineligible) %>% 
-    arrange(desc(Screened))
+    arrange(desc(Screened)) %>% 
+    mutate(Ineligible = format_count_percent(Ineligible, Screened))
   
   vis <- kable(output, align='l', padding='2l') %>%
     add_header_above(c(" " = 3, "Top 5 Ineligibility Reasons" = 5, " " = 1)) %>%  
@@ -1260,49 +1283,6 @@ complications_by_severity_relatedness <- function(analytic){
   return(table_raw)
 }
 
-
-
-
-#' Crossover Monitoring by Site
-#'
-#' @description This function visualizes the crossovers by site in hospital and at discharge
-#'
-#' @param analytic This is the analytic data set that must include enrolled, dfsurg_completed, 
-#' ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero, and facilitycode
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ih_and_dc_crossover_monitoring_by_site()
-#' }
-ih_and_dc_crossover_monitoring_by_site <- function(analytic){
-  df <- analytic %>% 
-    select(facilitycode, enrolled, dfsurg_completed, ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero) %>% 
-    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-    rename(Facility = facilitycode) %>% 
-    filter(enrolled) %>% 
-    mutate(ih_dischrg_date = !is.na(ih_dischrg_date)) %>% 
-    group_by(Facility) %>% 
-    summarize('Enrolled' = sum(enrolled),
-              "Definitive Fixation Complete" = sum(dfsurg_completed), 
-              "Discharged from Index Hospitalization" = sum(ih_dischrg_date),
-              "Discharged on Radomization Date" = sum(ih_dischrg_date_on_time_zero),
-              "Inpatient Crossover" = sum(ih_crossover),
-              "Discharge Crossover" = sum(dc_crossover))
-  
-  
-  table_raw <- df %>% 
-    adorn_totals("row") %>% 
-    mutate(is_total=Facility=="Total") %>% 
-    arrange(desc(is_total), Facility) %>% 
-    select(-is_total)
-  
-  table<- kable(table_raw, align='l', padding='2l') %>% 
-    kable_styling("striped", full_width = F, position="left")
-  return(table)
-}
 
 
 #' Nonunion surgery outcome

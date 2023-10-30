@@ -48,7 +48,7 @@ closed_enrollment_status_by_site <- function(analytic){
 #' \dontrun{
 #' closed_enrollment_status_by_site_var_discontinued ()
 #' }
-closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontined", discontinued_colname="Discontinued"){
+closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued"){
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
   
@@ -150,12 +150,17 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
       mutate(Category = ifelse(Name == "ankle", "A", "P")) 
     
     total_sum <- sum(injury_type_total$Total)
+    total_ank <- injury_type_total$Total[injury_type_total$Name=="ankle"]
+    total_plat <- injury_type_total$Total[injury_type_total$Name!="ankle"]
     
     summary_table <- bind_rows(injury_type_total, summary_totals) %>% 
       arrange(Category) %>% 
       mutate(Name = ifelse(Name == "ankle", "Number of Ankles", 
                            ifelse(Name == "plateau", "Number of Plateaus", Name))) %>% 
-      mutate(Total = format_count_percent(Total, total_sum, decimals = 2))
+      mutate(Total = format_count_percent(Total, ifelse(Category=="O", 
+                                                        total_ank,
+                                                        ifelse(Category=="T", 
+                                                               total_plat,total_sum)), decimals = 2))
     
     ota_number <<- summary_table %>% 
       filter(Category == "O") %>% 
@@ -182,11 +187,13 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
   colnames(df_table) <- c("Name", "Group A", "Group B", "Total")
   
   
-  index_vec <- c(" "= 1,"OTA Classification"= ota_number, " "= 1, "Tibial Plateau"=schatzer_number) 
+  index_vec <- c("OTA Classification"= ota_number+1, "Tibial Plateau"=schatzer_number+1) 
   
   table_raw<- kable(df_table, align='l', padding='2l', col.names = NULL) %>%
+    add_indent(c(seq(ota_number)+1, seq(schatzer_number)+1+ota_number+1)) %>% 
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left")
+  
   
   return(table_raw)
 }

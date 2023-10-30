@@ -6,7 +6,7 @@
 \usage{
 enrollment_status_by_site_var_discontinued(
   analytic,
-  discontinued = "discontined",
+  discontinued = "discontinued",
   discontinued_colname = "Discontinued"
 )
 }
