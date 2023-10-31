@@ -640,7 +640,7 @@ closed_appendix_A_SAEs <- function(analytic){
   
   unzipped_sae <- df %>%
     separate_rows(sae_data, sep = ";new_row: ") %>% 
-    separate(sae_data, into = c("facilitycode", "consent_date", "sae_dt_event", "age", "sae_relatedness_injury", 
+    separate(sae_data, into = c("facilitycode", "treatment_arm", "treatment_received", "consent_date", "sae_dt_event", "age", "sae_related",
                                 "sae_relatedness_treatment", "sae_outcome", "sae_describe"), sep='\\|') 
   
   
@@ -648,13 +648,16 @@ closed_appendix_A_SAEs <- function(analytic){
     mutate(text = paste0(
       "<b>Participant ID</b>: ", study_id, "-", facilitycode, "<br /> ",
       "<b>Date Enrolled</b>: ", consent_date, "<br /> ",
+      "<b>Tx Group</b>: ", treatment_arm, "<br /> ",
       "<b>Date of SAE</b>: ", sae_dt_event, "<br /> ",
       "<b>Age</b>: ", age, "<br /> ",
+      "<b>Treatment Received</b>: ", treatment_received, "<br /> ",
       "<b>Related to Injury(per Site)</b>: ", sae_relatedness_injury, "<br /> ",
       "<b>Related to Treatment (per Medical Monitor)</b>: ", sae_relatedness_treatment, "<br /> ",
       "<b>Outcome</b>: ", sae_outcome, "<br /> ",
       "<b>Description</b>: ", sae_describe, "<br /> ",
       "<br />")) 
+
   
   if (nrow(unzipped_sae) == 0) {
     return(paste0("<br />\nNone at this time.<br />\n"))
@@ -719,15 +722,17 @@ closed_appendix_C_discontinuations <- function(analytic){
   df <- analytic %>% 
     select(study_id, discontinuation_data) %>% 
     filter(!is.na(discontinuation_data))
+
   
   unzipped_discontinuation <- df %>%
-    separate(discontinuation_data, into = c("facilitycode", "consent_date", "discontinue_date", "age", 
+    separate(discontinuation_data, into = c("facilitycode","treatment_arm", "consent_date", "discontinue_date", "age", 
                                             "discontinuation_reason"), sep='\\|') 
   
   output_df <- unzipped_discontinuation %>% 
     mutate(text = paste0(
       "<b>Participant ID</b>: ", study_id, "-", facilitycode, "<br /> ",
       "<b>Date Enrolled</b>: ", consent_date, "<br /> ",
+      "<b>Tx Group</b>: ", treatment_arm, "<br /> ",
       "<b>Date discontinued</b>: ", discontinue_date, "<br /> ",
       "<b>Age</b>: ", age, "<br /> ",
       "<b>Reason for discontinuation</b>: ", discontinuation_reason, "<br /> ",
