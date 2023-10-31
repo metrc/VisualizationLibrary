@@ -1,68 +1,6 @@
 
 
 
-#' Closed Number of Subjects Screened, Eligible, Enrolled and Not Enrolled
-#'
-#' @description This function visualizes the enrollment totals for each site
-#'
-#' @param analytic This is the analytic data set that must include treatment_arm screened, 
-#' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, days_site_certified, 
-#' facilitycode, late_ineligible
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' closed_enrollment_status_by_site()
-#' }
-closed_enrollment_status_by_site <- function(analytic){
-  df_a <- analytic %>% 
-    filter(treatment_arm=="Group A")
-  
-  df_b <- analytic %>% 
-    filter(treatment_arm=="Group B")
-  
-  out <- paste0("<h4>Group A</h4><br />",
-                enrollment_status_by_site(df_a),
-                "<h4>Group B</h4><br />",
-                enrollment_status_by_site(df_b))
-  return(out)
-}
-
-
-
-#' Closed Number of Subjects Screened, Eligible, Enrolled and Not Enrolled (Variable Discontinued)
-#'
-#' @description This function visualizes the enrollment totals for each site
-#'
-#' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, consented, enrolled, not_consented, days_site_certified, facilitycode
-#' @param discontinued meta construct for discontinued
-#' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' closed_enrollment_status_by_site_var_discontinued ()
-#' }
-closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued"){
-  df_a <- analytic %>% 
-    filter(treatment_arm=="Group A")
-  
-  df_b <- analytic %>% 
-    filter(treatment_arm=="Group B")
-  
-  out <- paste0("<h4>Group A</h4><br />",
-                enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname),
-                "<h4>Group B</h4><br />",
-                enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname))
-  return(out)
-}
-
-
 #' Closed Expected, completed, missing, out of window visits by each form
 #'
 #' @description This function visualizes the expected visits for each timepoint for MRR, CFU, PFU, BPI, AOS, KOOS forms
