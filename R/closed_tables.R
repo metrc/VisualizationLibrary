@@ -559,7 +559,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
       select(-ends_with("_id"), -ends_with("_c")) %>% 
       mutate(complications = "Overall")
     
-    severity_categories <- c('Grade 2,1', 'Grade 3', 'Grade 4', 'Grade Unknown')
+    severity_categories <- c('Grade 4', 'Grade 3', 'Grade 2,1', 'Grade Unknown')
     level_order <- c("Superficial", "Deep - Involving Bone", "Deep - Not Involving Bone",
                      "Wound Dehiscence", "Wound Seroma/Hematoma", "Fixation failure", "Malunion", "Peri-implant Fracture",
                      "Other")
