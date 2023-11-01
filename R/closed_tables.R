@@ -577,7 +577,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
       select(complications, everything()) %>%
       mutate(severity = factor(severity, c("-",severity_categories))) %>%
       mutate(complications = factor(complications, c("Overall",level_order))) %>%
-      arrange(severity, complications) %>%
+      arrange(severity, complications)
     
     if(sum(df_template$severity!=output_complication$severity) > 0 | 
        sum(df_template$complications!=output_complication$complications) >0 ){
