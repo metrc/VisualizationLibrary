@@ -1267,6 +1267,9 @@ complications_by_severity_relatedness <- function(analytic){
   output <- bind_rows(output_overall, output_complication) %>% 
     mutate(across(everything(), ~replace(., is.na(.), "-"))) %>% 
     select(complications, everything()) %>% 
+    mutate(severity = factor(severity, c("-",severity_categories))) %>%
+    mutate(complications = factor(complications, c("Overall",level_order))) %>%
+    arrange(severity, complications) %>%
     select(-severity)
   
   colnames(output)[1] <- " "
