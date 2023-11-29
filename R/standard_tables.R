@@ -1436,3 +1436,212 @@ expected_and_followup_visit <- function(analytic){
   
   return(table_raw)
 }
+
+#' Injury Characteristics
+#'
+#' @description This function visualizes the certain injury characteristics for study participants study injuries
+#'
+#' @param analytic This is the analytic data set that must include enrolled, injury_ao, injury_at_work, injury_in_battle, 
+#' injury_in_blast, injury_date, injury_mechanism, injury_side, injury_tscherne, injury_type
+#
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+
+#' injury_characteristics_by_alternate_constructs()
+#' }
+injury_characteristics_by_alternate_constructs <- function(analytic){
+  df <- analytic %>% 
+    select(enrolled, injury_ao, injury_at_work, injury_in_battle, 
+           injury_in_blast, injury_date, injury_mechanism, injury_side, injury_tscherne, injury_type) %>% 
+    filter(enrolled)
+  
+  total <- sum(df$enrolled)
+  
+  type_df <- df %>% 
+    mutate(injury_type = replace_na(injury_type, "Missing")) %>% 
+    group_by(injury_type) %>% 
+    count(injury_type) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    rename(type = injury_type) %>% 
+    select(-n) %>% 
+    arrange(factor(type, levels = c('Blunt', 'Penetrating', 'Missing')))
+  
+  work_df <- df %>% 
+    mutate(injury_at_work = as.character(injury_at_work)) %>% 
+    mutate(injury_at_work = replace_na(injury_at_work, "Missing")) %>% 
+    count(injury_at_work) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    rename(type = injury_at_work) %>% 
+    select(-n) %>% 
+    mutate(type = case_when(
+      type == TRUE  ~ "Yes",
+      type == FALSE ~ "No",
+      type == 'Missing' ~ 'Missing')) %>%  
+    arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
+  
+  battle_df <- df %>% 
+    mutate(injury_in_battle = as.character(injury_in_battle)) %>% 
+    mutate(injury_in_battle = replace_na(injury_in_battle, "Missing")) %>% 
+    group_by(injury_in_battle) %>% 
+    count(injury_in_battle) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    rename(type = injury_in_battle) %>% 
+    select(-n) %>% 
+    mutate(type = case_when(
+      type == TRUE  ~ "Yes",
+      type == FALSE ~ "No",
+      type == 'Missing' ~ 'Missing')) %>% 
+    arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
+  
+  blast_df <- df %>% 
+    mutate(injury_in_blast = as.character(injury_in_blast)) %>% 
+    mutate(injury_in_blast = replace_na(injury_in_blast, "Missing")) %>% 
+    group_by(injury_in_blast) %>% 
+    count(injury_in_blast) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    rename(type = injury_in_blast) %>% 
+    select(-n) %>% 
+    arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
+  
+  side_df <- df %>% 
+    mutate(injury_side = as.character(injury_side)) %>% 
+    mutate(injury_side = replace_na(injury_side, "Missing")) %>% 
+    group_by(injury_side) %>% 
+    count(injury_side) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    rename(type = injury_side) %>% 
+    select(-n) %>% 
+    arrange(factor(type, levels = c('Left', 'Right', 'Missing')))
+  
+  tscherne_df <- df %>% 
+    mutate(injury_tscherne = as.character(injury_tscherne)) %>% 
+    mutate(injury_tscherne = replace_na(injury_tscherne, "Missing")) %>% 
+    group_by(injury_tscherne) %>% 
+    count(injury_tscherne) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    rename(type = injury_tscherne) %>% 
+    select(-n)
+  
+  ao_df <- df %>% 
+    mutate(injury_ao = as.character(injury_ao)) %>% 
+    mutate(injury_ao = replace_na(injury_ao, "Missing")) %>% 
+    group_by(injury_ao) %>% 
+    count(injury_ao) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    rename(type = injury_ao) %>% 
+    select(-n)
+  
+  df_final <- rbind(type_df, work_df, battle_df, blast_df, side_df, tscherne_df, ao_df) %>% 
+    mutate_all(replace_na, "0 (0%)") 
+  
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+  
+  
+  vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
+    add_header_above(header) %>%  
+    pack_rows(index = c('Type of Injury' = nrow(type_df), 'Work Related Injury' = nrow(work_df), 'Battlefield Injury' = nrow(battle_df), 
+                        'Blast Injury' = nrow(blast_df), 'Side of Study Injury' = nrow(side_df), 
+                        'Tscherne Classification' = nrow(tscherne_df), 'AO Classification' = nrow(ao_df)), label_row_css = "text-align:left") %>% 
+    kable_styling("striped", full_width = F, position="left") 
+  return(vis)
+}
+#######################################################################################
+#' Number of Visits Expected, Completed, Missed, and out of Window
+#'
+#' @description This function visualizes the expected visits, and which of those are completed in what relative window, and which of those are missed
+#'
+#' @param analytic This is the analytic data set that must include enrolled, followup_complete_4wk_6wk, followup_due_4wk_6wk, followup_early_4wk_6wk, followup_incomplete_4wk_6wk, 
+#' followup_late_4wk_6wk, followup_missing_4wk_6wk, followup_not_started_4wk_6wk, followup_ontime_4wk_6wk, 
+#' followup_complete_7wk_9wk, followup_due_7wk_9wk, followup_early_7wk_9wk, followup_incomplete_7wk_9wk, 
+#' followup_late_7wk_9wk, followup_missing_7wk_9wk, followup_not_started_7wk_9wk, followup_complete_12wk_16wk, 
+#' followup_due_12wk_16wk, followup_early_12wk_16wk, followup_incomplete_12wk_16wk, followup_late_12wk_16wk, 
+#' followup_missing_12wk_16wk, followup_not_started_12wk_16wk, followup_ontime_12wk_16wk, followup_complete_22wk_32wk, 
+#' followup_due_22wk_32wk, followup_early_22wk_32wk, followup_incomplete_22wk_32wk, followup_late_22wk_32wk, 
+#' followup_missing_22wk_32wk, followup_not_started_22wk_32wk, followup_ontime_22wk_32wk
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' expected_visits_by_followup_period()
+#' }
+expected_visits_by_followup_period <- function(analytic){
+  df <- analytic %>% 
+    select(study_id, enrolled, followup_complete_4wk_6wk, followup_due_4wk_6wk, followup_early_4wk_6wk, followup_incomplete_4wk_6wk, 
+           followup_late_4wk_6wk, followup_missing_4wk_6wk, followup_not_started_4wk_6wk, followup_ontime_4wk_6wk, 
+           followup_complete_7wk_9wk, followup_due_7wk_9wk, followup_early_7wk_9wk, followup_incomplete_7wk_9wk, 
+           followup_late_7wk_9wk, followup_missing_7wk_9wk, followup_not_started_7wk_9wk, followup_complete_12wk_16wk, 
+           followup_due_12wk_16wk, followup_early_12wk_16wk, followup_incomplete_12wk_16wk, followup_late_12wk_16wk, 
+           followup_missing_12wk_16wk, followup_not_started_12wk_16wk, followup_ontime_12wk_16wk, followup_complete_22wk_32wk, 
+           followup_due_22wk_32wk, followup_early_22wk_32wk, followup_incomplete_22wk_32wk, followup_late_22wk_32wk, 
+           followup_missing_22wk_32wk, followup_not_started_22wk_32wk, followup_ontime_22wk_32wk) %>% 
+    filter(enrolled) %>% 
+    mutate_all(~ifelse(is.na(.), FALSE, .))
+  
+  
+  expected <- df %>% 
+    select(followup_due_4wk_6wk, followup_due_7wk_9wk, followup_due_12wk_16wk, followup_due_22wk_32wk) %>% 
+    summarize('4-6 Weeks' = sum(followup_due_4wk_6wk), '7-9 Weeks' = sum(followup_due_7wk_9wk), 
+              '12-16 Weeks' = sum(followup_due_12wk_16wk), '22-32 Weeks' = sum(followup_due_22wk_32wk))
+  
+  complete <- df %>% 
+    select(followup_complete_4wk_6wk, followup_complete_7wk_9wk, followup_complete_12wk_16wk, followup_complete_22wk_32wk) %>% 
+    summarize('4-6 Weeks' = sum(followup_complete_4wk_6wk), '7-9 Weeks' = sum(followup_complete_7wk_9wk), 
+              '12-16 Weeks' = sum(followup_complete_12wk_16wk), '22-32 Weeks' = sum(followup_complete_22wk_32wk))
+  
+  early <- df %>% 
+    select(followup_early_4wk_6wk, followup_early_7wk_9wk, followup_early_12wk_16wk, followup_early_22wk_32wk) %>% 
+    summarize('4-6 Weeks' = sum(followup_early_4wk_6wk), '7-9 Weeks' = sum(followup_early_7wk_9wk), 
+              '12-16 Weeks' = sum(followup_early_12wk_16wk), '22-32 Weeks' = sum(followup_early_22wk_32wk))
+  
+  late <- df %>% 
+    select(followup_late_4wk_6wk, followup_late_7wk_9wk, followup_late_12wk_16wk, followup_late_22wk_32wk) %>% 
+    summarize('4-6 Weeks' = sum(followup_late_4wk_6wk), '7-9 Weeks' = sum(followup_late_7wk_9wk), 
+              '12-16 Weeks' = sum(followup_late_12wk_16wk), '22-32 Weeks' = sum(followup_late_22wk_32wk))
+  
+  not_started <- df %>% 
+    select(followup_not_started_4wk_6wk, followup_not_started_7wk_9wk, followup_not_started_12wk_16wk, followup_not_started_22wk_32wk) %>% 
+    summarize('4-6 Weeks' = sum(followup_not_started_4wk_6wk), '7-9 Weeks' = sum(followup_not_started_7wk_9wk), 
+              '12-16 Weeks' = sum(followup_not_started_12wk_16wk), '22-32 Weeks' = sum(followup_not_started_22wk_32wk))
+  
+  missing <- df %>% 
+    select(followup_missing_4wk_6wk, followup_missing_7wk_9wk, followup_missing_12wk_16wk, followup_missing_22wk_32wk) %>% 
+    summarize('4-6 Weeks' = sum(followup_missing_4wk_6wk), '7-9 Weeks' = sum(followup_missing_7wk_9wk), 
+              '12-16 Weeks' = sum(followup_missing_12wk_16wk), '22-32 Weeks' = sum(followup_missing_22wk_32wk))
+  
+  all <- rbind(expected, complete, early, late, not_started, missing)
+  rownames(all) <- c('Expected (Due)', 'Complete', 'Early', 'Late', 'Not Started', 'Missing')
+  
+  four <- all[[1, "4-6 Weeks"]]
+  seven <- all[[1, "7-9 Weeks"]]
+  twelve <- all[[1, "12-16 Weeks"]]
+  twentytwo <- all[[1, "22-32 Weeks"]]
+  fourcomp <- all[[2, "4-6 Weeks"]]
+  sevencomp <- all[[2, "7-9 Weeks"]]
+  twelvecomp <- all[[2, "12-16 Weeks"]]
+  twentytwocomp <- all[[2, "22-32 Weeks"]]
+  
+  
+  final <- cbind(Status = rownames(all), all) %>% 
+    mutate(`4-6 Weeks` = ifelse(Status %in% c('Complete', 'Not Started', 'Missing'), format_count_percent(`4-6 Weeks`, four), ifelse(Status %in% c('Early', 'Late'), format_count_percent(`4-6 Weeks`, fourcomp), `4-6 Weeks`))) %>% 
+    mutate(`7-9 Weeks` = ifelse(Status %in% c('Complete', 'Not Started', 'Missing'), format_count_percent(`7-9 Weeks`, seven), ifelse(Status %in% c('Early', 'Late'), format_count_percent(`7-9 Weeks`, sevencomp), `7-9 Weeks`))) %>% 
+    mutate(`12-16 Weeks` = ifelse(Status %in% c('Complete', 'Not Started', 'Missing'), format_count_percent(`12-16 Weeks`, twelve), ifelse(Status %in% c('Early', 'Late'), format_count_percent(`12-16 Weeks`, twelvecomp), `12-16 Weeks`))) %>% 
+    mutate(`22-32 Weeks` = ifelse(Status %in% c('Complete', 'Not Started', 'Missing'), format_count_percent(`22-32 Weeks`, twentytwo), ifelse(Status %in% c('Early', 'Late'), format_count_percent(`22-32 Weeks`, twentytwocomp), `22-32 Weeks`)))
+  
+  vis <- kable(final, align = 'l', padding = '2l') %>%
+    kable_styling("striped", full_width = F, position = "left") %>% 
+    add_indent(c(3, 4)) %>% 
+    row_spec(1, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(4, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(5, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(6, extra_css = "border-bottom: 1px solid")
+  
+  return(vis)
+}
