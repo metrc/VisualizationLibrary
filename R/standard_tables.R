@@ -985,7 +985,7 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #' \dontrun{
 #' ineligibility_by_reasons()
 #' }
-ineligibility_by_reasons <- function(analytic){
+ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
   
   
   df <- analytic %>% 
@@ -997,7 +997,7 @@ ineligibility_by_reasons <- function(analytic){
     boolean_column_counter() %>% 
     pivot_longer(everything()) %>% 
     arrange(desc(value)) %>% 
-    slice(1:5) %>% 
+    slice(1:n_top_reasons) %>% 
     pull(name) 
   
   total <- df %>% 
@@ -1007,7 +1007,7 @@ ineligibility_by_reasons <- function(analytic){
     mutate(Site = 'Total') %>% 
     select(Site, screened, ineligible, all_of(reasons), `Other Reasons`)
   
-  
+   
   sites <- df %>% 
     mutate(ineligibility_reasons = ifelse(ineligibility_reasons %in% reasons, ineligibility_reasons,'Other Reasons')) %>% 
     column_unzipper('ineligibility_reasons', sep = '; ') %>% 
@@ -1022,7 +1022,7 @@ ineligibility_by_reasons <- function(analytic){
     mutate(Ineligible = format_count_percent(Ineligible, Screened))
   
   vis <- kable(output, align='l', padding='2l') %>%
-    add_header_above(c(" " = 3, "Top 5 Ineligibility Reasons" = 5, " " = 1)) %>%  
+    add_header_above(c(" " = 3, paste0("Top ", n_top_reasons, " Ineligibility Reasons") = n_top_reasons, " " = 1)) %>%  
     kable_styling("striped", full_width = F, position="left") 
   
   return(vis)
@@ -1058,7 +1058,7 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
   total <- inj_gust %>%
     mutate(n=as.numeric(n)) %>%
     pull(n) %>%
-    sum()
+    sum() 
   
   inj_ao <- pull %>% 
     count(injury_ao_class) %>%
