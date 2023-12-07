@@ -559,7 +559,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
       select(-ends_with("_id"), -ends_with("_c")) %>% 
       mutate(complications = "Overall")
     
-    severity_categories <- c('Grade 2,1', 'Grade 3', 'Grade 4', 'Grade Unknown')
+    severity_categories <- c('Grade 4', 'Grade 3', 'Grade 2,1', 'Grade Unknown')
     level_order <- c("Superficial", "Deep - Involving Bone", "Deep - Not Involving Bone",
                      "Wound Dehiscence", "Wound Seroma/Hematoma", "Fixation failure", "Malunion", "Peri-implant Fracture",
                      "Other")
@@ -574,7 +574,10 @@ closed_complications_by_severity_relatedness <- function(analytic){
     
     output <- bind_rows(output_overall, output_complication) %>% 
       mutate(across(everything(), ~replace(., is.na(.), "-"))) %>% 
-      select(complications, everything())
+      select(complications, everything()) %>%
+      mutate(severity = factor(severity, c("-",severity_categories))) %>%
+      mutate(complications = factor(complications, c("Overall",level_order))) %>%
+      arrange(severity, complications)
     
     if(sum(df_template$severity!=output_complication$severity) > 0 | 
        sum(df_template$complications!=output_complication$complications) >0 ){
@@ -640,7 +643,7 @@ closed_appendix_A_SAEs <- function(analytic){
   
   unzipped_sae <- df %>%
     separate_rows(sae_data, sep = ";new_row: ") %>% 
-    separate(sae_data, into = c("facilitycode", "treatment_arm", "treatment_received", "consent_date", "sae_dt_event", "age", "sae_related",
+    separate(sae_data, into = c("facilitycode", "treatment_arm", "treatment_received", "consent_date", "sae_dt_event", "age", "sae_relatedness_injury",
                                 "sae_relatedness_treatment", "sae_outcome", "sae_describe"), sep='\\|') 
   
   
