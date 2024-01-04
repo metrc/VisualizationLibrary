@@ -143,8 +143,8 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #'
 #' @description This function visualizes Ankle and Plateau X-Ray and Measurement Status
 #'
-#' @param analytic This is the analytic data set that must include followup_visit_expected_6wk, 
-#' followup_visit_expected_3mo, followup_visit_expected_6mo, followup_visit_expected_12mo, injury_type,
+#' @param analytic This is the analytic data set that must include followup_expected_6wk, 
+#' followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type,
 #' radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo,
 #' plat_tib_fib_overlap_6mo, plat_sagittal_pl_alignment_6mo, plat_patella_centered_6mo, 
 #' plat_medial_prox_tibia_deg_6mo, plat_medial_lateral_diff_6mo, plat_condylar_width_6mo, plat_art_step_off_medial_6mo, 
@@ -187,9 +187,9 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_expected_ankle <- analytic %>% 
     filter(injury_type=="ankle") %>% 
-    select(followup_visit_expected_6wk, followup_visit_expected_3mo, followup_visit_expected_6mo) %>% 
-    summarise("3 Months"= sum(followup_visit_expected_3mo, na.rm = TRUE),
-              "6 Months"= sum(followup_visit_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_visit_expected_6wk, na.rm = TRUE)) %>% 
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo) %>% 
+    summarise("3 Months"= sum(followup_expected_3mo, na.rm = TRUE),
+              "6 Months"= sum(followup_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_expected_6wk, na.rm = TRUE)) %>% 
     pivot_longer(everything())  %>% 
     rename(n=value) %>% 
     mutate(value="Expected")
@@ -211,15 +211,15 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df2_ankle_expected <- analytic %>% 
     filter(injury_type=="ankle") %>% 
-    select(followup_visit_expected_6wk, followup_visit_expected_3mo, followup_visit_expected_6mo, 
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, 
            radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo) %>% 
-    mutate(radiographs_taken_6wk = ifelse(followup_visit_expected_6wk,
+    mutate(radiographs_taken_6wk = ifelse(followup_expected_6wk,
                                           ifelse(is.na(radiographs_taken_6wk),"Missing",radiographs_taken_6wk),NA)) %>% 
-    mutate(radiographs_taken_3mo = ifelse(followup_visit_expected_3mo,
+    mutate(radiographs_taken_3mo = ifelse(followup_expected_3mo,
                                           ifelse(is.na(radiographs_taken_3mo),"Missing",radiographs_taken_3mo),NA)) %>% 
-    mutate(radiographs_taken_6mo = ifelse(followup_visit_expected_6mo,
+    mutate(radiographs_taken_6mo = ifelse(followup_expected_6mo,
                                           ifelse(is.na(radiographs_taken_6mo),"Missing",radiographs_taken_6mo),NA)) %>% 
-    select(-followup_visit_expected_6wk, -followup_visit_expected_3mo, -followup_visit_expected_6mo) %>% 
+    select(-followup_expected_6wk, -followup_expected_3mo, -followup_expected_6mo) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(str_detect(value,"Yes|YES"),"Yes",value)) %>% 
     group_by(name, value) %>%
@@ -252,7 +252,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     rename("Radiographs"=value, n2=n)
   
   df3_ankle <- analytic %>% 
-    select(injury_type, followup_visit_expected_6wk, followup_visit_expected_3mo, followup_visit_expected_6mo, 
+    select(injury_type, followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, 
            ankle_talar_tilt_degrees_6wk, ankle_sagital_disp_6wk, ankle_coronal_plane_disp_6wk, 
            ankle_talar_tilt_degrees_3mo, ankle_sagital_disp_3mo, ankle_coronal_plane_disp_3mo, 
            ankle_talar_tilt_degrees_6mo, ankle_sagital_disp_6mo, ankle_coronal_plane_disp_6mo) %>% 
@@ -264,9 +264,9 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
       ankle_6_months = rowSums(is.na(select(., ends_with("6mo"))))<3
     ) %>% 
     select(-ends_with("wk"),-ends_with("mo")) %>% 
-    mutate(ankle_6_weeks = ifelse(followup_visit_expected_6wk, ankle_6_weeks,NA)) %>% 
-    mutate(ankle_3_months = ifelse(followup_visit_expected_3mo, ankle_3_months,NA)) %>% 
-    mutate(ankle_6_months = ifelse(followup_visit_expected_6mo, ankle_6_months,NA)) %>% 
+    mutate(ankle_6_weeks = ifelse(followup_expected_6wk, ankle_6_weeks,NA)) %>% 
+    mutate(ankle_3_months = ifelse(followup_expected_3mo, ankle_3_months,NA)) %>% 
+    mutate(ankle_6_months = ifelse(followup_expected_6mo, ankle_6_months,NA)) %>% 
     select(-ends_with("expected")) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(value,"Completed","Not Completed")) %>% 
@@ -315,9 +315,9 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_expected_plateau <- analytic %>% 
     filter(injury_type=="plateau") %>% 
-    select(followup_visit_expected_6wk, followup_visit_expected_3mo, followup_visit_expected_6mo) %>% 
-    summarise("3 Months"= sum(followup_visit_expected_3mo, na.rm = TRUE),
-              "6 Months"= sum(followup_visit_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_visit_expected_6wk, na.rm = TRUE)) %>% 
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo) %>% 
+    summarise("3 Months"= sum(followup_expected_3mo, na.rm = TRUE),
+              "6 Months"= sum(followup_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_expected_6wk, na.rm = TRUE)) %>% 
     pivot_longer(everything())  %>% 
     rename(n=value) %>% 
     mutate(value="Expected")
@@ -339,15 +339,15 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df2_plateau_expected <- analytic %>% 
     filter(injury_type=="plateau") %>% 
-    select(followup_visit_expected_6wk, followup_visit_expected_3mo, followup_visit_expected_6mo, 
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, 
            radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo) %>% 
-    mutate(radiographs_taken_6wk = ifelse(followup_visit_expected_6wk,
+    mutate(radiographs_taken_6wk = ifelse(followup_expected_6wk,
                                           ifelse(is.na(radiographs_taken_6wk),"Missing",radiographs_taken_6wk),NA)) %>% 
-    mutate(radiographs_taken_3mo = ifelse(followup_visit_expected_3mo,
+    mutate(radiographs_taken_3mo = ifelse(followup_expected_3mo,
                                           ifelse(is.na(radiographs_taken_3mo),"Missing",radiographs_taken_3mo),NA)) %>% 
-    mutate(radiographs_taken_6mo = ifelse(followup_visit_expected_6mo,
+    mutate(radiographs_taken_6mo = ifelse(followup_expected_6mo,
                                           ifelse(is.na(radiographs_taken_6mo),"Missing",radiographs_taken_6mo),NA)) %>% 
-    select(-followup_visit_expected_6wk, -followup_visit_expected_3mo, -followup_visit_expected_6mo) %>% 
+    select(-followup_expected_6wk, -followup_expected_3mo, -followup_expected_6mo) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(str_detect(value,"Yes|YES"),"Yes",value)) %>% 
     group_by(name, value) %>%
@@ -380,7 +380,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     rename("Radiographs"=value, n2=n)
   
   df3_plateau <- analytic %>% 
-    select(injury_type, followup_visit_expected_6wk, followup_visit_expected_3mo, followup_visit_expected_6mo, followup_visit_expected_12mo, 
+    select(injury_type, followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, 
            plat_tib_fib_overlap_6mo, plat_sagittal_pl_alignment_6mo, plat_patella_centered_6mo, 
            plat_medial_prox_tibia_deg_6mo, plat_medial_lateral_diff_6mo, plat_condylar_width_6mo, plat_art_step_off_medial_6mo, 
            plat_art_step_off_lateral_6mo, plat_femur_tibia_deg_6mo,
@@ -398,9 +398,9 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
       plateau_6_months = rowSums(is.na(select(., ends_with("6mo"))))<3,
     ) %>% 
     select(-ends_with("wk"),-ends_with("mo")) %>% 
-    mutate(plateau_6_weeks = ifelse(followup_visit_expected_6wk, plateau_6_weeks,NA)) %>% 
-    mutate(plateau_3_months = ifelse(followup_visit_expected_3mo, plateau_3_months,NA)) %>% 
-    mutate(plateau_6_months = ifelse(followup_visit_expected_6mo, plateau_6_months,NA)) %>% 
+    mutate(plateau_6_weeks = ifelse(followup_expected_6wk, plateau_6_weeks,NA)) %>% 
+    mutate(plateau_3_months = ifelse(followup_expected_3mo, plateau_3_months,NA)) %>% 
+    mutate(plateau_6_months = ifelse(followup_expected_6mo, plateau_6_months,NA)) %>% 
     select(-ends_with("expected")) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(value,"Completed","Not Completed")) %>% 
@@ -447,7 +447,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
 #' mrr_status_12mo, cfu_status_6wk, cfu_status_3mo, cfu_status_6mo, cfu_status_12mo, pfu_status_6wk, pfu_status_3mo, 
 #' pfu_status_6mo, pfu_status_12mo, bpi_status_6wk, bpi_status_3mo, bpi_status_6mo,bpi_status_12mo, aos_status_6wk, 
 #' aos_status_3mo, aos_status_6mo, aos_status_12mo, koos_status_6wk, koos_status_3mo, koos_status_6mo, koos_status_12mo, 
-#' followup_visit_expected_6wk, followup_visit_expected_3mo, followup_visit_expected_6mo, followup_visit_expected_12mo, injury_type
+#' followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type
 #'
 #' @return nothing
 #' @export
@@ -465,17 +465,17 @@ visit_status_for_followup_by_form <- function(analytic){
            koos_status_12mo)
   
   df_expected <- analytic %>% 
-    select(followup_visit_expected_6wk, followup_visit_expected_3mo, followup_visit_expected_6mo, followup_visit_expected_12mo) %>% 
-    summarise("12 Months"= sum(followup_visit_expected_12mo, na.rm = TRUE), "3 Months"= sum(followup_visit_expected_3mo, na.rm = TRUE),
-              "6 Months"= sum(followup_visit_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_visit_expected_6wk, na.rm = TRUE)) %>% 
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo) %>% 
+    summarise("12 Months"= sum(followup_expected_12mo, na.rm = TRUE), "3 Months"= sum(followup_expected_3mo, na.rm = TRUE),
+              "6 Months"= sum(followup_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_expected_6wk, na.rm = TRUE)) %>% 
     mutate(Form = "Enrolled") %>% 
     mutate(Status = "Expected") 
   
   df_injury_expected <- analytic %>% 
-    select(followup_visit_expected_6wk, followup_visit_expected_3mo, followup_visit_expected_6mo, followup_visit_expected_12mo, injury_type) %>%
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type) %>%
     group_by(injury_type) %>% 
-    summarise("12 Months"= sum(followup_visit_expected_12mo, na.rm = TRUE), "3 Months"= sum(followup_visit_expected_3mo, na.rm = TRUE),
-              "6 Months"= sum(followup_visit_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_visit_expected_6wk, na.rm = TRUE)) %>% 
+    summarise("12 Months"= sum(followup_expected_12mo, na.rm = TRUE), "3 Months"= sum(followup_expected_3mo, na.rm = TRUE),
+              "6 Months"= sum(followup_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_expected_6wk, na.rm = TRUE)) %>% 
     ungroup() %>% 
     mutate(Form = str_to_title(injury_type))%>% 
     select(-injury_type) %>% 
