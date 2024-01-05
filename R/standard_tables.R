@@ -6,7 +6,7 @@
 #' @description This function visualizes the enrollment totals for each site
 #'
 #' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, days_site_certified, 
+#' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
 #' facilitycode, late_ineligible
 #'
 #' @return nothing
@@ -18,10 +18,10 @@
 #' }
 enrollment_status_by_site <- function(analytic){
   df <- analytic %>% 
-    select(screened, eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, days_site_certified, 
+    select(screened, eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
            facilitycode, late_ineligible) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-    mutate(days_site_certified = as.numeric(Sys.Date() - as.Date(days_site_certified))) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certified_days))) %>% 
     rename(Facility = facilitycode) %>% 
     rename(not_enrolled = not_consented) %>% 
     filter(!is.na(Facility))
@@ -29,7 +29,7 @@ enrollment_status_by_site <- function(analytic){
   
   df_1st <- df %>% 
     group_by(Facility) %>% 
-    summarize('Days Certified' = days_site_certified[1], Screened = sum(screened), Eligible = sum(eligible))
+    summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible))
   
   df_2nd <- df %>% 
     filter(eligible == TRUE) %>% 
@@ -72,7 +72,7 @@ enrollment_status_by_site <- function(analytic){
 #' @description This function visualizes the enrollment totals for each site
 #'
 #' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, consented, enrolled, not_consented, days_site_certified, facilitycode
+#' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode
 #' @param discontinued meta construct for discontinued
 #' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
 #'
@@ -85,21 +85,21 @@ enrollment_status_by_site <- function(analytic){
 #' }
 enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued"){
   df <- analytic %>% 
-    select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, days_site_certified, 
+    select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, site_certified_days, 
            facilitycode, all_of(discontinued))
   
   colnames(df)[11] <- "discontinued"
   
   df <- df %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-    mutate(days_site_certified = as.numeric(Sys.Date() - as.Date(days_site_certified))) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certified_days))) %>% 
     rename(Facility = facilitycode) %>% 
     filter(!is.na(Facility))
   
   
   df_1st <- df %>% 
     group_by(Facility) %>% 
-    summarize('Days Certified' = days_site_certified[1], Screened = sum(screened), Eligible = sum(eligible))
+    summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible))
   
   df_2nd <- df %>% 
     filter(eligible == TRUE) %>% 
@@ -143,8 +143,8 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #'
 #' @description This function visualizes Ankle and Plateau X-Ray and Measurement Status
 #'
-#' @param analytic This is the analytic data set that must include sixweek_visit_expected, 
-#' threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected, injury_type,
+#' @param analytic This is the analytic data set that must include followup_expected_6wk, 
+#' followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type,
 #' radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo,
 #' plat_tib_fib_overlap_6mo, plat_sagittal_pl_alignment_6mo, plat_patella_centered_6mo, 
 #' plat_medial_prox_tibia_deg_6mo, plat_medial_lateral_diff_6mo, plat_condylar_width_6mo, plat_art_step_off_medial_6mo, 
@@ -187,9 +187,9 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_expected_ankle <- analytic %>% 
     filter(injury_type=="ankle") %>% 
-    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected) %>% 
-    summarise("3 Months"= sum(threemonth_visit_expected, na.rm = TRUE),
-              "6 Months"= sum(sixmonth_visit_expected, na.rm = TRUE),  "6 Weeks"= sum(sixweek_visit_expected, na.rm = TRUE)) %>% 
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo) %>% 
+    summarise("3 Months"= sum(followup_expected_3mo, na.rm = TRUE),
+              "6 Months"= sum(followup_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_expected_6wk, na.rm = TRUE)) %>% 
     pivot_longer(everything())  %>% 
     rename(n=value) %>% 
     mutate(value="Expected")
@@ -211,15 +211,15 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df2_ankle_expected <- analytic %>% 
     filter(injury_type=="ankle") %>% 
-    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, 
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, 
            radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo) %>% 
-    mutate(radiographs_taken_6wk = ifelse(sixweek_visit_expected,
+    mutate(radiographs_taken_6wk = ifelse(followup_expected_6wk,
                                           ifelse(is.na(radiographs_taken_6wk),"Missing",radiographs_taken_6wk),NA)) %>% 
-    mutate(radiographs_taken_3mo = ifelse(threemonth_visit_expected,
+    mutate(radiographs_taken_3mo = ifelse(followup_expected_3mo,
                                           ifelse(is.na(radiographs_taken_3mo),"Missing",radiographs_taken_3mo),NA)) %>% 
-    mutate(radiographs_taken_6mo = ifelse(sixmonth_visit_expected,
+    mutate(radiographs_taken_6mo = ifelse(followup_expected_6mo,
                                           ifelse(is.na(radiographs_taken_6mo),"Missing",radiographs_taken_6mo),NA)) %>% 
-    select(-sixweek_visit_expected, -threemonth_visit_expected, -sixmonth_visit_expected) %>% 
+    select(-followup_expected_6wk, -followup_expected_3mo, -followup_expected_6mo) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(str_detect(value,"Yes|YES"),"Yes",value)) %>% 
     group_by(name, value) %>%
@@ -252,7 +252,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     rename("Radiographs"=value, n2=n)
   
   df3_ankle <- analytic %>% 
-    select(injury_type, sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, 
+    select(injury_type, followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, 
            ankle_talar_tilt_degrees_6wk, ankle_sagital_disp_6wk, ankle_coronal_plane_disp_6wk, 
            ankle_talar_tilt_degrees_3mo, ankle_sagital_disp_3mo, ankle_coronal_plane_disp_3mo, 
            ankle_talar_tilt_degrees_6mo, ankle_sagital_disp_6mo, ankle_coronal_plane_disp_6mo) %>% 
@@ -264,9 +264,9 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
       ankle_6_months = rowSums(is.na(select(., ends_with("6mo"))))<3
     ) %>% 
     select(-ends_with("wk"),-ends_with("mo")) %>% 
-    mutate(ankle_6_weeks = ifelse(sixweek_visit_expected, ankle_6_weeks,NA)) %>% 
-    mutate(ankle_3_months = ifelse(threemonth_visit_expected, ankle_3_months,NA)) %>% 
-    mutate(ankle_6_months = ifelse(sixmonth_visit_expected, ankle_6_months,NA)) %>% 
+    mutate(ankle_6_weeks = ifelse(followup_expected_6wk, ankle_6_weeks,NA)) %>% 
+    mutate(ankle_3_months = ifelse(followup_expected_3mo, ankle_3_months,NA)) %>% 
+    mutate(ankle_6_months = ifelse(followup_expected_6mo, ankle_6_months,NA)) %>% 
     select(-ends_with("expected")) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(value,"Completed","Not Completed")) %>% 
@@ -315,9 +315,9 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_expected_plateau <- analytic %>% 
     filter(injury_type=="plateau") %>% 
-    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected) %>% 
-    summarise("3 Months"= sum(threemonth_visit_expected, na.rm = TRUE),
-              "6 Months"= sum(sixmonth_visit_expected, na.rm = TRUE),  "6 Weeks"= sum(sixweek_visit_expected, na.rm = TRUE)) %>% 
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo) %>% 
+    summarise("3 Months"= sum(followup_expected_3mo, na.rm = TRUE),
+              "6 Months"= sum(followup_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_expected_6wk, na.rm = TRUE)) %>% 
     pivot_longer(everything())  %>% 
     rename(n=value) %>% 
     mutate(value="Expected")
@@ -339,15 +339,15 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df2_plateau_expected <- analytic %>% 
     filter(injury_type=="plateau") %>% 
-    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, 
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, 
            radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo) %>% 
-    mutate(radiographs_taken_6wk = ifelse(sixweek_visit_expected,
+    mutate(radiographs_taken_6wk = ifelse(followup_expected_6wk,
                                           ifelse(is.na(radiographs_taken_6wk),"Missing",radiographs_taken_6wk),NA)) %>% 
-    mutate(radiographs_taken_3mo = ifelse(threemonth_visit_expected,
+    mutate(radiographs_taken_3mo = ifelse(followup_expected_3mo,
                                           ifelse(is.na(radiographs_taken_3mo),"Missing",radiographs_taken_3mo),NA)) %>% 
-    mutate(radiographs_taken_6mo = ifelse(sixmonth_visit_expected,
+    mutate(radiographs_taken_6mo = ifelse(followup_expected_6mo,
                                           ifelse(is.na(radiographs_taken_6mo),"Missing",radiographs_taken_6mo),NA)) %>% 
-    select(-sixweek_visit_expected, -threemonth_visit_expected, -sixmonth_visit_expected) %>% 
+    select(-followup_expected_6wk, -followup_expected_3mo, -followup_expected_6mo) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(str_detect(value,"Yes|YES"),"Yes",value)) %>% 
     group_by(name, value) %>%
@@ -380,7 +380,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     rename("Radiographs"=value, n2=n)
   
   df3_plateau <- analytic %>% 
-    select(injury_type, sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected, 
+    select(injury_type, followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, 
            plat_tib_fib_overlap_6mo, plat_sagittal_pl_alignment_6mo, plat_patella_centered_6mo, 
            plat_medial_prox_tibia_deg_6mo, plat_medial_lateral_diff_6mo, plat_condylar_width_6mo, plat_art_step_off_medial_6mo, 
            plat_art_step_off_lateral_6mo, plat_femur_tibia_deg_6mo,
@@ -398,9 +398,9 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
       plateau_6_months = rowSums(is.na(select(., ends_with("6mo"))))<3,
     ) %>% 
     select(-ends_with("wk"),-ends_with("mo")) %>% 
-    mutate(plateau_6_weeks = ifelse(sixweek_visit_expected, plateau_6_weeks,NA)) %>% 
-    mutate(plateau_3_months = ifelse(threemonth_visit_expected, plateau_3_months,NA)) %>% 
-    mutate(plateau_6_months = ifelse(sixmonth_visit_expected, plateau_6_months,NA)) %>% 
+    mutate(plateau_6_weeks = ifelse(followup_expected_6wk, plateau_6_weeks,NA)) %>% 
+    mutate(plateau_3_months = ifelse(followup_expected_3mo, plateau_3_months,NA)) %>% 
+    mutate(plateau_6_months = ifelse(followup_expected_6mo, plateau_6_months,NA)) %>% 
     select(-ends_with("expected")) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(value,"Completed","Not Completed")) %>% 
@@ -447,7 +447,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
 #' mrr_status_12mo, cfu_status_6wk, cfu_status_3mo, cfu_status_6mo, cfu_status_12mo, pfu_status_6wk, pfu_status_3mo, 
 #' pfu_status_6mo, pfu_status_12mo, bpi_status_6wk, bpi_status_3mo, bpi_status_6mo,bpi_status_12mo, aos_status_6wk, 
 #' aos_status_3mo, aos_status_6mo, aos_status_12mo, koos_status_6wk, koos_status_3mo, koos_status_6mo, koos_status_12mo, 
-#' sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected, injury_type
+#' followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type
 #'
 #' @return nothing
 #' @export
@@ -465,17 +465,17 @@ visit_status_for_followup_by_form <- function(analytic){
            koos_status_12mo)
   
   df_expected <- analytic %>% 
-    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected) %>% 
-    summarise("12 Months"= sum(twelvemonth_visit_expected, na.rm = TRUE), "3 Months"= sum(threemonth_visit_expected, na.rm = TRUE),
-              "6 Months"= sum(sixmonth_visit_expected, na.rm = TRUE),  "6 Weeks"= sum(sixweek_visit_expected, na.rm = TRUE)) %>% 
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo) %>% 
+    summarise("12 Months"= sum(followup_expected_12mo, na.rm = TRUE), "3 Months"= sum(followup_expected_3mo, na.rm = TRUE),
+              "6 Months"= sum(followup_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_expected_6wk, na.rm = TRUE)) %>% 
     mutate(Form = "Enrolled") %>% 
     mutate(Status = "Expected") 
   
   df_injury_expected <- analytic %>% 
-    select(sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected, injury_type) %>%
+    select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type) %>%
     group_by(injury_type) %>% 
-    summarise("12 Months"= sum(twelvemonth_visit_expected, na.rm = TRUE), "3 Months"= sum(threemonth_visit_expected, na.rm = TRUE),
-              "6 Months"= sum(sixmonth_visit_expected, na.rm = TRUE),  "6 Weeks"= sum(sixweek_visit_expected, na.rm = TRUE)) %>% 
+    summarise("12 Months"= sum(followup_expected_12mo, na.rm = TRUE), "3 Months"= sum(followup_expected_3mo, na.rm = TRUE),
+              "6 Months"= sum(followup_expected_6mo, na.rm = TRUE),  "6 Weeks"= sum(followup_expected_6wk, na.rm = TRUE)) %>% 
     ungroup() %>% 
     mutate(Form = str_to_title(injury_type))%>% 
     select(-injury_type) %>% 
@@ -526,7 +526,7 @@ visit_status_for_followup_by_form <- function(analytic){
 #' @description This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
 #' injuries
 #'
-#' @param analytic This is the analytic data set that must include injury_type, ankle_ota_class, schatzker_type, enrolled
+#' @param analytic This is the analytic data set that must include injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled
 #'
 #' @return nothing
 #' @export
@@ -538,19 +538,19 @@ visit_status_for_followup_by_form <- function(analytic){
 injury_ankle_plateau_characteristics <- function(analytic){
   
   df <- analytic %>% 
-    select(injury_type, ankle_ota_class, schatzker_type, enrolled) %>%  filter(enrolled == TRUE)
+    select(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled) %>%  filter(enrolled == TRUE)
   
   summary_totals <- df %>%
-    filter(injury_type == "plateau" & is.na(ankle_ota_class) | injury_type == "ankle" & is.na(schatzker_type)) %>%
-    group_by(injury_type, ankle_ota_class, schatzker_type) %>%
+    filter(injury_type == "plateau" & is.na(injury_classification_ankle_ota) | injury_type == "ankle" & is.na(injury_classification_plat_schatzker)) %>%
+    group_by(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker) %>%
     summarise(Total = n()) %>%
     ungroup() %>% 
-    mutate(ankle_ota_class = ifelse(injury_type == "ankle" & is.na(ankle_ota_class) & is.na(schatzker_type), "Missing", ankle_ota_class)) %>% 
-    mutate(schatzker_type = ifelse(injury_type == "plateau" & is.na(ankle_ota_class) & is.na(schatzker_type), "Missing", schatzker_type)) %>% 
+    mutate(injury_classification_ankle_ota = ifelse(injury_type == "ankle" & is.na(injury_classification_ankle_ota) & is.na(injury_classification_plat_schatzker), "Missing", injury_classification_ankle_ota)) %>% 
+    mutate(injury_classification_plat_schatzker = ifelse(injury_type == "plateau" & is.na(injury_classification_ankle_ota) & is.na(injury_classification_plat_schatzker), "Missing", injury_classification_plat_schatzker)) %>% 
     select(-injury_type) %>% 
-    mutate(Name = ifelse(!is.na(ankle_ota_class), ankle_ota_class, schatzker_type)) %>% 
-    mutate(Category = ifelse(!is.na(ankle_ota_class), "O", "T")) %>% 
-    select(-ankle_ota_class, -schatzker_type)
+    mutate(Name = ifelse(!is.na(injury_classification_ankle_ota), injury_classification_ankle_ota, injury_classification_plat_schatzker)) %>% 
+    mutate(Category = ifelse(!is.na(injury_classification_ankle_ota), "O", "T")) %>% 
+    select(-injury_classification_ankle_ota, -injury_classification_plat_schatzker)
   
   injury_type_total <- df %>% 
     group_by(injury_type) %>% 
@@ -600,7 +600,7 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include enrolled, age, age_group
 #' @param sex is a meta construct that is required that defaults to "sex"
-#' @param race is a meta construct that is required that defaults to "race_ethnicity"
+#' @param race is a meta construct that is required that defaults to "ethnicity_race"
 #' @param education is a meta construct that is required that defaults to "education_level"
 #' @param military is a meta construct that is required that defaults to "military_status"
 #' @param sex_levels sets default values and orders for sex meta construct
@@ -615,7 +615,7 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #' \dontrun{
 #' baseline_characteristics_percent()
 #' }
-baseline_characteristics_percent <- function(analytic, sex="sex", race="race_ethnicity", education="education_level", military="military_status",
+baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicity_race", education="education_level", military="military_status",
                                              sex_levels=c("Female","Male", "Missing"), 
                                              race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
                                              education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
@@ -727,8 +727,8 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #' This was originally made for Union
 #'
-#' @param analytic This is the analytic data set that must include enrolled, enrolled_discontinuation_reason, 
-#' deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported
+#' @param analytic This is the analytic data set that must include enrolled, censored_reason, 
+#' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
 #'
 #' @return nothing
 #' @export
@@ -740,48 +740,48 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="race_eth
 discontinuation_sae_deviation_by_type <- function(analytic){
   total <- sum(analytic$enrolled, na.rm=T)
   discontinuation_df <- analytic %>% 
-    select(enrolled, enrolled_discontinuation_reason) %>% 
+    select(enrolled, censored_reason) %>% 
     filter(enrolled == TRUE) %>% 
-    count(enrolled_discontinuation_reason) %>%
-    rename(type=enrolled_discontinuation_reason) %>% 
+    count(censored_reason) %>%
+    rename(type=censored_reason) %>% 
     filter(!is.na(type)) %>% 
     mutate(type = as.character(type))
   
   discontinuation_df_tot <- tibble(type="Discontinuations", n=sum(discontinuation_df$n))
   
   sae_df <- analytic %>% 
-    select(study_id, enrolled, sae_reported) %>% 
-    filter(enrolled & sae_reported>0) %>% 
-    mutate(sae_reported = "SAE") %>% 
-    count(sae_reported) %>%
-    rename(type=sae_reported) %>% 
+    select(study_id, enrolled, sae_count) %>% 
+    filter(enrolled & sae_count>0) %>% 
+    mutate(sae_count = "SAE") %>% 
+    count(sae_count) %>%
+    rename(type=sae_count) %>% 
     filter(!is.na(type)) %>% 
     mutate(type = as.character(type))
   
   
   deviation_sc_df <- analytic %>% 
-    select(study_id, enrolled, deviation_screen_consent) %>% 
+    select(study_id, enrolled, protocol_deviation_screen_consent) %>% 
     filter(enrolled == TRUE) %>% 
-    count(deviation_screen_consent) %>%
-    rename(type=deviation_screen_consent) %>% 
+    count(protocol_deviation_screen_consent) %>%
+    rename(type=protocol_deviation_screen_consent) %>% 
     filter(!is.na(type)) %>% 
     mutate(type = as.character(type))
   
   
   deviation_p_df <- analytic %>% 
-    select(study_id, enrolled, deviation_procedural) %>% 
+    select(study_id, enrolled, protocol_deviation_procedural) %>% 
     filter(enrolled == TRUE) %>% 
-    count(deviation_procedural) %>%
-    rename(type=deviation_procedural) %>% 
+    count(protocol_deviation_procedural) %>%
+    rename(type=protocol_deviation_procedural) %>% 
     filter(!is.na(type)) %>% 
     mutate(type = as.character(type))
   
   
   deviation_a_df <- analytic %>% 
-    select(study_id, enrolled, deviation_administrative) %>% 
+    select(study_id, enrolled, protocol_deviation_administrative) %>% 
     filter(enrolled == TRUE) %>% 
-    count(deviation_administrative) %>%
-    rename(type=deviation_administrative) %>% 
+    count(protocol_deviation_administrative) %>%
+    rename(type=protocol_deviation_administrative) %>% 
     filter(!is.na(type)) %>% 
     mutate(type = str_replace(type,"Other: .+","Other")) %>% 
     mutate(type = as.character(type))
@@ -833,8 +833,8 @@ discontinuation_sae_deviation_by_type <- function(analytic){
 #' This was originally made for NSAID
 #'
 #' @param analytic This is the analytic data set that must include screened; inappropriate_enrollment; 
-#' late_ineligible; late_refusal; withdrawn_patient; withdrawn_physician; pending_adjudication; 
-#' dead; sae_reported; deviation_screen_consent; deviation_procedural; deviation_administrative
+#' late_ineligible; late_refusal; withdrawn_patient; withdrawn_physician; adjudication_pending; 
+#' dead; sae_count; protocol_deviation_screen_consent; protocol_deviation_procedural; protocol_deviation_administrative
 #'
 #' @return nothing
 #' @export
@@ -846,27 +846,27 @@ discontinuation_sae_deviation_by_type <- function(analytic){
 adjudications_and_discontinuations_by_type <- function(analytic){
   df <- analytic %>% 
     filter(screened == TRUE) %>% 
-    select(inappropriate_enrollment, late_ineligible, late_refusal, withdrawn_patient, withdrawn_physician, #pending_adjudication, 
-           dead, sae_reported, deviation_screen_consent, deviation_procedural, deviation_administrative) %>% 
+    select(inappropriate_enrollment, late_ineligible, late_refusal, withdrawn_patient, withdrawn_physician, #adjudication_pending, 
+           dead, sae_count, protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative) %>% 
     
     mutate(na_count = rowSums(is.na(select(., 
                                            study_discontinuation,
-                                           deviation_screen_consent,
-                                           deviation_procedural,
-                                           deviation_administrative,
-                                           sae_reported)))) %>%
+                                           protocol_deviation_screen_consent,
+                                           protocol_deviation_procedural,
+                                           protocol_deviation_administrative,
+                                           sae_count)))) %>%
     filter(na_count != 5) %>%
     select(-na_count) %>% 
-    mutate(sae_reported = ifelse(sae_reported == TRUE, 'SAE', sae_reported))
+    mutate(sae_count = ifelse(sae_count == TRUE, 'SAE', sae_count))
   
   total <- sum(df$enrolled)
   
   totals_df <- df %>%
     mutate(total_disc = ifelse(!is.na(study_discontinuation), TRUE, FALSE)) %>% 
-    mutate(total_dsc = ifelse(!is.na(deviation_screen_consent), TRUE, FALSE)) %>% 
-    mutate(total_dp = ifelse(!is.na(deviation_procedural), TRUE, FALSE)) %>% 
-    mutate(total_da = ifelse(!is.na(deviation_administrative), TRUE, FALSE)) %>% 
-    mutate(total_sae = ifelse(!is.na(sae_reported), TRUE, FALSE)) %>% 
+    mutate(total_dsc = ifelse(!is.na(protocol_deviation_screen_consent), TRUE, FALSE)) %>% 
+    mutate(total_dp = ifelse(!is.na(protocol_deviation_procedural), TRUE, FALSE)) %>% 
+    mutate(total_da = ifelse(!is.na(protocol_deviation_administrative), TRUE, FALSE)) %>% 
+    mutate(total_sae = ifelse(!is.na(sae_count), TRUE, FALSE)) %>% 
     select(total_disc, total_dsc, total_dp, total_da, total_sae)
   
   total_disc <- sum(totals_df$total_disc)
@@ -897,45 +897,45 @@ adjudications_and_discontinuations_by_type <- function(analytic){
     select(-n) %>% 
     rename(type = study_discontinuation)
   
-  deviation_screen_consent_df <- df %>% 
-    select(deviation_screen_consent) %>% 
-    filter(!is.na(deviation_screen_consent)) %>% 
-    count(deviation_screen_consent) %>% 
+  protocol_deviation_screen_consent_df <- df %>% 
+    select(protocol_deviation_screen_consent) %>% 
+    filter(!is.na(protocol_deviation_screen_consent)) %>% 
+    count(protocol_deviation_screen_consent) %>% 
     mutate(percentage = format_count_percent(n, total)) %>% 
     select(-n) %>% 
-    rename(type = deviation_screen_consent)
+    rename(type = protocol_deviation_screen_consent)
   
-  deviation_procedural_df <- df %>% 
-    select(deviation_procedural) %>% 
-    filter(!is.na(deviation_procedural)) %>% 
-    count(deviation_procedural) %>% 
+  protocol_deviation_procedural_df <- df %>% 
+    select(protocol_deviation_procedural) %>% 
+    filter(!is.na(protocol_deviation_procedural)) %>% 
+    count(protocol_deviation_procedural) %>% 
     mutate(percentage = format_count_percent(n, total)) %>% 
     select(-n) %>% 
-    rename(type = deviation_procedural)
+    rename(type = protocol_deviation_procedural)
   
-  deviation_administrative_df <- df %>% 
-    select(deviation_administrative) %>% 
-    filter(!is.na(deviation_administrative)) %>% 
-    count(deviation_administrative) %>% 
+  protocol_deviation_administrative_df <- df %>% 
+    select(protocol_deviation_administrative) %>% 
+    filter(!is.na(protocol_deviation_administrative)) %>% 
+    count(protocol_deviation_administrative) %>% 
     mutate(percentage = format_count_percent(n, total)) %>% 
     select(-n) %>% 
-    rename(type = deviation_administrative)
+    rename(type = protocol_deviation_administrative)
   
-  sae_reported_df <- df %>% 
-    select(sae_reported) %>% 
-    filter(!is.na(sae_reported)) %>% 
-    count(sae_reported) %>% 
+  sae_count_df <- df %>% 
+    select(sae_count) %>% 
+    filter(!is.na(sae_count)) %>% 
+    count(sae_count) %>% 
     mutate(percentage = format_count_percent(n, total)) %>% 
     select(-n) %>% 
-    rename(type = sae_reported)
+    rename(type = sae_count)
   
-  df_final <- rbind(disc, study_discontinuation_df, sae_reported_df, protocol_deviations, sc, deviation_screen_consent_df, 
-                    dp, deviation_procedural_df, da, deviation_administrative_df) 
+  df_final <- rbind(disc, study_discontinuation_df, sae_count_df, protocol_deviations, sc, protocol_deviation_screen_consent_df, 
+                    dp, protocol_deviation_procedural_df, da, protocol_deviation_administrative_df) 
   
   n_disc <- nrow(study_discontinuation_df)
-  n_dsc <- nrow(deviation_screen_consent_df)
-  n_dp <- nrow(deviation_procedural_df)
-  n_da <- nrow(deviation_administrative_df)
+  n_dsc <- nrow(protocol_deviation_screen_consent_df)
+  n_dp <- nrow(protocol_deviation_procedural_df)
+  n_da <- nrow(protocol_deviation_administrative_df)
   
   cnames <- c(' ', paste('n = ', total))
   header <- c(1,1)
@@ -985,7 +985,7 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #' \dontrun{
 #' ineligibility_by_reasons()
 #' }
-ineligibility_by_reasons <- function(analytic){
+ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
   
   
   df <- analytic %>% 
@@ -997,7 +997,7 @@ ineligibility_by_reasons <- function(analytic){
     boolean_column_counter() %>% 
     pivot_longer(everything()) %>% 
     arrange(desc(value)) %>% 
-    slice(1:5) %>% 
+    slice(1:n_top_reasons) %>% 
     pull(name) 
   
   total <- df %>% 
@@ -1007,7 +1007,7 @@ ineligibility_by_reasons <- function(analytic){
     mutate(Site = 'Total') %>% 
     select(Site, screened, ineligible, all_of(reasons), `Other Reasons`)
   
-  
+   
   sites <- df %>% 
     mutate(ineligibility_reasons = ifelse(ineligibility_reasons %in% reasons, ineligibility_reasons,'Other Reasons')) %>% 
     column_unzipper('ineligibility_reasons', sep = '; ') %>% 
@@ -1022,7 +1022,7 @@ ineligibility_by_reasons <- function(analytic){
     mutate(Ineligible = format_count_percent(Ineligible, Screened))
   
   vis <- kable(output, align='l', padding='2l') %>%
-    add_header_above(c(" " = 3, "Top 5 Ineligibility Reasons" = 5, " " = 1)) %>%  
+    add_header_above(c(" " = 3, paste0("Top ", n_top_reasons, " Ineligibility Reasons ="), n_top_reasons, " " = 1)) %>%  
     kable_styling("striped", full_width = F, position="left") 
   
   return(vis)
@@ -1034,7 +1034,7 @@ ineligibility_by_reasons <- function(analytic){
 #' @description This function visualizes the injury characteristics
 #'
 #' @param analytic This is the analytic data set that must include enrolled, 
-#' injury_gustilo, injury_tscherne, injury_ao_class
+#' injury_gustilo, injury_classification_tscherne, injury_classification_ankle_ao
 #'
 #' @return nothing
 #' @export
@@ -1046,7 +1046,7 @@ ineligibility_by_reasons <- function(analytic){
 ao_gustillo_tscherne_injury_characteristics <- function(analytic){
   pull <- analytic %>% 
     filter(enrolled) %>%
-    select(injury_gustilo, injury_tscherne, injury_ao_class)
+    select(injury_gustilo, injury_classification_tscherne, injury_classification_ankle_ao)
   
   inj_gust <- pull %>% 
     count(injury_gustilo) %>%
@@ -1058,16 +1058,16 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
   total <- inj_gust %>%
     mutate(n=as.numeric(n)) %>%
     pull(n) %>%
-    sum()
+    sum() 
   
   inj_ao <- pull %>% 
-    count(injury_ao_class) %>%
+    count(injury_classification_ankle_ao) %>%
     pivot_longer(-n) %>%
     mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
     select(-name)
   
   inj_tsch <- pull %>% 
-    count(injury_tscherne) %>%
+    count(injury_classification_tscherne) %>%
     pivot_longer(-n) %>%
     mutate(value=ifelse(!is.na(value), paste('Tscherne Gotzen Grade', value), value)) %>%
     mutate(value=ifelse(is.na(value), 'Tscherne Unknown', value)) %>%
@@ -1112,7 +1112,7 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
 #' @description This function returns a list of sites and their dates of 
 #' local, DOD, and METRC certifications
 #'
-#' @param analytic This is the analytic data set that must include sites_certification_dates
+#' @param analytic This is the analytic data set that must include site_certified_date
 #'
 #' @return nothing
 #' @export
@@ -1123,7 +1123,7 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
 #' }
 certification_date_data <- function(analytic){
   df <- analytic %>% 
-    select(sites_certification_dates) %>%
+    select(site_certified_date) %>%
     unique()
   
   date_today <- Sys.Date()
@@ -1133,7 +1133,7 @@ certification_date_data <- function(analytic){
             paste0('Days Number of Days Certified (as of ', as.character(date_today), ')'))
   
   site_data <- df %>%
-    separate(sites_certification_dates, cols, sep = ';') %>%
+    separate(site_certified_date, cols, sep = ';') %>%
     filter(!is.na(Facility))
   
   vis <- kable(site_data, align='l', padding='2l') %>% 
@@ -1323,8 +1323,8 @@ nonunion_surgery_outcome <- function(analytic){
 #'
 #' @description This function visualizes the crossovers by site in hospital and at discharge
 #'
-#' @param analytic This is the analytic data set that must include enrolled, dfsurg_completed, 
-#' ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero, and facilitycode
+#' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
+#' ih_dischrg_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
 #'
 #' @return nothing
 #' @export
@@ -1335,18 +1335,18 @@ nonunion_surgery_outcome <- function(analytic){
 #' }
 ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   df <- analytic %>% 
-    select(facilitycode, enrolled, dfsurg_completed, ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero) %>% 
+    select(facilitycode, enrolled, df_surg_completed, ih_dischrg_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
     rename(Facility = facilitycode) %>% 
     filter(enrolled) %>% 
     mutate(ih_dischrg_date = !is.na(ih_dischrg_date)) %>% 
     group_by(Facility) %>% 
     summarize('Enrolled' = sum(enrolled),
-              "Definitive Fixation Complete" = sum(dfsurg_completed), 
+              "Definitive Fixation Complete" = sum(df_surg_completed), 
               "Discharged from Index Hospitalization" = sum(ih_dischrg_date),
-              "Discharged on Radomization Date" = sum(ih_dischrg_date_on_time_zero),
-              "Inpatient Crossover" = sum(ih_crossover),
-              "Discharge Crossover" = sum(dc_crossover))
+              "Discharged on Radomization Date" = sum(ih_discharge_date_on_time_zero),
+              "Inpatient Crossover" = sum(crossover_inpatient),
+              "Discharge Crossover" = sum(crossover_discharge))
   
   
   table_raw <- df %>% 
@@ -1441,8 +1441,8 @@ expected_and_followup_visit <- function(analytic){
 #'
 #' @description This function visualizes the certain injury characteristics for study participants study injuries
 #'
-#' @param analytic This is the analytic data set that must include enrolled, injury_ao, injury_at_work, injury_in_battle, 
-#' injury_in_blast, injury_date, injury_mechanism, injury_side, injury_tscherne, injury_type
+#' @param analytic This is the analytic data set that must include enrolled, injury_classification_ankle_ao, injury_at_work, injury_in_battle, 
+#' injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type
 #
 #'
 #' @return nothing
@@ -1455,8 +1455,8 @@ expected_and_followup_visit <- function(analytic){
 #' }
 injury_characteristics_by_alternate_constructs <- function(analytic){
   df <- analytic %>% 
-    select(enrolled, injury_ao, injury_at_work, injury_in_battle, 
-           injury_in_blast, injury_date, injury_mechanism, injury_side, injury_tscherne, injury_type) %>% 
+    select(enrolled, injury_classification_ankle_ao, injury_at_work, injury_in_battle, 
+           injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type) %>% 
     filter(enrolled)
   
   total <- sum(df$enrolled)
@@ -1518,21 +1518,21 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
     arrange(factor(type, levels = c('Left', 'Right', 'Missing')))
   
   tscherne_df <- df %>% 
-    mutate(injury_tscherne = as.character(injury_tscherne)) %>% 
-    mutate(injury_tscherne = replace_na(injury_tscherne, "Missing")) %>% 
-    group_by(injury_tscherne) %>% 
-    count(injury_tscherne) %>% 
+    mutate(injury_classification_tscherne = as.character(injury_classification_tscherne)) %>% 
+    mutate(injury_classification_tscherne = replace_na(injury_classification_tscherne, "Missing")) %>% 
+    group_by(injury_classification_tscherne) %>% 
+    count(injury_classification_tscherne) %>% 
     mutate(percentage = format_count_percent(n, total)) %>% 
-    rename(type = injury_tscherne) %>% 
+    rename(type = injury_classification_tscherne) %>% 
     select(-n)
   
   ao_df <- df %>% 
-    mutate(injury_ao = as.character(injury_ao)) %>% 
-    mutate(injury_ao = replace_na(injury_ao, "Missing")) %>% 
-    group_by(injury_ao) %>% 
-    count(injury_ao) %>% 
+    mutate(injury_classification_ankle_ao = as.character(injury_classification_ankle_ao)) %>% 
+    mutate(injury_classification_ankle_ao = replace_na(injury_classification_ankle_ao, "Missing")) %>% 
+    group_by(injury_classification_ankle_ao) %>% 
+    count(injury_classification_ankle_ao) %>% 
     mutate(percentage = format_count_percent(n, total)) %>% 
-    rename(type = injury_ao) %>% 
+    rename(type = injury_classification_ankle_ao) %>% 
     select(-n)
   
   df_final <- rbind(type_df, work_df, battle_df, blast_df, side_df, tscherne_df, ao_df) %>% 

@@ -7,7 +7,7 @@
 certification_date_data(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include sites_certification_dates}
+\item{analytic}{This is the analytic data set that must include site_certified_date}
 }
 \value{
 nothing

@@ -9,7 +9,7 @@
 #' mrr_status_12mo, cfu_status_6wk, cfu_status_3mo, cfu_status_6mo, cfu_status_12mo, pfu_status_6wk, pfu_status_3mo, 
 #' pfu_status_6mo, pfu_status_12mo, bpi_status_6wk, bpi_status_3mo, bpi_status_6mo,bpi_status_12mo, aos_status_6wk, 
 #' aos_status_3mo, aos_status_6mo, aos_status_12mo, koos_status_6wk, koos_status_3mo, koos_status_6mo, koos_status_12mo, 
-#' sixweek_visit_expected, threemonth_visit_expected, sixmonth_visit_expected, twelvemonth_visit_expected, injury_type
+#' followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type
 #'
 #' @return nothing
 #' @export
@@ -40,7 +40,7 @@ closed_visit_status_for_followup_by_form <- function(analytic){
 #' @description This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
 #' injuries
 #'
-#' @param analytic This is the analytic data set that must include treatment_arm injury_type, ankle_ota_class, schatzker_type, enrolled
+#' @param analytic This is the analytic data set that must include treatment_arm injury_type, injury_classification_ankle_ota, schatzker_type, enrolled
 #'
 #' @return nothing
 #' @export
@@ -52,33 +52,33 @@ closed_visit_status_for_followup_by_form <- function(analytic){
 closed_injury_ankle_plateau_characteristics <- function(analytic){
   
   df <- analytic %>% 
-    select(injury_type, ankle_ota_class, schatzker_type, enrolled) %>%  
+    select(injury_type, injury_classification_ankle_ota, schatzker_type, enrolled) %>%  
     filter(enrolled == TRUE)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A") %>% 
-    select(injury_type, ankle_ota_class, schatzker_type, enrolled) %>%  
+    select(injury_type, injury_classification_ankle_ota, schatzker_type, enrolled) %>%  
     filter(enrolled == TRUE)
   
   df_b <- analytic %>% 
     filter(treatment_arm=="Group B") %>% 
-    select(injury_type, ankle_ota_class, schatzker_type, enrolled) %>%  
+    select(injury_type, injury_classification_ankle_ota, schatzker_type, enrolled) %>%  
     filter(enrolled == TRUE)
   
   ota_number <- -1
   schatzer_numbe <- -1
   inner_closed_injury_ankle_plateau_characteristics <- function(df){
     summary_totals <- df %>%
-      filter(injury_type == "plateau" & is.na(ankle_ota_class) | injury_type == "ankle" & is.na(schatzker_type)) %>%
-      group_by(injury_type, ankle_ota_class, schatzker_type) %>%
+      filter(injury_type == "plateau" & is.na(injury_classification_ankle_ota) | injury_type == "ankle" & is.na(schatzker_type)) %>%
+      group_by(injury_type, injury_classification_ankle_ota, schatzker_type) %>%
       summarise(Total = n()) %>%
       ungroup() %>% 
-      mutate(ankle_ota_class = ifelse(injury_type == "ankle" & is.na(ankle_ota_class) & is.na(schatzker_type), "Missing", ankle_ota_class)) %>% 
-      mutate(schatzker_type = ifelse(injury_type == "plateau" & is.na(ankle_ota_class) & is.na(schatzker_type), "Missing", schatzker_type)) %>% 
+      mutate(injury_classification_ankle_ota = ifelse(injury_type == "ankle" & is.na(injury_classification_ankle_ota) & is.na(schatzker_type), "Missing", injury_classification_ankle_ota)) %>% 
+      mutate(schatzker_type = ifelse(injury_type == "plateau" & is.na(injury_classification_ankle_ota) & is.na(schatzker_type), "Missing", schatzker_type)) %>% 
       select(-injury_type) %>% 
-      mutate(Name = ifelse(!is.na(ankle_ota_class), ankle_ota_class, schatzker_type)) %>% 
-      mutate(Category = ifelse(!is.na(ankle_ota_class), "O", "T")) %>% 
-      select(-ankle_ota_class, -schatzker_type)
+      mutate(Name = ifelse(!is.na(injury_classification_ankle_ota), injury_classification_ankle_ota, schatzker_type)) %>% 
+      mutate(Category = ifelse(!is.na(injury_classification_ankle_ota), "O", "T")) %>% 
+      select(-injury_classification_ankle_ota, -schatzker_type)
     
     injury_type_total <- df %>% 
       group_by(injury_type) %>% 
@@ -313,8 +313,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="r
 #'
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #'
-#' @param analytic This is the analytic data set that must include treatment_arm enrolled, enrolled_discontinuation, 
-#' deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported
+#' @param analytic This is the analytic data set that must include treatment_arm enrolled, censored, 
+#' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
 #'
 #' @return nothing
 #' @export
@@ -341,48 +341,48 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
   
   inner_closed_discontinuation_sae_deviation_by_type <- function(analytic){
     discontinuation_df <- analytic %>% 
-      select(enrolled, enrolled_discontinuation_reason) %>% 
+      select(enrolled, censored_reason) %>% 
       filter(enrolled == TRUE) %>% 
-      count(enrolled_discontinuation_reason) %>%
-      rename(type=enrolled_discontinuation_reason) %>% 
+      count(censored_reason) %>%
+      rename(type=censored_reason) %>% 
       filter(!is.na(type)) %>% 
       mutate(type = as.character(type))
     
     discontinuation_df_tot <- tibble(type="Discontinuations", n=sum(discontinuation_df$n))
     
     sae_df <- analytic %>% 
-      select(study_id, enrolled, sae_reported) %>% 
-      filter(enrolled & sae_reported>0) %>% 
-      mutate(sae_reported = "SAE") %>% 
-      count(sae_reported) %>%
-      rename(type=sae_reported) %>% 
+      select(study_id, enrolled, sae_count) %>% 
+      filter(enrolled & sae_count>0) %>% 
+      mutate(sae_count = "SAE") %>% 
+      count(sae_count) %>%
+      rename(type=sae_count) %>% 
       filter(!is.na(type)) %>% 
       mutate(type = as.character(type))
     
     
     deviation_sc_df <- analytic %>% 
-      select(study_id, enrolled, deviation_screen_consent) %>% 
+      select(study_id, enrolled, protocol_deviation_screen_consent) %>% 
       filter(enrolled == TRUE) %>% 
-      count(deviation_screen_consent) %>%
-      rename(type=deviation_screen_consent) %>% 
+      count(protocol_deviation_screen_consent) %>%
+      rename(type=protocol_deviation_screen_consent) %>% 
       filter(!is.na(type)) %>% 
       mutate(type = as.character(type))
     
     
     deviation_p_df <- analytic %>% 
-      select(study_id, enrolled, deviation_procedural) %>% 
+      select(study_id, enrolled, protocol_deviation_procedural) %>% 
       filter(enrolled == TRUE) %>% 
-      count(deviation_procedural) %>%
-      rename(type=deviation_procedural) %>% 
+      count(protocol_deviation_procedural) %>%
+      rename(type=protocol_deviation_procedural) %>% 
       filter(!is.na(type)) %>% 
       mutate(type = as.character(type))
     
     
     deviation_a_df <- analytic %>% 
-      select(study_id, enrolled, deviation_administrative) %>% 
+      select(study_id, enrolled, protocol_deviation_administrative) %>% 
       filter(enrolled == TRUE) %>% 
-      count(deviation_administrative) %>%
-      rename(type=deviation_administrative) %>% 
+      count(protocol_deviation_administrative) %>%
+      rename(type=protocol_deviation_administrative) %>% 
       filter(!is.na(type)) %>% 
       mutate(type = str_replace(type,"Other: .+","Other")) %>% 
       mutate(type = as.character(type))
@@ -800,8 +800,8 @@ closed_appendix_D_protocol_deviation <- function(analytic){
 #'
 #' @description This function visualizes the crossovers by site in hospital and at discharge
 #'
-#' @param analytic This is the analytic data set that must include enrolled, dfsurg_completed, 
-#' ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero, facilitycode, and treatment_arm
+#' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
+#' ih_dischrg_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, and treatment_arm
 #'
 #' @return nothing
 #' @export
@@ -840,18 +840,18 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 #   inner_closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic_df){
 #     
 #     df <- analytic_df %>% 
-#       select(facilitycode, enrolled, dfsurg_completed, ih_dischrg_date, ih_crossover, dc_crossover, ih_dischrg_date_on_time_zero) %>% 
+#       select(facilitycode, enrolled, df_surg_completed, ih_dischrg_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero) %>% 
 #       mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
 #       rename(Facility = facilitycode) %>% 
 #       filter(enrolled) %>% 
 #       mutate(ih_dischrg_date = !is.na(ih_dischrg_date)) %>% 
 #       group_by(Facility) %>% 
 #       summarize('Enrolled' = sum(enrolled),
-#                 "Definitive Fixation Complete" = sum(dfsurg_completed), 
+#                 "Definitive Fixation Complete" = sum(df_surg_completed), 
 #                 "Discharged from Index Hospitalization" = sum(ih_dischrg_date),
-#                 "Discharged on Radomization Date" = sum(ih_dischrg_date_on_time_zero),
-#                 "Inpatient Crossover" = sum(ih_crossover),
-#                 "Discharge Crossover" = sum(dc_crossover))
+#                 "Discharged on Radomization Date" = sum(ih_discharge_date_on_time_zero),
+#                 "Inpatient Crossover" = sum(crossover_inpatient),
+#                 "Discharge Crossover" = sum(crossover_discharge))
 #     
 #     table_raw <- df %>% 
 #       adorn_totals("row") %>% 
@@ -885,7 +885,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 #' @description This function visualizes the Nonunion surgery outcome
 #'
 #' @param analytic This is the analytic data set that must include enrolled, 
-#' followup_due_3mo, followup_due_12mo, nonunion_90day,  nonunion_1yr, treatment_arm
+#' followup_due_3mo, followup_due_12mo, nonunion_90days,  nonunion_1yr, treatment_arm
 #'
 #' @return nothing
 #' @export
@@ -896,36 +896,36 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 #' }
 closed_nonunion_surgery_outcome <- function(analytic){
   df <- analytic %>% 
-    select(enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr) %>% 
+    select(enrolled, followup_due_3mo, nonunion_90days, followup_due_12mo, nonunion_1yr) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
     filter(enrolled) %>% 
     boolean_column_counter() %>% 
-    mutate(nonunion_90day = format_count_percent(nonunion_90day, followup_due_3mo),
+    mutate(nonunion_90days = format_count_percent(nonunion_90days, followup_due_3mo),
            nonunion_1yr = format_count_percent(nonunion_1yr, followup_due_12mo)) %>% 
     mutate(Treatment = "Total") %>% 
-    select(Treatment, enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr)
+    select(Treatment, enrolled, followup_due_3mo, nonunion_90days, followup_due_12mo, nonunion_1yr)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A") %>% 
-    select(enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr) %>% 
+    select(enrolled, followup_due_3mo, nonunion_90days, followup_due_12mo, nonunion_1yr) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
     filter(enrolled) %>% 
     boolean_column_counter() %>% 
-    mutate(nonunion_90day = format_count_percent(nonunion_90day, followup_due_3mo),
+    mutate(nonunion_90days = format_count_percent(nonunion_90days, followup_due_3mo),
            nonunion_1yr = format_count_percent(nonunion_1yr, followup_due_12mo)) %>% 
     mutate(Treatment = "Group A") %>% 
-    select(Treatment, enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr)
+    select(Treatment, enrolled, followup_due_3mo, nonunion_90days, followup_due_12mo, nonunion_1yr)
     
   df_b <- analytic %>% 
     filter(treatment_arm=="Group B") %>% 
-    select(enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr) %>% 
+    select(enrolled, followup_due_3mo, nonunion_90days, followup_due_12mo, nonunion_1yr) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
     filter(enrolled) %>% 
     boolean_column_counter() %>% 
-    mutate(nonunion_90day = format_count_percent(nonunion_90day, followup_due_3mo),
+    mutate(nonunion_90days = format_count_percent(nonunion_90days, followup_due_3mo),
            nonunion_1yr = format_count_percent(nonunion_1yr, followup_due_12mo)) %>% 
     mutate(Treatment = "Group B") %>% 
-    select(Treatment, enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr)
+    select(Treatment, enrolled, followup_due_3mo, nonunion_90days, followup_due_12mo, nonunion_1yr)
   
   df <- rbind(df, df_a, df_b)
   
@@ -944,7 +944,7 @@ closed_nonunion_surgery_outcome <- function(analytic){
 #' @description This function visualizes the injury characteristics
 #'
 #' @param analytic This is the analytic data set that must include enrolled, 
-#' injury_gustilo, injury_tscherne, injury_ao_class, treatment_arm
+#' injury_gustilo, injury_classification_tscherne, injury_classification_ankle_ao, treatment_arm
 #'
 #' @return nothing
 #' @export
@@ -975,7 +975,7 @@ closed_ao_gustillo_tscherne_injury_characteristics <- function(analytic){
   
     pull <- analytic_df %>% 
       filter(enrolled) %>%
-      select(injury_gustilo, injury_tscherne, injury_ao_class)
+      select(injury_gustilo, injury_classification_tscherne, injury_classification_ankle_ao)
     
     inj_gust <<- pull %>% 
       count(injury_gustilo) %>%
@@ -990,13 +990,13 @@ closed_ao_gustillo_tscherne_injury_characteristics <- function(analytic){
       sum()
     
     inj_ao <<- pull %>% 
-      count(injury_ao_class) %>%
+      count(injury_classification_ankle_ao) %>%
       pivot_longer(-n) %>%
       mutate(value=ifelse(is.na(value), 'Unknown 2', value)) %>%
       select(-name)
     
     inj_tsch <<- pull %>% 
-      count(injury_tscherne) %>%
+      count(injury_classification_tscherne) %>%
       pivot_longer(-n) %>%
       mutate(value=ifelse(!is.na(value), paste('Tscherne Gotzen Grade', value), value)) %>%
       mutate(value=ifelse(is.na(value), 'Tscherne Unknown', value)) %>%

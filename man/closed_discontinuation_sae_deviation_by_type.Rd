@@ -7,8 +7,8 @@
 closed_discontinuation_sae_deviation_by_type(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include treatment_arm enrolled, enrolled_discontinuation, 
-deviation_screen_consent, deviation_procedural, deviation_administrative, sae_reported}
+\item{analytic}{This is the analytic data set that must include treatment_arm enrolled, censored, 
+protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count}
 }
 \value{
 nothing

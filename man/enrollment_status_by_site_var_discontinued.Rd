@@ -12,7 +12,7 @@ enrollment_status_by_site_var_discontinued(
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, 
-eligible, refused, consented, enrolled, not_consented, days_site_certified, facilitycode}
+eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode}
 
 \item{discontinued}{meta construct for discontinued}
 
