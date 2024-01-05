@@ -7,7 +7,7 @@
 injury_ankle_plateau_characteristics(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include injury_type, ankle_ota_class, schatzker_type, enrolled}
+\item{analytic}{This is the analytic data set that must include injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled}
 }
 \value{
 nothing

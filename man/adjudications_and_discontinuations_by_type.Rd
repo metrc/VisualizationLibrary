@@ -8,8 +8,8 @@ adjudications_and_discontinuations_by_type(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened; inappropriate_enrollment; 
-late_ineligible; late_refusal; withdrawn_patient; withdrawn_physician; pending_adjudication; 
-dead; sae_reported; deviation_screen_consent; deviation_procedural; deviation_administrative}
+late_ineligible; late_refusal; withdrawn_patient; withdrawn_physician; adjudication_pending; 
+dead; sae_count; protocol_deviation_screen_consent; protocol_deviation_procedural; protocol_deviation_administrative}
 }
 \value{
 nothing

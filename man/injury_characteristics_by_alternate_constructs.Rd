@@ -7,8 +7,8 @@
 injury_characteristics_by_alternate_constructs(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include enrolled, injury_ao, injury_at_work, injury_in_battle, 
-injury_in_blast, injury_date, injury_mechanism, injury_side, injury_tscherne, injury_type}
+\item{analytic}{This is the analytic data set that must include enrolled, injury_classification_ankle_ao, injury_at_work, injury_in_battle, 
+injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type}
 }
 \value{
 nothing
