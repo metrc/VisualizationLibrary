@@ -4,7 +4,7 @@
 #' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, 
-#' consented, randomized, enrolled, active, enrolled_discontinuation, refused, late_ineligible, and the meta construct column
+#' consented, randomized, enrolled, patient_status_active, censored, refused, late_ineligible, and the meta construct column
 #' @param not_enrolled_other is a meta construct that is NULL by default
 #' @param completed_str is the text for the completed box that defaults to 'Completed 12-month visit'
 #'
@@ -49,13 +49,13 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
                   filter(consented) %>% 
                   filter(randomized) %>% 
                   filter(enrolled) %>% 
-                  pull(active), na.rm=TRUE)
+                  pull(patient_status_active), na.rm=TRUE)
   Discontinued <- sum(analytic %>% 
                         filter(eligible) %>% 
                         filter(consented) %>% 
                         filter(randomized) %>%
                         filter(enrolled) %>% 
-                        pull(enrolled_discontinuation), na.rm=TRUE)
+                        pull(censored), na.rm=TRUE)
   Completed <- sum(analytic %>% 
                         filter(eligible) %>% 
                         filter(consented) %>% 
@@ -128,7 +128,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
 #' for the NSAID study
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, 
-#' consented, not_consented, randomized, enrolled, enrolled_discontinuation, refused, dfsurg_completed, and the meta construct column
+#' consented, not_consented, randomized, enrolled, censored, refused, df_surg_completed, and the meta construct column
 #'
 #' @return nothing
 #' @export
@@ -173,13 +173,13 @@ dsmb_nsaid_consort_diagram <- function(analytic){
                         filter(consented) %>% 
                         filter(randomized) %>%
                         filter(enrolled) %>% 
-                        pull(enrolled_discontinuation), na.rm=TRUE)
+                        pull(censored), na.rm=TRUE)
   Definitive_Fixation_Complete <- sum(analytic %>% 
                         filter(eligible) %>% 
                         filter(consented) %>% 
                         filter(randomized) %>%
                         filter(enrolled) %>% 
-                        pull(dfsurg_completed), na.rm=TRUE)
+                        pull(df_surg_completed), na.rm=TRUE)
   
 
   

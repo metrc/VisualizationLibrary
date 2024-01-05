@@ -7,7 +7,7 @@
 baseline_characteristics_percent(
   analytic,
   sex = "sex",
-  race = "race_ethnicity",
+  race = "ethnicity_race",
   education = "education_level",
   military = "military_status",
   sex_levels = c("Female", "Male", "Missing"),
@@ -23,7 +23,7 @@ baseline_characteristics_percent(
 
 \item{sex}{is a meta construct that is required that defaults to "sex"}
 
-\item{race}{is a meta construct that is required that defaults to "race_ethnicity"}
+\item{race}{is a meta construct that is required that defaults to "ethnicity_race"}
 
 \item{education}{is a meta construct that is required that defaults to "education_level"}
 

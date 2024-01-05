@@ -8,7 +8,7 @@ ao_gustillo_tscherne_injury_characteristics(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, 
-injury_gustilo, injury_tscherne, injury_ao_class}
+injury_gustilo, injury_classification_tscherne, injury_classification_ankle_ao}
 }
 \value{
 nothing
