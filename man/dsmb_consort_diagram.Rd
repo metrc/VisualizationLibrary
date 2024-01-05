@@ -12,7 +12,7 @@ dsmb_consort_diagram(
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, eligible, 
-consented, randomized, enrolled, active, enrolled_discontinuation, refused, late_ineligible, and the meta construct column}
+consented, randomized, enrolled, patient_status_active, censored, refused, late_ineligible, and the meta construct column}
 
 \item{not_enrolled_other}{is a meta construct that is NULL by default}
 

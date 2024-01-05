@@ -8,7 +8,7 @@ dsmb_nsaid_consort_diagram(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, eligible, 
-consented, not_consented, randomized, enrolled, enrolled_discontinuation, refused, dfsurg_completed, and the meta construct column}
+consented, not_consented, randomized, enrolled, censored, refused, df_surg_completed, and the meta construct column}
 }
 \value{
 nothing

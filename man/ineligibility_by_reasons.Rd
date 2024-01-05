@@ -4,7 +4,7 @@
 \alias{ineligibility_by_reasons}
 \title{Number of patients Ineligible by Top 5 reasons of Exclusion}
 \usage{
-ineligibility_by_reasons(analytic)
+ineligibility_by_reasons(analytic, n_top_reasons = 5)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include facilitycode,  screened, ineligible, ineligibility_reasons}
