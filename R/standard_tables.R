@@ -263,11 +263,10 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
       ankle_3_months = rowSums(is.na(select(., ends_with("3mo"))))<3,
       ankle_6_months = rowSums(is.na(select(., ends_with("6mo"))))<3
     ) %>% 
-    select(-ends_with("wk"),-ends_with("mo")) %>% 
     mutate(ankle_6_weeks = ifelse(followup_expected_6wk, ankle_6_weeks,NA)) %>% 
     mutate(ankle_3_months = ifelse(followup_expected_3mo, ankle_3_months,NA)) %>% 
     mutate(ankle_6_months = ifelse(followup_expected_6mo, ankle_6_months,NA)) %>% 
-    select(-ends_with("expected")) %>% 
+    select(ankle_6_weeks,ankle_3_months,ankle_6_months) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(value,"Completed","Not Completed")) %>% 
     group_by(name, value) %>%
@@ -397,11 +396,10 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
       plateau_3_months = rowSums(is.na(select(., ends_with("3mo"))))<3,
       plateau_6_months = rowSums(is.na(select(., ends_with("6mo"))))<3,
     ) %>% 
-    select(-ends_with("wk"),-ends_with("mo")) %>% 
     mutate(plateau_6_weeks = ifelse(followup_expected_6wk, plateau_6_weeks,NA)) %>% 
     mutate(plateau_3_months = ifelse(followup_expected_3mo, plateau_3_months,NA)) %>% 
     mutate(plateau_6_months = ifelse(followup_expected_6mo, plateau_6_months,NA)) %>% 
-    select(-ends_with("expected")) %>% 
+    select(plateau_6_weeks,plateau_3_months,plateau_6_months) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(value,"Completed","Not Completed")) %>% 
     group_by(name, value) %>%
