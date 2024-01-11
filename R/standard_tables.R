@@ -1018,9 +1018,11 @@ ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
            Ineligible = ineligible) %>% 
     arrange(desc(Screened)) %>% 
     mutate(Ineligible = format_count_percent(Ineligible, Screened))
+
+  top_n_header <- paste0("Top ", n_top_reasons, " Ineligibility Reasons =")
   
   vis <- kable(output, align='l', padding='2l') %>%
-    add_header_above(c(" " = 3, paste0("Top ", n_top_reasons, " Ineligibility Reasons ="), n_top_reasons, " " = 1)) %>%  
+    add_header_above(c(" " = 3, top_n_header = n_top_reasons, " " = 1)) %>%  
     kable_styling("striped", full_width = F, position="left") 
   
   return(vis)
