@@ -1293,7 +1293,7 @@ complications_by_severity_relatedness <- function(analytic){
 #' @description This function visualizes the Nonunion surgery outcome
 #'
 #' @param analytic This is the analytic data set that must include enrolled, 
-#' followup_due_3mo, followup_due_12mo, nonunion_90day,  nonunion_1yr
+#' followup_due_3mo, followup_due_12mo, nonunion_90days,  nonunion_1yr
 #'
 #' @return nothing
 #' @export
@@ -1304,11 +1304,11 @@ complications_by_severity_relatedness <- function(analytic){
 #' }
 nonunion_surgery_outcome <- function(analytic){
   df <- analytic %>% 
-    select(enrolled, followup_due_3mo, nonunion_90day, followup_due_12mo, nonunion_1yr) %>% 
+    select(enrolled, followup_due_3mo, nonunion_90days, followup_due_12mo, nonunion_1yr) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
     filter(enrolled) %>% 
     boolean_column_counter() %>% 
-    mutate(nonunion_90day = format_count_percent(nonunion_90day, followup_due_3mo),
+    mutate(nonunion_90days = format_count_percent(nonunion_90days, followup_due_3mo),
            nonunion_1yr = format_count_percent(nonunion_1yr, followup_due_12mo))
   
   colname <- c("Enrolled", "Expected Three Month", "90 Day Non-Union", "Expected Twelve Month", "1 Year Non-Union")
@@ -1324,7 +1324,7 @@ nonunion_surgery_outcome <- function(analytic){
 #' @description This function visualizes the crossovers by site in hospital and at discharge
 #'
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
-#' ih_dischrg_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
+#' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
 #'
 #' @return nothing
 #' @export
@@ -1335,15 +1335,15 @@ nonunion_surgery_outcome <- function(analytic){
 #' }
 ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   df <- analytic %>% 
-    select(facilitycode, enrolled, df_surg_completed, ih_dischrg_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero) %>% 
+    select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
     rename(Facility = facilitycode) %>% 
     filter(enrolled) %>% 
-    mutate(ih_dischrg_date = !is.na(ih_dischrg_date)) %>% 
+    mutate(ih_discharge_date = !is.na(ih_discharge_date)) %>% 
     group_by(Facility) %>% 
     summarize('Enrolled' = sum(enrolled),
               "Definitive Fixation Complete" = sum(df_surg_completed), 
-              "Discharged from Index Hospitalization" = sum(ih_dischrg_date),
+              "Discharged from Index Hospitalization" = sum(ih_discharge_date),
               "Discharged on Radomization Date" = sum(ih_discharge_date_on_time_zero),
               "Inpatient Crossover" = sum(crossover_inpatient),
               "Discharge Crossover" = sum(crossover_discharge))
