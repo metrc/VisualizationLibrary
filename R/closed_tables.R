@@ -157,7 +157,7 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
 #' \dontrun{
 #' closed_baseline_characteristics_percent()
 #' }
-closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="race_ethnicity", education="education_level", military="military_status",
+closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicity_race", education="education_level", military="military_status",
                                                     sex_levels=c("Female","Male", "Missing"), 
                                                     race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
                                                     education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
