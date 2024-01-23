@@ -40,7 +40,7 @@ closed_visit_status_for_followup_by_form <- function(analytic){
 #' @description This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
 #' injuries
 #'
-#' @param analytic This is the analytic data set that must include treatment_arm injury_type, injury_classification_ankle_ota, schatzker_type, enrolled
+#' @param analytic This is the analytic data set that must include treatment_arm injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled
 #'
 #' @return nothing
 #' @export
@@ -52,33 +52,33 @@ closed_visit_status_for_followup_by_form <- function(analytic){
 closed_injury_ankle_plateau_characteristics <- function(analytic){
   
   df <- analytic %>% 
-    select(injury_type, injury_classification_ankle_ota, schatzker_type, enrolled) %>%  
+    select(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled) %>%  
     filter(enrolled == TRUE)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A") %>% 
-    select(injury_type, injury_classification_ankle_ota, schatzker_type, enrolled) %>%  
+    select(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled) %>%  
     filter(enrolled == TRUE)
   
   df_b <- analytic %>% 
     filter(treatment_arm=="Group B") %>% 
-    select(injury_type, injury_classification_ankle_ota, schatzker_type, enrolled) %>%  
+    select(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled) %>%  
     filter(enrolled == TRUE)
   
   ota_number <- -1
   schatzer_numbe <- -1
   inner_closed_injury_ankle_plateau_characteristics <- function(df){
     summary_totals <- df %>%
-      filter(injury_type == "plateau" & is.na(injury_classification_ankle_ota) | injury_type == "ankle" & is.na(schatzker_type)) %>%
-      group_by(injury_type, injury_classification_ankle_ota, schatzker_type) %>%
+      filter(injury_type == "plateau" & is.na(injury_classification_ankle_ota) | injury_type == "ankle" & is.na(injury_classification_plat_schatzker)) %>%
+      group_by(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker) %>%
       summarise(Total = n()) %>%
       ungroup() %>% 
-      mutate(injury_classification_ankle_ota = ifelse(injury_type == "ankle" & is.na(injury_classification_ankle_ota) & is.na(schatzker_type), "Missing", injury_classification_ankle_ota)) %>% 
-      mutate(schatzker_type = ifelse(injury_type == "plateau" & is.na(injury_classification_ankle_ota) & is.na(schatzker_type), "Missing", schatzker_type)) %>% 
+      mutate(injury_classification_ankle_ota = ifelse(injury_type == "ankle" & is.na(injury_classification_ankle_ota) & is.na(injury_classification_plat_schatzker), "Missing", injury_classification_ankle_ota)) %>% 
+      mutate(injury_classification_plat_schatzker = ifelse(injury_type == "plateau" & is.na(injury_classification_ankle_ota) & is.na(injury_classification_plat_schatzker), "Missing", injury_classification_plat_schatzker)) %>% 
       select(-injury_type) %>% 
-      mutate(Name = ifelse(!is.na(injury_classification_ankle_ota), injury_classification_ankle_ota, schatzker_type)) %>% 
+      mutate(Name = ifelse(!is.na(injury_classification_ankle_ota), injury_classification_ankle_ota, injury_classification_plat_schatzker)) %>% 
       mutate(Category = ifelse(!is.na(injury_classification_ankle_ota), "O", "T")) %>% 
-      select(-injury_classification_ankle_ota, -schatzker_type)
+      select(-injury_classification_ankle_ota, -injury_classification_plat_schatzker)
     
     injury_type_total <- df %>% 
       group_by(injury_type) %>% 
