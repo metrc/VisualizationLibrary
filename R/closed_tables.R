@@ -157,7 +157,7 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
 #' \dontrun{
 #' closed_baseline_characteristics_percent()
 #' }
-closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="race_ethnicity", education="education_level", military="military_status",
+closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicity_race", education="education_level", military="military_status",
                                                     sex_levels=c("Female","Male", "Missing"), 
                                                     race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
                                                     education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
@@ -801,7 +801,7 @@ closed_appendix_D_protocol_deviation <- function(analytic){
 #' @description This function visualizes the crossovers by site in hospital and at discharge
 #'
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
-#' ih_dischrg_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, and treatment_arm
+#' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, and treatment_arm
 #'
 #' @return nothing
 #' @export
@@ -840,15 +840,15 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 #   inner_closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic_df){
 #     
 #     df <- analytic_df %>% 
-#       select(facilitycode, enrolled, df_surg_completed, ih_dischrg_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero) %>% 
+#       select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero) %>% 
 #       mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
 #       rename(Facility = facilitycode) %>% 
 #       filter(enrolled) %>% 
-#       mutate(ih_dischrg_date = !is.na(ih_dischrg_date)) %>% 
+#       mutate(ih_discharge_date = !is.na(ih_discharge_date)) %>% 
 #       group_by(Facility) %>% 
 #       summarize('Enrolled' = sum(enrolled),
 #                 "Definitive Fixation Complete" = sum(df_surg_completed), 
-#                 "Discharged from Index Hospitalization" = sum(ih_dischrg_date),
+#                 "Discharged from Index Hospitalization" = sum(ih_discharge_date),
 #                 "Discharged on Radomization Date" = sum(ih_discharge_date_on_time_zero),
 #                 "Inpatient Crossover" = sum(crossover_inpatient),
 #                 "Discharge Crossover" = sum(crossover_discharge))
