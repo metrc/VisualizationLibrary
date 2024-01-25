@@ -1645,3 +1645,66 @@ expected_visits_by_followup_period <- function(analytic){
   
   return(vis)
 }
+
+#' Amputations and Gustilo Injury Characteristics
+#'
+#' @description This function visualizes the injury characteristics for amputations and Gustilo Injury types for 
+#' Sextant study
+#'
+#' @param analytic This is the analytic data set that must include enrolled, 
+#' injury_gustilo_type, injury_amputation_status
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' amputations_and_gustilo_injury_characteristics()
+#' }
+amputations_and_gustilo_injury_characteristics <- function(analytic){
+pull <- analytic %>% 
+  filter(enrolled) %>%
+  select(injury_gustilo_type, injury_amputation_status)
+
+inj_gust <- pull %>%  
+  mutate(injury_gustilo_type = strsplit(as.character(injury_gustilo_type), ";\\s*")) %>%
+  unnest(injury_gustilo_type) %>%
+  group_by(injury_gustilo_type) %>%
+  summarise(count = n()) %>%
+  mutate(injury_gustilo_type = coalesce(injury_gustilo_type, 'Unknown'))
+
+
+total <- inj_gust %>%
+  mutate(count=as.numeric(count)) %>%
+  pull(count) %>%
+  sum() 
+
+amputation_status <- pull %>% 
+  count(injury_amputation_status) %>%
+  pivot_longer(-n) %>%
+  mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
+  select(-name) %>%
+  rename(count = n, injury_gustilo_type = value)
+
+total_amputations <- amputation_status %>%
+  filter(injury_gustilo_type == 'Non-amputation trauma' | injury_gustilo_type == 'Traumatic amputation') %>% 
+  pull(count) %>% 
+  sum()
+
+
+combined <- bind_rows(amputation_status, inj_gust) %>%
+  relocate(count, .after=injury_gustilo_type) %>%
+  mutate(count = ifelse(injury_gustilo_type == 'Unknown', total-total_amputations, count)) %>% 
+  rename('Fracture Type'=injury_gustilo_type)
+
+out <- combined %>%
+  mutate(count= format_count_percent(count, total))
+
+output<- kable(out, align='l', padding='2l', col.names = c("Injury Characteristics", paste0("n=",total))) %>%
+  kable_styling("condensed", position = "left") %>%
+  pack_rows("Amputation Status", 1, nrow(amputation_status), label_row_css = "text-align:left") %>%
+  pack_rows("Fracture Type", nrow(amputation_status)+1, nrow(inj_gust) + 3, label_row_css = "text-align:left") %>% 
+  kable_styling("striped", full_width = F, position="left")
+
+return(output)
+}
