@@ -7,7 +7,7 @@
 closed_baseline_characteristics_percent(
   analytic,
   sex = "sex",
-  race = "race_ethnicity",
+  race = "ethnicity_race",
   education = "education_level",
   military = "military_status",
   sex_levels = c("Female", "Male", "Missing"),
