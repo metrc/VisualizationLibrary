@@ -1645,3 +1645,78 @@ expected_visits_by_followup_period <- function(analytic){
   
   return(vis)
 }
+
+#' Amputations and Gustilo Injury Characteristics
+#'
+#' @description This function visualizes the injury characteristics for amputations and Gustilo Injury types for 
+#' Sextant study
+#'
+#' @param analytic This is the analytic data set that must include enrolled, 
+#' injury_gustilo_type, injury_amputation_status
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' amputations_and_gustilo_injury_characteristics()
+#' }
+amputations_and_gustilo_injury_characteristics <- function(analytic){
+  
+  pull <- analytic %>% 
+    filter(enrolled) %>%
+    select(injury_gustilo_type, injury_amputation_status)
+  
+  inj_gust <- pull %>%  
+    select(injury_gustilo_type) %>% 
+    mutate(injury_gustilo_type = strsplit(as.character(injury_gustilo_type), ";\\s*")) %>%
+    unnest(injury_gustilo_type) %>%
+    group_by(injury_gustilo_type) %>%
+    summarise(count = n()) %>%
+    mutate(injury_gustilo_type = coalesce(injury_gustilo_type, 'Unknown'))
+  
+  
+  total <- inj_gust %>%
+    mutate(count=as.numeric(count)) %>%
+    pull(count) %>%
+    sum() 
+  
+  out_gustilo <- inj_gust %>%
+    mutate(count= format_count_percent(count, total))
+  
+  amputation_status <- pull %>% 
+    select(injury_amputation_status) %>% 
+    count(injury_amputation_status) %>%
+    pivot_longer(-n) %>%
+    mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
+    select(-name) %>%
+    rename(count = n, injury_gustilo_type = value)
+  
+  total_amputations <- amputation_status %>%
+    pull(count) %>% 
+    sum()
+  
+  out_amputations <- amputation_status %>%
+    mutate(count= format_count_percent(count, total_amputations))
+  
+  n_amputations <- data.frame(
+    count = as.character(total_amputations),
+    injury_gustilo_type = "Amputation Status")
+  
+  n_gustilo <- data.frame(
+    count = as.character(total),
+    injury_gustilo_type = "Fracture Type")
+  
+  
+  combined <- bind_rows(n_amputations, out_amputations,n_gustilo, out_gustilo) %>%
+    relocate(count, .after=injury_gustilo_type) %>%
+    rename('Fracture Type'=injury_gustilo_type)
+  
+  output<- kable(combined, align='l', padding='2l', col.names = NULL) %>%
+    kable_styling("condensed", position = "left") %>%
+    add_indent(positions = c(2,3,4,6,7,8,9,10,11,12)) %>% 
+    kable_styling("striped", full_width = F, position="left") %>% 
+    row_spec(c(1,5), bold=T,hline_after = T)
+
+return(output)
+}
