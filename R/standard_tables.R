@@ -1720,3 +1720,64 @@ amputations_and_gustilo_injury_characteristics <- function(analytic){
 
 return(output)
 }
+
+
+#' Refusal reasons by each site
+#'
+#' @description This function visualizes the reasons of refusal, total refused and total screened by each site.
+#'
+#' @param analytic This is the analytic data set that must include facilitycode, screened, refused, refused_reason
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' refusal_reasons_by_site()
+#' }
+refusal_reasons_by_site <- function(analytic){
+
+  df <- analytic %>% 
+    select(facilitycode, screened, refused, refused_reason) %>% 
+    filter(screened == TRUE) 
+  
+  screened_df <- df %>% select(facilitycode, screened) %>% 
+    filter(screened) %>% 
+    count(facilitycode, screened) %>% 
+    rename(screen_n = n) %>% 
+    select(facilitycode, screen_n)
+  
+  refused_df <- df %>% select(facilitycode, refused) %>% 
+    filter(refused) %>% 
+    count(facilitycode, refused) %>% 
+    rename(refuse_n = n) %>% 
+    select(facilitycode, refuse_n)
+  
+  reasons <- df %>%  select(facilitycode, refused_reason) %>% 
+    count(facilitycode, refused_reason) %>% 
+    filter(!is.na(refused_reason)) %>% 
+    pivot_wider(names_from = refused_reason,
+                values_from = n) 
+  
+  
+  exclude_columns <- c("facilitycode", "screen_n", "refuse_n")
+  
+  
+  df_final <- left_join(reasons, screened_df) %>% left_join(refused_df) %>% 
+    mutate_all(~ ifelse(is.na(.), 0, .)) %>% 
+    mutate(across(-one_of(exclude_columns),
+                  ~ format_count_percent(.x, refuse_n),
+                  .names = "{col}_percentage")) %>% 
+    select(ends_with("_percentage"), one_of(exclude_columns)) %>% 
+    rename_with(~ sub("_percentage$", "", .), ends_with("_percentage")) %>% 
+    select(one_of(exclude_columns), everything()) %>%
+    select(-contains("Other"), -contains("Unknown"), contains("Other"), contains("Unknown")) %>% 
+    rename(`Screened, to date` = screen_n,
+           `Refused, to date` = refuse_n, 
+           `Clinical Site` = facilitycode)
+
+  output <- kable(df_final, align='l', padding='2l') %>%
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
+}
