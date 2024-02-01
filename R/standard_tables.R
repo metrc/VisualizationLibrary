@@ -1781,3 +1781,32 @@ refusal_reasons_by_site <- function(analytic){
   
   return(output)
 }
+
+#' Other reason of refusal by each site
+#'
+#' @description This function visualizes list of each "Other" reason of refusal, total screened by each site.
+#'
+#' @param analytic This is the analytic data set that must include study_id, facilitycode, screened_date, 
+#' refused_reason_other
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' other_reason_refusal_by_site()
+#' }
+other_reason_refusal_by_site <- function(analytic){
+  
+  df1 <- analytic %>%  select(study_id, facilitycode, screened_date, refused_reason_other) %>% 
+    filter(!is.na(refused_reason_other)) %>% 
+    rename(`Clinical Site` = facilitycode,
+           `Screened Date` = screened_date,
+           `"Other" reason of refusal` = refused_reason_other,
+           `Study_ID` = study_id)
+  
+  output <- kable(df1, align='l', padding='2l') %>%
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
+}
