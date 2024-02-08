@@ -1810,3 +1810,97 @@ other_reason_refusal_by_site <- function(analytic){
   
   return(output)
 }
+
+#' Not enrolled for other reasons
+#'
+#' @description This function visualizes list of study_ids who were screened howevere were not enrolled for "Other"
+#' reasons
+#'
+#' @param analytic This is the analytic data set that must include study_id, facilitycode, able_to_participate, 
+#' nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_othr, constraint_othr_txt, screened
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' not_enrolled_for_other_reasons()
+#' }
+not_enrolled_for_other_reasons <- function(analytic){
+  
+  df1 <- analytic %>%  select(study_id, facilitycode, able_to_participate, nonparticipation_text_given, 
+                              constraint_noconsent, constraint_admin, constraint_othr, constraint_othr_txt, screened) %>% 
+    filter(screened) %>% 
+    filter(constraint_admin == TRUE | constraint_noconsent == TRUE | constraint_othr == TRUE | !is.na(nonparticipation_text_given)) %>% 
+    select(-screened) %>% 
+    mutate(constraint_noconsent = ifelse(constraint_noconsent, "Yes", "No")) %>% 
+    mutate(constraint_admin = ifelse(constraint_admin, "Yes", "No")) %>% 
+    mutate(constraint_othr = ifelse(constraint_othr, "Yes", "No")) %>% 
+    rename(`Clinical Site` = facilitycode,
+           `Able to participate` = able_to_participate,
+           `Reason for nonparticpation` = nonparticipation_text_given,
+           `Constraint: No consent given` = constraint_noconsent,
+           `Constraint: Administrative reason` = constraint_admin,
+           `Constraint: Other` = constraint_othr,
+           `Other constraint reason` = constraint_othr_txt,
+           `Study_ID` = study_id)
+  
+  
+  output <- kable(df1, align='l', padding='2l') %>%
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
+}
+
+
+#' Treatment crossover and nonadherance
+#'
+#' @description This function visualizes the treatment crossover or any nonadherance occured during the Sextant 
+#' study.
+#'
+#' @param analytic This is the analytic data set that must include facilitycode, eligible, enrolled, dwc_date, 
+#' dwc_tobra, dwc_vanco
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' treatment_crossover_and_nonadherance()
+#' }
+treatment_crossover_and_nonadherance <- function(analytic){
+
+  df <- analytic %>% select(facilitycode, eligible, enrolled, dwc_date, dwc_tobra, dwc_vanco) %>% 
+    filter(eligible == TRUE & enrolled == TRUE) %>% 
+    mutate(eligible_enrolled = ifelse(eligible == TRUE & enrolled == TRUE, TRUE, FALSE)) %>% 
+    mutate(dwc_complete = ifelse(!is.na(dwc_date), TRUE, FALSE)) %>% 
+    mutate(dwc_vanco_tobra = ifelse(dwc_vanco & dwc_tobra, TRUE, FALSE)) %>% 
+    select(-eligible, -enrolled, -dwc_date, -dwc_tobra, -dwc_vanco) 
+  
+  
+  df_2nd <- df %>% 
+    group_by(facilitycode) %>% 
+    summarize(elig_enr = sum(eligible_enrolled), total_dwc = sum(dwc_complete), treatment_completed = sum(dwc_vanco_tobra)) %>% 
+    replace(., is.na(.), 0)
+  
+  numerical_columns <- df_2nd %>% select_if(is.numeric) %>% colnames()
+  
+  df_3rd <- df_2nd %>%
+    summarise(across(all_of(numerical_columns), sum, na.rm = TRUE),
+              facilitycode = "TOTAL")
+  
+  
+  result <- bind_rows(df_2nd, df_3rd[nrow(df_3rd), ]) %>% 
+    mutate(treatment_completed= format_count_percent(treatment_completed, total_dwc)) %>% 
+    rename(`Clinical Site` = facilitycode,
+           `Eligible and Enrolled` = elig_enr,
+           `Definitive Wound Closure completed` = total_dwc,
+           `Received treatment per protocol and assignment(% DWC complete)` = treatment_completed)
+  
+  output <- kable(result, align='l', padding='2l') %>%
+    kable_styling("striped", full_width = F, position="left") %>% 
+    row_spec(nrow(result), bold = TRUE)
+  
+  return(output)
+}
+
