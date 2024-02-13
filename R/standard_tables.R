@@ -1904,3 +1904,86 @@ treatment_crossover_and_nonadherance <- function(analytic){
   return(output)
 }
 
+#' Characteristics Treatment
+#'
+#' @description This function visualizes definitive fixation by total df complete out of total enrolled, stages breakdown,
+#' incisions broken down by plateau fractures and pilon fractures, and whether or not the study treatment adhered to protocol.
+#'
+#' @param analytic This is the analytic data set that must include study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, df_randomized_treatment
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' charcateristics_treatment()
+#' }
+characteristics_treatment <- function(analytic){
+  
+  df <- analytic %>% 
+    select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, df_randomized_treatment) %>% 
+    filter(enrolled)
+  
+  total <- sum(df$enrolled, na.rm=T)
+  df_total <- sum(!is.na(df$df_date))
+  
+  df_complete <- data.frame(type = 'Patients with Definitive Fixation Data Complete', percentage = format_count_percent(df_total, total))
+  
+  plat <- sum(!is.na(df$plat_df_surgical_incision))
+  pil <- sum(!is.na(df$pil_df_surgical_incision))
+  
+  avg_stages <- df %>% 
+    filter(!is.na(df_date)) %>% 
+    summarize(type = 'Mean Stages (SD)', percentage = format_mean_sd(df_number_procedures))
+  
+  stages <- df %>% 
+    filter(!is.na(df_date)) %>% 
+    count(df_number_procedures) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, df_total)) %>% 
+    select(-number) %>% 
+    rename(type = df_number_procedures) 
+  
+  plat_incisions <- df %>%
+    filter(!is.na(df_date)) %>% 
+    mutate(plat_incisions = str_count(plat_df_surgical_incision, ";") + 1) %>% 
+    summarize(type = paste0('Plateau Fractures (n = ', plat, ")"), percentage = format_mean_sd(plat_incisions))
+  
+  pil_incisions <- df %>%
+    filter(!is.na(df_date)) %>% 
+    mutate(pil_incisions = str_count(pil_df_surgical_incision, ";") + 1) %>% 
+    summarize(type = paste0('Pilon Fractures (n = ', pil, ")"), percentage = format_mean_sd(pil_incisions))
+  
+  adherance <- df %>% 
+    filter(!is.na(df_date)) %>% 
+    mutate(df_randomized_treatment = as.character(df_randomized_treatment)) %>%
+    mutate(df_randomized_treatment = replace_na(df_randomized_treatment, 'Missing')) %>% 
+    mutate(type = recode(df_randomized_treatment, 'TRUE' = "Yes", 
+                         'FALSE' = 'No')) %>% 
+    count(type) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, df_total)) %>% 
+    select(-number) %>% 
+    arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
+  
+  df_final <- rbind(df_complete, avg_stages, stages, plat_incisions, pil_incisions, adherance)
+  
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+  
+  n_df <- nrow(df_complete)
+  n_avg <- nrow(avg_stages)
+  n_stages <- nrow(stages)
+  
+  vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
+    add_header_above(header) %>%  
+    pack_rows(index = c(" " = nrow(df_complete), 'Definitive Fixation' = (nrow(avg_stages) + nrow(stages)), 'Number of Incisions [Mean (SD)]' = (nrow(pil_incisions) + nrow(plat_incisions)),
+                        'Study Treatment Adhering to Protocol' = nrow(adherance)), label_row_css = "text-align:left") %>% 
+    kable_styling("striped", full_width = F, position="left") %>% 
+    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1, extra_css = 'border-bottom: 1px solid') %>% 
+    add_indent(seq(n_stages) + n_avg + n_df)
+  
+  return(vis)
+}
