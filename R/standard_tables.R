@@ -1987,3 +1987,87 @@ characteristics_treatment <- function(analytic){
   
   return(vis)
 }
+
+
+#' Fracture Characteristics
+#'
+#' @description This function visualizes fracture characteristics, broken down by tibial plateau or pilon, 
+#' and then closed or open fracture with tscherne grades and gustilo types respectively
+#'
+#' @param analytic This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' fracture_characteristics()
+#' }
+fracture_characteristics <- function(analytic){
+  
+  df <- analytic %>% select(study_id, enrolled, fracture_type, injury_gustilo, injury_classification_tscherne) %>% 
+    filter(enrolled) %>% 
+    mutate(closed = ifelse(!is.na(injury_classification_tscherne), TRUE, FALSE)) %>% 
+    mutate(open = ifelse(!is.na(injury_gustilo), TRUE, FALSE))
+  
+  total <- sum(df$enrolled)
+  closed_total <- sum(df$closed)
+  open_total <- sum(df$open)
+  
+  closed <- data.frame(type = 'Closed Fracture', percentage = format_count_percent(closed_total, total))
+  open <- data.frame(type = 'Open Fracture', percentage = format_count_percent(open_total, total))
+  
+  fracture_type <- df %>% 
+    mutate(fracture_type = replace_na(fracture_type, "Unknown")) %>% 
+    group_by(fracture_type) %>% 
+    count(fracture_type) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    rename(type = fracture_type) %>% 
+    select(-n) %>% 
+    arrange(factor(type, levels = c('Tibial Plateau', 'Tibial Pilon', 'Unknown')))
+  
+  tscherne <- df %>% 
+    filter(closed) %>% 
+    group_by(injury_classification_tscherne) %>% 
+    mutate(injury_classification_tscherne = recode(injury_classification_tscherne, 'C0' ='Tscherne Grade 0',
+                                                   'CI' = 'Tscherne Grade 1',
+                                                   'CII' = 'Tscherne Grade 2',
+                                                   'CIII' = 'Tscherne Grade 3')) %>% 
+    count(injury_classification_tscherne) %>% 
+    mutate(percentage = format_count_percent(n, closed_total)) %>% 
+    rename(type = injury_classification_tscherne) %>% 
+    select(-n) %>% 
+    arrange(factor(type, levels = c("Tscherne Grade 0","Tscherne Grade 1","Tscherne Grade 2","Tscherne Grade 3","N/A (low velocity GSW)")))
+  
+  gustilo <- df %>% 
+    filter(open) %>% 
+    group_by(injury_gustilo) %>% 
+    mutate(injury_gustilo = recode(injury_gustilo, 'I' = 'Gustilo Type I',
+                                   'II' = 'Gustilo Type II',
+                                   'IIIA' = 'Gustilo Type IIIa')) %>% 
+    count(injury_gustilo) %>% 
+    mutate(percentage = format_count_percent(n, open_total)) %>% 
+    rename(type = injury_gustilo) %>% 
+    select(-n) %>% 
+    arrange(factor(type, levels = c('I' = 'Gustilo Type I','II' = 'Gustilo Type II','III' = 'Gustilo Type IIIa')))
+  
+  df_final <- rbind(fracture_type, closed, tscherne, open, gustilo) 
+  
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+  
+  n_closed <- nrow(closed)
+  n_open <- nrow(open)
+  n_frac <- nrow(fracture_type)
+  n_tscherne <- nrow(tscherne)
+  n_gustilo <- nrow(gustilo)
+  
+  
+  vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
+    add_header_above(header) %>%  
+    pack_rows(index = c('Fractured Bone' = nrow(fracture_type), 'Fracture Type' = (nrow(closed) + nrow(tscherne) + nrow(open) + nrow(gustilo))), label_row_css = "text-align:left") %>%
+    add_indent(c(seq(n_tscherne) + n_frac + n_closed, seq(n_gustilo) + n_frac + n_closed + n_open + n_tscherne)) %>% 
+    kable_styling("striped", full_width = F, position="left") 
+  return(vis)
+}
