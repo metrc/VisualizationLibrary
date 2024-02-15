@@ -456,3 +456,63 @@ cumulative_enrolled <- function(analytic){
   
   return(img_tag)
 }
+
+#' Cumulative Enrollment with Goals
+#'
+#' @description This function visualizes the cumulative number of patients enrolled, accompanied by 
+#' a participant goal curve which demonstrates the goal relative to the actual cumulative participant enrollment process, 
+#' and a second curve which demonstrates the necessary growth in order to meet that goal, all within a specified start and end date..
+#'
+#' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date.
+#' @param start_date The start date for the analysis.
+#' @param end_date The end date for the analysis.
+#' @param participant_goal The goal number of participants for the study.
+#'
+#' @return Nothing (intended for plotting)
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' cumulative_enrollment_goals()
+#' }
+cumulative_enrollment_goals <- function(analytic, start_date, end_date, participant_goal){
+  df <- analytic %>% 
+    select(study_id, enrolled, consent_date)
+  
+  df <- analytic %>%  select(study_id, enrolled, consent_date) %>% 
+    filter(!is.na(consent_date)) %>% 
+    filter(enrolled == TRUE) 
+  
+  df$consent_date <- ymd(df$consent_date)
+  
+  most_recent_row <- yyyy_mm %>% slice_tail(n = 1)
+  
+  current_participants <- most_recent_row$cumulative_value
+  
+  most_recent_entry <- most_recent_row$year_month
+  
+  yyyy_mm <- df %>% 
+    mutate(year_month = as.Date(str_replace(consent_date, '...$', '-01'))) %>% 
+    group_by(year_month) %>%
+    summarise(Total = n()) %>%
+    ungroup() %>% 
+    arrange(year_month) %>%
+    mutate(cumulative_value = cumsum(Total))
+  
+  g <- ggplot(yyyy_mm) +
+    geom_line(aes(x = year_month, y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1, linewidth = 1) + 
+    geom_segment(aes(x = as.Date(start_date), xend = as.Date(end_date), y = 0, yend = participant_goal), color = 'red', linetype = 2) +
+    geom_segment(aes(x = as.Date(most_recent_entry), xend = as.Date(end_date), y = current_participants, yend = participant_goal), color = 'green', linetype = 2) +
+    scale_x_date(date_labels = "%b %Y", date_breaks = "1 month") +
+    labs(title = "Cumulative Enrollment with Projections and Targets", x = "Month", y = "Enrolled") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 60, vjust = 0.5))
+  
+  temp_png_path <- tempfile(fileext = ".png")
+  ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Enrollment with Projections and Targets" style="max-width: 100%%; width: 80%%;">', image_data)
+  file.remove(temp_png_path)
+  
+  return(img_tag)
+}  
