@@ -1,6 +1,4 @@
 
-
-
 #' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled
 #'
 #' @description This function visualizes the enrollment totals for each site
@@ -1005,7 +1003,7 @@ ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
     mutate(Site = 'Total') %>% 
     select(Site, screened, ineligible, all_of(reasons), `Other Reasons`)
   
-   
+  
   sites <- df %>% 
     mutate(ineligibility_reasons = ifelse(ineligibility_reasons %in% reasons, ineligibility_reasons,'Other Reasons')) %>% 
     column_unzipper('ineligibility_reasons', sep = '; ') %>% 
@@ -1018,7 +1016,7 @@ ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
            Ineligible = ineligible) %>% 
     arrange(desc(Screened)) %>% 
     mutate(Ineligible = format_count_percent(Ineligible, Screened))
-
+  
   top_n_header <- paste0("Top ", n_top_reasons, " Ineligibility Reasons =")
   
   vis <- kable(output, align='l', padding='2l') %>%
@@ -1717,8 +1715,8 @@ amputations_and_gustilo_injury_characteristics <- function(analytic){
     add_indent(positions = c(2,3,4,6,7,8,9,10,11,12)) %>% 
     kable_styling("striped", full_width = F, position="left") %>% 
     row_spec(c(1,5), bold=T,hline_after = T)
-
-return(output)
+  
+  return(output)
 }
 
 
@@ -1736,7 +1734,7 @@ return(output)
 #' refusal_reasons_by_site()
 #' }
 refusal_reasons_by_site <- function(analytic){
-
+  
   df <- analytic %>% 
     select(facilitycode, screened, refused, refused_reason) %>% 
     filter(screened == TRUE) 
@@ -1775,7 +1773,7 @@ refusal_reasons_by_site <- function(analytic){
     rename(`Screened, to date` = screen_n,
            `Refused, to date` = refuse_n, 
            `Clinical Site` = facilitycode)
-
+  
   output <- kable(df_final, align='l', padding='2l') %>%
     kable_styling("striped", full_width = F, position="left") 
   
@@ -1869,7 +1867,7 @@ not_enrolled_for_other_reasons <- function(analytic){
 #' treatment_crossover_and_nonadherance()
 #' }
 treatment_crossover_and_nonadherance <- function(analytic){
-
+  
   df <- analytic %>% select(facilitycode, eligible, enrolled, dwc_date, dwc_tobra, dwc_vanco) %>% 
     filter(eligible == TRUE & enrolled == TRUE) %>% 
     mutate(eligible_enrolled = ifelse(eligible == TRUE & enrolled == TRUE, TRUE, FALSE)) %>% 
@@ -1904,6 +1902,175 @@ treatment_crossover_and_nonadherance <- function(analytic){
   return(output)
 }
 
+#' Characteristics Treatment
+#'
+#' @description This function visualizes definitive fixation by total df complete out of total enrolled, stages breakdown,
+#' incisions broken down by plateau fractures and pilon fractures, and whether or not the study treatment adhered to protocol.
+#'
+#' @param analytic This is the analytic data set that must include study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, df_randomized_treatment
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' charcateristics_treatment()
+#' }
+characteristics_treatment <- function(analytic){
+  
+  df <- analytic %>% 
+    select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, df_randomized_treatment) %>% 
+    filter(enrolled)
+  
+  total <- sum(df$enrolled, na.rm=T)
+  df_total <- sum(!is.na(df$df_date))
+  
+  df_complete <- data.frame(type = 'Patients with Definitive Fixation Data Complete', percentage = format_count_percent(df_total, total))
+  
+  plat <- sum(!is.na(df$plat_df_surgical_incision))
+  pil <- sum(!is.na(df$pil_df_surgical_incision))
+  
+  avg_stages <- df %>% 
+    filter(!is.na(df_date)) %>% 
+    summarize(type = 'Mean Stages (SD)', percentage = format_mean_sd(df_number_procedures))
+  
+  stages <- df %>% 
+    filter(!is.na(df_date)) %>% 
+    count(df_number_procedures) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, df_total)) %>% 
+    select(-number) %>% 
+    rename(type = df_number_procedures) 
+  
+  plat_incisions <- df %>%
+    filter(!is.na(df_date)) %>% 
+    mutate(plat_incisions = str_count(plat_df_surgical_incision, ";") + 1) %>% 
+    summarize(type = paste0('Plateau Fractures (n = ', plat, ")"), percentage = format_mean_sd(plat_incisions))
+  
+  pil_incisions <- df %>%
+    filter(!is.na(df_date)) %>% 
+    mutate(pil_incisions = str_count(pil_df_surgical_incision, ";") + 1) %>% 
+    summarize(type = paste0('Pilon Fractures (n = ', pil, ")"), percentage = format_mean_sd(pil_incisions))
+  
+  adherance <- df %>% 
+    filter(!is.na(df_date)) %>% 
+    mutate(df_randomized_treatment = as.character(df_randomized_treatment)) %>%
+    mutate(df_randomized_treatment = replace_na(df_randomized_treatment, 'Missing')) %>% 
+    mutate(type = recode(df_randomized_treatment, 'TRUE' = "Yes", 
+                         'FALSE' = 'No')) %>% 
+    count(type) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, df_total)) %>% 
+    select(-number) %>% 
+    arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
+  
+  df_final <- rbind(df_complete, avg_stages, stages, plat_incisions, pil_incisions, adherance)
+  
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+  
+  n_df <- nrow(df_complete)
+  n_avg <- nrow(avg_stages)
+  n_stages <- nrow(stages)
+  
+  vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
+    add_header_above(header) %>%  
+    pack_rows(index = c(" " = nrow(df_complete), 'Definitive Fixation' = (nrow(avg_stages) + nrow(stages)), 'Number of Incisions [Mean (SD)]' = (nrow(pil_incisions) + nrow(plat_incisions)),
+                        'Study Treatment Adhering to Protocol' = nrow(adherance)), label_row_css = "text-align:left") %>% 
+    kable_styling("striped", full_width = F, position="left") %>% 
+    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1, extra_css = 'border-bottom: 1px solid') %>% 
+    add_indent(seq(n_stages) + n_avg + n_df)
+  
+  return(vis)
+}
+
+
+#' Fracture Characteristics
+#'
+#' @description This function visualizes fracture characteristics, broken down by tibial plateau or pilon, 
+#' and then closed or open fracture with tscherne grades and gustilo types respectively
+#'
+#' @param analytic This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' fracture_characteristics()
+#' }
+fracture_characteristics <- function(analytic){
+  
+  df <- analytic %>% select(study_id, enrolled, fracture_type, injury_gustilo, injury_classification_tscherne) %>% 
+    filter(enrolled) %>% 
+    mutate(closed = ifelse(!is.na(injury_classification_tscherne), TRUE, FALSE)) %>% 
+    mutate(open = ifelse(!is.na(injury_gustilo), TRUE, FALSE))
+  
+  total <- sum(df$enrolled)
+  closed_total <- sum(df$closed)
+  open_total <- sum(df$open)
+  
+  closed <- data.frame(type = 'Closed Fracture', percentage = format_count_percent(closed_total, total))
+  open <- data.frame(type = 'Open Fracture', percentage = format_count_percent(open_total, total))
+  
+  fracture_type <- df %>% 
+    mutate(fracture_type = replace_na(fracture_type, "Unknown")) %>% 
+    group_by(fracture_type) %>% 
+    count(fracture_type) %>% 
+    mutate(percentage = format_count_percent(n, total)) %>% 
+    rename(type = fracture_type) %>% 
+    select(-n) %>% 
+    arrange(factor(type, levels = c('Tibial Plateau', 'Tibial Pilon', 'Unknown')))
+  
+  tscherne <- df %>% 
+    filter(closed) %>% 
+    group_by(injury_classification_tscherne) %>% 
+    mutate(injury_classification_tscherne = recode(injury_classification_tscherne, 'C0' ='Tscherne Grade 0',
+                                                   'CI' = 'Tscherne Grade 1',
+                                                   'CII' = 'Tscherne Grade 2',
+                                                   'CIII' = 'Tscherne Grade 3')) %>% 
+    count(injury_classification_tscherne) %>% 
+    mutate(percentage = format_count_percent(n, closed_total)) %>% 
+    rename(type = injury_classification_tscherne) %>% 
+    select(-n) %>% 
+    arrange(factor(type, levels = c("Tscherne Grade 0","Tscherne Grade 1","Tscherne Grade 2","Tscherne Grade 3","N/A (low velocity GSW)")))
+  
+  gustilo <- df %>% 
+    filter(open) %>% 
+    group_by(injury_gustilo) %>% 
+    mutate(injury_gustilo = recode(injury_gustilo, 'I' = 'Gustilo Type I',
+                                   'II' = 'Gustilo Type II',
+                                   'IIIA' = 'Gustilo Type IIIa')) %>% 
+    count(injury_gustilo) %>% 
+    mutate(percentage = format_count_percent(n, open_total)) %>% 
+    rename(type = injury_gustilo) %>% 
+    select(-n) %>% 
+    arrange(factor(type, levels = c('I' = 'Gustilo Type I','II' = 'Gustilo Type II','III' = 'Gustilo Type IIIa')))
+  
+  df_final <- rbind(fracture_type, closed, tscherne, open, gustilo) 
+  
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+  
+  n_closed <- nrow(closed)
+  n_open <- nrow(open)
+  n_frac <- nrow(fracture_type)
+  n_tscherne <- nrow(tscherne)
+  n_gustilo <- nrow(gustilo)
+  
+  
+  vis <- kable(df_final, align='l', padding='2l', col.names = NULL) %>%
+    add_header_above(header) %>%  
+    pack_rows(index = c('Fractured Bone' = nrow(fracture_type), 'Fracture Type' = (nrow(closed) + nrow(tscherne) + nrow(open) + nrow(gustilo))), label_row_css = "text-align:left") %>%
+    add_indent(c(seq(n_tscherne) + n_frac + n_closed, seq(n_gustilo) + n_frac + n_closed + n_open + n_tscherne)) %>% 
+    kable_styling("striped", full_width = F, position="left") 
+  return(vis)
+}
+
+
 #' Treatment characteristics_sextant
 #'
 #' @description This function visualizes the treatment characteristics per protocol and assignmnet for Sextant. 
@@ -1919,7 +2086,7 @@ treatment_crossover_and_nonadherance <- function(analytic){
 #' treatment_characteristics_sextant()
 #' }
 treatment_characteristics_sextant <- function(analytic){
-
+  
   df <- analytic %>% 
     select(local_antibiotic_at_dwc,
            systemic_antibiotic_post_dwc,
@@ -1949,3 +2116,4 @@ treatment_characteristics_sextant <- function(analytic){
   
   return(output)
 }
+
