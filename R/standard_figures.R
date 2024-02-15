@@ -411,6 +411,7 @@ enrollment_by_site <- function(analytic){
   return(img_tag)
 }
 
+
 #' Cumulative enrollment
 #'
 #' @description This function visualizes the Cumulative number of patients enrolled
