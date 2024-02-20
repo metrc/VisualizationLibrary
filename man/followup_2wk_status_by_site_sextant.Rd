@@ -22,7 +22,7 @@ followup_not_started_12mo_crf12, followup_status_2wk_crf14_crf15}
 nothing
 }
 \description{
-This function visualizes followup status by site for Clinical followup form(crf12) and patient
+This function visualizes 2 weeks followup status by site for Clinical followup form(crf12) and patient
 reported outcome forms(CRF 14 & 15) for Sextant weekly report
 }
 \examples{
