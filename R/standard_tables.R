@@ -2119,3 +2119,256 @@ treatment_characteristics_sextant <- function(analytic){
   return(output)
 }
 
+#' Followup 2 week status by site for Sextant
+#'
+#' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf12) and patient
+#' reported outcome forms(CRF 14 & 15) for Sextant weekly report 
+#'
+#' @param analytic This is the analytic data set that must include study_id, eligible, enrolled, facilitycode, 
+#' followup_expected_2wk, followup_expected_3mo, dwc_date, followup_expected_6mo, followup_expected_12mo,
+#' followup_complete_2wk_crf12, followup_complete_3mo_crf12, followup_complete_6mo_crf12, 
+#' followup_complete_12mo_crf12, followup_incomplete_2wk_crf12, followup_incomplete_3mo_crf12, 
+#' followup_incomplete_6mo_crf12, followup_incomplete_12mo_crf12, followup_early_2wk_crf12, 
+#' followup_early_3mo_crf12, followup_early_6mo_crf12, followup_early_12mo_crf12, followup_late_2wk_crf12, 
+#' followup_late_3mo_crf12, followup_late_6mo_crf12, followup_late_12mo_crf12, followup_missing_2wk_crf12, 
+#' followup_missing_3mo_crf12, followup_missing_6mo_crf12, followup_missing_12mo_crf12,
+#' followup_not_started_2wk_crf12, followup_not_started_3mo_crf12, followup_not_started_6mo_crf12, 
+#' followup_not_started_12mo_crf12, followup_status_2wk_crf14_crf15
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' followup_2wk_status_by_site_sextant()
+#' }
+followup_2wk_status_by_site_sextant <- function(analytic){
+
+df <- analytic %>% 
+  select(study_id, eligible, enrolled, facilitycode, followup_expected_2wk, followup_expected_3mo, dwc_date, followup_expected_6mo, followup_expected_12mo,
+         followup_complete_2wk_crf12, followup_complete_3mo_crf12, followup_complete_6mo_crf12, followup_complete_12mo_crf12,
+         followup_incomplete_2wk_crf12, followup_incomplete_3mo_crf12, followup_incomplete_6mo_crf12, followup_incomplete_12mo_crf12, 
+         followup_early_2wk_crf12, followup_early_3mo_crf12, followup_early_6mo_crf12, followup_early_12mo_crf12,
+         followup_late_2wk_crf12, followup_late_3mo_crf12, followup_late_6mo_crf12, followup_late_12mo_crf12,
+         followup_missing_2wk_crf12, followup_missing_3mo_crf12, followup_missing_6mo_crf12, followup_missing_12mo_crf12,
+         followup_not_started_2wk_crf12, followup_not_started_3mo_crf12, followup_not_started_6mo_crf12, followup_not_started_12mo_crf12,
+         followup_status_2wk_crf14_crf15)
+
+df_crf12 <- df %>% 
+  select(study_id, facilitycode, followup_complete_2wk_crf12, followup_incomplete_2wk_crf12, 
+         followup_early_2wk_crf12, followup_late_2wk_crf12, followup_missing_2wk_crf12, followup_not_started_2wk_crf12) %>% 
+  group_by(facilitycode) %>% 
+  summarise("Complete" = sum(followup_complete_2wk_crf12, na.rm = TRUE), "Incomplete" = sum(followup_incomplete_2wk_crf12, na.rm = TRUE),
+            "Early" = sum(followup_early_2wk_crf12, na.rm = TRUE), "Late" = sum(followup_late_2wk_crf12, na.rm = TRUE),
+            "Missing" = sum(followup_missing_2wk_crf12, na.rm = TRUE), "Not Started" = sum(followup_not_started_2wk_crf12, na.rm = TRUE))
+
+df_crf14_crf15 <- df %>%
+  select(study_id, facilitycode, followup_status_2wk_crf14_crf15) %>%
+  pivot_wider(names_from = followup_status_2wk_crf14_crf15, values_from = followup_status_2wk_crf14_crf15) %>%
+  mutate(across(-c(study_id, facilitycode), ~ !is.na(.)), not_started = FALSE) %>%
+  group_by(facilitycode) %>%
+  summarise("Complete_crf14_15" = sum(complete, na.rm = TRUE),
+            "Incomplete_crf14_15" = sum(incomplete, na.rm = TRUE),
+            "Early_crf14_15" = sum(early, na.rm = TRUE),
+            "Late_crf14_15" = sum(late, na.rm = TRUE),
+            "Missing_crf14_15" = sum(missing, na.rm = TRUE),
+            "Not Started_crf14_15" = sum(not_started, na.rm = TRUE))
+
+exclude_columns <- c("facilitycode", "eligible_and_enrolled", "dwc_completed", "expected")
+
+df_expected_2wk <- df %>% 
+  select(study_id, facilitycode, eligible, enrolled, dwc_date, followup_expected_2wk) %>% 
+  mutate(dwc_complete = ifelse(!is.na(dwc_date), TRUE, FALSE)) %>% 
+  mutate(eligible_enrolled = ifelse(eligible & enrolled, TRUE, FALSE)) %>% 
+  select(-dwc_date, -enrolled, -eligible) %>% 
+  group_by(facilitycode) %>% 
+  summarise("eligible_and_enrolled"= sum(eligible_enrolled, na.rm = TRUE), "dwc_completed"= sum(dwc_complete, na.rm = TRUE),
+            "expected"= sum(followup_expected_2wk, na.rm = TRUE)) %>% 
+  left_join(df_crf12) %>% 
+  left_join(df_crf14_crf15) %>% 
+  mutate(across(-one_of(exclude_columns),
+                ~ format_count_percent(., expected))) %>% 
+  rename(`Clinical Site` = facilitycode,
+         `Eligible & Enrolled` = eligible_and_enrolled,
+         `DF Complete` = dwc_completed,
+         `Expected` = expected) 
+
+colnames(df_expected_2wk) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
+                             gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
+                             gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
+                                                                colnames(df_expected_2wk)))))))
+
+output <- df_expected_2wk %>%
+  kable("html") %>%
+  kable_styling() %>%
+  add_header_above(c("", "", "", "", "2 Weeks CRF12 (Clinical followup form)" = 6, "2 Weeks CRF14 & CRF15 (Patient reported outcomes)" = 6), align = "c") %>% 
+  column_spec(1, border_left = TRUE) %>%
+  column_spec(4, border_right = TRUE) %>%
+  column_spec(10, border_right = TRUE) %>%
+  column_spec(16, border_right = TRUE) 
+
+return(output)
+}
+
+#' Followup 3 month status by site for Sextant
+#'
+#' @description This function visualizes 3 month followup status by site for Clinical followup form(crf12) and patient
+#' reported outcome forms(CRF 14 & 15) for Sextant weekly report 
+#'
+#' @param analytic This is the analytic data set that must include study_id, eligible, enrolled, facilitycode, followup_expected_3mo, dwc_date, 
+#' followup_complete_3mo_crf12, followup_incomplete_3mo_crf12, followup_early_3mo_crf12, followup_late_3mo_crf12, 
+#' followup_missing_3mo_crf12, followup_not_started_3mo_crf12, followup_status_3mo_crf14_crf15
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' followup_3mo_status_by_site_sextant()
+#' }
+followup_3mo_status_by_site_sextant <- function(analytic){
+  
+  
+  df <- analytic %>% 
+    select(study_id, eligible, enrolled, facilitycode, followup_expected_3mo, dwc_date, 
+           followup_complete_3mo_crf12, followup_incomplete_3mo_crf12, followup_early_3mo_crf12, 
+           followup_late_3mo_crf12, followup_missing_3mo_crf12, followup_not_started_3mo_crf12, 
+           followup_status_3mo_crf14_crf15)
+  
+  df_crf12 <- df %>% 
+    select(study_id, facilitycode, followup_complete_3mo_crf12, followup_incomplete_3mo_crf12, 
+           followup_early_3mo_crf12, followup_late_3mo_crf12, followup_missing_3mo_crf12, followup_not_started_3mo_crf12) %>% 
+    group_by(facilitycode) %>% 
+    summarise("Complete" = sum(followup_complete_3mo_crf12, na.rm = TRUE), "Incomplete" = sum(followup_incomplete_3mo_crf12, na.rm = TRUE),
+              "Early" = sum(followup_early_3mo_crf12, na.rm = TRUE), "Late" = sum(followup_late_3mo_crf12, na.rm = TRUE),
+              "Missing" = sum(followup_missing_3mo_crf12, na.rm = TRUE), "Not Started" = sum(followup_not_started_3mo_crf12, na.rm = TRUE))
+  
+  df_crf14_crf15 <- df %>%
+    select(study_id, facilitycode, followup_status_3mo_crf14_crf15) %>%
+    pivot_wider(names_from = followup_status_3mo_crf14_crf15, values_from = followup_status_3mo_crf14_crf15) %>%
+    mutate(across(-c(study_id, facilitycode), ~ !is.na(.)), not_started = FALSE) %>%
+    group_by(facilitycode) %>%
+    summarise("Complete_crf14_15" = sum(complete, na.rm = TRUE),
+              "Incomplete_crf14_15" = sum(incomplete, na.rm = TRUE),
+              "Early_crf14_15" = sum(early, na.rm = TRUE),
+              "Late_crf14_15" = sum(late, na.rm = TRUE),
+              "Missing_crf14_15" = sum(missing, na.rm = TRUE),
+              "Not Started_crf14_15" = sum(not_started, na.rm = TRUE))
+  
+  exclude_columns <- c("facilitycode", "eligible_and_enrolled", "dwc_completed", "expected")
+  
+  df_expected_3mo <- df %>% 
+    select(study_id, facilitycode, eligible, enrolled, dwc_date, followup_expected_3mo) %>% 
+    mutate(dwc_complete = ifelse(!is.na(dwc_date), TRUE, FALSE)) %>% 
+    mutate(eligible_enrolled = ifelse(eligible & enrolled, TRUE, FALSE)) %>% 
+    select(-dwc_date, -enrolled, -eligible) %>% 
+    group_by(facilitycode) %>% 
+    summarise("eligible_and_enrolled"= sum(eligible_enrolled, na.rm = TRUE), "dwc_completed"= sum(dwc_complete, na.rm = TRUE),
+              "expected"= sum(followup_expected_3mo, na.rm = TRUE)) %>% 
+    left_join(df_crf12) %>% 
+    left_join(df_crf14_crf15) %>% 
+    mutate(across(-one_of(exclude_columns),
+                  ~ format_count_percent(., expected))) %>% 
+    rename(`Clinical Site` = facilitycode,
+           `Eligible & Enrolled` = eligible_and_enrolled,
+           `DF Complete` = dwc_completed,
+           `Expected` = expected) 
+  
+  colnames(df_expected_3mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
+                               gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
+                               gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
+                                colnames(df_expected_3mo)))))))
+  
+  output <- df_expected_3mo %>%
+    kable("html") %>%
+    kable_styling() %>%
+    add_header_above(c("", "", "", "", "3 Months CRF12 (Clinical followup form)" = 6, "3 Months CRF14 & CRF15 (Patient reported outcomes)" = 6), align = "c") %>% 
+    column_spec(1, border_left = TRUE) %>%
+    column_spec(4, border_right = TRUE) %>%
+    column_spec(10, border_right = TRUE) %>%
+    column_spec(16, border_right = TRUE) 
+  
+  return(output)
+}
+
+
+#' Followup 6 month status by site for Sextant
+#'
+#' @description This function visualizes 6 month followup status by site for Clinical followup form(crf12) and patient
+#' reported outcome forms(CRF 14 & 15) for Sextant weekly report 
+#'
+#' @param analytic This is the analytic data set that must include study_id, eligible, enrolled, facilitycode, 
+#' followup_expected_6mo, dwc_date, followup_complete_6mo_crf12, followup_incomplete_6mo_crf12, 
+#' followup_early_6mo_crf12, followup_late_6mo_crf12, followup_missing_6mo_crf12, followup_not_started_6mo_crf12, 
+#' followup_status_6mo_crf14_crf15
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' followup_6mo_status_by_site_sextant()
+#' }
+followup_6mo_status_by_site_sextant <- function(analytic){
+  
+  df <- analytic %>% 
+    select(study_id, eligible, enrolled, facilitycode, followup_expected_6mo, dwc_date, 
+           followup_complete_6mo_crf12, followup_incomplete_6mo_crf12, followup_early_6mo_crf12, 
+           followup_late_6mo_crf12, followup_missing_6mo_crf12, followup_not_started_6mo_crf12, 
+           followup_status_6mo_crf14_crf15)
+  
+  df_crf12 <- df %>% 
+    select(study_id, facilitycode, followup_complete_6mo_crf12, followup_incomplete_6mo_crf12, 
+           followup_early_6mo_crf12, followup_late_6mo_crf12, followup_missing_6mo_crf12, followup_not_started_6mo_crf12) %>% 
+    group_by(facilitycode) %>% 
+    summarise("Complete" = sum(followup_complete_6mo_crf12, na.rm = TRUE), "Incomplete" = sum(followup_incomplete_6mo_crf12, na.rm = TRUE),
+              "Early" = sum(followup_early_6mo_crf12, na.rm = TRUE), "Late" = sum(followup_late_6mo_crf12, na.rm = TRUE),
+              "Missing" = sum(followup_missing_6mo_crf12, na.rm = TRUE), "Not Started" = sum(followup_not_started_6mo_crf12, na.rm = TRUE))
+  
+  df_crf14_crf15 <- df %>%
+    select(study_id, facilitycode, followup_status_6mo_crf14_crf15) %>%
+    pivot_wider(names_from = followup_status_6mo_crf14_crf15, values_from = followup_status_6mo_crf14_crf15) %>%
+    mutate(across(-c(study_id, facilitycode), ~ !is.na(.)), not_started = FALSE) %>%
+    group_by(facilitycode) %>%
+    summarise("Complete_crf14_15" = sum(complete, na.rm = TRUE),
+              "Incomplete_crf14_15" = sum(incomplete, na.rm = TRUE),
+              "Early_crf14_15" = sum(early, na.rm = TRUE),
+              "Late_crf14_15" = sum(late, na.rm = TRUE),
+              "Missing_crf14_15" = sum(missing, na.rm = TRUE),
+              "Not Started_crf14_15" = sum(not_started, na.rm = TRUE))
+  
+  exclude_columns <- c("facilitycode", "eligible_and_enrolled", "dwc_completed", "expected")
+  
+  df_expected_6mo <- df %>% 
+    select(study_id, facilitycode, eligible, enrolled, dwc_date, followup_expected_6mo) %>% 
+    mutate(dwc_complete = ifelse(!is.na(dwc_date), TRUE, FALSE)) %>% 
+    mutate(eligible_enrolled = ifelse(eligible & enrolled, TRUE, FALSE)) %>% 
+    select(-dwc_date, -enrolled, -eligible) %>% 
+    group_by(facilitycode) %>% 
+    summarise("eligible_and_enrolled"= sum(eligible_enrolled, na.rm = TRUE), "dwc_completed"= sum(dwc_complete, na.rm = TRUE),
+              "expected"= sum(followup_expected_6mo, na.rm = TRUE)) %>% 
+    left_join(df_crf12) %>% 
+    left_join(df_crf14_crf15) %>% 
+    mutate(across(-one_of(exclude_columns),
+                  ~ format_count_percent(., expected))) %>% 
+    rename(`Clinical Site` = facilitycode,
+           `Eligible & Enrolled` = eligible_and_enrolled,
+           `DF Complete` = dwc_completed,
+           `Expected` = expected) 
+  
+  colnames(df_expected_6mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
+                               gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
+                               gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
+                               colnames(df_expected_6mo)))))))
+  
+  
+  output <- df_expected_6mo %>%
+    kable("html") %>%
+    kable_styling() %>%
+    add_header_above(c("", "", "", "", "6 Months CRF12 (Clinical followup form)" = 6, "6 Months CRF14 & CRF15 (Patient reported outcomes)" = 6), align = "c") %>% 
+    column_spec(1, border_left = TRUE) %>%
+    column_spec(4, border_right = TRUE) %>%
+    column_spec(10, border_right = TRUE) %>%
+    column_spec(16, border_right = TRUE) 
+  return(output)
+}
