@@ -2372,3 +2372,127 @@ followup_6mo_status_by_site_sextant <- function(analytic){
     column_spec(16, border_right = TRUE) 
   return(output)
 }
+
+
+#' Followup 12 month status by site for Sextant
+#'
+#' @description This function visualizes 12 month followup status by site using CRF12(Clinical followup form),
+#' PROMIS pain interference/intensity + CRF15(Survey version) or CRF14 + CRF15(Redcap version), and CRF08(Medical
+#' Record Review) form
+#'
+#' @param analytic This is the analytic data set that must include study_id, eligible, enrolled, facilitycode, 
+#' followup_expected_12mo, dwc_date, followup_complete_12mo_crf12, followup_incomplete_12mo_crf12, 
+#' followup_early_12mo_crf12, followup_late_12mo_crf12, followup_missing_12mo_crf12, 
+#' followup_not_started_12mo_crf12, followup_status_12mo_crf14_crf15, followup_status_12mo_crf09
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' followup_12mo_status_by_site_sextant()
+#' }
+followup_12mo_status_by_site_sextant <- function(analytic){
+
+  df <- analytic %>% 
+    select(study_id, eligible, enrolled, facilitycode, followup_expected_12mo, dwc_date, 
+           followup_complete_12mo_crf12, followup_incomplete_12mo_crf12, followup_early_12mo_crf12, 
+           followup_late_12mo_crf12, followup_missing_12mo_crf12, followup_not_started_12mo_crf12, 
+           followup_status_12mo_crf14_crf15, followup_status_12mo_crf09)
+  
+  df_crf12 <- df %>% 
+    select(study_id, facilitycode, followup_complete_12mo_crf12, followup_incomplete_12mo_crf12, 
+           followup_early_12mo_crf12, followup_late_12mo_crf12, followup_missing_12mo_crf12, followup_not_started_12mo_crf12) %>% 
+    group_by(facilitycode) %>% 
+    summarise("Complete" = sum(followup_complete_12mo_crf12, na.rm = TRUE), "Incomplete" = sum(followup_incomplete_12mo_crf12, na.rm = TRUE),
+              "Early" = sum(followup_early_12mo_crf12, na.rm = TRUE), "Late" = sum(followup_late_12mo_crf12, na.rm = TRUE),
+              "Missing" = sum(followup_missing_12mo_crf12, na.rm = TRUE), "Not Started" = sum(followup_not_started_12mo_crf12, na.rm = TRUE)) %>% 
+    mutate(facilitycode = as.character(facilitycode)) 
+  
+  all_categories <- c("complete", "incomplete", "missing", "early", "late", "not_started")
+  
+  empty_df <- tibble(
+    study_id = as.character(integer()),  
+    !!!setNames(rep(list(""), length(all_categories)), all_categories))
+  
+  df_crf14_crf15 <- df %>%
+    select(study_id, facilitycode, followup_status_12mo_crf14_crf15) %>%
+    mutate(across(everything(), as.character)) %>%
+    pivot_wider(names_from = followup_status_12mo_crf14_crf15, 
+                values_from = followup_status_12mo_crf14_crf15, 
+                values_fill = list(followup_status_12mo_crf14_crf15 = ""))
+  
+  df_pivot <- left_join(df_crf14_crf15, empty_df) %>% 
+    select(study_id, facilitycode, complete, incomplete, missing, early, late, not_started) %>% 
+    mutate(across(-c(study_id, facilitycode), ~if_else(is.na(.) | . == "", FALSE, TRUE)))
+  
+  
+  df_crf1415 <- df_pivot %>% 
+    group_by(facilitycode) %>%
+    summarise("Complete_crf14_15" = sum(complete, na.rm = TRUE),
+              "Incomplete_crf14_15" = sum(incomplete, na.rm = TRUE),
+              "Early_crf14_15" = sum(early, na.rm = TRUE),
+              "Late_crf14_15" = sum(late, na.rm = TRUE),
+              "Missing_crf14_15" = sum(missing, na.rm = TRUE),
+              "Not Started_crf14_15" = sum(not_started, na.rm = TRUE)) %>% 
+    mutate(facilitycode = as.character(facilitycode)) 
+  
+  df_crf09 <- df %>%
+    select(study_id, facilitycode, followup_status_12mo_crf09) %>%
+    mutate(across(everything(), as.character)) %>%
+    pivot_wider(names_from = followup_status_12mo_crf09, 
+                values_from = followup_status_12mo_crf09, 
+                values_fill = list(followup_status_12mo_crf09 = ""))
+  
+  merged_crf09 <- left_join(df_crf09, empty_df) %>% 
+    select(study_id, facilitycode, complete, incomplete, missing, early, late, not_started) %>% 
+    mutate(across(-c(study_id, facilitycode), ~if_else(is.na(.) | . == "", FALSE, TRUE))) %>% 
+    group_by(facilitycode) %>%
+    summarise("Complete_crf09" = sum(complete, na.rm = TRUE),
+              "Incomplete_crf09" = sum(incomplete, na.rm = TRUE),
+              "Early_crf09" = sum(early, na.rm = TRUE),
+              "Late_crf09" = sum(late, na.rm = TRUE),
+              "Missing_crf09" = sum(missing, na.rm = TRUE),
+              "Not Started_crf09" = sum(not_started, na.rm = TRUE)) %>% 
+    mutate(facilitycode = as.character(facilitycode)) 
+  
+  exclude_columns <- c("facilitycode", "eligible_and_enrolled", "dwc_completed", "expected")
+  
+  df_expected_12mo <- df %>% 
+    select(study_id, facilitycode, eligible, enrolled, dwc_date, followup_expected_12mo) %>% 
+    mutate(dwc_complete = ifelse(!is.na(dwc_date), TRUE, FALSE)) %>% 
+    mutate(eligible_enrolled = ifelse(eligible & enrolled, TRUE, FALSE)) %>% 
+    select(-dwc_date, -enrolled, -eligible) %>% 
+    group_by(facilitycode) %>% 
+    summarise("eligible_and_enrolled"= sum(eligible_enrolled, na.rm = TRUE), "dwc_completed"= sum(dwc_complete, na.rm = TRUE),
+              "expected"= sum(followup_expected_12mo, na.rm = TRUE)) %>% 
+    left_join(df_crf12) %>% 
+    left_join(df_crf1415) %>% 
+    left_join(merged_crf09) %>% 
+    mutate(across(-one_of(exclude_columns),
+                  ~ format_count_percent(., expected))) %>% 
+    rename(`Clinical Site` = facilitycode,
+           `Eligible & Enrolled` = eligible_and_enrolled,
+           `DF Complete` = dwc_completed,
+           `Expected` = expected) 
+  
+  colnames(df_expected_12mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
+                                gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
+                                gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started",
+                                gsub("Complete_crf09", "Complete", gsub("Incomplete_crf09", "Incomplete", 
+                                gsub("Missing_crf09", "Missing", gsub("Early_crf09", "Early", 
+                                gsub("Late_crf09", "Late", gsub("Not Started_crf09", "Not started",
+                                colnames(df_expected_12mo)))))))))))))
+  
+  output <- df_expected_12mo %>%
+    kable("html") %>%
+    kable_styling() %>%
+    add_header_above(c("", "", "", "", "12 Months CRF12 (Clinical followup form)" = 6, "12 Months CRF14 & CRF15 (Patient reported outcomes)" = 6, "12 Months CRF09 (Medical record review)" = 6), align = "c") %>% 
+    column_spec(1, border_left = TRUE) %>%
+    column_spec(4, border_right = TRUE) %>%
+    column_spec(10, border_right = TRUE) %>%
+    column_spec(16, border_right = TRUE) %>% 
+    column_spec(22, border_right = TRUE)
+  
+  return(output)
+}
