@@ -2198,14 +2198,9 @@ colnames(df_expected_2wk) <- gsub("Complete_crf14_15", "Complete", gsub("Incompl
                              gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
                                                                 colnames(df_expected_2wk)))))))
 
-output <- df_expected_2wk %>%
-  kable("html") %>%
-  kable_styling() %>%
+output <- kable(df_expected_2wk, align='l') %>%
   add_header_above(c("", "", "", "", "2 Weeks CRF12 (Clinical followup form)" = 6, "2 Weeks CRF14 & CRF15 (Patient reported outcomes)" = 6), align = "c") %>% 
-  column_spec(1, border_left = TRUE) %>%
-  column_spec(4, border_right = TRUE) %>%
-  column_spec(10, border_right = TRUE) %>%
-  column_spec(16, border_right = TRUE) 
+  kable_styling("striped", full_width = F, position="left") 
 
 return(output)
 }
@@ -2279,14 +2274,9 @@ followup_3mo_status_by_site_sextant <- function(analytic){
                                gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
                                 colnames(df_expected_3mo)))))))
   
-  output <- df_expected_3mo %>%
-    kable("html") %>%
-    kable_styling() %>%
+  output <- kable(df_expected_3mo, align='l') %>%
     add_header_above(c("", "", "", "", "3 Months CRF12 (Clinical followup form)" = 6, "3 Months CRF14 & CRF15 (Patient reported outcomes)" = 6), align = "c") %>% 
-    column_spec(1, border_left = TRUE) %>%
-    column_spec(4, border_right = TRUE) %>%
-    column_spec(10, border_right = TRUE) %>%
-    column_spec(16, border_right = TRUE) 
+    kable_styling("striped", full_width = F, position="left") 
   
   return(output)
 }
@@ -2362,14 +2352,10 @@ followup_6mo_status_by_site_sextant <- function(analytic){
                                colnames(df_expected_6mo)))))))
   
   
-  output <- df_expected_6mo %>%
-    kable("html") %>%
-    kable_styling() %>%
+  output <- kable(df_expected_6mo, align='l') %>%
     add_header_above(c("", "", "", "", "6 Months CRF12 (Clinical followup form)" = 6, "6 Months CRF14 & CRF15 (Patient reported outcomes)" = 6), align = "c") %>% 
-    column_spec(1, border_left = TRUE) %>%
-    column_spec(4, border_right = TRUE) %>%
-    column_spec(10, border_right = TRUE) %>%
-    column_spec(16, border_right = TRUE) 
+    kable_styling("striped", full_width = F, position="left") 
+  
   return(output)
 }
 
@@ -2484,15 +2470,9 @@ followup_12mo_status_by_site_sextant <- function(analytic){
                                 gsub("Late_crf09", "Late", gsub("Not Started_crf09", "Not started",
                                 colnames(df_expected_12mo)))))))))))))
   
-  output <- df_expected_12mo %>%
-    kable("html") %>%
-    kable_styling() %>%
+    output <- kable(df_expected_12mo, align='l') %>%
     add_header_above(c("", "", "", "", "12 Months CRF12 (Clinical followup form)" = 6, "12 Months CRF14 & CRF15 (Patient reported outcomes)" = 6, "12 Months CRF09 (Medical record review)" = 6), align = "c") %>% 
-    column_spec(1, border_left = TRUE) %>%
-    column_spec(4, border_right = TRUE) %>%
-    column_spec(10, border_right = TRUE) %>%
-    column_spec(16, border_right = TRUE) %>% 
-    column_spec(22, border_right = TRUE)
+    kable_styling("striped", full_width = F, position="left") 
   
   return(output)
 }
