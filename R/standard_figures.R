@@ -516,3 +516,102 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
   
   return(img_tag)
 }  
+
+#' Consort Diagram
+#'
+#' @description This function visualizes the categorical percentages of study status as well as followup completions
+#'
+#' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible, refused, consented_and_randomized, enrolled, df_date, 
+#' adjudicated_early_discontinued, followup_complete_12mo
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' consort_diagram()
+#' }
+consort_diagram <- function(analytic){
+  
+  df <- analytic %>% 
+    select(study_id, screened, ineligible, eligible, refused, consented_and_randomized, enrolled, df_date, 
+           adjudicated_early_discontinued, followup_complete_12mo) %>% 
+    mutate(df_date = ifelse(!is.na(df_date), TRUE, FALSE))
+  
+  screened <- sum(analytic$screened, na.rm = TRUE)
+  
+  eligible_df <- df %>% 
+    filter(screened)
+  
+  eligible <- sum(eligible_df$eligible, na.rm = TRUE)
+  
+  ineligible <- screened - eligible
+  
+  refused_df <- eligible_df %>% 
+    filter(eligible)
+  
+  refused <- sum(refused_df$refused, na.rm = TRUE)
+  
+  cnr_df <- refused_df %>% 
+    filter(refused == FALSE | is.na(refused))
+  
+  cnr <- sum(cnr_df$consented_and_randomized, na.rm = TRUE)
+  not_enrolled_other <- eligible - (cnr + refused)
+  
+  ed_df <- cnr_df %>% 
+    filter(consented_and_randomized)
+  
+  early_discontinuation <- sum(ed_df$adjudicated_early_discontinued, na.rm = TRUE)
+  
+  enrolled_df <- ed_df %>% 
+    filter(adjudicated_early_discontinued == FALSE | is.na(adjudicated_early_discontinued))
+  
+  enrolled <- sum(enrolled_df$enrolled, na.rm = TRUE)
+  df_complete <- sum(enrolled_df$df_date, na.rm = TRUE)
+  
+  fu_df <- enrolled_df %>% 
+    filter(df_date)
+  
+  fu_complete_12mo <- sum(fu_df$followup_complete_12mo, na.rm = TRUE)
+  
+  consort_diagram <- grViz(paste0('
+    digraph g {
+      graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
+      
+      screened [style="rounded,filled", fillcolor="#a4d3ee", pos="6,12!", shape = box, width=2.4, height=1, label = "Screened (n=',screened,')"];
+      ineligible [style="rounded,filled", fillcolor="#a4d3ee", pos="10,12!", shape = box, width=2.4, height=1, label = "Ineligible (n=',ineligible,')"];
+      eligible [style="rounded,filled", fillcolor="#a4d3ee", pos="6,10!", shape = box, width=2.4, height=1, label = "Eligible (n=',eligible,')"];
+      
+      refused [style="rounded,filled", fillcolor="#a4d3ee", pos="10,10!", shape = box, width=2.4, height=1, label = "Other Not Enrolled (n=',not_enrolled_other,')\nRefused (n=',refused,')"];
+
+      cnr [style="rounded,filled", fillcolor="#a4d3ee", pos="6,8!", shape = box, width=2.4, height=1, label = "Consented and Randomized (n=',cnr,')"];
+
+      ed [style="rounded,filled", fillcolor="#a4d3ee", pos="10,8!", shape = box, width=2.4, height=1, label = "Early Discontinuation (n=',early_discontinuation,')"];
+      
+      enrolled [style="rounded,filled", fillcolor="#a4d3ee", pos="6,6!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',enrolled,')"];
+      df_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="6,4!", shape = box, width=2.4, height=1, label = "Definitive Fixation Complete (n=',df_complete,')"];
+
+      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="6,2!", shape = box, width=2.4, height=1, label = "12 Month Follow-Up Complete (n=',fu_complete_12mo,')"];
+      
+      # Relationships
+      screened -> eligible
+      screened -> ineligible
+      eligible -> refused
+      eligible -> cnr
+      cnr -> ed
+      cnr -> enrolled
+      enrolled -> df_complete
+      df_complete -> fu_complete
+      
+    }
+  '))
+  svg_content <- DiagrammeRsvg::export_svg(consort_diagram)
+  temp_svg_path <- tempfile(fileext = ".svg")
+  writeLines(svg_content, temp_svg_path)
+  temp_png_path <- tempfile(fileext = ".png")
+  rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 2000, height = 2000)
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 80%%;">', image_data)
+  file.remove(c(temp_svg_path, temp_png_path))
+  return(img_tag)
+}
