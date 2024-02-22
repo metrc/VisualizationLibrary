@@ -1859,7 +1859,7 @@ not_enrolled_for_other_reasons <- function(analytic){
 #' study.
 #'
 #' @param analytic This is the analytic data set that must include facilitycode, eligible, enrolled, dwc_date, 
-#' dwc_tobra, dwc_vanco
+#' local_antibiotic_at_dwc
 #'
 #' @return nothing
 #' @export
@@ -1870,17 +1870,17 @@ not_enrolled_for_other_reasons <- function(analytic){
 #' }
 treatment_crossover_and_nonadherance <- function(analytic){
 
-  df <- analytic %>% select(facilitycode, eligible, enrolled, dwc_date, dwc_tobra, dwc_vanco) %>% 
+  df <- analytic %>% select(facilitycode, eligible, enrolled, dwc_date, local_antibiotic_at_dwc) %>% 
     filter(eligible == TRUE & enrolled == TRUE) %>% 
     mutate(eligible_enrolled = ifelse(eligible == TRUE & enrolled == TRUE, TRUE, FALSE)) %>% 
     mutate(dwc_complete = ifelse(!is.na(dwc_date), TRUE, FALSE)) %>% 
-    mutate(dwc_vanco_tobra = ifelse(dwc_vanco & dwc_tobra, TRUE, FALSE)) %>% 
-    select(-eligible, -enrolled, -dwc_date, -dwc_tobra, -dwc_vanco) 
+    mutate(dwc_treatment = ifelse(local_antibiotic_at_dwc, TRUE, FALSE)) %>% 
+    select(-eligible, -enrolled, -dwc_date) 
   
   
   df_2nd <- df %>% 
     group_by(facilitycode) %>% 
-    summarize(elig_enr = sum(eligible_enrolled), total_dwc = sum(dwc_complete), treatment_completed = sum(dwc_vanco_tobra)) %>% 
+    summarize(elig_enr = sum(eligible_enrolled), total_dwc = sum(dwc_complete), treatment_completed = sum(dwc_treatment)) %>% 
     replace(., is.na(.), 0)
   
   numerical_columns <- df_2nd %>% select_if(is.numeric) %>% colnames()
