@@ -7,7 +7,7 @@
 treatment_crossover_and_nonadherance(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include facilitycode, eligible, enrolled, dwc_date, 
+\item{analytic}{This is the analytic data set that must include facilitycode, eligible, enrolled, time_zero, 
 local_antibiotic_at_dwc}
 }
 \value{
