@@ -8,9 +8,9 @@ followup_12mo_status_by_site_sextant(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, eligible, enrolled, facilitycode, 
-followup_expected_12mo, dwc_date, followup_complete_12mo_crf12, followup_incomplete_12mo_crf12, 
-followup_early_12mo_crf12, followup_late_12mo_crf12, followup_missing_12mo_crf12, 
-followup_not_started_12mo_crf12, followup_status_12mo_crf14_crf15, followup_status_12mo_crf09}
+followup_expected_12mo, time_zero, followup_complete_crf12_12mo, followup_incomplete_crf12_12mo, 
+followup_early_crf12_12mo, followup_late_crf12_12mo, followup_missing_crf12_12mo, 
+followup_not_started_crf12_12mo, followup_status_crf14_crf15_12mo, followup_status_crf09_12mo}
 }
 \value{
 nothing

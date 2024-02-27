@@ -7,16 +7,10 @@
 followup_2wk_status_by_site_sextant(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, eligible, enrolled, facilitycode, 
-followup_expected_2wk, followup_expected_3mo, dwc_date, followup_expected_6mo, followup_expected_12mo,
-followup_complete_2wk_crf12, followup_complete_3mo_crf12, followup_complete_6mo_crf12, 
-followup_complete_12mo_crf12, followup_incomplete_2wk_crf12, followup_incomplete_3mo_crf12, 
-followup_incomplete_6mo_crf12, followup_incomplete_12mo_crf12, followup_early_2wk_crf12, 
-followup_early_3mo_crf12, followup_early_6mo_crf12, followup_early_12mo_crf12, followup_late_2wk_crf12, 
-followup_late_3mo_crf12, followup_late_6mo_crf12, followup_late_12mo_crf12, followup_missing_2wk_crf12, 
-followup_missing_3mo_crf12, followup_missing_6mo_crf12, followup_missing_12mo_crf12,
-followup_not_started_2wk_crf12, followup_not_started_3mo_crf12, followup_not_started_6mo_crf12, 
-followup_not_started_12mo_crf12, followup_status_2wk_crf14_crf15}
+\item{analytic}{This is the analytic data set that must include study_id, eligible, enrolled, time_zero, facilitycode, 
+followup_expected_2wk, followup_complete_crf12_2wk, followup_incomplete_crf12_2wk, followup_early_crf12_2wk, 
+followup_late_crf12_2wk, followup_missing_crf12_2wk, followup_not_started_crf12_2wk, 
+followup_status_crf14_crf15_2wk}
 }
 \value{
 nothing
