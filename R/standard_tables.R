@@ -2472,3 +2472,51 @@ followup_12mo_status_by_site_sextant <- function(analytic){
   
   return(output)
 }
+
+#' Adherance by site
+#'
+#' @description This function visualizes the treatment crossover or any nonadherance occured during the Tobra 
+#' study.
+#'
+#' @param analytic This is the analytic data set that must include facilitycode, df_date, df_randomized_treatment
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' adherance_by_site()
+#' }
+adherance_by_site <- function(analytic){
+  
+  df <- analytic %>%
+    select(facilitycode, enrolled, df_date, df_randomized_treatment) %>% 
+    filter(enrolled) %>%
+    mutate(df_date = na_if(df_date, "NA")) %>% 
+    mutate(df_complete = ifelse(!is.na(df_date), TRUE, FALSE)) 
+  
+  treatment_total <- (sum(df$df_randomized_treatment, na.rm = TRUE))
+  
+  df2 <- df %>% 
+    group_by(facilitycode) %>% 
+    summarize(elig_enr = sum(enrolled, na.rm = TRUE), df_total = sum(df_complete, na.rm = TRUE), treatment_completed = sum(df_randomized_treatment, na.rm = TRUE)) %>% 
+    mutate(treatment_completed = format_count_percent(treatment_completed, df_total)) 
+  
+  enrolled_total <- (sum(df2$elig_enr, na.rm = TRUE))
+  df_total <- (sum(df2$df_total, na.rm = TRUE))
+  
+  df3 <- data.frame(facilitycode = 'TOTAL', elig_enr = enrolled_total, df_total = df_total, treatment_completed = format_count_percent(treatment_total, df_total))
+  
+  df4 <- rbind(df2, df3) %>% 
+    rename(`Clinical Site` = facilitycode,
+           `Eligible and Enrolled` = elig_enr,
+           `Definitive Wound Closure completed` = df_total,
+           `Received treatment per protocol and assignment(% DWC complete)` = treatment_completed) 
+  
+  
+  output <- kable(df4, align='l', padding='2l') %>%
+    kable_styling("striped", full_width = F, position="left") %>% 
+    row_spec(nrow(df4), bold = TRUE)
+  
+  return(output)
+}
