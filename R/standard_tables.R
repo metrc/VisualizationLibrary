@@ -2571,9 +2571,13 @@ expected_and_followup_visit_by_site <- function(analytic){
     filter(!is.na(facilitycode)) %>% 
     mutate(`Early(% Complete)` = format_count_percent(`Early`, `Complete`),
            `On Time(% Complete)` = format_count_percent(`On Time`, `Complete`),
-           `Late(% Complete)` = format_count_percent(`Late`, `Complete`)) %>% 
-    select(facilitycode, `Expected 3 Months`, `Complete`, `Early(% Complete)`, `On Time(% Complete)`, `Late(% Complete)`,
-           `Incomplete`, `Missing`, `Not Started`)
+           `Late(% Complete)` = format_count_percent(`Late`, `Complete`),
+           `Complete(% Expected)` = format_count_percent(`Complete`, `Expected 3 Months`),
+           `Incomplete(% Expected)` = format_count_percent(`Incomplete`, `Expected 3 Months`),
+           `Missing(% Expected)` = format_count_percent(`Missing`, `Expected 3 Months`),
+           `Not Started(% Expected)` = format_count_percent(`Not Started`, `Expected 3 Months`)) %>% 
+    select(facilitycode, `Expected 3 Months`, `Complete(% Expected)`, `Early(% Complete)`, `On Time(% Complete)`, `Late(% Complete)`,
+           `Incomplete(% Expected)`, `Missing(% Expected)`, `Not Started(% Expected)`)
   
   ######
   all_categories <- c("Complete", "Incomplete", "Missing", "Early", "Late", "Not Started")
@@ -2611,7 +2615,11 @@ expected_and_followup_visit_by_site <- function(analytic){
     select(facilitycode, `Expected`, `Complete`, `Early`, `On Time`, `Late`, `Incomplete`, `Missing`, `Not Started`) %>% 
     mutate(`Early` = format_count_percent(`Early`, `Complete`),
            `On Time` = format_count_percent(`On Time`, `Complete`),
-           `Late` = format_count_percent(`Late`, `Complete`)) %>% 
+           `Late` = format_count_percent(`Late`, `Complete`),
+           `Complete` = format_count_percent(`Complete`, `Expected`),
+           `Incomplete` = format_count_percent(`Incomplete`, `Expected`),
+           `Missing` = format_count_percent(`Missing`, `Expected`),
+           `Not Started` = format_count_percent(`Not Started`, `Expected`)) %>% 
     rename(expected_6mo = `Expected`,
            complete_6mo = `Complete`,
            early_6mo = `Early`,
@@ -2651,7 +2659,11 @@ expected_and_followup_visit_by_site <- function(analytic){
     select(facilitycode, `Expected`, `Complete`, `Early`, `On Time`, `Late`, `Incomplete`, `Missing`, `Not Started`) %>% 
     mutate(`Early` = format_count_percent(`Early`, `Complete`),
            `On Time` = format_count_percent(`On Time`, `Complete`),
-           `Late` = format_count_percent(`Late`, `Complete`)) %>% 
+           `Late` = format_count_percent(`Late`, `Complete`),
+           `Complete` = format_count_percent(`Complete`, `Expected`),
+           `Incomplete` = format_count_percent(`Incomplete`, `Expected`),
+           `Missing` = format_count_percent(`Missing`, `Expected`),
+           `Not Started` = format_count_percent(`Not Started`, `Expected`)) %>% 
     rename(expected_12mo = `Expected`,
            complete_12mo = `Complete`,
            early_12mo = `Early`,
@@ -2665,19 +2677,24 @@ expected_and_followup_visit_by_site <- function(analytic){
     rename(`Site` = facilitycode)
   
   colnames(final_df) <- 
-    gsub("expected_6mo", "Expected 6 Months", gsub("complete_6mo", "Complete", 
-    gsub("incomplete_6mo", "Incomplete", gsub("missing_6mo", "Missing", 
+    gsub("expected_6mo", "Expected 6 Months", gsub("complete_6mo", "Complete(% Expected)", 
+    gsub("incomplete_6mo", "Incomplete(% Expected)", gsub("missing_6mo", "Missing(% Expected)", 
     gsub("early_6mo", "Early(% Complete)", gsub("late_6mo", "Late(% Complete)", 
-    gsub("not_started_6mo", "Not started", gsub("on_time_6mo", "On Time(% Complete)", 
-    gsub("expected_12mo", "Expected 12 Months", gsub("complete_12mo", "Complete", 
-    gsub("incomplete_12mo", "Incomplete", gsub("missing_12mo", "Missing", 
+    gsub("not_started_6mo", "Not started(% Expected)", gsub("on_time_6mo", "On Time(% Complete)", 
+    gsub("expected_12mo", "Expected 12 Months", gsub("complete_12mo", "Complete(% Expected)", 
+    gsub("incomplete_12mo", "Incomplete(% Expected)", gsub("missing_12mo", "Missing(% Expected)", 
     gsub("early_12mo", "Early(% Complete)", gsub("late_12mo", "Late(% Complete)", 
-    gsub("not_started_12mo", "Not started", gsub("on_time_12mo", "On Time(% Complete)", 
+    gsub("not_started_12mo", "Not started(% Expected)", gsub("on_time_12mo", "On Time(% Complete)", 
     colnames(final_df)))))))))))))))))
+  
+  footnotes_1 <- c("*Complete, Incomplete, Missing, and Not Started sums up to Expected")
+  footnotes_2 <- c("**Early, On Time, and Late sums up to total Complete")
   
   output <- kable(final_df, align='l') %>%
     add_header_above(c("", "3 Months Followup Status" = 8, "6 Months Followup Status" = 8, "12 Months Followup Status" = 8), align = "c") %>% 
-    kable_styling("striped", full_width = F, position="left") 
+    kable_styling("striped", full_width = F, position="left") %>% 
+    add_footnote(footnotes_1) %>% 
+    add_footnote(footnotes_2)
   
   return(output)
 }
