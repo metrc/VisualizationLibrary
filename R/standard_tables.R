@@ -2696,8 +2696,8 @@ expected_and_followup_visit_by_site <- function(analytic){
   output <- kable(final_df, align='l') %>%
     add_header_above(c("", "3 Months Followup Status" = 8, "6 Months Followup Status" = 8, "12 Months Followup Status" = 8), align = "c") %>% 
     kable_styling("striped", full_width = F, position="left") %>% 
-    add_footnote(c(footnote(paste0("<div style='text-align: left;'>", footnotes_1, "</div>")),
-                   footnote(paste0("<div style='text-align: left;'>", footnotes_2, "</div>"))))
+    add_footnote(footnotes_1) %>%
+    add_footnote(footnotes_2)
   
   return(output)
 }
