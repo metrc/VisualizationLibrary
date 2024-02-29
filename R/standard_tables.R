@@ -984,8 +984,6 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #' ineligibility_by_reasons()
 #' }
 ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
-  
-  
   df <- analytic %>% 
     select(study_id, facilitycode,  screened, ineligible, ineligibility_reasons) %>% 
     filter(screened == TRUE) 
@@ -999,34 +997,35 @@ ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
     pull(name) 
   
   total <- df %>% 
-    mutate(ineligibility_reasons = ifelse(ineligibility_reasons %in% reasons, ineligibility_reasons,'Other Reasons')) %>% 
     column_unzipper('ineligibility_reasons', sep = '; ') %>% 
     boolean_column_counter() %>% 
+    mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible)))) %>% 
     mutate(Site = 'Total') %>% 
-    select(Site, screened, ineligible, all_of(reasons), `Other Reasons`)
+    select(Site, screened, ineligible, all_of(reasons), otherreasons)
   
-   
   sites <- df %>% 
-    mutate(ineligibility_reasons = ifelse(ineligibility_reasons %in% reasons, ineligibility_reasons,'Other Reasons')) %>% 
     column_unzipper('ineligibility_reasons', sep = '; ') %>% 
     boolean_column_counter(groups = 'facilitycode') %>% 
+    mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible, facilitycode)))) %>% 
     rename(Site = facilitycode) %>% 
-    select(Site, screened, ineligible, all_of(reasons), `Other Reasons`)
+    select(Site, screened, ineligible, all_of(reasons), otherreasons)
   
   output <- bind_rows(total, sites) %>% 
     rename(Screened = screened,
-           Ineligible = ineligible) %>% 
+           Ineligible = ineligible,
+           `Other Reasons` = otherreasons) %>% 
     arrange(desc(Screened)) %>% 
-    mutate(across(4:8, ~ format_count_percent(.x, Ineligible))) %>% 
     mutate(Ineligible = format_count_percent(Ineligible, Screened))
-
-  header_num <- c(3,n_top_reasons, 1)
-  header_names <- c(" ", paste("Top ", n_top_reasons, " Ineligibility Reasons"), " ")
-  names(header_num) <- header_names
   
-  vis <- kable(output, align='l', padding='2l') %>%
-    add_header_above(header_num) %>%  
-    kable_styling("striped", full_width = F, position="left") 
+  top_n_header_text <- paste0("Top ", n_top_reasons, " Ineligibility Reasons =")
+  
+  header_names <- c(" " = 3, top_n_header_text = n_top_reasons, " " = 1) 
+  
+  names(header_names)[2] <- top_n_header_text
+  
+  vis <- kable(output, align = 'l', padding = '2l') %>%
+    add_header_above(header_names) %>%  
+    kable_styling("striped", full_width = FALSE, position = "left")
   
   return(vis)
 }
