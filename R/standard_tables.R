@@ -1017,6 +1017,7 @@ ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
     rename(Screened = screened,
            Ineligible = ineligible) %>% 
     arrange(desc(Screened)) %>% 
+    mutate(across(4:8, ~ format_count_percent(.x, Ineligible))) %>% 
     mutate(Ineligible = format_count_percent(Ineligible, Screened))
 
   top_n_header <- paste0("Top ", n_top_reasons, " Ineligibility Reasons =")
