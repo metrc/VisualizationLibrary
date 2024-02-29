@@ -4,7 +4,7 @@
 \alias{enrollment_by_site_var_disc_tobra_sextant}
 \title{enrollment_by_site tobra and sextant (var discontinued)}
 \usage{
-enrollment_by_site_var_disc_tobra_sextant(analytic)
+enrollment_by_site_var_disc_tobra_sextant(analytic, days, days_title)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 

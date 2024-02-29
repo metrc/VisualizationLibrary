@@ -2694,8 +2694,8 @@ expected_and_followup_visit_by_site <- function(analytic){
   output <- kable(final_df, align='l') %>%
     add_header_above(c("", "3 Months Followup Status" = 8, "6 Months Followup Status" = 8, "12 Months Followup Status" = 8), align = "c") %>% 
     kable_styling("striped", full_width = F, position="left") %>% 
-    add_footnote(footnotes_1) %>% 
-    add_footnote(footnotes_2)
+    add_footnote(c(footnote(paste0("<div style='text-align: left;'>", footnotes_1, "</div>")),
+                   footnote(paste0("<div style='text-align: left;'>", footnotes_2, "</div>"))))
   
   return(output)
 }
@@ -2715,12 +2715,12 @@ expected_and_followup_visit_by_site <- function(analytic){
 #' \dontrun{
 #' enrollment_by_site_var_disc_tobra_sextant()
 #' }
-enrollment_by_site_var_disc_tobra_sextant <- function(analytic){
+enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days, days_title){
   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
            facilitycode, adjudicated_discontinued, screened_date)
   
-  last14 <- Sys.Date() - days(14)
+  last14 <- Sys.Date() - days
   
   df <- df %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
@@ -2802,7 +2802,7 @@ enrollment_by_site_var_disc_tobra_sextant <- function(analytic){
                       'Consented & Randomized (% eligible)', 'Discontinued (% randomized)', 'Eligible & Enrolled (% randomized)' )
   
   table <- kable(last, align='l', padding='2l') %>% 
-    add_header_above(c(" " = 1, "Last 14 Days" = 3, "Average per Week" = 2, 'Cumulative, to date' = 7)) %>%
+    add_header_above(c(" " = 1, days_title = 3, "Average per Week" = 2, 'Cumulative, to date' = 7)) %>%
     kable_styling("striped", full_width = F, position="left") %>% 
     row_spec(nrow(last), bold = TRUE)
   
