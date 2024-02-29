@@ -1020,10 +1020,12 @@ ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
     mutate(across(4:8, ~ format_count_percent(.x, Ineligible))) %>% 
     mutate(Ineligible = format_count_percent(Ineligible, Screened))
 
-  top_n_header <- paste0("Top ", n_top_reasons, " Ineligibility Reasons =")
+  header_num <- c(3,n_top_reasons, 1)
+  header_names <- c(" ", paste("Top ", n_top_reasons, " Ineligibility Reasons"), " ")
+  names(header_num) <- header_names
   
   vis <- kable(output, align='l', padding='2l') %>%
-    add_header_above(c(" " = 3, top_n_header = n_top_reasons, " " = 1)) %>%  
+    add_header_above(header_num) %>%  
     kable_styling("striped", full_width = F, position="left") 
   
   return(vis)
@@ -2694,8 +2696,8 @@ expected_and_followup_visit_by_site <- function(analytic){
   output <- kable(final_df, align='l') %>%
     add_header_above(c("", "3 Months Followup Status" = 8, "6 Months Followup Status" = 8, "12 Months Followup Status" = 8), align = "c") %>% 
     kable_styling("striped", full_width = F, position="left") %>% 
-    add_footnote(footnotes_1) %>% 
-    add_footnote(footnotes_2)
+    add_footnote(c(footnote(paste0("<div style='text-align: left;'>", footnotes_1, "</div>")),
+                   footnote(paste0("<div style='text-align: left;'>", footnotes_2, "</div>"))))
   
   return(output)
 }
@@ -2715,12 +2717,12 @@ expected_and_followup_visit_by_site <- function(analytic){
 #' \dontrun{
 #' enrollment_by_site_var_disc_tobra_sextant()
 #' }
-enrollment_by_site_var_disc_tobra_sextant <- function(analytic){
+enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days){
   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
            facilitycode, adjudicated_discontinued, screened_date)
   
-  last14 <- Sys.Date() - days(14)
+  last14 <- Sys.Date() - days
   
   df <- df %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
@@ -2801,8 +2803,11 @@ enrollment_by_site_var_disc_tobra_sextant <- function(analytic){
   colnames(last) <- c('Facility', 'Screened', 'Eligible', 'Enrolled', "Screened", 'Enrolled', 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
                       'Consented & Randomized (% eligible)', 'Discontinued (% randomized)', 'Eligible & Enrolled (% randomized)' )
   
+  header_num <- c(1,3,2,7)
+  header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
+  names(header_num) <- header_names
   table <- kable(last, align='l', padding='2l') %>% 
-    add_header_above(c(" " = 1, "Last 14 Days" = 3, "Average per Week" = 2, 'Cumulative, to date' = 7)) %>%
+    add_header_above(header_num) %>%
     kable_styling("striped", full_width = F, position="left") %>% 
     row_spec(nrow(last), bold = TRUE)
   
