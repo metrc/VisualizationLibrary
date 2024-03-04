@@ -2797,7 +2797,9 @@ enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days){
     slice_tail(n=-1) %>% 
     select(-`Days Certified`, -Eligible, -Enrolled, -Refused, -`Not Consented`, -cnr, -Discontinued) %>% 
     select(Facility, Screened1, Eligible1, Enrolled1, Screened2, Enrolled2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for 'Other' Reasons (% eligible)`, 
-           `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Eligible & Enrolled (% randomized)`)
+           `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Eligible & Enrolled (% randomized)`) %>% 
+    mutate(`Eligible1` = format_count_percent(`Eligible1`, `Screened1`),
+           `Enrolled1` = format_count_percent(`Enrolled1`, `Screened1`))
   
   colnames(last) <- c('Facility', 'Screened', 'Eligible', 'Enrolled', "Screened", 'Enrolled', 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
                       'Consented & Randomized (% eligible)', 'Discontinued (% randomized)', 'Eligible & Enrolled (% randomized)' )
