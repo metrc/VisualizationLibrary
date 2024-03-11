@@ -778,6 +778,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   deviation_a_df <- analytic %>% 
     select(study_id, enrolled, protocol_deviation_administrative) %>% 
     filter(enrolled == TRUE) %>% 
+    mutate(protocol_deviation_administrative = ifelse(grepl("^Other:", protocol_deviation_administrative), "Other", protocol_deviation_administrative)) %>% 
     count(protocol_deviation_administrative) %>%
     rename(type=protocol_deviation_administrative) %>% 
     filter(!is.na(type)) %>% 
