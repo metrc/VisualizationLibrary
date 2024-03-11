@@ -2815,3 +2815,268 @@ enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days){
   
   return(table)
 }
+
+#' Followup 2 week status by site for tobra
+#'
+#' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' followup_2wk_status_by_site_tobra()
+#' }
+followup_2wk_status_by_site_tobra <- function(analytic){
+  df <- analytic %>% 
+    select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk) %>% 
+    filter(enrolled) %>%
+    mutate(df_date = as.Date(df_date)) %>% 
+    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(complete1 = ifelse(str_detect(followup_status_crf08_2wk, "complete"), TRUE, FALSE),
+           incomplete1 = ifelse(str_detect(followup_status_crf08_2wk, "incomplete"), TRUE, FALSE),
+           missing1 = ifelse(str_detect(followup_status_crf08_2wk, "missing"), TRUE, FALSE),
+           early1 = ifelse(str_detect(followup_status_crf08_2wk, "early"), TRUE, FALSE),
+           late1 = ifelse(str_detect(followup_status_crf08_2wk, "late"), TRUE, FALSE),
+           not_started1 = ifelse(str_detect(followup_status_crf08_2wk, "not_started"), TRUE, FALSE)) %>% 
+    mutate(complete2 = ifelse(str_detect(followup_status_crf09_2wk, "complete"), TRUE, FALSE),
+           incomplete2 = ifelse(str_detect(followup_status_crf09_2wk, "incomplete"), TRUE, FALSE),
+           missing2 = ifelse(str_detect(followup_status_crf09_2wk, "missing"), TRUE, FALSE),
+           early2 = ifelse(str_detect(followup_status_crf09_2wk, "early"), TRUE, FALSE),
+           late2 = ifelse(str_detect(followup_status_crf09_2wk, "late"), TRUE, FALSE),
+           not_started2 = ifelse(str_detect(followup_status_crf09_2wk, "not_started"), TRUE, FALSE)) %>%
+    group_by(facilitycode) %>% 
+    summarise("enrolled" = sum(enrolled, na.rm = TRUE),
+              'expected' = sum(expected, na.rm = TRUE),
+              "Complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "Incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "Early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "Late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "Missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "Not Started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "Complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "Incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "Early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "Late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "Missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "Not Started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected))
+  
+  colnames(df) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started')
+  
+  output <- kable(df, align='l') %>%
+    add_header_above(c("", '', '', "2 Weeks CRF08 (Medical Record Review)" = 6, "2 Weeks CRF09 (Clinical Followup)" = 6), align = "c") %>% 
+    kable_styling("striped", full_width = F, position="left")  
+  
+  return(output)
+}
+
+#' Followup 3mo status by site for tobra
+#'
+#' @description This function visualizes 3mo followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_12mo, followup_status_crf09_12mo
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' followup_3mo_status_by_site_tobra()
+#' }
+followup_3mo_status_by_site_tobra <- function(analytic){
+  df <- analytic %>% 
+    select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_3mo, followup_status_crf09_3mo) %>% 
+    filter(enrolled) %>%
+    mutate(df_date = as.Date(df_date)) %>% 
+    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(complete1 = ifelse(str_detect(followup_status_crf08_3mo, "complete"), TRUE, FALSE),
+           incomplete1 = ifelse(str_detect(followup_status_crf08_3mo, "incomplete"), TRUE, FALSE),
+           missing1 = ifelse(str_detect(followup_status_crf08_3mo, "missing"), TRUE, FALSE),
+           early1 = ifelse(str_detect(followup_status_crf08_3mo, "early"), TRUE, FALSE),
+           late1 = ifelse(str_detect(followup_status_crf08_3mo, "late"), TRUE, FALSE),
+           not_started1 = ifelse(str_detect(followup_status_crf08_3mo, "not_started"), TRUE, FALSE)) %>% 
+    mutate(complete2 = ifelse(str_detect(followup_status_crf09_3mo, "complete"), TRUE, FALSE),
+           incomplete2 = ifelse(str_detect(followup_status_crf09_3mo, "incomplete"), TRUE, FALSE),
+           missing2 = ifelse(str_detect(followup_status_crf09_3mo, "missing"), TRUE, FALSE),
+           early2 = ifelse(str_detect(followup_status_crf09_3mo, "early"), TRUE, FALSE),
+           late2 = ifelse(str_detect(followup_status_crf09_3mo, "late"), TRUE, FALSE),
+           not_started2 = ifelse(str_detect(followup_status_crf09_3mo, "not_started"), TRUE, FALSE)) %>%
+    group_by(facilitycode) %>% 
+    summarise("enrolled" = sum(enrolled, na.rm = TRUE),
+              'expected' = sum(expected, na.rm = TRUE),
+              "Complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "Incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "Early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "Late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "Missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "Not Started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "Complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "Incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "Early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "Late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "Missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "Not Started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected))
+  
+  colnames(df) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started')
+  
+  output <- kable(df, align='l') %>%
+    add_header_above(c("", '', '', "3 Months CRF08 (Medical Record Review)" = 6, "3 Months Weeks CRF09 (Clinical Followup)" = 6), align = "c") %>% 
+    kable_styling("striped", full_width = F, position="left")   
+  
+  return(output)
+}
+
+#' Followup 6mo status by site for tobra
+#'
+#' @description This function visualizes 6mo followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report, and PROS from promis and workers comp
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_6mo, followup_status_crf09_6mo, followup_status_crf12_6mo, followup_status_bank_6mo, followup_status_comp_6mo
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' followup_6mo_status_by_site_tobra()
+#' }
+followup_6mo_status_by_site_tobra <- function(analytic){
+  df <- analytic %>% 
+    select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_6mo, followup_status_crf09_6mo, followup_status_crf12_6mo, followup_status_bank_6mo, followup_status_comp_6mo) %>% 
+    filter(enrolled) %>%
+    mutate(df_date = as.Date(df_date)) %>% 
+    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(pro = ifelse(followup_status_bank_6mo != 'incomplete' & followup_status_crf12_6mo == 'incomplete', followup_status_bank_6mo, followup_status_crf12_6mo)) %>% 
+    mutate(complete1 = ifelse(str_detect(followup_status_crf08_6mo, "complete"), TRUE, FALSE),
+           incomplete1 = ifelse(str_detect(followup_status_crf08_6mo, "incomplete"), TRUE, FALSE),
+           missing1 = ifelse(str_detect(followup_status_crf08_6mo, "missing"), TRUE, FALSE),
+           early1 = ifelse(str_detect(followup_status_crf08_6mo, "early"), TRUE, FALSE),
+           late1 = ifelse(str_detect(followup_status_crf08_6mo, "late"), TRUE, FALSE),
+           not_started1 = ifelse(str_detect(followup_status_crf08_6mo, "not_started"), TRUE, FALSE)) %>% 
+    mutate(complete2 = ifelse(str_detect(followup_status_crf09_6mo, "complete"), TRUE, FALSE),
+           incomplete2 = ifelse(str_detect(followup_status_crf09_6mo, "incomplete"), TRUE, FALSE),
+           missing2 = ifelse(str_detect(followup_status_crf09_6mo, "missing"), TRUE, FALSE),
+           early2 = ifelse(str_detect(followup_status_crf09_6mo, "early"), TRUE, FALSE),
+           late2 = ifelse(str_detect(followup_status_crf09_6mo, "late"), TRUE, FALSE),
+           not_started2 = ifelse(str_detect(followup_status_crf09_6mo, "not_started"), TRUE, FALSE)) %>%
+    mutate(complete3 = ifelse(str_detect(pro, "complete"), TRUE, FALSE),
+           incomplete3 = ifelse(str_detect(pro, "incomplete"), TRUE, FALSE),
+           missing3 = ifelse(str_detect(pro, "missing"), TRUE, FALSE),
+           early3 = ifelse(str_detect(pro, "early"), TRUE, FALSE),
+           late3 = ifelse(str_detect(pro, "late"), TRUE, FALSE),
+           not_started3 = ifelse(str_detect(pro, "not_started"), TRUE, FALSE)) %>% 
+    mutate(complete4 = ifelse(str_detect(followup_status_comp_6mo, "complete"), TRUE, FALSE),
+           incomplete4 = ifelse(str_detect(followup_status_comp_6mo, "incomplete"), TRUE, FALSE),
+           not_started4 = ifelse(str_detect(followup_status_comp_6mo, "not_started"), TRUE, FALSE)) %>% 
+    group_by(facilitycode) %>% 
+    summarise("enrolled" = sum(enrolled, na.rm = TRUE),
+              'expected' = sum(expected, na.rm = TRUE),
+              "Complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "Incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "Early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "Late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "Missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "Not Started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "Complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "Incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "Early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "Late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "Missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "Not Started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected), 
+              "Complete3" = format_count_percent(sum(complete3, na.rm = TRUE), expected),
+              "Incomplete3" = format_count_percent(sum(incomplete3, na.rm = TRUE), expected),
+              "Early3" = format_count_percent(sum(early3, na.rm = TRUE), expected),
+              "Late3" = format_count_percent(sum(late3, na.rm = TRUE), expected),
+              "Missing3" = format_count_percent(sum(missing3, na.rm = TRUE), expected),
+              "Not Started3" = format_count_percent(sum(not_started3, na.rm = TRUE), expected),
+              "Complete4" = format_count_percent(sum(complete4, na.rm = TRUE), expected),
+              "Incomplete4" = format_count_percent(sum(incomplete4, na.rm = TRUE), expected),
+              "Not Started4" = format_count_percent(sum(not_started4, na.rm = TRUE), expected))
+  
+  colnames(df) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Not Started')
+  
+  output <- kable(df, align='l') %>%
+    add_header_above(c("", '', '', "6 Months CRF08 (Medical Record Review)" = 6, "6 Months CRF09 (Clinical Followup)" = 6, "6 Months PROMIS (Patient Reported Outcomes)" = 6, "6 Months Worker's Compensation (Patient Reported Outcomes)" = 3), align = "c") %>% 
+    kable_styling("striped", full_width = F, position="left")   
+  return(output)
+}
+
+#' Followup 12mo status by site for tobra
+#'
+#' @description This function visualizes 12mo followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report, and PROS from promis and workers comp
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_12mo, followup_status_crf09_12mo, followup_status_crf12_12mo, followup_status_bank_12mo, followup_status_comp_12mo
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' followup_12mo_status_by_site_tobra()
+#' }
+followup_12mo_status_by_site_tobra <- function(analytic){
+  df <- analytic %>% 
+    select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_12mo, followup_status_crf09_12mo, followup_status_crf12_12mo, followup_status_bank_12mo, followup_status_comp_12mo) %>% 
+    filter(enrolled) %>%
+    mutate(df_date = as.Date(df_date)) %>% 
+    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(pro = ifelse(followup_status_bank_12mo != 'incomplete' & followup_status_crf12_12mo == 'incomplete', followup_status_bank_12mo, followup_status_crf12_12mo)) %>% 
+    mutate(complete1 = ifelse(str_detect(followup_status_crf08_12mo, "complete"), TRUE, FALSE),
+           incomplete1 = ifelse(str_detect(followup_status_crf08_12mo, "incomplete"), TRUE, FALSE),
+           missing1 = ifelse(str_detect(followup_status_crf08_12mo, "missing"), TRUE, FALSE),
+           early1 = ifelse(str_detect(followup_status_crf08_12mo, "early"), TRUE, FALSE),
+           late1 = ifelse(str_detect(followup_status_crf08_12mo, "late"), TRUE, FALSE),
+           not_started1 = ifelse(str_detect(followup_status_crf08_12mo, "not_started"), TRUE, FALSE)) %>% 
+    mutate(complete2 = ifelse(str_detect(followup_status_crf09_12mo, "complete"), TRUE, FALSE),
+           incomplete2 = ifelse(str_detect(followup_status_crf09_12mo, "incomplete"), TRUE, FALSE),
+           missing2 = ifelse(str_detect(followup_status_crf09_12mo, "missing"), TRUE, FALSE),
+           early2 = ifelse(str_detect(followup_status_crf09_12mo, "early"), TRUE, FALSE),
+           late2 = ifelse(str_detect(followup_status_crf09_12mo, "late"), TRUE, FALSE),
+           not_started2 = ifelse(str_detect(followup_status_crf09_12mo, "not_started"), TRUE, FALSE)) %>%
+    mutate(complete3 = ifelse(str_detect(pro, "complete"), TRUE, FALSE),
+           incomplete3 = ifelse(str_detect(pro, "incomplete"), TRUE, FALSE),
+           missing3 = ifelse(str_detect(pro, "missing"), TRUE, FALSE),
+           early3 = ifelse(str_detect(pro, "early"), TRUE, FALSE),
+           late3 = ifelse(str_detect(pro, "late"), TRUE, FALSE),
+           not_started3 = ifelse(str_detect(pro, "not_started"), TRUE, FALSE)) %>% 
+    mutate(complete4 = ifelse(str_detect(followup_status_comp_12mo, "complete"), TRUE, FALSE),
+           incomplete4 = ifelse(str_detect(followup_status_comp_12mo, "incomplete"), TRUE, FALSE),
+           not_started4 = ifelse(str_detect(followup_status_comp_12mo, "not_started"), TRUE, FALSE)) %>% 
+    group_by(facilitycode) %>% 
+    summarise("enrolled" = sum(enrolled, na.rm = TRUE),
+              'expected' = sum(expected, na.rm = TRUE),
+              "Complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "Incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "Early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "Late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "Missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "Not Started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "Complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "Incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "Early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "Late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "Missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "Not Started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected), 
+              "Complete3" = format_count_percent(sum(complete3, na.rm = TRUE), expected),
+              "Incomplete3" = format_count_percent(sum(incomplete3, na.rm = TRUE), expected),
+              "Early3" = format_count_percent(sum(early3, na.rm = TRUE), expected),
+              "Late3" = format_count_percent(sum(late3, na.rm = TRUE), expected),
+              "Missing3" = format_count_percent(sum(missing3, na.rm = TRUE), expected),
+              "Not Started3" = format_count_percent(sum(not_started3, na.rm = TRUE), expected),
+              "Complete4" = format_count_percent(sum(complete4, na.rm = TRUE), expected),
+              "Incomplete4" = format_count_percent(sum(incomplete4, na.rm = TRUE), expected),
+              "Not Started4" = format_count_percent(sum(not_started4, na.rm = TRUE), expected))
+  
+  colnames(df) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Not Started')
+  
+  output <- kable(df, align='l') %>%
+    add_header_above(c("", '', '', "12 Months CRF08 (Medical Record Review)" = 6, "12 Months CRF09 (Clinical Followup)" = 6, "12 Months PROMIS (Patient Reported Outcomes)" = 6, "12 Months Worker's Compensation (Patient Reported Outcomes)" = 3), align = "c") %>% 
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
+}
