@@ -3280,7 +3280,9 @@ closed_enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days = 14
       mutate(`Eligible1` = format_count_percent(`Eligible1`, `Screened1`),
              `Enrolled1` = format_count_percent(`Enrolled1`, `Screened1`))
     
-    colnames(last) <- c('Facility', 'Screened', 'Eligible', 'Enrolled', "Screened per week", 'Enrolled per week', 'Screened total', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
+    colnames(last) <- c('Facility', 'Screened', 'Eligible', 'Enrolled', "Screened per week", 
+                        'Enrolled per week', 'Screened total', 'Eligible (% screened)', 'Refused (% eligible)', 
+                        'Not Enrolled for `Other` Reasons (% eligible)', 
                         'Consented & Randomized (% eligible)', 'Discontinued (% randomized)', 'Eligible & Enrolled (% randomized)' )
     
     return(last)
