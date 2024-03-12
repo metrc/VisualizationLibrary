@@ -2789,7 +2789,8 @@ enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days){
     mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
     mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
     mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
-    mutate(`Eligible (% screened)` = format_count_percent(Eligible, Screened)) 
+    mutate(`Eligible (% screened)` = format_count_percent(Eligible, Screened)) %>% 
+    mutate_at(vars(-`Facility`, -`Days Certified`), ~replace_na(., 0))
   
   total_row <- final %>% 
     slice_head(n=1)
@@ -3080,3 +3081,327 @@ followup_12mo_status_by_site_tobra <- function(analytic){
   
   return(output)
 }
+
+
+
+#' Weight Bearing Injury characteristics for Main paper
+#'
+#' @description This function outputs a table with various injury characteristics for enrolled patients with "Ankle"
+#' injuries. This table is produced for Weight bearing main paper. 
+#'
+#' @param analytic injury_classification_weber, injury_classification_open_close, 
+#' injury_classification_lauge_hansen, injury_gustilo, injury_type, injury_classification_ankle_ota, 
+#' definitive_fixation_construct, definitive_fixation_type, soft_tissue_closure, enrolled
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' wbs_main_paper_injury_characteristics()
+#' }
+wbs_main_paper_injury_characteristics <- function(analytic){
+df <- analytic %>% 
+  select(injury_classification_weber, injury_classification_open_close, injury_classification_lauge_hansen, injury_gustilo, injury_type, 
+         injury_classification_ankle_ota, definitive_fixation_construct, definitive_fixation_type, 
+         soft_tissue_closure, enrolled) %>% 
+  filter(enrolled & injury_type == 'ankle')
+
+df_injury_ota <- df %>% 
+  select(injury_classification_ankle_ota) %>% 
+  filter(!is.na(injury_classification_ankle_ota)) %>% 
+  filter(injury_classification_ankle_ota != '44B1') %>% 
+  mutate(ota_classification = ifelse(injury_classification_ankle_ota %in% c('44A2', '44A3'), "44 A2/A3", 
+                                     ifelse(injury_classification_ankle_ota %in% c('44B2', '44B3'), '44 B2/B3',
+                                            ifelse(injury_classification_ankle_ota %in% c('44C1', '44C2', '44C3'), '44 C1/C2/C3', injury_classification_ankle_ota)))) %>% 
+  select(-injury_classification_ankle_ota) %>% 
+  group_by(ota_classification) %>% 
+  count() %>% 
+  rename(heading = ota_classification) %>% 
+  mutate(Category = "OTA")
+
+df_weber <- df %>% 
+  select(injury_classification_weber) %>% 
+  filter(!is.na(injury_classification_weber)) %>% 
+  group_by(injury_classification_weber) %>% 
+  count() %>% 
+  rename(heading = injury_classification_weber) %>% 
+  mutate(Category = "Weber")
+
+df_lauge_hansen <- df %>% 
+  select(injury_classification_lauge_hansen) %>% 
+  filter(!is.na(injury_classification_lauge_hansen)) %>% 
+  group_by(injury_classification_lauge_hansen) %>% 
+  count() %>% 
+  rename(heading = injury_classification_lauge_hansen) %>% 
+  mutate(Category = "Lauge Hansen")
+
+df_gustilo_closed <- df %>% select(injury_classification_open_close) %>% 
+  filter(injury_classification_open_close == "Closed") %>% 
+  group_by(injury_classification_open_close) %>% 
+  count() %>% 
+  rename(heading = injury_classification_open_close) %>% 
+  mutate(Category = "Gustilo")
+
+df_gustilo <- df %>% 
+  select(injury_gustilo) %>% 
+  filter(!is.na(injury_gustilo)) %>% 
+  mutate(injury_gustilo = paste("Type", injury_gustilo)) %>% 
+  group_by(injury_gustilo) %>% 
+  count() %>% 
+  rename(heading = injury_gustilo) %>% 
+  mutate(Category = "Gustilo")
+
+df_gustilo_final <- bind_rows(df_gustilo_closed, df_gustilo)
+
+df_fixation_construct <- df %>% 
+  select(definitive_fixation_construct) %>% 
+  separate_rows(definitive_fixation_construct, sep = ";") %>% 
+  filter(!is.na(definitive_fixation_construct)) %>% 
+  group_by(definitive_fixation_construct) %>% 
+  count() %>% 
+  rename(heading = definitive_fixation_construct) %>% 
+  mutate(Category = "Construct")
+
+df_fixation_medial <- df %>% 
+  select(definitive_fixation_type) %>% 
+  separate(definitive_fixation_type, into = c("medial", "lateral", "posterior"), sep='\\|') %>% 
+  select(medial) %>% 
+  mutate(medial = str_replace(medial, "^Medial-", "")) %>% 
+  filter(!rowSums(across(everything(), ~. == "NA", .names = "anyNA"))) %>% 
+  group_by(medial) %>% 
+  count() %>% 
+  rename(heading = medial) %>% 
+  mutate(Category = "Medial")
+
+df_fixation_lateral <- df %>% 
+  select(definitive_fixation_type) %>% 
+  separate(definitive_fixation_type, into = c("medial", "lateral", "posterior"), sep='\\|') %>% 
+  select(lateral) %>% 
+  separate_rows(lateral, sep = ";") %>% 
+  mutate(lateral = str_replace(lateral, "^Lateral-", "")) %>% 
+  filter(!rowSums(across(everything(), ~. == "NA", .names = "anyNA"))) %>% 
+  group_by(lateral) %>% 
+  count() %>% 
+  rename(heading = lateral) %>% 
+  mutate(Category = "Lateral")
+
+df_fixation_posterior <- df %>% 
+  select(definitive_fixation_type) %>% 
+  separate(definitive_fixation_type, into = c("medial", "lateral", "posterior"), sep='\\|') %>% 
+  select(posterior) %>% 
+  separate_rows(posterior, sep = ";") %>% 
+  mutate(posterior = str_replace(posterior, "^Posterior-", "")) %>% 
+  filter(!rowSums(across(everything(), ~. == "NA", .names = "anyNA"))) %>% 
+  group_by(posterior) %>% 
+  count() %>% 
+  rename(heading = posterior) %>% 
+  mutate(Category = "Posterior")
+
+empty_df <- tibble(
+  soft_tissue_closure = c("Primary closure", "Delayed primary closure", "STSG", "Flap(rotational or free)"),
+  n = NA_real_
+)
+
+df_soft_tissue <- df %>% 
+  select(soft_tissue_closure) %>% 
+  separate_rows(soft_tissue_closure, sep = ";") %>% 
+  mutate(soft_tissue_closure = recode(soft_tissue_closure, 
+                                      "Primary" = "Primary closure")) %>% 
+  full_join(empty_df, by = "soft_tissue_closure") %>% 
+  filter(!is.na(soft_tissue_closure)) %>% 
+  group_by(soft_tissue_closure) %>% 
+  count() %>% 
+  rename(heading = soft_tissue_closure) %>% 
+  mutate(Category = "Tissue")
+
+df_heading <- tibble(
+  Category = "Fixation Types",
+  n = NA_real_
+)
+
+bound_df <- bind_rows(df_injury_ota, df_weber, df_lauge_hansen, df_gustilo_final, df_fixation_construct, df_heading, df_fixation_medial, df_fixation_lateral, df_fixation_posterior,
+                      df_soft_tissue) 
+
+
+df_table_raw <- reorder_rows(bound_df, list('Category'=c("OTA", "Weber", "Lauge Hansen", "Gustilo", "Construct", 'Fixation Types', 'Medial', 'Lateral', 'Posterior', 'Tissue'), 
+                                            'heading'=c('No fixation', 'Ligament repair', 'Intrameddulary Device', 'Screws', 'Screws Only', 'Screws and Plates'))) 
+
+index_vec_a <- c("OTA Injury Classification" = 3, "Weber Classification" = 2, "Lauge-Hansen Classification" = 4,
+                 "Gustilo Type" = 4,  "Fixation Constructs"=4, "Fixation Types" = 9, "Soft Tissue Closure"= 4)
+index_vec_b <- c(" " = 17, "Medial"=4, "Lateral"=3, "Posterior"=2,  " "= 4)
+
+df_for_table <- df_table_raw %>% 
+  filter(!is.na(n)) %>% 
+  select(-Category) %>% 
+  rename(" " = heading, "Enrolled" = n)
+
+
+table_raw<- kable(df_for_table, align='l') %>%
+  pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>% 
+  pack_rows(index = index_vec_b, label_row_css = "text-align:left", bold = FALSE) %>% 
+  kable_styling("striped", full_width = F, position='left') %>% 
+  row_spec(c(0,3,5,9,13,17,26,30), extra_css = "border-bottom: 1px solid;")
+
+return(table_raw)
+}
+
+
+#' Weight Bearing Patient Characteristics for Main paper
+#'
+#' @description This function outputs a table with various patient characteristics/demographics for enrolled 
+#' patients with "Ankle" injuries. This table is produced for Weight bearing main paper. 
+#'
+#' @param analytic enrolled, injury_type, sex, age, ethnicity_race, education_level, patient_reported_self_efficacy_6mo, 
+#' patient_reported_self_efficacy_12mo, preinjury_usual_major_activity, preinjury_work_demand, 
+#' preinjury_work_hours, tobacco_use, bmi, preinjury_health, insurance_type
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' wbs_main_paper_patient_characteristics()
+#' }
+wbs_main_paper_patient_characteristics <- function(analytic){
+  
+  df <- analytic %>% select(enrolled, injury_type, sex, age, ethnicity_race, education_level,
+                            patient_reported_self_efficacy_6mo, patient_reported_self_efficacy_12mo,
+                            preinjury_usual_major_activity, preinjury_work_demand, preinjury_work_hours,
+                            tobacco_use, bmi, preinjury_health, insurance_type) %>% 
+    filter(enrolled, injury_type == 'ankle')
+  
+  df_age <- df %>% 
+    select(age) %>% 
+    filter(!is.na(age)) %>% 
+    mutate(age = as.numeric(age)) %>% 
+    summarise(age_mean = round(mean(age, na.rm = TRUE), 2),
+              age_sd = round(sd(age, na.rm = TRUE), 2)) %>% 
+    mutate(heading = 'Mean age, (SD)') %>% 
+    mutate(n = paste0(age_mean, '(', age_sd, ')')) %>% 
+    mutate(Category = "Age") %>% 
+    select(-age_mean, -age_sd)
+  
+  df_sex <- df %>% select(sex) %>% 
+    filter(!is.na(sex)) %>% 
+    group_by(sex) %>% 
+    count() %>% 
+    mutate(Category = 'Sex') %>% 
+    rename(heading = sex)
+  
+  df_race_ethnicity <- df %>% 
+    select(ethnicity_race) %>% 
+    filter(!is.na(ethnicity_race)) %>% 
+    group_by(ethnicity_race) %>% 
+    count() %>% 
+    mutate(Category = 'Race Ethnicity') %>% 
+    rename(heading = ethnicity_race)
+  
+  df_education <- df %>% 
+    select(education_level) %>% 
+    filter(!is.na(education_level)) %>% 
+    group_by(education_level) %>% 
+    count() %>% 
+    mutate(Category = 'Education Level') %>% 
+    rename(heading = education_level)
+  
+  df_self_efficacy <- df %>% 
+    select(patient_reported_self_efficacy_6mo, patient_reported_self_efficacy_12mo) %>% 
+    mutate(patient_reported_self_efficacy_6mo = as.numeric(patient_reported_self_efficacy_6mo)) %>% 
+    mutate(patient_reported_self_efficacy_12mo = as.numeric(patient_reported_self_efficacy_12mo)) %>% 
+    summarise(sixmon_mean = round(mean(patient_reported_self_efficacy_6mo, na.rm = TRUE), 2),
+              sixmon_sd = round(sd(patient_reported_self_efficacy_6mo, na.rm = TRUE), 2),
+              twelvemon_mean = round(mean(patient_reported_self_efficacy_12mo, na.rm = TRUE), 2),
+              twelvemon_sd = round(sd(patient_reported_self_efficacy_12mo, na.rm = TRUE), 2)) %>% 
+    mutate(self_efficacy_6mo = paste(sixmon_mean, "(", sixmon_sd, ")"),
+           self_efficacy_12mo = paste(twelvemon_mean, "(", twelvemon_sd, ")")) %>%
+    select(-sixmon_mean, -sixmon_sd, -twelvemon_mean, -twelvemon_sd) %>% 
+    pivot_longer(cols = starts_with("self_efficacy"), names_to = "heading", values_to = "n") %>% 
+    mutate(heading = recode(heading,
+                            "self_efficacy_6mo" = 'Within 6 Months',
+                            "self_efficacy_12mo" = 'Within 1 year')) %>% 
+    mutate(Category = 'Self Efficacy')
+  
+  
+  df_usual_major_activity <- df %>% 
+    select(preinjury_usual_major_activity) %>% 
+    filter(!is.na(preinjury_usual_major_activity)) %>% 
+    group_by(preinjury_usual_major_activity) %>% 
+    count() %>% 
+    mutate(Category = 'Major Activity') %>% 
+    rename(heading = preinjury_usual_major_activity)
+  
+  df_physical_demand <- df %>% 
+    select(preinjury_work_demand) %>% 
+    filter(!is.na(preinjury_work_demand)) %>% 
+    group_by(preinjury_work_demand) %>% 
+    count() %>% 
+    mutate(Category = 'Work Demand') %>% 
+    rename(heading = preinjury_work_demand)
+  
+  df_work_hours <- df %>% 
+    select(preinjury_work_hours) %>% 
+    mutate(preinjury_work_hours = as.numeric(preinjury_work_hours)) %>% 
+    summarise(wh_mean = round(mean(preinjury_work_hours, na.rm = TRUE), 2),
+              wh_sd = round(sd(preinjury_work_hours, na.rm = TRUE), 2)) %>% 
+    mutate(heading = 'Mean hours, (SD)') %>% 
+    mutate(n = paste0(wh_mean, '(', wh_sd, ')')) %>% 
+    mutate(Category = "Work hours")  %>% 
+    select(-wh_mean, -wh_sd)
+  
+  df_tobacco <- df %>% 
+    select(tobacco_use) %>% 
+    filter(!is.na(tobacco_use)) %>% 
+    group_by(tobacco_use) %>% 
+    count() %>% 
+    rename(heading = tobacco_use) %>% 
+    mutate(Category = 'Tobacco')
+  
+  df_bmi <- df %>% 
+    select(bmi) %>% 
+    mutate(bmi = as.numeric(bmi)) %>% 
+    summarise(bmi_mean = round(mean(bmi, na.rm = TRUE), 2),
+              bmi_sd = round(sd(bmi, na.rm = TRUE), 2)) %>% 
+    mutate(heading = 'Mean, (SD)') %>% 
+    mutate(n = paste0(bmi_mean, '(', bmi_sd, ')')) %>% 
+    mutate(Category = "BMI")  %>% 
+    select(-bmi_mean, -bmi_sd)
+  
+  df_preinjury_health <- df %>% 
+    select(preinjury_health) %>% 
+    filter(!is.na(preinjury_health)) %>% 
+    group_by(preinjury_health) %>%
+    count() %>% 
+    rename(heading = preinjury_health) %>% 
+    mutate(Category = 'Health')
+  
+  df_insurance <- df %>% 
+    select(insurance_type) %>% 
+    mutate(insurance_type = ifelse(str_detect(insurance_type, "Medicaid"), "Medicaid", 
+                                   ifelse(!is.na(insurance_type), "Other Insurance", NA))) %>% 
+    mutate(insurance_type = ifelse(!is.na(insurance_type), insurance_type, "None")) %>% 
+    group_by(insurance_type) %>%
+    count() %>% 
+    rename(heading = insurance_type) %>% 
+    mutate(Category = 'Insurance')
+  
+  df_final <- rbind(df_age, df_sex, df_race_ethnicity, df_education, df_self_efficacy, df_usual_major_activity,
+                    df_physical_demand, df_work_hours, df_tobacco, df_bmi, df_preinjury_health, df_insurance) 
+  
+  index_vec_a <- c("Age" = 1, "Sex" = 2, "Race Ethnicity" = 4,
+                   "Education" = 4,  "Self Efficacy for return to Usual Activities"=2, "Preinjury Usual Major Activity" = 5, "Physical Demand of Job"= 5,
+                   "Hours worked per week" = 1, "Tobacco Use" = 3, "BMI" = 1, "Preinjury Health" = 5, 
+                   "Insurance Type" = 3)
+  
+  df_for_table <- df_final %>% 
+    select(-Category) %>% 
+    rename(" " = heading, "Enrolled" = n)
+  
+  table_raw<- kable(df_for_table, align='l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>% 
+    kable_styling("striped", full_width = F, position='left') %>% 
+    row_spec(c(0,1,3,7,11,13,18,23,24,27,28,33,36), extra_css = "border-bottom: 1px solid;")
+  
+  return(table_raw)
+}
+  
