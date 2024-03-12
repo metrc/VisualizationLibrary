@@ -2153,7 +2153,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
       
     out_gustilo <- inj_gust %>%
       mutate(count= format_count_percent(count, total)) %>%
-      rename(`Fracture Type` = injury_gustilo_type, Percentage = count)
+      rename(`Fracture Type` = injury_gustilo_type)
     
     amputation_status <- pull %>%
       select(injury_amputation_status) %>%
@@ -2169,7 +2169,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
     
     out_amputations <- amputation_status %>%
       mutate(count= format_count_percent(count, total_amputations)) %>%
-      rename(`Fracture Type` = injury_gustilo_type, Percentage = count)
+      rename(`Fracture Type` = injury_gustilo_type)
     
     n_amputations <- tibble(
       count = as.character(total_amputations),
@@ -2180,8 +2180,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
       `Fracture Type` = "Fracture Type")
     
     combined <- bind_rows(n_amputations, out_amputations,n_gustilo, out_gustilo) %>%
-      relocate(Percentage, .after = `Fracture Type`) %>%
-      mutate(`Fracture Type` = factor(`Fracture Type`, levels=c("Amputation Status","No amputation","Amputation","Unknown","Fracture Type","Closed","Gustilo Type I","Gustilo Type II","Gustilo Type IIIA","Gustilo Type IIIB","Unknown")))
+      relocate(count, .after = `Fracture Type`)
     
     return(combined)
   }
@@ -2200,11 +2199,11 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
   
   df_table <- full_join(combined_a, combined_b, by = "Fracture Type", suffix = c(" (Group A)", " (Group B)")) %>%
     left_join(combined_full, by = "Fracture Type") %>%
-    select(`Fracture Type`, ends_with(" (Group A)"), ends_with(" (Group B)"), Percentage)
+    select(`Fracture Type`, ends_with(" (Group A)"), ends_with(" (Group B)"), count)
   
   output <- kable(df_table, align='l', padding='2l', col.names = c(" ", "Group A", "Group B", "Overall")) %>%
     kable_styling("condensed", position = "left", full_width = FALSE) %>%
-    add_indent(positions = c(2,3,4,6,7,8,9,10,11,12,13,14)) %>%
+    add_indent(positions = c(2,3,4,6,7,8,9,10,11,12)) %>%
     row_spec(c(1,5), bold=T,hline_after = T)
   
   return(output)
