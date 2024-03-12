@@ -339,8 +339,8 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
   n_da <- -1
   total <- sum(analytic$enrolled, na.rm=T)
   
-  inner_closed_discontinuation_sae_deviation_by_type <- function(analytic){
-    discontinuation_df <- analytic %>% 
+  inner_closed_discontinuation_sae_deviation_by_type <- function(df){
+    discontinuation_df <- df %>% 
       select(enrolled, censored_reason) %>% 
       filter(enrolled == TRUE) %>% 
       count(censored_reason) %>%
@@ -350,7 +350,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     
     discontinuation_df_tot <- tibble(type="Discontinuations", n=sum(discontinuation_df$n))
     
-    sae_df <- analytic %>% 
+    sae_df <- df %>% 
       select(study_id, enrolled, sae_count) %>% 
       filter(enrolled & sae_count>0) %>% 
       mutate(sae_count = "SAE") %>% 
@@ -360,7 +360,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       mutate(type = as.character(type))
     
     
-    deviation_sc_df <- analytic %>% 
+    deviation_sc_df <- df %>% 
       select(study_id, enrolled, protocol_deviation_screen_consent) %>% 
       filter(enrolled == TRUE) %>% 
       count(protocol_deviation_screen_consent) %>%
@@ -369,7 +369,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       mutate(type = as.character(type))
     
     
-    deviation_p_df <- analytic %>% 
+    deviation_p_df <- df %>% 
       select(study_id, enrolled, protocol_deviation_procedural) %>% 
       filter(enrolled == TRUE) %>% 
       count(protocol_deviation_procedural) %>%
@@ -378,7 +378,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       mutate(type = as.character(type))
     
     
-    deviation_a_df <- analytic %>% 
+    deviation_a_df <- df %>% 
       select(study_id, enrolled, protocol_deviation_administrative) %>% 
       filter(enrolled == TRUE) %>% 
       count(protocol_deviation_administrative) %>%
@@ -2545,7 +2545,6 @@ closed_characteristics_treatment <- function(analytic){
               label_row_css = "text-align:left") %>%
     row_spec(0, extra_css = "border-bottom: 1px solid") %>%
     row_spec(1, extra_css = 'border-bottom: 1px solid') %>%
-    row_spec(1 + n_df_full + n_avg_full, extra_css = 'border-bottom: 1px solid') %>%
     add_indent(seq(n_stages_full) + n_avg_full + n_df_full)
   
   return(vis)
