@@ -1155,7 +1155,7 @@ closed_enrollment_status_by_site <- function(analytic){
            starts_with("Late Ineligible"), starts_with("Enrolled"))
   
   table <- kable(df_table, align='l', padding='2l') %>% 
-    add_header_above(c(" " = 2, "Group A" = 7, "Group B" = 7, "Overall" = 7)) %>%
+    add_header_above(c(" " = 2, "Group A" = 8, "Group B" = 8, "Overall" = 8)) %>%
     kable_styling("striped", full_width = F, position="left")
   
   return(table)
@@ -2151,39 +2151,39 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
         pull(count) %>%
         sum()
       
-      out_gustilo <- inj_gust %>%
-        mutate(count= format_count_percent(count, total)) %>%
-        rename(`Fracture Type` = injury_gustilo_type, Percentage = count)
-      
-      amputation_status <- pull %>%
-        select(injury_amputation_status) %>%
-        count(injury_amputation_status) %>%
-        pivot_longer(-n) %>%
-        mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
-        select(-name) %>%
-        rename(count = n, injury_gustilo_type = value)
-      
-      total_amputations <- amputation_status %>%
-        pull(count) %>%
-        sum()
-      
-      out_amputations <- amputation_status %>%
-        mutate(count= format_count_percent(count, total_amputations)) %>%
-        rename(`Fracture Type` = injury_gustilo_type, Percentage = count)
-      
-      n_amputations <- data.frame(
-        count = as.character(total_amputations),
-        `Fracture Type` = "Amputation Status")
-      
-      n_gustilo <- data.frame(
-        count = as.character(total),
-        `Fracture Type` = "Fracture Type")
-      
-      combined <- bind_rows(n_amputations, out_amputations,n_gustilo, out_gustilo) %>%
-        relocate(Percentage, .after = `Fracture Type`) %>%
-        mutate(`Fracture Type` = factor(`Fracture Type`, levels=c("Amputation Status","No amputation","Amputation","Unknown","Fracture Type","Closed","Gustilo Type I","Gustilo Type II","Gustilo Type IIIA","Gustilo Type IIIB","Unknown")))
-      
-      return(combined)
+    out_gustilo <- inj_gust %>%
+      mutate(count= format_count_percent(count, total)) %>%
+      rename(`Fracture Type` = injury_gustilo_type, Percentage = count)
+    
+    amputation_status <- pull %>%
+      select(injury_amputation_status) %>%
+      count(injury_amputation_status) %>%
+      pivot_longer(-n) %>%
+      mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
+      select(-name) %>%
+      rename(count = n, injury_gustilo_type = value)
+    
+    total_amputations <- amputation_status %>%
+      pull(count) %>%
+      sum()
+    
+    out_amputations <- amputation_status %>%
+      mutate(count= format_count_percent(count, total_amputations)) %>%
+      rename(`Fracture Type` = injury_gustilo_type, Percentage = count)
+    
+    n_amputations <- tibble(
+      count = as.character(total_amputations),
+      `Fracture Type` = "Amputation Status")
+    
+    n_gustilo <- tibble(
+      count = as.character(total),
+      `Fracture Type` = "Fracture Type")
+    
+    combined <- bind_rows(n_amputations, out_amputations,n_gustilo, out_gustilo) %>%
+      relocate(Percentage, .after = `Fracture Type`) %>%
+      mutate(`Fracture Type` = factor(`Fracture Type`, levels=c("Amputation Status","No amputation","Amputation","Unknown","Fracture Type","Closed","Gustilo Type I","Gustilo Type II","Gustilo Type IIIA","Gustilo Type IIIB","Unknown")))
+    
+    return(combined)
   }
   
   pull <- analytic %>%
@@ -2536,7 +2536,7 @@ closed_characteristics_treatment <- function(analytic){
   cnames <- c(' ', paste('Group A (n=', sum(df_a$enrolled), ')'),
               paste('Group B (n=', sum(df_b$enrolled), ')'),
               paste('Overall (n=', total, ')'))
-  header <- c(1,1)
+  header <- c(1,1,1,1)
   names(header) <- cnames
   
   vis <- kable(df_table, align='l', padding='2l', col.names = cnames) %>%
@@ -2637,7 +2637,7 @@ closed_fracture_characteristics <- function(analytic){
   cnames <- c(' ', paste('Group A (n=', sum(df_a$enrolled), ')'),
               paste('Group B (n=', sum(df_b$enrolled), ')'),
               paste('Overall (n=', total, ')'))
-  header <- c(1,1)
+  header <- c(1,1,1,1)
   names(header) <- cnames
   
   n_closed <- nrow(df_table %>% filter(str_detect(type, "Closed Fracture")))
@@ -3282,7 +3282,7 @@ closed_enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days = 14
       mutate(`Eligible1` = format_count_percent(`Eligible1`, `Screened1`),
              `Enrolled1` = format_count_percent(`Enrolled1`, `Screened1`))
     
-    colnames(last) <- c('Facility', 'Screened', 'Eligible', 'Enrolled', "Screened", 'Enrolled', 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
+    colnames(last) <- c('Facility', 'Screened', 'Eligible', 'Enrolled', "Screened per week", 'Enrolled per week', 'Screened total', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
                         'Consented & Randomized (% eligible)', 'Discontinued (% randomized)', 'Eligible & Enrolled (% randomized)' )
     
     return(last)
@@ -3302,8 +3302,9 @@ closed_enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days = 14
   df_table <- full_join(last_a, last_b, by = "Facility", suffix = c(" (Group A)", " (Group B)")) %>%
     select(Facility, ends_with(" (Group A)"), ends_with(" (Group B)"))
   
-  header_num <- c(1,3,2,7)
-  header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
+  header_num <- c(1,3,2,7,3,2,7)
+  header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"), 
+                    paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
   names(header_num) <- header_names
   table <- kable(df_table, align='l', padding='2l') %>%
     add_header_above(header_num) %>%

@@ -1716,7 +1716,6 @@ amputations_and_gustilo_injury_characteristics <- function(analytic){
     count = as.character(total),
     injury_gustilo_type = "Fracture Type")
   
-  
   combined <- bind_rows(n_amputations, out_amputations,n_gustilo, out_gustilo) %>%
     relocate(count, .after=injury_gustilo_type) %>%
     rename('Fracture Type'=injury_gustilo_type)
