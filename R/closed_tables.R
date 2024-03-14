@@ -379,7 +379,9 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     
     deviation_a_df <- df %>% 
       select(study_id, enrolled, protocol_deviation_administrative) %>% 
-      mutate(protocol_deviation_administrative = ifelse(grepl("^Other:", protocol_deviation_administrative), "Other", protocol_deviation_administrative)) %>% 
+      mutate(protocol_deviation_administrative = case_when(str_detect('Other: ') ~ 'Other',
+                                                           str_detect(';') ~ 'Multiple Deviations',
+                                                           TRUE ~ protocol_deviation_administrative)) %>% 
       filter(enrolled == TRUE) %>% 
       count(protocol_deviation_administrative) %>%
       rename(type=protocol_deviation_administrative) %>% 
