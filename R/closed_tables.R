@@ -2642,13 +2642,12 @@ closed_fracture_characteristics <- function(analytic){
   
   n_closed <- nrow(df_table %>% filter(str_detect(type, "Closed Fracture")))
   n_open <- nrow(df_table %>% filter(str_detect(type, "Open Fracture")))
-  n_frac <- nrow(df_table %>% filter(str_detect(type, "Tibial")))
+  n_frac <- nrow(df_table %>% filter(str_detect(type, "Tibial")|str_detect(type, 'Unknown')))
   n_tscherne <- nrow(df_table %>% filter(str_detect(type, "Tscherne")))
   n_gustilo <- nrow(df_table %>% filter(str_detect(type, "Gustilo")))
   
   vis <- kable(df_table, align='l', padding='2l', col.names = cnames) %>%
     pack_rows(index = c('Fractured Bone' = n_frac,
-                        
                         'Fracture Type' = (n_closed + n_tscherne + n_open + n_gustilo)),
               label_row_css = "text-align:left") %>%
     add_indent(c(seq(n_tscherne) + n_frac + n_closed, seq(n_gustilo) + n_frac + n_closed + n_open + n_tscherne)) %>%
