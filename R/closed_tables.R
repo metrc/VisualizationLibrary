@@ -2201,7 +2201,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
     select(`Fracture Type`, ends_with(" (Group A)"), ends_with(" (Group B)"), count)
   
   output <- kable(df_table, align='l', padding='2l', col.names = c(" ", "Group A", "Group B", "Overall")) %>%
-    kable_styling("condensed", position = "left", full_width = FALSE) %>%
+    kable_styling("striped", position = "left", full_width = F) %>%
     add_indent(positions = c(2,3,4,6,7,8,9,10,11,12)) %>%
     row_spec(c(1,5), bold=T,hline_after = T)
   
