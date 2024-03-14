@@ -2778,7 +2778,7 @@ enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days){
   
   almost <- left_join(l14, weekly, by = 'Facility')
   
-  sum_days_certified <- sum(table_raw$`Days Certified`)
+  sum_days_certified <- sum(table_raw$`Days Certified`, na.rm=T)
   
   final <- left_join(almost, table_raw, by = 'Facility') %>% 
     adorn_totals("row") %>% 
@@ -2804,7 +2804,7 @@ enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days){
     mutate(`Eligible1` = format_count_percent(`Eligible1`, `Screened1`),
            `Enrolled1` = format_count_percent(`Enrolled1`, `Screened1`))
   
-  colnames(last) <- c('Facility', 'Screened', 'Eligible', 'Enrolled', "Screened", 'Enrolled', 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
+  colnames(last) <- c('Facility', 'Screened', 'Eligible (% screened)', 'Enrolled (% screened)', "Screened", 'Enrolled', 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
                       'Consented & Randomized (% eligible)', 'Discontinued (% randomized)', 'Eligible & Enrolled (% randomized)' )
   
   header_num <- c(1,3,2,7)
