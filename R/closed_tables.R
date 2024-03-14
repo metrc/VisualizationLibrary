@@ -2544,7 +2544,8 @@ closed_characteristics_treatment <- function(analytic){
               label_row_css = "text-align:left") %>%
     row_spec(0, extra_css = "border-bottom: 1px solid") %>%
     row_spec(1, extra_css = 'border-bottom: 1px solid') %>%
-    add_indent(seq(n_stages_full) + n_avg_full + n_df_full)
+    add_indent(seq(n_stages_full) + n_avg_full + n_df_full) %>%
+    kable_styling("striped", full_width = F, position="left")
   
   return(vis)
 }
