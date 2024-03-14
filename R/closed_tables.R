@@ -2141,7 +2141,8 @@ closed_expected_visits_by_followup_period <- function(analytic){
 closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
   inner_amputations_and_gustilo_injury_characteristics <- function(pull) {
     inj_gust <- pull %>%
-      select(injury_gustilo_type) %>%
+      select(injury_gustilo_type) %>%  
+      mutate(injury_gustilo_type = gsub('"|“|”', '', injury_gustilo_type)) %>%
       mutate(injury_gustilo_type = strsplit(as.character(injury_gustilo_type), ";\\s*")) %>%
       unnest(injury_gustilo_type) %>%
       group_by(injury_gustilo_type) %>%
@@ -2568,7 +2569,6 @@ closed_characteristics_treatment <- function(analytic){
 #' closed_fracture_characteristics(analytic)
 #' }
 closed_fracture_characteristics <- function(analytic){
-  
   inner_fracture_characteristics <- function(df) {
     total <- sum(df$enrolled)
     closed_total <- sum(df$closed)
