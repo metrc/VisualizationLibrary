@@ -2401,7 +2401,7 @@ closed_treatment_crossover_and_nonadherence <- function(analytic){
       rename(`Clinical Site` = facilitycode,
              `Eligible and Enrolled` = elig_enr,
              `Definitive Wound Closure completed` = total_dwc,
-             `Received treatment per protocol and assignment(% DWC complete)` = treatment_completed)
+             `Received treatment per protocol and assignment (%DWC complete)` = treatment_completed)
     
     return(result)
   }
