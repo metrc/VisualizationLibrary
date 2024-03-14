@@ -994,6 +994,7 @@ ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
     boolean_column_counter() %>% 
     pivot_longer(everything()) %>% 
     arrange(desc(value)) %>% 
+    filter(name!='Other') %>%
     slice(1:n_top_reasons) %>% 
     pull(name) 
   
