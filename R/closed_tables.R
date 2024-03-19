@@ -324,7 +324,6 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #' closed_discontinuation_sae_deviation_by_type()
 #' }
 closed_discontinuation_sae_deviation_by_type <- function(analytic){
-  
   df_full <- analytic
   
   df_a <- analytic %>% 
@@ -380,11 +379,13 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     
     deviation_a_df <- df %>% 
       select(study_id, enrolled, protocol_deviation_administrative) %>% 
+      mutate(protocol_deviation_administrative = case_when(str_detect('Other: ') ~ 'Other',
+                                                           str_detect(';') ~ 'Multiple Deviations',
+                                                           TRUE ~ protocol_deviation_administrative)) %>% 
       filter(enrolled == TRUE) %>% 
       count(protocol_deviation_administrative) %>%
       rename(type=protocol_deviation_administrative) %>% 
       filter(!is.na(type)) %>% 
-      mutate(type = str_replace(type,"Other: .+","Other")) %>% 
       mutate(type = as.character(type))
     
     deviation_sc_tot <- tibble(type="Screen and Consent",n=sum(deviation_sc_df$n))
@@ -2140,7 +2141,8 @@ closed_expected_visits_by_followup_period <- function(analytic){
 closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
   inner_amputations_and_gustilo_injury_characteristics <- function(pull) {
     inj_gust <- pull %>%
-      select(injury_gustilo_type) %>%
+      select(injury_gustilo_type) %>%  
+      mutate(injury_gustilo_type = gsub('"|“|”', '', injury_gustilo_type)) %>%
       mutate(injury_gustilo_type = strsplit(as.character(injury_gustilo_type), ";\\s*")) %>%
       unnest(injury_gustilo_type) %>%
       group_by(injury_gustilo_type) %>%
@@ -2202,7 +2204,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
     select(`Fracture Type`, ends_with(" (Group A)"), ends_with(" (Group B)"), count)
   
   output <- kable(df_table, align='l', padding='2l', col.names = c(" ", "Group A", "Group B", "Overall")) %>%
-    kable_styling("condensed", position = "left", full_width = FALSE) %>%
+    kable_styling("striped", position = "left", full_width = F) %>%
     add_indent(positions = c(2,3,4,6,7,8,9,10,11,12)) %>%
     row_spec(c(1,5), bold=T,hline_after = T)
   
@@ -2402,7 +2404,7 @@ closed_treatment_crossover_and_nonadherence <- function(analytic){
       rename(`Clinical Site` = facilitycode,
              `Eligible and Enrolled` = elig_enr,
              `Definitive Wound Closure completed` = total_dwc,
-             `Received treatment per protocol and assignment(% DWC complete)` = treatment_completed)
+             `Received treatment per protocol and assignment (%DWC complete)` = treatment_completed)
     
     return(result)
   }
@@ -2545,7 +2547,8 @@ closed_characteristics_treatment <- function(analytic){
               label_row_css = "text-align:left") %>%
     row_spec(0, extra_css = "border-bottom: 1px solid") %>%
     row_spec(1, extra_css = 'border-bottom: 1px solid') %>%
-    add_indent(seq(n_stages_full) + n_avg_full + n_df_full)
+    add_indent(seq(n_stages_full) + n_avg_full + n_df_full) %>%
+    kable_styling("striped", full_width = F, position="left")
   
   return(vis)
 }
@@ -2566,7 +2569,6 @@ closed_characteristics_treatment <- function(analytic){
 #' closed_fracture_characteristics(analytic)
 #' }
 closed_fracture_characteristics <- function(analytic){
-  
   inner_fracture_characteristics <- function(df) {
     total <- sum(df$enrolled)
     closed_total <- sum(df$closed)
@@ -2640,13 +2642,12 @@ closed_fracture_characteristics <- function(analytic){
   
   n_closed <- nrow(df_table %>% filter(str_detect(type, "Closed Fracture")))
   n_open <- nrow(df_table %>% filter(str_detect(type, "Open Fracture")))
-  n_frac <- nrow(df_table %>% filter(str_detect(type, "Tibial")))
+  n_frac <- nrow(df_table %>% filter(str_detect(type, "Tibial")|str_detect(type, 'Unknown')))
   n_tscherne <- nrow(df_table %>% filter(str_detect(type, "Tscherne")))
   n_gustilo <- nrow(df_table %>% filter(str_detect(type, "Gustilo")))
   
   vis <- kable(df_table, align='l', padding='2l', col.names = cnames) %>%
     pack_rows(index = c('Fractured Bone' = n_frac,
-                        
                         'Fracture Type' = (n_closed + n_tscherne + n_open + n_gustilo)),
               label_row_css = "text-align:left") %>%
     add_indent(c(seq(n_tscherne) + n_frac + n_closed, seq(n_gustilo) + n_frac + n_closed + n_open + n_tscherne)) %>%
@@ -3200,116 +3201,16 @@ closed_adherence_by_site <- function(analytic){
 #' closed_enrollment_by_site_var_disc_tobra_sextant(analytic)
 #' }
 closed_enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days = 14){
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
   
-  inner_enrollment_by_site_var_disc_tobra_sextant <- function(df) {
-    last14 <- Sys.Date() - days
-    df <- df %>%
-      mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-      mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certified_days))) %>% 
-      rename(Facility = facilitycode) %>% 
-      filter(!is.na(Facility)) %>% 
-      mutate(weeks_site_certified = site_certified_days/7)
-    
-    df_1st <- df %>% 
-      group_by(Facility) %>% 
-      summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible))
-    
-    df_2nd <- df %>% 
-      filter(eligible == TRUE) %>% 
-      group_by(Facility) %>% 
-      summarize(Refused = sum(refused), 'Not Consented' = sum(not_consented), cnr = sum(consented_and_randomized))
-    
-    df_3rd <- df %>% 
-      filter(eligible == TRUE & consented_and_randomized == TRUE) %>% 
-      group_by(Facility) %>% 
-      summarize('Discontinued' = sum(adjudicated_discontinued),
-                "Enrolled" = sum(enrolled)) 
-    
-    table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
-      left_join(df_3rd, by = 'Facility') %>% 
-      mutate_all(~ifelse(is.na(.), 0, .))
-    
-    facilities <- df %>% 
-      select(Facility) %>% 
-      unique()
-    
-    last_fourteen <- df %>% 
-      mutate(screened_date = ymd(screened_date)) %>% 
-      mutate(Screened = ifelse(screened_date > last14, TRUE, FALSE)) %>% 
-      filter(Screened) %>% 
-      select(Facility, Screened, eligible, enrolled) %>% 
-      group_by(Facility) %>% 
-      summarize('Screened1' = sum(Screened, na.rm = TRUE),
-                'Eligible1' = sum(eligible, na.rm = TRUE),
-                'Enrolled1' = sum(enrolled, na.rm = TRUE))
-    
-    l14 <- left_join(facilities, last_fourteen) 
-    
-    by_week <- df %>%
-      filter(!is.na(weeks_site_certified)) %>% 
-      group_by(Facility) %>% 
-      summarize(
-        Screened2 = round(sum(screened, na.rm = TRUE) / first(weeks_site_certified), 2),
-        Enrolled2 = round(sum(enrolled, na.rm = TRUE) / first(weeks_site_certified), 2))
-    
-    weekly <- left_join(facilities, by_week, by = 'Facility')
-    
-    almost <- left_join(l14, weekly, by = 'Facility')
-    
-    final <- left_join(almost, table_raw, by = 'Facility') %>% 
-      adorn_totals("row") %>% 
-      mutate(is_total=Facility=="Total") %>% 
-      mutate(`Days Certified`=ifelse(is_total,NA,`Days Certified`)) %>% 
-      arrange(desc(is_total), Facility) %>% 
-      select(-is_total) %>% 
-      mutate(`Discontinued (% randomized)` = format_count_percent(Discontinued, cnr)) %>% 
-      mutate(`Eligible & Enrolled (% randomized)` = format_count_percent(Enrolled, cnr)) %>% 
-      mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
-      mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
-      mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
-      mutate(`Eligible (% screened)` = format_count_percent(Eligible, Screened))
-    
-    total_row <- final %>% 
-      slice_head(n=1)
-    
-    last <- bind_rows(final, total_row) %>% 
-      slice_tail(n=-1) %>% 
-      select(-`Days Certified`, -Eligible, -Enrolled, -Refused, -`Not Consented`, -cnr, -Discontinued) %>% 
-      select(Facility, Screened1, Eligible1, Enrolled1, Screened2, Enrolled2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for 'Other' Reasons (% eligible)`, 
-             `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Eligible & Enrolled (% randomized)`) %>% 
-      mutate(`Eligible1` = format_count_percent(`Eligible1`, `Screened1`),
-             `Enrolled1` = format_count_percent(`Enrolled1`, `Screened1`))
-    
-    colnames(last) <- c('Facility', 'Screened', 'Eligible', 'Enrolled', "Screened per week", 
-                        'Enrolled per week', 'Screened total', 'Eligible (% screened)', 'Refused (% eligible)', 
-                        'Not Enrolled for `Other` Reasons (% eligible)', 
-                        'Consented & Randomized (% eligible)', 'Discontinued (% randomized)', 'Eligible & Enrolled (% randomized)' )
-    
-    return(last)
-  }
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
   
-  df <- analytic %>%
-    select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days,
-           facilitycode, adjudicated_discontinued, screened_date, treatment_arm)
+  out <- paste0("<h4>Group A</h4><br />",
+                enrollment_by_site_var_disc_tobra_sextant(df_a, days),
+                "<h4>Group B</h4><br />",
+                enrollment_by_site_var_disc_tobra_sextant(df_b, days))
   
-  df_a <- df %>% filter(treatment_arm == "Group A")
-  df_b <- df %>% filter(treatment_arm == "Group B")
-  
-  last_a <- inner_enrollment_by_site_var_disc_tobra_sextant(df_a)
-  
-  last_b <- inner_enrollment_by_site_var_disc_tobra_sextant(df_b)
-  
-  df_table <- full_join(last_a, last_b, by = "Facility", suffix = c(" (Group A)", " (Group B)")) %>%
-    select(Facility, ends_with(" (Group A)"), ends_with(" (Group B)"))
-  
-  header_num <- c(1,3,2,7,3,2,7)
-  header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"), 
-                    paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
-  names(header_num) <- header_names
-  table <- kable(df_table, align='l', padding='2l') %>%
-    add_header_above(header_num) %>%
-    kable_styling("striped", full_width = F, position="left") %>%
-    row_spec(nrow(df_table), bold = TRUE)
-  
-  return(table)
+  return(out)
 }
