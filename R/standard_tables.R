@@ -3390,8 +3390,7 @@ wbs_main_paper_patient_characteristics <- function(analytic){
   df_for_table <- df_final %>% 
     select(heading, n) %>% 
     rename("Enrolled" = heading, " " = n)
-  install.packages("knitr")
-  library(knitr)
+
   
   table_raw<- kable(df_for_table, align='l') %>%
     pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>% 
