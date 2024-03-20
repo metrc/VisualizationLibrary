@@ -2206,7 +2206,7 @@ df_expected_2wk <- df %>%
                 ~ format_count_percent(., expected))) %>% 
   rename(`Clinical Site` = facilitycode,
          `Eligible & Enrolled` = eligible_and_enrolled,
-         `DF Complete` = dwc_completed,
+         `DWC Complete` = dwc_completed,
          `Expected` = expected) 
 
 colnames(df_expected_2wk) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
@@ -2282,7 +2282,7 @@ followup_3mo_status_by_site_sextant <- function(analytic){
                   ~ format_count_percent(., expected))) %>% 
     rename(`Clinical Site` = facilitycode,
            `Eligible & Enrolled` = eligible_and_enrolled,
-           `DF Complete` = dwc_completed,
+           `DWC Complete` = dwc_completed,
            `Expected` = expected) 
   
   colnames(df_expected_3mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
@@ -2359,7 +2359,7 @@ followup_6mo_status_by_site_sextant <- function(analytic){
                   ~ format_count_percent(., expected))) %>% 
     rename(`Clinical Site` = facilitycode,
            `Eligible & Enrolled` = eligible_and_enrolled,
-           `DF Complete` = dwc_completed,
+           `DWC Complete` = dwc_completed,
            `Expected` = expected) 
   
   colnames(df_expected_6mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
@@ -2475,7 +2475,7 @@ followup_12mo_status_by_site_sextant <- function(analytic){
                   ~ format_count_percent(., expected))) %>% 
     rename(`Clinical Site` = facilitycode,
            `Eligible & Enrolled` = eligible_and_enrolled,
-           `DF Complete` = dwc_completed,
+           `DWC Complete` = dwc_completed,
            `Expected` = expected) 
   
   colnames(df_expected_12mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
