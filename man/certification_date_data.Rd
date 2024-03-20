@@ -4,10 +4,12 @@
 \alias{certification_date_data}
 \title{Status of IRB Approvals and Certification by Site}
 \usage{
-certification_date_data(analytic)
+certification_date_data(analytic, exclude_local_irb = FALSE)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include site_certified_date}
+
+\item{exclude_local_irb}{defaults to False}
 }
 \value{
 nothing

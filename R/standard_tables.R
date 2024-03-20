@@ -1117,6 +1117,7 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
 #' local, DOD, and METRC certifications
 #'
 #' @param analytic This is the analytic data set that must include site_certified_date
+#' @param exclude_local_irb defaults to False
 #'
 #' @return nothing
 #' @export
@@ -1125,7 +1126,7 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
 #' \dontrun{
 #' ineligibility_by_reasons()
 #' }
-certification_date_data <- function(analytic){
+certification_date_data <- function(analytic, exclude_local_irb=FALSE){
   df <- analytic %>% 
     select(site_certified_date) %>%
     unique()
@@ -1139,6 +1140,12 @@ certification_date_data <- function(analytic){
   site_data <- df %>%
     separate(site_certified_date, cols, sep = ';') %>%
     filter(!is.na(Facility))
+  
+  if(exclude_local_irb){
+    cols <- cols[-2] 
+    site_data <- site_data %>% 
+      select(all_of(cols))
+  }
   
   vis <- kable(site_data, align='l', padding='2l') %>% 
     kable_styling("striped", full_width = F, position="left") 
