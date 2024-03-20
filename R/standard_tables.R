@@ -1769,25 +1769,42 @@ refusal_reasons_by_site <- function(analytic){
     pivot_wider(names_from = refused_reason,
                 values_from = n) 
   
+  totals_reasons <- reasons %>%
+    summarise(across(where(is.numeric), sum, na.rm = TRUE)) %>%
+    mutate(facilitycode = "Total")
+  
+  totals_screened <- screened_df %>%
+    summarise(across(where(is.numeric), sum, na.rm = TRUE)) %>%
+    mutate(facilitycode = "Total")
+  
+  totals_refused <- refused_df %>%
+    summarise(across(where(is.numeric), sum, na.rm = TRUE)) %>%
+    mutate(facilitycode = "Total")
+  
+  totals <- left_join(totals_reasons, totals_screened) %>% left_join(totals_refused)
   
   exclude_columns <- c("facilitycode", "screen_n", "refuse_n")
   
   
   df_final <- left_join(reasons, screened_df) %>% left_join(refused_df) %>% 
     mutate_all(~ ifelse(is.na(.), 0, .)) %>% 
+    rbind(totals) %>% 
+    arrange(ifelse(facilitycode == "Total", 0, 1)) %>% 
     mutate(across(-one_of(exclude_columns),
                   ~ format_count_percent(.x, refuse_n),
                   .names = "{col}_percentage")) %>% 
     select(ends_with("_percentage"), one_of(exclude_columns)) %>% 
     rename_with(~ sub("_percentage$", "", .), ends_with("_percentage")) %>% 
     select(one_of(exclude_columns), everything()) %>%
+    arrange(desc(refuse_n)) %>% 
     select(-contains("Other"), -contains("Unknown"), contains("Other"), contains("Unknown")) %>% 
     rename(`Screened, to date` = screen_n,
            `Refused, to date` = refuse_n, 
-           `Clinical Site` = facilitycode)
+           `Clinical Site` = facilitycode) 
 
   output <- kable(df_final, align='l', padding='2l') %>%
-    kable_styling("striped", full_width = F, position="left") 
+    kable_styling("striped", full_width = F, position="left") %>% 
+    row_spec(row = 1, bold = TRUE)
   
   return(output)
 }
@@ -2189,7 +2206,7 @@ df_expected_2wk <- df %>%
                 ~ format_count_percent(., expected))) %>% 
   rename(`Clinical Site` = facilitycode,
          `Eligible & Enrolled` = eligible_and_enrolled,
-         `DF Complete` = dwc_completed,
+         `DWC Complete` = dwc_completed,
          `Expected` = expected) 
 
 colnames(df_expected_2wk) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
@@ -2265,7 +2282,7 @@ followup_3mo_status_by_site_sextant <- function(analytic){
                   ~ format_count_percent(., expected))) %>% 
     rename(`Clinical Site` = facilitycode,
            `Eligible & Enrolled` = eligible_and_enrolled,
-           `DF Complete` = dwc_completed,
+           `DWC Complete` = dwc_completed,
            `Expected` = expected) 
   
   colnames(df_expected_3mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
@@ -2342,7 +2359,7 @@ followup_6mo_status_by_site_sextant <- function(analytic){
                   ~ format_count_percent(., expected))) %>% 
     rename(`Clinical Site` = facilitycode,
            `Eligible & Enrolled` = eligible_and_enrolled,
-           `DF Complete` = dwc_completed,
+           `DWC Complete` = dwc_completed,
            `Expected` = expected) 
   
   colnames(df_expected_6mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
@@ -2458,7 +2475,7 @@ followup_12mo_status_by_site_sextant <- function(analytic){
                   ~ format_count_percent(., expected))) %>% 
     rename(`Clinical Site` = facilitycode,
            `Eligible & Enrolled` = eligible_and_enrolled,
-           `DF Complete` = dwc_completed,
+           `DWC Complete` = dwc_completed,
            `Expected` = expected) 
   
   colnames(df_expected_12mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
