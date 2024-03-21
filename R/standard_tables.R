@@ -2726,7 +2726,7 @@ expected_and_followup_visit_by_site <- function(analytic){
   return(output)
 }
 
-#' enrollment_by_site tobra and sextant (var discontinued)
+#' enrollment_by_site (var discontinued)
 #'
 #' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week 
 #' study.
@@ -2739,9 +2739,9 @@ expected_and_followup_visit_by_site <- function(analytic){
 #'
 #' @examples
 #' \dontrun{
-#' enrollment_by_site_var_disc_tobra_sextant()
+#' enrollment_by_site_var_disc()
 #' }
-enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days){
+enrollment_by_site_var_disc <- function(analytic, days){
   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
            facilitycode, adjudicated_discontinued, screened_date)
@@ -2832,6 +2832,124 @@ enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days){
                       'Consented & Randomized (% eligible)', 'Discontinued (% randomized)', 'Eligible & Enrolled (% randomized)' )
   
   header_num <- c(1,3,2,7)
+  header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
+  names(header_num) <- header_names
+  table <- kable(last, align='l') %>% 
+    add_header_above(header_num) %>%
+    kable_styling("striped", full_width = F, position="left") %>% 
+    row_spec(nrow(last), bold = TRUE)
+  
+  return(table)
+}
+
+
+#' enrollment_by_site for Tobra and Sextant (var discontinued)
+#'
+#' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 
+#' 14 days and average by week study for Sextant and Tobra
+#'
+#' @param analytic This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+#' facilitycode, adjudicated_discontinued, screened_date, safety_set
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' enrollment_by_site_var_disc_tobra_sextant()
+#' }
+enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days){
+  df <- analytic %>% 
+    select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+           facilitycode, adjudicated_discontinued, screened_date, safety_set)
+  
+  last14 <- Sys.Date() - days
+  
+  df <- df %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certified_days))) %>% 
+    rename(Facility = facilitycode) %>% 
+    filter(!is.na(Facility)) %>% 
+    mutate(weeks_site_certified = site_certified_days/7)
+  
+  
+  df_1st <- df %>% 
+    group_by(Facility) %>% 
+    summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible))
+  
+  df_2nd <- df %>% 
+    filter(eligible == TRUE) %>% 
+    group_by(Facility) %>% 
+    summarize(Refused = sum(refused), 'Not Consented' = sum(not_consented), cnr = sum(consented_and_randomized))
+  
+  df_3rd <- df %>% 
+    filter(eligible == TRUE & consented_and_randomized == TRUE & safety_set) %>% 
+    group_by(Facility) %>% 
+    summarize('Discontinued' = sum(adjudicated_discontinued),
+              "Enrolled" = sum(enrolled),
+              "Safety set" = sum(safety_set)) 
+  
+  table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
+    left_join(df_3rd, by = 'Facility') 
+  
+  facilities <- df %>% 
+    select(Facility) %>% 
+    unique()
+  
+  last_fourteen <- df %>% 
+    mutate(screened_date = ymd(screened_date)) %>% 
+    mutate(screened_last_fourteen = ifelse(screened_date > last14, TRUE, FALSE)) %>% 
+    mutate(eligible_last_fourteen = ifelse(screened_last_fourteen, eligible, FALSE)) %>% 
+    mutate(enrolled_last_fourteen = ifelse(screened_last_fourteen, enrolled, FALSE)) %>% 
+    select(Facility, screened_last_fourteen, eligible_last_fourteen, enrolled_last_fourteen) %>% 
+    group_by(Facility) %>% 
+    summarize('Screened1' = sum(screened_last_fourteen),
+              'Eligible1' = sum(eligible_last_fourteen),
+              'Enrolled1' = sum(enrolled_last_fourteen))
+  
+  l14 <- left_join(facilities, last_fourteen) 
+  
+  by_week <- df %>%
+    filter(!is.na(weeks_site_certified)) %>% 
+    group_by(Facility) %>% 
+    summarize(
+      Screened2 = round(sum(screened, na.rm = TRUE) / first(weeks_site_certified), 2),
+      Enrolled2 = round(sum(enrolled, na.rm = TRUE) / first(weeks_site_certified), 2))
+  
+  weekly <- left_join(facilities, by_week, by = 'Facility')
+  
+  almost <- left_join(l14, weekly, by = 'Facility')
+  
+  sum_days_certified <- sum(table_raw$`Days Certified`, na.rm=T)
+  
+  final <- left_join(almost, table_raw, by = 'Facility') %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    mutate(`Days Certified`=ifelse(is_total,sum_days_certified,`Days Certified`)) %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total) %>% 
+    mutate(`Discontinued (% randomized)` = format_count_percent(Discontinued, cnr)) %>% 
+    mutate(`Eligible & Enrolled (% randomized)` = format_count_percent(Enrolled, cnr)) %>% 
+    mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
+    mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
+    mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
+    mutate(`Eligible (% screened)` = format_count_percent(Eligible, Screened)) 
+  
+  total_row <- final %>% 
+    slice_head(n=1)
+  
+  last <- bind_rows(final, total_row) %>% 
+    slice_tail(n=-1) %>% 
+    select(-Eligible, -Enrolled, -Refused, -`Not Consented`, -cnr, -Discontinued) %>% 
+    select(Facility, Screened1, Eligible1, Enrolled1, Screened2, Enrolled2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for 'Other' Reasons (% eligible)`, 
+           `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Safety set`, `Eligible & Enrolled (% randomized)`) %>% 
+    mutate(`Eligible1` = format_count_percent(`Eligible1`, `Screened1`),
+           `Enrolled1` = format_count_percent(`Enrolled1`, `Screened1`))
+  
+  colnames(last) <- c('Facility', 'Screened', 'Eligible (% screened)', 'Enrolled (% screened)', "Screened", 'Enrolled', 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
+                      'Consented & Randomized (% eligible)', 'Discontinued (% randomized)', 'Safety set', 'Eligible & Enrolled (% randomized)' )
+  
+  header_num <- c(1,3,2,8)
   header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
   names(header_num) <- header_names
   table <- kable(last, align='l') %>% 

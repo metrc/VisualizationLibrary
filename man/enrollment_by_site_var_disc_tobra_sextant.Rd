@@ -2,20 +2,20 @@
 % Please edit documentation in R/standard_tables.R
 \name{enrollment_by_site_var_disc_tobra_sextant}
 \alias{enrollment_by_site_var_disc_tobra_sextant}
-\title{enrollment_by_site tobra and sextant (var discontinued)}
+\title{enrollment_by_site for Tobra and Sextant (var discontinued)}
 \usage{
 enrollment_by_site_var_disc_tobra_sextant(analytic, days)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
-facilitycode, adjudicated_discontinued, screened_date}
+facilitycode, adjudicated_discontinued, screened_date, safety_set}
 }
 \value{
 nothing
 }
 \description{
-This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week 
-study.
+This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 
+14 days and average by week study for Sextant and Tobra
 }
 \examples{
 \dontrun{
