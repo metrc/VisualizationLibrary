@@ -521,8 +521,9 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #'
 #' @description This function visualizes the categorical percentages of study status as well as followup completions
 #'
-#' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible, refused, consented_and_randomized, enrolled, df_date, 
-#' adjudicated_early_discontinued, followup_complete_12mo
+#' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
+#' adjudicated_early_discontinued, followup_complete_12mo, safety_set
+#' @param definitive_event Event either DF or DWC
 #'
 #' @return nothing
 #' @export
@@ -531,17 +532,19 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #' \dontrun{
 #' consort_diagram()
 #' }
-consort_diagram <- function(analytic){
+consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Complete"){
   
   df <- analytic %>% 
-    select(study_id, screened, ineligible, eligible, refused, consented_and_randomized, enrolled, df_date, 
-           adjudicated_early_discontinued, followup_complete_12mo) %>% 
-    mutate(df_date = ifelse(!is.na(df_date), TRUE, FALSE))
+    select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
+           adjudicated_early_discontinued, followup_complete_12mo, safety_set) %>% 
+    mutate(time_zero = ifelse(!is.na(time_zero), TRUE, FALSE))
   
   screened <- sum(analytic$screened, na.rm = TRUE)
   
   eligible_df <- df %>% 
     filter(screened)
+  
+  safety <- sum(eligible_df$safety_set, na.rm = TRUE)
   
   eligible <- sum(eligible_df$eligible, na.rm = TRUE)
   
@@ -552,14 +555,19 @@ consort_diagram <- function(analytic){
   
   refused <- sum(refused_df$refused, na.rm = TRUE)
   
-  cnr_df <- refused_df %>% 
+  consented_df <- refused_df %>% 
     filter(refused == FALSE | is.na(refused))
   
-  cnr <- sum(cnr_df$consented_and_randomized, na.rm = TRUE)
-  not_enrolled_other <- eligible - (cnr + refused)
+  consented <- sum(consented_df$consented, na.rm = TRUE)
+  not_enrolled_other <- eligible - (consented + refused)
   
-  ed_df <- cnr_df %>% 
-    filter(consented_and_randomized)
+  randomized_df <- consented_df %>% 
+    filter(consented)
+  
+  randomized <- sum(randomized_df$randomized, na.rm = TRUE)
+  
+  ed_df <- randomized_df %>% 
+    filter(randomized)
   
   early_discontinuation <- sum(ed_df$adjudicated_early_discontinued, na.rm = TRUE)
   
@@ -567,10 +575,13 @@ consort_diagram <- function(analytic){
     filter(adjudicated_early_discontinued == FALSE | is.na(adjudicated_early_discontinued))
   
   enrolled <- sum(enrolled_df$enrolled, na.rm = TRUE)
-  df_complete <- sum(enrolled_df$df_date, na.rm = TRUE)
+  df_complete <- sum(enrolled_df$time_zero, na.rm = TRUE)
+  
+  ed_consented <- consented - randomized
+  ed_randomized <- randomized - enrolled
   
   fu_df <- enrolled_df %>% 
-    filter(df_date)
+    filter(time_zero)
   
   fu_complete_12mo <- sum(fu_df$followup_complete_12mo, na.rm = TRUE)
   
@@ -584,24 +595,33 @@ consort_diagram <- function(analytic){
       
       refused [style="rounded,filled", fillcolor="#a4d3ee", pos="10,10!", shape = box, width=2.4, height=1, label = "Other Not Enrolled (n=',not_enrolled_other,')\nRefused (n=',refused,')"];
 
-      cnr [style="rounded,filled", fillcolor="#a4d3ee", pos="6,8!", shape = box, width=2.4, height=1, label = "Consented and Randomized (n=',cnr,')"];
-
-      ed [style="rounded,filled", fillcolor="#a4d3ee", pos="10,8!", shape = box, width=2.4, height=1, label = "Early Discontinuation (n=',early_discontinuation,')"];
+      consented [style="rounded,filled", fillcolor="#a4d3ee", pos="6,8!", shape = box, width=2.4, height=1, label = "Consented (n=',consented,')"];
       
-      enrolled [style="rounded,filled", fillcolor="#a4d3ee", pos="6,6!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',enrolled,')"];
-      df_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="6,4!", shape = box, width=2.4, height=1, label = "Definitive Fixation Complete (n=',df_complete,')"];
+      randomized [style="rounded,filled", fillcolor="#a4d3ee", pos="6,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',randomized,')"];
 
-      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="6,2!", shape = box, width=2.4, height=1, label = "12 Month Follow-Up Complete (n=',fu_complete_12mo,')"];
+      ed_consented [style="rounded,filled", fillcolor="#a4d3ee", pos="10,8!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (Consented) (n=',ed_consented,')"];
+      
+      ed_randomized [style="rounded,filled", fillcolor="#a4d3ee", pos="10,6!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (Randomized) (n=',ed_randomized,')"];
+      
+      enrolled [style="rounded,filled", fillcolor="#a4d3ee", pos="6,4!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',enrolled,')"];
+      df_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="6,2!", shape = box, width=2.4, height=1, label = "',definitive_event,' (n=',df_complete,')"];
+
+      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="6,0!", shape = box, width=2.4, height=1, label = "12 Month Follow-Up Complete (n=',fu_complete_12mo,')"];
+      
+      safety [style="rounded,filled", fillcolor="#a4d3ee", pos="10,2!", shape = box, width=2.4, height=1, label = "Safety Set (n=',safety,')"];
       
       # Relationships
       screened -> eligible
       screened -> ineligible
       eligible -> refused
-      eligible -> cnr
-      cnr -> ed
-      cnr -> enrolled
+      eligible -> consented
+      consented -> randomized
+      consented -> ed_consented
+      randomized -> enrolled
+      randomized -> ed_randomized
       enrolled -> df_complete
       df_complete -> fu_complete
+      df_complete -> safety
       
     }
   '))
