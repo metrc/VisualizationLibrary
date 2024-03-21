@@ -1139,7 +1139,10 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
   
   site_data <- df %>%
     separate(site_certified_date, cols, sep = ';') %>%
-    filter(!is.na(Facility))
+    filter(!is.na(Facility)) %>% 
+    arrange(desc(.[[5]]))
+  
+  site_data <- rbind(site_data %>% filter(.[[5]]!="NA days"),site_data %>% filter(.[[5]]=="NA days"))
   
   if(exclude_local_irb){
     cols <- cols[-2] 
