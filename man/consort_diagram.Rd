@@ -4,11 +4,13 @@
 \alias{consort_diagram}
 \title{Consort Diagram}
 \usage{
-consort_diagram(analytic)
+consort_diagram(analytic, definitive_event = "Definitive Fixation Complete")
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, screened, ineligible, eligible, refused, consented_and_randomized, enrolled, df_date, 
-adjudicated_early_discontinued, followup_complete_12mo}
+\item{analytic}{This is the analytic data set that must include study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
+adjudicated_early_discontinued, followup_complete_12mo, safety_set}
+
+\item{definitive_event}{Event either DF or DWC}
 }
 \value{
 nothing
