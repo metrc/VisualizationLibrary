@@ -13,8 +13,7 @@ adherence_by_site(analytic)
 nothing
 }
 \description{
-This function visualizes the treatment crossover or any nonadherence occured during the Tobra 
-study.
+This function visualizes the treatment crossover or any nonadherence occured during the study.
 }
 \examples{
 \dontrun{

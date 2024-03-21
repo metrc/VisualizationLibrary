@@ -3184,23 +3184,25 @@ closed_adherence_by_site <- function(analytic){
   return(output)
 }
 
-#' Closed Enrollment by site tobra and sextant (var discontinued)
+#' Closed enrollment_by_site tobra and sextant (var discontinued)
 #'
-#' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week
-#' study by treatment arm.
+#' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week by treatment arm
 #'
-#' @param analytic This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days,
-#' facilitycode, adjudicated_discontinued, screened_date, treatment_arm
-#' @param days Number of days to look back for enrollment activity (default is 14)
+#' @param analytic This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+#' facilitycode, screened_date
+#' @param days the number of last days to include in the last days summary section of the table
+#' @param discontinued this is a meta construct where you can specify your discontinued construct like 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
+#' @param discontinued_colname this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')
+#' @param include_safety_set this is a toggle that will include a safety_set construct if you want it included (defaults to FALSE)
 #'
-#' @return A kable table
+#' @return html table
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' closed_enrollment_by_site_var_disc_tobra_sextant(analytic)
+#' closed_enrollment_by_site_last_days_var_disc()
 #' }
-closed_enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days = 14){
+closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="discontinued", discontinued_colname="Discontinued", include_safety_set=FALSE){
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
   
@@ -3208,9 +3210,9 @@ closed_enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days = 14
     filter(treatment_arm=="Group B")
   
   out <- paste0("<h4>Group A</h4><br />",
-                enrollment_by_site_var_disc_tobra_sextant(df_a, days),
+                enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set),
                 "<h4>Group B</h4><br />",
-                enrollment_by_site_var_disc_tobra_sextant(df_b, days))
+                enrollment_by_site_var_disc_tobra_sextant(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set))
   
   return(out)
 }
