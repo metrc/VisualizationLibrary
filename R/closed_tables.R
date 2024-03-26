@@ -359,8 +359,9 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       mutate(type = as.character(type))
     
     
-    deviation_sc_df <- df %>% 
+    deviation_sc_df <- analytic %>% 
       select(study_id, enrolled, protocol_deviation_screen_consent) %>% 
+      separate_rows(protocol_deviation_screen_consent, sep=";") %>% 
       filter(enrolled == TRUE) %>% 
       count(protocol_deviation_screen_consent) %>%
       rename(type=protocol_deviation_screen_consent) %>% 
@@ -368,8 +369,9 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       mutate(type = as.character(type))
     
     
-    deviation_p_df <- df %>% 
+    deviation_p_df <- analytic %>% 
       select(study_id, enrolled, protocol_deviation_procedural) %>% 
+      separate_rows(protocol_deviation_procedural, sep=";") %>% 
       filter(enrolled == TRUE) %>% 
       count(protocol_deviation_procedural) %>%
       rename(type=protocol_deviation_procedural) %>% 
@@ -377,22 +379,21 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       mutate(type = as.character(type))
     
     
-    deviation_a_df <- df %>% 
+    deviation_a_df <- analytic %>% 
       select(study_id, enrolled, protocol_deviation_administrative) %>% 
-      mutate(protocol_deviation_administrative = case_when(str_detect('Other: ') ~ 'Other',
-                                                           str_detect(';') ~ 'Multiple Deviations',
-                                                           TRUE ~ protocol_deviation_administrative)) %>% 
+      separate_rows(protocol_deviation_administrative, sep=";") %>%
       filter(enrolled == TRUE) %>% 
+      mutate(protocol_deviation_administrative = ifelse(grepl("^Other:", protocol_deviation_administrative), "Other", protocol_deviation_administrative)) %>% 
       count(protocol_deviation_administrative) %>%
       rename(type=protocol_deviation_administrative) %>% 
       filter(!is.na(type)) %>% 
+      mutate(type = str_replace(type,"Other: .+","Other")) %>% 
       mutate(type = as.character(type))
-    
+  
     deviation_sc_tot <- tibble(type="Screen and Consent",n=sum(deviation_sc_df$n))
     deviation_p_tot <- tibble(type="Procedural",n=sum(deviation_p_df$n))
     deviation_a_tot <- tibble(type="Administrative/Other",n=sum(deviation_a_df$n))
     deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
-    
     
     df_final <- bind_rows(discontinuation_df_tot %>% mutate(group=as.numeric(rep(1,length(type)))), 
                           discontinuation_df %>% mutate(group=as.numeric(rep(2,length(type)))),
