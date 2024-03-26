@@ -7,7 +7,7 @@
 closed_adherence_by_site(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include facilitycode, df_date, df_randomized_treatment, treatment_arm}
+\item{analytic}{This is the analytic data set that must include facilitycode, df_date, treatment_arm, treatment_arm}
 }
 \value{
 A kable table

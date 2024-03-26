@@ -2372,187 +2372,7 @@ closed_not_enrolled_for_other_reasons <- function(analytic){
   return(output)
 }
 
-#' Closed Treatment crossover and nonadherence
-#'
-#' @description This function visualizes the treatment crossover or any nonadherence occured during the Sextant
-#' study by treatment arm.
-#'
-#' @param analytic This is the analytic data set that must include facilitycode, eligible, enrolled, time_zero,
-#' local_antibiotic_at_dwc
-#'
-#' @return A kable table
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' closed_treatment_crossover_and_nonadherence(analytic)
-#' }
-closed_treatment_crossover_and_nonadherence <- function(analytic){
-  
-  inner_treatment_crossover_and_nonadherence <- function(df) {
-    df_2nd <- df %>%
-      group_by(facilitycode) %>%
-      summarize(elig_enr = sum(eligible_enrolled), total_dwc = sum(dwc_complete), treatment_completed = sum(dwc_treatment)) %>%
-      replace(., is.na(.), 0)
-    numerical_columns <- df_2nd %>% select_if(is.numeric) %>% colnames()
-    
-    df_3rd <- df_2nd %>%
-      summarise(across(all_of(numerical_columns), sum, na.rm = TRUE),
-                facilitycode = "TOTAL")
-    
-    result <- bind_rows(df_2nd, df_3rd[nrow(df_3rd), ]) %>% 
-      mutate(treatment_completed= format_count_percent(treatment_completed, total_dwc)) %>% 
-      rename(`Clinical Site` = facilitycode,
-             `Eligible and Enrolled` = elig_enr,
-             `Definitive Wound Closure completed` = total_dwc,
-             `Received treatment per protocol and assignment (%DWC complete)` = treatment_completed)
-    
-    return(result)
-  }
-  
-  df <- analytic %>%
-    select(facilitycode, eligible, enrolled, time_zero, local_antibiotic_at_dwc, treatment_arm) %>%
-    filter(eligible == TRUE & enrolled == TRUE) %>%
-    mutate(eligible_enrolled = ifelse(eligible == TRUE & enrolled == TRUE, TRUE, FALSE)) %>%
-    mutate(dwc_complete = ifelse(!is.na(time_zero), TRUE, FALSE)) %>%
-    mutate(dwc_treatment = ifelse(local_antibiotic_at_dwc, TRUE, FALSE)) %>%
-    select(-eligible, -enrolled, -time_zero)
-  
-  df_a <- df %>% filter(treatment_arm == "Group A")
-  df_b <- df %>% filter(treatment_arm == "Group B")
-  
-  result_a <- inner_treatment_crossover_and_nonadherence(df_a)
-  result_b <- inner_treatment_crossover_and_nonadherence(df_b)
-  
-  df_table <- full_join(result_a, result_b, by = "Clinical Site", suffix = c(" (Group A)", " (Group B)")) %>%
-    select(`Clinical Site`, ends_with(" (Group A)"), ends_with(" (Group B)"))
-  
-  output <- kable(df_table, align='l') %>%
-    add_header_above(c(" " = 1, "Group A" = (ncol(df_table)-1)/2, "Group B" = (ncol(df_table)-1)/2)) %>%
-    kable_styling("striped", full_width = F, position="left") %>%
-    row_spec(nrow(df_table), bold = TRUE)
-  
-  return(output)
-}
 
-#' Closed Characteristics Treatment
-#'
-#' @description This function visualizes definitive fixation by total df complete out of total enrolled, stages breakdown,
-#' incisions broken down by plateau fractures and pilon fractures, and whether or not the study treatment adhered to protocol
-#' by treatment arm.
-#'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, df_randomized_treatment, treatment_arm
-#'
-#' @return A kable table
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' closed_charcateristics_treatment(analytic)
-#' }
-closed_characteristics_treatment <- function(analytic){
-  
-  inner_characteristics_treatment <- function(df) {
-    total <- sum(df$enrolled, na.rm=T)
-    df_total <- sum(!is.na(df$df_date))
-    df_complete <- data.frame(type = 'Patients with Definitive Fixation Data Complete', percentage = format_count_percent(df_total, total))
-    
-    plat <- sum(!is.na(df$plat_df_surgical_incision))
-    pil <- sum(!is.na(df$pil_df_surgical_incision))
-    
-    avg_stages <- df %>% 
-      filter(!is.na(df_date)) %>% 
-      summarize(type = 'Mean Stages (SD)', percentage = format_mean_sd(df_number_procedures))
-    
-    stages <- df %>% 
-      filter(!is.na(df_date)) %>% 
-      count(df_number_procedures) %>% 
-      rename(number = n) %>% 
-      mutate(percentage = format_count_percent(number, df_total)) %>% 
-      select(-number) %>% 
-      rename(type = df_number_procedures) 
-    
-    plat_incisions <- df %>%
-      filter(!is.na(df_date)) %>% 
-      mutate(plat_incisions = str_count(plat_df_surgical_incision, ";") + 1) %>% 
-      summarize(type = paste0('Plateau Fractures (n = ', plat, ")"), percentage = format_mean_sd(plat_incisions))
-    
-    pil_incisions <- df %>%
-      filter(!is.na(df_date)) %>% 
-      mutate(pil_incisions = str_count(pil_df_surgical_incision, ";") + 1) %>% 
-      summarize(type = paste0('Pilon Fractures (n = ', pil, ")"), percentage = format_mean_sd(pil_incisions))
-    
-    adherence <- df %>%
-      filter(!is.na(df_date)) %>%
-      mutate(df_randomized_treatment = as.character(df_randomized_treatment)) %>%
-      mutate(df_randomized_treatment = replace_na(df_randomized_treatment, 'Missing')) %>%
-      mutate(type = recode(df_randomized_treatment, 'TRUE' = "Yes",
-                           'FALSE' = 'No')) %>%
-      count(type) %>%
-      rename(number = n) %>%
-      mutate(percentage = format_count_percent(number, df_total)) %>%
-      select(-number) %>%
-      arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
-    
-    df_final <- rbind(df_complete, avg_stages, stages, plat_incisions, pil_incisions, adherence)
-    
-    n_df <- nrow(df_complete)
-    n_avg <- nrow(avg_stages)
-    n_stages <- nrow(stages)
-    
-    return(list(df_final, n_df, n_avg, n_stages))
-  }
-  
-  df <- analytic %>%
-    select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, df_randomized_treatment, treatment_arm) %>%
-    filter(enrolled)
-  
-  total <- sum(df$enrolled, na.rm=T)
-  
-  df_a <- df %>% filter(treatment_arm == "Group A")
-  df_b <- df %>% filter(treatment_arm == "Group B")
-  
-  results_a <- inner_characteristics_treatment(df_a)
-  results_b <- inner_characteristics_treatment(df_b)
-  results_full <- inner_characteristics_treatment(df)
-  
-  df_final_a <- results_a[[1]]
-  n_df_a <- results_a[[2]]
-  n_avg_a <- results_a[[3]]
-  n_stages_a <- results_a[[4]]
-  
-  df_final_b <- results_b[[1]]
-  n_df_b <- results_b[[2]]
-  n_avg_b <- results_b[[3]]
-  n_stages_b <- results_b[[4]]
-  
-  df_final_full <- results_full[[1]]
-  n_df_full <- results_full[[2]]
-  n_avg_full <- results_full[[3]]
-  n_stages_full <- results_full[[4]]
-  
-  df_table <- full_join(df_final_a, df_final_b, by = "type", suffix = c(" (Group A)", " (Group B)")) %>%
-    left_join(df_final_full, by = "type") %>%
-    select(type, ends_with(" (Group A)"), ends_with(" (Group B)"), percentage)
-  
-  cnames <- c(' ', paste('Group A (n=', sum(df_a$enrolled), ')'),
-              paste('Group B (n=', sum(df_b$enrolled), ')'),
-              paste('Overall (n=', total, ')'))
-  header <- c(1,1,1,1)
-  names(header) <- cnames
-  
-  vis <- kable(df_table, align='l',  col.names = cnames) %>%
-    pack_rows(index = c(" " = n_df_full, 'Definitive Fixation' = (n_avg_full + n_stages_full),
-                        
-                        'Number of Incisions [Mean (SD)]' = 2, 'Study Treatment Adhering to Protocol' = 3),
-              label_row_css = "text-align:left") %>%
-    row_spec(0, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(1, extra_css = 'border-bottom: 1px solid') %>%
-    add_indent(seq(n_stages_full) + n_avg_full + n_df_full) %>%
-    kable_styling("striped", full_width = F, position="left")
-  
-  return(vis)
-}
 
 #' Closed Fracture Characteristics
 #'
@@ -2655,66 +2475,6 @@ closed_fracture_characteristics <- function(analytic){
     kable_styling("striped", full_width = F, position="left")
   
   return(vis)
-}
-
-#' Closed Treatment characteristics Sextant
-#'
-#' @description This function visualizes the treatment characteristics per protocol and assignment for Sextant by treatment arm.
-#'
-#' @param analytic This is the analytic data set that must include local_antibiotic_at_dwc, treatment_arm,
-#' systemic_antibiotic_post_dwc, no_other_antibiotic_at_dwc
-#'
-#' @return A kable table
-
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' closed_treatment_characteristics_sextant(analytic)
-#' }
-closed_treatment_characteristics_sextant <- function(analytic){
-  
-  inner_treatment_characteristics_sextant <- function(df) {
-    result <- df %>%
-      group_by(local_antibiotic_at_dwc, systemic_antibiotic_post_dwc, no_other_antibiotic_at_dwc) %>%
-      summarize(count = n()) %>%
-      filter(!is.na(local_antibiotic_at_dwc) & !is.na(systemic_antibiotic_post_dwc) & !is.na(no_other_antibiotic_at_dwc)) %>%
-      arrange(desc(count))
-    total <- result %>%
-      pull(count) %>% 
-      sum()
-    
-    df <- result %>% 
-      mutate(count = format_count_percent(count, total)) %>% 
-      mutate_at(vars(-count), funs(ifelse(. == TRUE, "Adherent", "Not Adherent"))) %>% 
-      rename(`Local antibiotic treatment at DWC` = local_antibiotic_at_dwc,
-             `Systemic antibiotic treatment post DWC`= systemic_antibiotic_post_dwc,
-             `No other local antibiotic use at DWC` = no_other_antibiotic_at_dwc,
-             `Overall` = count) 
-    
-    colnames(df)[which(names(df) == "Overall")] <- paste("Overall (n =", total, ")", sep = " ")
-    
-    return(df)
-  }
-  
-  df <- analytic %>%
-    select(local_antibiotic_at_dwc, treatment_arm, systemic_antibiotic_post_dwc, no_other_antibiotic_at_dwc)
-  
-  df_a <- df %>% filter(treatment_arm == "Group A")
-  df_b <- df %>% filter(treatment_arm == "Group B")
-  
-  df_a_final <- inner_treatment_characteristics_sextant(df_a)
-  df_b_final <- inner_treatment_characteristics_sextant(df_b)
-  df_full_final <- inner_treatment_characteristics_sextant(df)
-  
-  df_table <- full_join(df_a_final, df_b_final, by = c("Local antibiotic treatment at DWC", "Systemic antibiotic treatment post DWC", "No other local antibiotic use at DWC"), suffix = c(" (Group A)", " (Group B)")) %>%
-    left_join(df_full_final, by = c("Local antibiotic treatment at DWC", "Systemic antibiotic treatment post DWC", "No other local antibiotic use at DWC"))
-  
-  output <- kable(df_table, align='l') %>%
-    add_header_above(c(" " = 3, "Group A" = 1, "Group B" = 1, "Overall" = 1)) %>%
-    kable_styling("striped", full_width = F, position="left")
-  
-  return(output)
 }
 
 #' Closed Followup 2 week status by site for Sextant
@@ -3129,7 +2889,7 @@ closed_followup_12mo_status_by_site_sextant <- function(analytic){
 #' @description This function visualizes the treatment crossover or any nonadherence occured during the Tobra
 #' study by treatment arm.
 #'
-#' @param analytic This is the analytic data set that must include facilitycode, df_date, df_randomized_treatment, treatment_arm
+#' @param analytic This is the analytic data set that must include facilitycode, df_date, treatment_arm, treatment_arm
 #'
 #' @return A kable table
 #' @export
@@ -3141,11 +2901,11 @@ closed_followup_12mo_status_by_site_sextant <- function(analytic){
 closed_adherence_by_site <- function(analytic){
   
   inner_adherence_by_site <- function(df) {
-    treatment_total <- sum(df$df_randomized_treatment, na.rm = TRUE)
+    treatment_total <- sum(df$treatment_arm, na.rm = TRUE)
     
     df2 <- df %>% 
       group_by(facilitycode) %>% 
-      summarize(elig_enr = sum(enrolled, na.rm = TRUE), df_total = sum(df_complete, na.rm = TRUE), treatment_completed = sum(df_randomized_treatment, na.rm = TRUE)) %>% 
+      summarize(elig_enr = sum(enrolled, na.rm = TRUE), df_total = sum(df_complete, na.rm = TRUE), treatment_completed = sum(treatment_arm, na.rm = TRUE)) %>% 
       mutate(treatment_completed = format_count_percent(treatment_completed, df_total)) 
     
     enrolled_total <- sum(df2$elig_enr, na.rm = TRUE)
@@ -3163,7 +2923,7 @@ closed_adherence_by_site <- function(analytic){
   }
   
   df <- analytic %>%
-    select(facilitycode, enrolled, df_date, df_randomized_treatment, treatment_arm) %>%
+    select(facilitycode, enrolled, df_date, treatment_arm, treatment_arm) %>%
     filter(enrolled) %>%
     mutate(df_date = na_if(df_date, "NA")) %>%
     mutate(df_complete = ifelse(!is.na(df_date), TRUE, FALSE))
