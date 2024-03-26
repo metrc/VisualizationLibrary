@@ -1887,56 +1887,6 @@ not_enrolled_for_other_reasons <- function(analytic){
 }
 
 
-#' Treatment crossover and nonadherence
-#'
-#' @description This function visualizes the treatment crossover or any nonadherence occured during the Sextant 
-#' study.
-#'
-#' @param analytic This is the analytic data set that must include facilitycode, eligible, enrolled, time_zero, 
-#' local_antibiotic_at_dwc
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' treatment_crossover_and_nonadherence()
-#' }
-treatment_crossover_and_nonadherence <- function(analytic){
-
-  df <- analytic %>% select(facilitycode, eligible, enrolled, time_zero, local_antibiotic_at_dwc) %>% 
-    filter(eligible == TRUE & enrolled == TRUE) %>% 
-    mutate(eligible_enrolled = ifelse(eligible == TRUE & enrolled == TRUE, TRUE, FALSE)) %>% 
-    mutate(dwc_complete = ifelse(!is.na(time_zero), TRUE, FALSE)) %>% 
-    mutate(dwc_treatment = ifelse(local_antibiotic_at_dwc, TRUE, FALSE)) %>% 
-    select(-eligible, -enrolled, -time_zero) 
-  
-  
-  df_2nd <- df %>% 
-    group_by(facilitycode) %>% 
-    summarize(elig_enr = sum(eligible_enrolled), total_dwc = sum(dwc_complete), treatment_completed = sum(dwc_treatment)) %>% 
-    replace(., is.na(.), 0)
-  
-  numerical_columns <- df_2nd %>% select_if(is.numeric) %>% colnames()
-  
-  df_3rd <- df_2nd %>%
-    summarise(across(all_of(numerical_columns), sum, na.rm = TRUE),
-              facilitycode = "TOTAL")
-  
-  
-  result <- bind_rows(df_2nd, df_3rd[nrow(df_3rd), ]) %>% 
-    mutate(treatment_completed= format_count_percent(treatment_completed, total_dwc)) %>% 
-    rename(`Clinical Site` = facilitycode,
-           `Eligible and Enrolled` = elig_enr,
-           `Definitive Wound Closure completed` = total_dwc,
-           `Received treatment per protocol and assignment(% DWC complete)` = treatment_completed)
-  
-  output <- kable(result, align='l') %>%
-    kable_styling("striped", full_width = F, position="left") %>% 
-    row_spec(nrow(result), bold = TRUE)
-  
-  return(output)
-}
 
 #' Characteristics Treatment
 #'
@@ -2106,52 +2056,6 @@ fracture_characteristics <- function(analytic){
   return(vis)
 }
 
-
-#' Treatment characteristics_sextant
-#'
-#' @description This function visualizes the treatment characteristics per protocol and assignmnet for Sextant. 
-#'
-#' @param analytic This is the analytic data set that must include local_antibiotic_at_dwc,
-#' systemic_antibiotic_post_dwc, no_other_antibiotic_at_dwc
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' treatment_characteristics_sextant()
-#' }
-treatment_characteristics_sextant <- function(analytic){
-  
-  df <- analytic %>% 
-    select(local_antibiotic_at_dwc,
-           systemic_antibiotic_post_dwc,
-           no_other_antibiotic_at_dwc)
-  result <- df %>%
-    group_by(local_antibiotic_at_dwc, systemic_antibiotic_post_dwc, no_other_antibiotic_at_dwc) %>%
-    summarize(count = n()) %>%
-    filter(!is.na(local_antibiotic_at_dwc) & !is.na(systemic_antibiotic_post_dwc) & !is.na(no_other_antibiotic_at_dwc)) %>% 
-    arrange(desc(count)) 
-  
-  total <- result %>%
-    pull(count) %>% 
-    sum()
-  
-  df <- result %>% 
-    mutate(count = format_count_percent(count, total)) %>% 
-    mutate_at(vars(-count), funs(ifelse(. == TRUE, "Adherent", "Not Adherent"))) %>% 
-    rename(`Local antibiotic treatment at DWC` = local_antibiotic_at_dwc,
-           `Systemic antibiotic treatment post DWC`= systemic_antibiotic_post_dwc,
-           `No other local antibiotic use at DWC` = no_other_antibiotic_at_dwc,
-           `Overall` = count) 
-  
-  colnames(df)[which(names(df) == "Overall")] <- paste("Overall (n =", total, ")", sep = " ")
-  
-  output <- kable(df, align='l') %>%
-    kable_styling("striped", full_width = F, position="left") 
-  
-  return(output)
-}
 
 #' Followup 2 week status by site for Sextant
 #'
