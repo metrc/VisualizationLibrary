@@ -1687,8 +1687,7 @@ amputations_and_gustilo_injury_characteristics <- function(analytic){
     relocate(count, .after=injury_gustilo_type) %>%
     rename('Fracture Type'=injury_gustilo_type)
   
-  output<- kable(combined, align='l', col.names = NULL) %>%
-    kable_styling("condensed", position = "left") %>%
+  output<- kable(combined, align='l', col.names = c(" ", " ")) %>%
     add_indent(positions = c(2,3,4,6,7,8,9,10,11,12)) %>% 
     kable_styling("striped", full_width = F, position="left") %>% 
     row_spec(c(1,5), bold=T,hline_after = T)
