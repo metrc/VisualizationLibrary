@@ -137,8 +137,6 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 
 
 
-
-
 #' Ankle and Plateau X-Ray and Measurement Status
 #'
 #' @description This function visualizes Ankle and Plateau X-Ray and Measurement Status
@@ -974,6 +972,7 @@ adjudications_and_discontinuations_by_type <- function(analytic){
   return(vis)
 }
 
+
 #' Number of patients Ineligible by Top 5 reasons of Exclusion
 #'
 #' @description This function visualizes the number of patients Ineligible by Top 5 reasons of Exclusion criteria
@@ -1336,55 +1335,6 @@ nonunion_surgery_outcome <- function(analytic){
 }
 
 
-#' Crossover Monitoring by Site
-#'
-#' @description This function visualizes the crossovers by site in hospital and at discharge
-#'
-#' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
-#' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ih_and_dc_crossover_monitoring_by_site()
-#' }
-ih_and_dc_crossover_monitoring_by_site <- function(analytic){
-  df <- analytic %>% 
-    select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero) %>% 
-    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-    rename(Facility = facilitycode) %>% 
-    filter(enrolled) %>% 
-    mutate(ih_discharge_date = !is.na(ih_discharge_date)) %>% 
-    group_by(Facility) %>% 
-    summarize('Enrolled' = sum(enrolled),
-              "Definitive Fixation Complete" = sum(df_surg_completed), 
-              "Discharged from Index Hospitalization" = sum(ih_discharge_date),
-              "Discharged on Radomization Date" = sum(ih_discharge_date_on_time_zero),
-              "Inpatient Crossover" = sum(crossover_inpatient),
-              "Discharge Crossover" = sum(crossover_discharge)) 
-  
-  
-  table_raw <- df %>% 
-    adorn_totals("row") %>% 
-    mutate(is_total=Facility=="Total") %>% 
-    arrange(desc(is_total), Facility) %>% 
-    select(-is_total) %>% 
-    mutate(`Definitive Fixation Complete` = format_count_percent(`Definitive Fixation Complete`, `Enrolled`)) %>% 
-    mutate(`Discharged from Index Hospitalization` = format_count_percent(`Discharged from Index Hospitalization`, `Enrolled`)) %>%
-    mutate(`Discharged on Radomization Date` = format_count_percent(`Discharged on Radomization Date`, `Enrolled`)) %>%
-    mutate(`Inpatient Crossover` = format_count_percent(`Inpatient Crossover`, `Enrolled`)) %>% 
-    mutate(`Discharge Crossover` = format_count_percent(`Discharge Crossover`, `Enrolled`))
-  
-  
-  table<- kable(table_raw, align='l') %>% 
-    kable_styling("striped", full_width = F, position="left")
-  
-  return(table)
-}
-
-
 #' Expected visit status for 3 Months, 6 Months, and 12 Months followup
 #'
 #' @description This function uses status constructs but treats early, late and complete as mutually exclusive.
@@ -1575,6 +1525,8 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
     kable_styling("striped", full_width = F, position="left") 
   return(vis)
 }
+
+
 #######################################################################################
 #' Number of Visits Expected, Completed, Missed, and out of Window
 #'
@@ -1893,142 +1845,6 @@ not_enrolled_for_other_reasons <- function(analytic){
 }
 
 
-#' Treatment crossover and nonadherence
-#'
-#' @description This function visualizes the treatment crossover or any nonadherence occured during the Sextant 
-#' study.
-#'
-#' @param analytic This is the analytic data set that must include facilitycode, eligible, enrolled, time_zero, 
-#' local_antibiotic_at_dwc
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' treatment_crossover_and_nonadherence()
-#' }
-treatment_crossover_and_nonadherence <- function(analytic){
-
-  df <- analytic %>% select(facilitycode, eligible, enrolled, time_zero, local_antibiotic_at_dwc) %>% 
-    filter(eligible == TRUE & enrolled == TRUE) %>% 
-    mutate(eligible_enrolled = ifelse(eligible == TRUE & enrolled == TRUE, TRUE, FALSE)) %>% 
-    mutate(dwc_complete = ifelse(!is.na(time_zero), TRUE, FALSE)) %>% 
-    mutate(dwc_treatment = ifelse(local_antibiotic_at_dwc, TRUE, FALSE)) %>% 
-    select(-eligible, -enrolled, -time_zero) 
-  
-  
-  df_2nd <- df %>% 
-    group_by(facilitycode) %>% 
-    summarize(elig_enr = sum(eligible_enrolled), total_dwc = sum(dwc_complete), treatment_completed = sum(dwc_treatment)) %>% 
-    replace(., is.na(.), 0)
-  
-  numerical_columns <- df_2nd %>% select_if(is.numeric) %>% colnames()
-  
-  df_3rd <- df_2nd %>%
-    summarise(across(all_of(numerical_columns), sum, na.rm = TRUE),
-              facilitycode = "TOTAL")
-  
-  
-  result <- bind_rows(df_2nd, df_3rd[nrow(df_3rd), ]) %>% 
-    mutate(treatment_completed= format_count_percent(treatment_completed, total_dwc)) %>% 
-    rename(`Clinical Site` = facilitycode,
-           `Eligible and Enrolled` = elig_enr,
-           `Definitive Wound Closure completed` = total_dwc,
-           `Received treatment per protocol and assignment(% DWC complete)` = treatment_completed)
-  
-  output <- kable(result, align='l') %>%
-    kable_styling("striped", full_width = F, position="left") %>% 
-    row_spec(nrow(result), bold = TRUE)
-  
-  return(output)
-}
-
-#' Characteristics Treatment
-#'
-#' @description This function visualizes definitive fixation by total df complete out of total enrolled, stages breakdown,
-#' incisions broken down by plateau fractures and pilon fractures, and whether or not the study treatment adhered to protocol.
-#'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, df_randomized_treatment
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' charcateristics_treatment()
-#' }
-characteristics_treatment <- function(analytic){
-  
-  df <- analytic %>% 
-    select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, df_randomized_treatment) %>% 
-    filter(enrolled)
-  
-  total <- sum(df$enrolled, na.rm=T)
-  df_total <- sum(!is.na(df$df_date))
-  
-  df_complete <- data.frame(type = 'Patients with Definitive Fixation Data Complete', percentage = format_count_percent(df_total, total))
-  
-  plat <- sum(!is.na(df$plat_df_surgical_incision))
-  pil <- sum(!is.na(df$pil_df_surgical_incision))
-  
-  avg_stages <- df %>% 
-    filter(!is.na(df_date)) %>% 
-    summarize(type = 'Mean Stages (SD)', percentage = format_mean_sd(df_number_procedures))
-  
-  stages <- df %>% 
-    filter(!is.na(df_date)) %>% 
-    count(df_number_procedures) %>% 
-    rename(number = n) %>% 
-    mutate(percentage = format_count_percent(number, df_total)) %>% 
-    select(-number) %>% 
-    rename(type = df_number_procedures) 
-  
-  plat_incisions <- df %>%
-    filter(!is.na(df_date)) %>% 
-    mutate(plat_incisions = str_count(plat_df_surgical_incision, ";") + 1) %>% 
-    summarize(type = paste0('Plateau Fractures (n = ', plat, ")"), percentage = format_mean_sd(plat_incisions))
-  
-  pil_incisions <- df %>%
-    filter(!is.na(df_date)) %>% 
-    mutate(pil_incisions = str_count(pil_df_surgical_incision, ";") + 1) %>% 
-    summarize(type = paste0('Pilon Fractures (n = ', pil, ")"), percentage = format_mean_sd(pil_incisions))
-  
-  adherence <- df %>% 
-    filter(!is.na(df_date)) %>% 
-    mutate(df_randomized_treatment = as.character(df_randomized_treatment)) %>%
-    mutate(df_randomized_treatment = replace_na(df_randomized_treatment, 'Missing')) %>% 
-    mutate(type = recode(df_randomized_treatment, 'TRUE' = "Yes", 
-                         'FALSE' = 'No')) %>% 
-    count(type) %>% 
-    rename(number = n) %>% 
-    mutate(percentage = format_count_percent(number, df_total)) %>% 
-    select(-number) %>% 
-    arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
-  
-  df_final <- rbind(df_complete, avg_stages, stages, plat_incisions, pil_incisions, adherence)
-  
-  cnames <- c(' ', paste('n = ', total))
-  header <- c(1,1)
-  names(header)<-cnames
-  
-  n_df <- nrow(df_complete)
-  n_avg <- nrow(avg_stages)
-  n_stages <- nrow(stages)
-  
-  vis <- kable(df_final, align='l', col.names = NULL) %>%
-    add_header_above(header) %>%  
-    pack_rows(index = c(" " = nrow(df_complete), 'Definitive Fixation' = (nrow(avg_stages) + nrow(stages)), 'Number of Incisions [Mean (SD)]' = (nrow(pil_incisions) + nrow(plat_incisions)),
-                        'Study Treatment Adhering to Protocol' = nrow(adherence)), label_row_css = "text-align:left") %>% 
-    kable_styling("striped", full_width = F, position="left") %>% 
-    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1, extra_css = 'border-bottom: 1px solid') %>% 
-    add_indent(seq(n_stages) + n_avg + n_df)
-  
-  return(vis)
-}
-
-
 #' Fracture Characteristics
 #'
 #' @description This function visualizes fracture characteristics, broken down by tibial plateau or pilon, 
@@ -2113,52 +1929,6 @@ fracture_characteristics <- function(analytic){
 }
 
 
-#' Treatment characteristics_sextant
-#'
-#' @description This function visualizes the treatment characteristics per protocol and assignmnet for Sextant. 
-#'
-#' @param analytic This is the analytic data set that must include local_antibiotic_at_dwc,
-#' systemic_antibiotic_post_dwc, no_other_antibiotic_at_dwc
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' treatment_characteristics_sextant()
-#' }
-treatment_characteristics_sextant <- function(analytic){
-  
-  df <- analytic %>% 
-    select(local_antibiotic_at_dwc,
-           systemic_antibiotic_post_dwc,
-           no_other_antibiotic_at_dwc)
-  result <- df %>%
-    group_by(local_antibiotic_at_dwc, systemic_antibiotic_post_dwc, no_other_antibiotic_at_dwc) %>%
-    summarize(count = n()) %>%
-    filter(!is.na(local_antibiotic_at_dwc) & !is.na(systemic_antibiotic_post_dwc) & !is.na(no_other_antibiotic_at_dwc)) %>% 
-    arrange(desc(count)) 
-  
-  total <- result %>%
-    pull(count) %>% 
-    sum()
-  
-  df <- result %>% 
-    mutate(count = format_count_percent(count, total)) %>% 
-    mutate_at(vars(-count), funs(ifelse(. == TRUE, "Adherent", "Not Adherent"))) %>% 
-    rename(`Local antibiotic treatment at DWC` = local_antibiotic_at_dwc,
-           `Systemic antibiotic treatment post DWC`= systemic_antibiotic_post_dwc,
-           `No other local antibiotic use at DWC` = no_other_antibiotic_at_dwc,
-           `Overall` = count) 
-  
-  colnames(df)[which(names(df) == "Overall")] <- paste("Overall (n =", total, ")", sep = " ")
-  
-  output <- kable(df, align='l') %>%
-    kable_styling("striped", full_width = F, position="left") 
-  
-  return(output)
-}
-
 #' Followup 2 week status by site for Sextant
 #'
 #' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf12) and patient
@@ -2233,6 +2003,7 @@ output <- kable(df_expected_2wk, align='l') %>%
 
 return(output)
 }
+
 
 #' Followup 3 month status by site for Sextant
 #'
@@ -2506,52 +2277,6 @@ followup_12mo_status_by_site_sextant <- function(analytic){
   return(output)
 }
 
-#' adherence by site
-#'
-#' @description This function visualizes the treatment crossover or any nonadherence occured during the study.
-#'
-#' @param analytic This is the analytic data set that must include facilitycode, df_date, df_randomized_treatment
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' adherence_by_site()
-#' }
-adherence_by_site <- function(analytic){
-  
-  df <- analytic %>%
-    select(facilitycode, enrolled, df_date, df_randomized_treatment) %>% 
-    filter(enrolled) %>%
-    mutate(df_date = na_if(df_date, "NA")) %>% 
-    mutate(df_complete = ifelse(!is.na(df_date), TRUE, FALSE)) 
-  
-  treatment_total <- (sum(df$df_randomized_treatment, na.rm = TRUE))
-  
-  df2 <- df %>% 
-    group_by(facilitycode) %>% 
-    summarize(elig_enr = sum(enrolled, na.rm = TRUE), df_total = sum(df_complete, na.rm = TRUE), treatment_completed = sum(df_randomized_treatment, na.rm = TRUE)) %>% 
-    mutate(treatment_completed = format_count_percent(treatment_completed, df_total)) 
-  
-  enrolled_total <- (sum(df2$elig_enr, na.rm = TRUE))
-  df_total <- (sum(df2$df_total, na.rm = TRUE))
-  
-  df3 <- data.frame(facilitycode = 'TOTAL', elig_enr = enrolled_total, df_total = df_total, treatment_completed = format_count_percent(treatment_total, df_total))
-  
-  df4 <- rbind(df2, df3) %>% 
-    rename(`Clinical Site` = facilitycode,
-           `Eligible and Enrolled` = elig_enr,
-           `Definitive Wound Closure completed` = df_total,
-           `Received treatment per protocol and assignment(% DWC complete)` = treatment_completed) 
-  
-  
-  output <- kable(df4, align='l') %>%
-    kable_styling("striped", full_width = F, position="left") %>% 
-    row_spec(nrow(df4), bold = TRUE)
-  
-  return(output)
-}
 
 #' Expected visit status for 3 Months, 6 Months, and 12 Months followup by EACH SITE
 #'
@@ -2731,6 +2456,7 @@ expected_and_followup_visit_by_site <- function(analytic){
   return(output)
 }
 
+
 #' enrollment_by_site tobra and sextant (var discontinued)
 #'
 #' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week 
@@ -2886,6 +2612,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="
   return(table)
 }
 
+
 #' Followup 2 week status by site for tobra
 #'
 #' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
@@ -2943,6 +2670,7 @@ followup_2wk_status_by_site_tobra <- function(analytic){
   return(output)
 }
 
+
 #' Followup 3mo status by site for tobra
 #'
 #' @description This function visualizes 3mo followup status by site for Clinical followup form(crf09) and patient
@@ -2999,6 +2727,7 @@ followup_3mo_status_by_site_tobra <- function(analytic){
   
   return(output)
 }
+
 
 #' Followup 6mo status by site for tobra
 #'
@@ -3074,6 +2803,7 @@ followup_6mo_status_by_site_tobra <- function(analytic){
     kable_styling("striped", full_width = F, position="left")   
   return(output)
 }
+
 
 #' Followup 12mo status by site for tobra
 #'
