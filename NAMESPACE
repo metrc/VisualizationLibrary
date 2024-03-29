@@ -50,12 +50,7 @@ export(dsmb_consort_diagram)
 export(dsmb_nsaid_consort_diagram)
 export(enrollment_by_injury_and_site)
 export(enrollment_by_site)
-<<<<<<< HEAD
-export(enrollment_by_site_var_disc)
-export(enrollment_by_site_var_disc_tobra_sextant)
-=======
 export(enrollment_by_site_last_days_var_disc)
->>>>>>> 29eafdf7994cc01258c58d7a124dc509c89b24c6
 export(enrollment_status_by_site)
 export(enrollment_status_by_site_var_discontinued)
 export(expected_and_followup_visit)
