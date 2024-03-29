@@ -7,9 +7,9 @@
 wbs_main_paper_injury_characteristics(analytic)
 }
 \arguments{
-\item{analytic}{injury_classification_weber, injury_classification_open_close, 
-injury_classification_lauge_hansen, injury_gustilo, injury_type, injury_classification_ankle_ota, 
-definitive_fixation_construct, definitive_fixation_type, soft_tissue_closure, enrolled}
+\item{analytic}{injury_classification_weber, injury_classification_lauge_hansen, injury_gustilo, 
+injury_type, injury_classification_ankle_ota, definitive_fixation_construct, 
+definitive_fixation_type, soft_tissue_closure, enrolled}
 }
 \value{
 nothing
