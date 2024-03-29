@@ -137,8 +137,6 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 
 
 
-
-
 #' Ankle and Plateau X-Ray and Measurement Status
 #'
 #' @description This function visualizes Ankle and Plateau X-Ray and Measurement Status
@@ -759,6 +757,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   
   deviation_sc_df <- analytic %>% 
     select(study_id, enrolled, protocol_deviation_screen_consent) %>% 
+    separate_rows(protocol_deviation_screen_consent, sep=";") %>% 
     filter(enrolled == TRUE) %>% 
     count(protocol_deviation_screen_consent) %>%
     rename(type=protocol_deviation_screen_consent) %>% 
@@ -768,6 +767,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   
   deviation_p_df <- analytic %>% 
     select(study_id, enrolled, protocol_deviation_procedural) %>% 
+    separate_rows(protocol_deviation_procedural, sep=";")
     filter(enrolled == TRUE) %>% 
     count(protocol_deviation_procedural) %>%
     rename(type=protocol_deviation_procedural) %>% 
@@ -777,6 +777,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   
   deviation_a_df <- analytic %>% 
     select(study_id, enrolled, protocol_deviation_administrative) %>% 
+    separate_rows(protocol_deviation_administrative, sep=";") %>%
     filter(enrolled == TRUE) %>% 
     mutate(protocol_deviation_administrative = ifelse(grepl("^Other:", protocol_deviation_administrative), "Other", protocol_deviation_administrative)) %>% 
     count(protocol_deviation_administrative) %>%
@@ -971,6 +972,7 @@ adjudications_and_discontinuations_by_type <- function(analytic){
   return(vis)
 }
 
+
 #' Number of patients Ineligible by Top 5 reasons of Exclusion
 #'
 #' @description This function visualizes the number of patients Ineligible by Top 5 reasons of Exclusion criteria
@@ -1139,7 +1141,10 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
   
   site_data <- df %>%
     separate(site_certified_date, cols, sep = ';') %>%
-    filter(!is.na(Facility))
+    filter(!is.na(Facility)) %>% 
+    arrange(desc(.[[5]]))
+  
+  site_data <- rbind(site_data %>% filter(.[[5]]!="NA days"),site_data %>% filter(.[[5]]=="NA days"))
   
   if(exclude_local_irb){
     cols <- cols[-2] 
@@ -1326,55 +1331,6 @@ nonunion_surgery_outcome <- function(analytic){
   
   table<- kable(df, align='l', col.names = colname) %>% 
     kable_styling("striped", full_width = F, position="left")
-  return(table)
-}
-
-
-#' Crossover Monitoring by Site
-#'
-#' @description This function visualizes the crossovers by site in hospital and at discharge
-#'
-#' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
-#' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' ih_and_dc_crossover_monitoring_by_site()
-#' }
-ih_and_dc_crossover_monitoring_by_site <- function(analytic){
-  df <- analytic %>% 
-    select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero) %>% 
-    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-    rename(Facility = facilitycode) %>% 
-    filter(enrolled) %>% 
-    mutate(ih_discharge_date = !is.na(ih_discharge_date)) %>% 
-    group_by(Facility) %>% 
-    summarize('Enrolled' = sum(enrolled),
-              "Definitive Fixation Complete" = sum(df_surg_completed), 
-              "Discharged from Index Hospitalization" = sum(ih_discharge_date),
-              "Discharged on Radomization Date" = sum(ih_discharge_date_on_time_zero),
-              "Inpatient Crossover" = sum(crossover_inpatient),
-              "Discharge Crossover" = sum(crossover_discharge)) 
-  
-  
-  table_raw <- df %>% 
-    adorn_totals("row") %>% 
-    mutate(is_total=Facility=="Total") %>% 
-    arrange(desc(is_total), Facility) %>% 
-    select(-is_total) %>% 
-    mutate(`Definitive Fixation Complete` = format_count_percent(`Definitive Fixation Complete`, `Enrolled`)) %>% 
-    mutate(`Discharged from Index Hospitalization` = format_count_percent(`Discharged from Index Hospitalization`, `Enrolled`)) %>%
-    mutate(`Discharged on Radomization Date` = format_count_percent(`Discharged on Radomization Date`, `Enrolled`)) %>%
-    mutate(`Inpatient Crossover` = format_count_percent(`Inpatient Crossover`, `Enrolled`)) %>% 
-    mutate(`Discharge Crossover` = format_count_percent(`Discharge Crossover`, `Enrolled`))
-  
-  
-  table<- kable(table_raw, align='l') %>% 
-    kable_styling("striped", full_width = F, position="left")
-  
   return(table)
 }
 
@@ -1569,6 +1525,8 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
     kable_styling("striped", full_width = F, position="left") 
   return(vis)
 }
+
+
 #######################################################################################
 #' Number of Visits Expected, Completed, Missed, and out of Window
 #'
@@ -1729,8 +1687,7 @@ amputations_and_gustilo_injury_characteristics <- function(analytic){
     relocate(count, .after=injury_gustilo_type) %>%
     rename('Fracture Type'=injury_gustilo_type)
   
-  output<- kable(combined, align='l', col.names = NULL) %>%
-    kable_styling("condensed", position = "left") %>%
+  output<- kable(combined, align='l', col.names = c(" ", " ")) %>%
     add_indent(positions = c(2,3,4,6,7,8,9,10,11,12)) %>% 
     kable_styling("striped", full_width = F, position="left") %>% 
     row_spec(c(1,5), bold=T,hline_after = T)
@@ -1887,6 +1844,7 @@ not_enrolled_for_other_reasons <- function(analytic){
 }
 
 
+<<<<<<< HEAD
 
 #' Characteristics Treatment
 #'
@@ -1973,6 +1931,8 @@ characteristics_treatment <- function(analytic){
 }
 
 
+=======
+>>>>>>> 29eafdf7994cc01258c58d7a124dc509c89b24c6
 #' Fracture Characteristics
 #'
 #' @description This function visualizes fracture characteristics, broken down by tibial plateau or pilon, 
@@ -2131,6 +2091,7 @@ output <- kable(df_expected_2wk, align='l') %>%
 
 return(output)
 }
+
 
 #' Followup 3 month status by site for Sextant
 #'
@@ -2404,53 +2365,6 @@ followup_12mo_status_by_site_sextant <- function(analytic){
   return(output)
 }
 
-#' adherence by site
-#'
-#' @description This function visualizes the treatment crossover or any nonadherence occured during the Tobra 
-#' study.
-#'
-#' @param analytic This is the analytic data set that must include facilitycode, df_date, df_randomized_treatment
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' adherence_by_site()
-#' }
-adherence_by_site <- function(analytic){
-  
-  df <- analytic %>%
-    select(facilitycode, enrolled, df_date, df_randomized_treatment) %>% 
-    filter(enrolled) %>%
-    mutate(df_date = na_if(df_date, "NA")) %>% 
-    mutate(df_complete = ifelse(!is.na(df_date), TRUE, FALSE)) 
-  
-  treatment_total <- (sum(df$df_randomized_treatment, na.rm = TRUE))
-  
-  df2 <- df %>% 
-    group_by(facilitycode) %>% 
-    summarize(elig_enr = sum(enrolled, na.rm = TRUE), df_total = sum(df_complete, na.rm = TRUE), treatment_completed = sum(df_randomized_treatment, na.rm = TRUE)) %>% 
-    mutate(treatment_completed = format_count_percent(treatment_completed, df_total)) 
-  
-  enrolled_total <- (sum(df2$elig_enr, na.rm = TRUE))
-  df_total <- (sum(df2$df_total, na.rm = TRUE))
-  
-  df3 <- data.frame(facilitycode = 'TOTAL', elig_enr = enrolled_total, df_total = df_total, treatment_completed = format_count_percent(treatment_total, df_total))
-  
-  df4 <- rbind(df2, df3) %>% 
-    rename(`Clinical Site` = facilitycode,
-           `Eligible and Enrolled` = elig_enr,
-           `Definitive Wound Closure completed` = df_total,
-           `Received treatment per protocol and assignment(% DWC complete)` = treatment_completed) 
-  
-  
-  output <- kable(df4, align='l') %>%
-    kable_styling("striped", full_width = F, position="left") %>% 
-    row_spec(nrow(df4), bold = TRUE)
-  
-  return(output)
-}
 
 #' Expected visit status for 3 Months, 6 Months, and 12 Months followup by EACH SITE
 #'
@@ -2630,25 +2544,51 @@ expected_and_followup_visit_by_site <- function(analytic){
   return(output)
 }
 
+<<<<<<< HEAD
 #' enrollment_by_site (var discontinued)
+=======
+
+#' enrollment_by_site tobra and sextant (var discontinued)
+>>>>>>> 29eafdf7994cc01258c58d7a124dc509c89b24c6
 #'
 #' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week 
-#' study.
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
-#' facilitycode, adjudicated_discontinued, screened_date
+#' facilitycode, screened_date
+#' @param days the number of last days to include in the last days summary section of the table
+#' @param discontinued this is a meta construct where you can specify your discontinued construct like 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
+#' @param discontinued_colname this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')
+#' @param include_safety_set this is a toggle that will include a safety_set construct if you want it included (defaults to FALSE)
 #'
-#' @return nothing
+#' @return html table
 #' @export
 #'
 #' @examples
 #' \dontrun{
+<<<<<<< HEAD
 #' enrollment_by_site_var_disc()
 #' }
 enrollment_by_site_var_disc <- function(analytic, days){
   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
            facilitycode, adjudicated_discontinued, screened_date)
+=======
+#' enrollment_by_site_last_days_var_disc()
+#' }
+enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="discontinued", discontinued_colname="Discontinued", include_safety_set=FALSE){
+  
+  if(include_safety_set){
+    df <- analytic %>% 
+      select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+             facilitycode, all_of(discontinued), screened_date, safety_set)
+  } else{
+    df <- analytic %>% 
+      select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+             facilitycode, all_of(discontinued), screened_date)
+  }
+
+  colnames(df)[10] <- "discontinued"
+>>>>>>> 29eafdf7994cc01258c58d7a124dc509c89b24c6
   
   last14 <- Sys.Date() - days
   
@@ -2669,12 +2609,21 @@ enrollment_by_site_var_disc <- function(analytic, days){
     group_by(Facility) %>% 
     summarize(Refused = sum(refused), 'Not Consented' = sum(not_consented), cnr = sum(consented_and_randomized))
   
-  df_3rd <- df %>% 
-    filter(eligible == TRUE & consented_and_randomized == TRUE) %>% 
-    group_by(Facility) %>% 
-    summarize('Discontinued' = sum(adjudicated_discontinued),
-              "Enrolled" = sum(enrolled)) 
-  
+  if(include_safety_set){
+    df_3rd <- df %>% 
+      filter(eligible == TRUE & consented_and_randomized == TRUE) %>% 
+      group_by(Facility) %>% 
+      summarize('Discontinued' = sum(discontinued),
+                "Enrolled" = sum(enrolled),
+                'Safety Set' = sum(safety_set)) 
+  } else{
+    df_3rd <- df %>% 
+      filter(eligible == TRUE & consented_and_randomized == TRUE) %>% 
+      group_by(Facility) %>% 
+      summarize('Discontinued' = sum(discontinued),
+                "Enrolled" = sum(enrolled)) 
+  }
+
   table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
     left_join(df_3rd, by = 'Facility') 
   
@@ -2724,20 +2673,38 @@ enrollment_by_site_var_disc <- function(analytic, days){
   total_row <- final %>% 
     slice_head(n=1)
   
-  last <- bind_rows(final, total_row) %>% 
-    slice_tail(n=-1) %>% 
-    select(-Eligible, -Enrolled, -Refused, -`Not Consented`, -cnr, -Discontinued) %>% 
-    select(Facility, Screened1, Eligible1, Enrolled1, Screened2, Enrolled2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for 'Other' Reasons (% eligible)`, 
-           `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Eligible & Enrolled (% randomized)`) %>% 
-    mutate(`Eligible1` = format_count_percent(`Eligible1`, `Screened1`),
-           `Enrolled1` = format_count_percent(`Enrolled1`, `Screened1`))
+  if(include_safety_set){
+    last <- bind_rows(final, total_row) %>% 
+      slice_tail(n=-1) %>% 
+      select(-Eligible, -Enrolled, -Refused, -`Not Consented`, -cnr, -Discontinued) %>% 
+      select(Facility, Screened1, Eligible1, Enrolled1, Screened2, Enrolled2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for 'Other' Reasons (% eligible)`, 
+             `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Safety Set`, `Eligible & Enrolled (% randomized)`) %>% 
+      mutate(`Eligible1` = format_count_percent(`Eligible1`, `Screened1`),
+             `Enrolled1` = format_count_percent(`Enrolled1`, `Screened1`))
+    
+    colnames(last) <- c('Facility', 'Screened', 'Eligible (% screened)', 'Enrolled (% screened)', "Screened", 'Enrolled', 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
+                        'Consented & Randomized (% eligible)', paste(discontinued_colname, '(% randomized)'), 'Safety Set', 'Eligible & Enrolled (% randomized)' )
+    
+    header_num <- c(1,3,2,8)
+    header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
+    names(header_num) <- header_names
+  } else{
+    last <- bind_rows(final, total_row) %>% 
+      slice_tail(n=-1) %>% 
+      select(-Eligible, -Enrolled, -Refused, -`Not Consented`, -cnr, -Discontinued) %>% 
+      select(Facility, Screened1, Eligible1, Enrolled1, Screened2, Enrolled2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for 'Other' Reasons (% eligible)`, 
+             `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Eligible & Enrolled (% randomized)`) %>% 
+      mutate(`Eligible1` = format_count_percent(`Eligible1`, `Screened1`),
+             `Enrolled1` = format_count_percent(`Enrolled1`, `Screened1`))
+    
+    colnames(last) <- c('Facility', 'Screened', 'Eligible (% screened)', 'Enrolled (% screened)', "Screened", 'Enrolled', 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
+                        'Consented & Randomized (% eligible)', paste(discontinued_colname, '(% randomized)'), 'Eligible & Enrolled (% randomized)' )
+    
+    header_num <- c(1,3,2,7)
+    header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
+    names(header_num) <- header_names
+  }
   
-  colnames(last) <- c('Facility', 'Screened', 'Eligible (% screened)', 'Enrolled (% screened)', "Screened", 'Enrolled', 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
-                      'Consented & Randomized (% eligible)', 'Discontinued (% randomized)', 'Eligible & Enrolled (% randomized)' )
-  
-  header_num <- c(1,3,2,7)
-  header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
-  names(header_num) <- header_names
   table <- kable(last, align='l') %>% 
     add_header_above(header_num) %>%
     kable_styling("striped", full_width = F, position="left") %>% 
@@ -2747,6 +2714,7 @@ enrollment_by_site_var_disc <- function(analytic, days){
 }
 
 
+<<<<<<< HEAD
 #' enrollment_by_site for Tobra and Sextant (var discontinued)
 #'
 #' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 
@@ -2864,6 +2832,8 @@ enrollment_by_site_var_disc_tobra_sextant <- function(analytic, days){
   return(table)
 }
 
+=======
+>>>>>>> 29eafdf7994cc01258c58d7a124dc509c89b24c6
 #' Followup 2 week status by site for tobra
 #'
 #' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
@@ -2921,6 +2891,7 @@ followup_2wk_status_by_site_tobra <- function(analytic){
   return(output)
 }
 
+
 #' Followup 3mo status by site for tobra
 #'
 #' @description This function visualizes 3mo followup status by site for Clinical followup form(crf09) and patient
@@ -2977,6 +2948,7 @@ followup_3mo_status_by_site_tobra <- function(analytic){
   
   return(output)
 }
+
 
 #' Followup 6mo status by site for tobra
 #'
@@ -3052,6 +3024,7 @@ followup_6mo_status_by_site_tobra <- function(analytic){
     kable_styling("striped", full_width = F, position="left")   
   return(output)
 }
+
 
 #' Followup 12mo status by site for tobra
 #'

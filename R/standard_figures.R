@@ -559,7 +559,7 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
     filter(refused == FALSE | is.na(refused))
   
   consented <- sum(consented_df$consented, na.rm = TRUE)
-  not_enrolled_other <- eligible - (consented + refused)
+  not_consented <- eligible - (consented + refused)
   
   randomized_df <- consented_df %>% 
     filter(consented)
@@ -593,7 +593,7 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
       ineligible [style="rounded,filled", fillcolor="#a4d3ee", pos="10,12!", shape = box, width=2.4, height=1, label = "Ineligible (n=',ineligible,')"];
       eligible [style="rounded,filled", fillcolor="#a4d3ee", pos="6,10!", shape = box, width=2.4, height=1, label = "Eligible (n=',eligible,')"];
       
-      refused [style="rounded,filled", fillcolor="#a4d3ee", pos="10,10!", shape = box, width=2.4, height=1, label = "Other Not Enrolled (n=',not_enrolled_other,')\nRefused (n=',refused,')"];
+      refused [style="rounded,filled", fillcolor="#a4d3ee", pos="10,10!", shape = box, width=2.4, height=1, label = "Not Consented (n=',not_consented,')\nRefused (n=',refused,')"];
 
       consented [style="rounded,filled", fillcolor="#a4d3ee", pos="6,8!", shape = box, width=2.4, height=1, label = "Consented (n=',consented,')"];
       
