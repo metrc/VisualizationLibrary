@@ -768,7 +768,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   deviation_p_df <- analytic %>% 
     select(study_id, enrolled, protocol_deviation_procedural) %>% 
     separate_rows(protocol_deviation_procedural, sep=";")
-    filter(enrolled == TRUE) %>% 
+  filter(enrolled == TRUE) %>% 
     count(protocol_deviation_procedural) %>%
     rename(type=protocol_deviation_procedural) %>% 
     filter(!is.na(type)) %>% 
@@ -1691,8 +1691,8 @@ amputations_and_gustilo_injury_characteristics <- function(analytic){
     add_indent(positions = c(2,3,4,6,7,8,9,10,11,12)) %>% 
     kable_styling("striped", full_width = F, position="left") %>% 
     row_spec(c(1,5), bold=T,hline_after = T)
-
-return(output)
+  
+  return(output)
 }
 
 
@@ -1710,7 +1710,7 @@ return(output)
 #' refusal_reasons_by_site()
 #' }
 refusal_reasons_by_site <- function(analytic){
-
+  
   df <- analytic %>% 
     select(facilitycode, screened, refused, refused_reason) %>% 
     filter(screened == TRUE) 
@@ -1765,7 +1765,7 @@ refusal_reasons_by_site <- function(analytic){
     rename(`Screened, to date` = screen_n,
            `Refused, to date` = refuse_n, 
            `Clinical Site` = facilitycode) 
-
+  
   output <- kable(df_final, align='l') %>%
     kable_styling("striped", full_width = F, position="left") %>% 
     row_spec(row = 1, bold = TRUE)
@@ -1946,61 +1946,61 @@ fracture_characteristics <- function(analytic){
 #' followup_2wk_status_by_site_sextant()
 #' }
 followup_2wk_status_by_site_sextant <- function(analytic){
-
-df <- analytic %>% 
-  select(study_id, eligible, enrolled, facilitycode, time_zero, followup_expected_2wk, followup_complete_crf12_2wk, 
-         followup_incomplete_crf12_2wk, followup_early_crf12_2wk, followup_late_crf12_2wk, followup_missing_crf12_2wk, 
-         followup_not_started_crf12_2wk, followup_status_crf14_crf15_2wk)
-
-df_crf12 <- df %>% 
-  select(study_id, facilitycode, followup_complete_crf12_2wk, followup_incomplete_crf12_2wk, 
-         followup_early_crf12_2wk, followup_late_crf12_2wk, followup_missing_crf12_2wk, followup_not_started_crf12_2wk) %>% 
-  group_by(facilitycode) %>% 
-  summarise("Complete" = sum(followup_complete_crf12_2wk, na.rm = TRUE), "Incomplete" = sum(followup_incomplete_crf12_2wk, na.rm = TRUE),
-            "Early" = sum(followup_early_crf12_2wk, na.rm = TRUE), "Late" = sum(followup_late_crf12_2wk, na.rm = TRUE),
-            "Missing" = sum(followup_missing_crf12_2wk, na.rm = TRUE), "Not Started" = sum(followup_not_started_crf12_2wk, na.rm = TRUE))
-
-df_crf14_crf15 <- df %>%
-  select(study_id, facilitycode, followup_status_crf14_crf15_2wk) %>%
-  pivot_wider(names_from = followup_status_crf14_crf15_2wk, values_from = followup_status_crf14_crf15_2wk) %>%
-  mutate(across(-c(study_id, facilitycode), ~ !is.na(.)), not_started = FALSE) %>%
-  group_by(facilitycode) %>%
-  summarise("Complete_crf14_15" = sum(complete, na.rm = TRUE),
-            "Incomplete_crf14_15" = sum(incomplete, na.rm = TRUE),
-            "Early_crf14_15" = sum(early, na.rm = TRUE),
-            "Late_crf14_15" = sum(late, na.rm = TRUE),
-            "Missing_crf14_15" = sum(missing, na.rm = TRUE),
-            "Not Started_crf14_15" = sum(not_started, na.rm = TRUE))
-
-exclude_columns <- c("facilitycode", "eligible_and_enrolled", "dwc_completed", "expected")
-
-df_expected_2wk <- df %>% 
-  select(study_id, facilitycode, eligible, enrolled, time_zero, followup_expected_2wk) %>% 
-  mutate(dwc_complete = ifelse(!is.na(time_zero), TRUE, FALSE)) %>% 
-  mutate(eligible_enrolled = ifelse(eligible & enrolled, TRUE, FALSE)) %>% 
-  select(-time_zero, -enrolled, -eligible) %>% 
-  group_by(facilitycode) %>% 
-  summarise("eligible_and_enrolled"= sum(eligible_enrolled, na.rm = TRUE), "dwc_completed"= sum(dwc_complete, na.rm = TRUE),
-            "expected"= sum(followup_expected_2wk, na.rm = TRUE)) %>% 
-  left_join(df_crf12) %>% 
-  left_join(df_crf14_crf15) %>% 
-  mutate(across(-one_of(exclude_columns),
-                ~ format_count_percent(., expected))) %>% 
-  rename(`Clinical Site` = facilitycode,
-         `Eligible & Enrolled` = eligible_and_enrolled,
-         `DWC Complete` = dwc_completed,
-         `Expected` = expected) 
-
-colnames(df_expected_2wk) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
-                             gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
-                             gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
-                                                                colnames(df_expected_2wk)))))))
-
-output <- kable(df_expected_2wk, align='l') %>%
-  add_header_above(c("", "", "", "", "2 Weeks CRF12 (Clinical followup form)" = 6, "2 Weeks CRF14 & CRF15 (Patient reported outcomes)" = 6), align = "c") %>% 
-  kable_styling("striped", full_width = F, position="left") 
-
-return(output)
+  
+  df <- analytic %>% 
+    select(study_id, eligible, enrolled, facilitycode, time_zero, followup_expected_2wk, followup_complete_crf12_2wk, 
+           followup_incomplete_crf12_2wk, followup_early_crf12_2wk, followup_late_crf12_2wk, followup_missing_crf12_2wk, 
+           followup_not_started_crf12_2wk, followup_status_crf14_crf15_2wk)
+  
+  df_crf12 <- df %>% 
+    select(study_id, facilitycode, followup_complete_crf12_2wk, followup_incomplete_crf12_2wk, 
+           followup_early_crf12_2wk, followup_late_crf12_2wk, followup_missing_crf12_2wk, followup_not_started_crf12_2wk) %>% 
+    group_by(facilitycode) %>% 
+    summarise("Complete" = sum(followup_complete_crf12_2wk, na.rm = TRUE), "Incomplete" = sum(followup_incomplete_crf12_2wk, na.rm = TRUE),
+              "Early" = sum(followup_early_crf12_2wk, na.rm = TRUE), "Late" = sum(followup_late_crf12_2wk, na.rm = TRUE),
+              "Missing" = sum(followup_missing_crf12_2wk, na.rm = TRUE), "Not Started" = sum(followup_not_started_crf12_2wk, na.rm = TRUE))
+  
+  df_crf14_crf15 <- df %>%
+    select(study_id, facilitycode, followup_status_crf14_crf15_2wk) %>%
+    pivot_wider(names_from = followup_status_crf14_crf15_2wk, values_from = followup_status_crf14_crf15_2wk) %>%
+    mutate(across(-c(study_id, facilitycode), ~ !is.na(.)), not_started = FALSE) %>%
+    group_by(facilitycode) %>%
+    summarise("Complete_crf14_15" = sum(complete, na.rm = TRUE),
+              "Incomplete_crf14_15" = sum(incomplete, na.rm = TRUE),
+              "Early_crf14_15" = sum(early, na.rm = TRUE),
+              "Late_crf14_15" = sum(late, na.rm = TRUE),
+              "Missing_crf14_15" = sum(missing, na.rm = TRUE),
+              "Not Started_crf14_15" = sum(not_started, na.rm = TRUE))
+  
+  exclude_columns <- c("facilitycode", "eligible_and_enrolled", "dwc_completed", "expected")
+  
+  df_expected_2wk <- df %>% 
+    select(study_id, facilitycode, eligible, enrolled, time_zero, followup_expected_2wk) %>% 
+    mutate(dwc_complete = ifelse(!is.na(time_zero), TRUE, FALSE)) %>% 
+    mutate(eligible_enrolled = ifelse(eligible & enrolled, TRUE, FALSE)) %>% 
+    select(-time_zero, -enrolled, -eligible) %>% 
+    group_by(facilitycode) %>% 
+    summarise("eligible_and_enrolled"= sum(eligible_enrolled, na.rm = TRUE), "dwc_completed"= sum(dwc_complete, na.rm = TRUE),
+              "expected"= sum(followup_expected_2wk, na.rm = TRUE)) %>% 
+    left_join(df_crf12) %>% 
+    left_join(df_crf14_crf15) %>% 
+    mutate(across(-one_of(exclude_columns),
+                  ~ format_count_percent(., expected))) %>% 
+    rename(`Clinical Site` = facilitycode,
+           `Eligible & Enrolled` = eligible_and_enrolled,
+           `DWC Complete` = dwc_completed,
+           `Expected` = expected) 
+  
+  colnames(df_expected_2wk) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
+                                                                          gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
+                                                                                                                   gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
+                                                                                                                                                      colnames(df_expected_2wk)))))))
+  
+  output <- kable(df_expected_2wk, align='l') %>%
+    add_header_above(c("", "", "", "", "2 Weeks CRF12 (Clinical followup form)" = 6, "2 Weeks CRF14 & CRF15 (Patient reported outcomes)" = 6), align = "c") %>% 
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
 }
 
 
@@ -2069,9 +2069,9 @@ followup_3mo_status_by_site_sextant <- function(analytic){
            `Expected` = expected) 
   
   colnames(df_expected_3mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
-                               gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
-                               gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
-                                colnames(df_expected_3mo)))))))
+                                                                          gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
+                                                                                                                   gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
+                                                                                                                                                      colnames(df_expected_3mo)))))))
   
   output <- kable(df_expected_3mo, align='l') %>%
     add_header_above(c("", "", "", "", "3 Months CRF12 (Clinical followup form)" = 6, "3 Months CRF14 & CRF15 (Patient reported outcomes)" = 6), align = "c") %>% 
@@ -2146,9 +2146,9 @@ followup_6mo_status_by_site_sextant <- function(analytic){
            `Expected` = expected) 
   
   colnames(df_expected_6mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
-                               gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
-                               gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
-                               colnames(df_expected_6mo)))))))
+                                                                          gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
+                                                                                                                   gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
+                                                                                                                                                      colnames(df_expected_6mo)))))))
   
   
   output <- kable(df_expected_6mo, align='l') %>%
@@ -2178,7 +2178,7 @@ followup_6mo_status_by_site_sextant <- function(analytic){
 #' followup_12mo_status_by_site_sextant()
 #' }
 followup_12mo_status_by_site_sextant <- function(analytic){
-
+  
   df <- analytic %>% 
     select(study_id, eligible, enrolled, facilitycode, followup_expected_12mo, time_zero, 
            followup_complete_crf12_12mo, followup_incomplete_crf12_12mo, followup_early_crf12_12mo, 
@@ -2262,14 +2262,14 @@ followup_12mo_status_by_site_sextant <- function(analytic){
            `Expected` = expected) 
   
   colnames(df_expected_12mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
-                                gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
-                                gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started",
-                                gsub("Complete_crf09", "Complete", gsub("Incomplete_crf09", "Incomplete", 
-                                gsub("Missing_crf09", "Missing", gsub("Early_crf09", "Early", 
-                                gsub("Late_crf09", "Late", gsub("Not Started_crf09", "Not started",
-                                colnames(df_expected_12mo)))))))))))))
+                                                                           gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
+                                                                                                                    gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started",
+                                                                                                                                                       gsub("Complete_crf09", "Complete", gsub("Incomplete_crf09", "Incomplete", 
+                                                                                                                                                                                               gsub("Missing_crf09", "Missing", gsub("Early_crf09", "Early", 
+                                                                                                                                                                                                                                     gsub("Late_crf09", "Late", gsub("Not Started_crf09", "Not started",
+                                                                                                                                                                                                                                                                     colnames(df_expected_12mo)))))))))))))
   
-    output <- kable(df_expected_12mo, align='l') %>%
+  output <- kable(df_expected_12mo, align='l') %>%
     add_header_above(c("", "", "", "", "12 Months CRF12 (Clinical followup form)" = 6, "12 Months CRF14 & CRF15 (Patient reported outcomes)" = 6, "12 Months CRF09 (Medical record review)" = 6), align = "c") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
@@ -2434,14 +2434,14 @@ expected_and_followup_visit_by_site <- function(analytic){
   
   colnames(final_df) <- 
     gsub("expected_6mo", "Expected 6 Months", gsub("complete_6mo", "Complete(% Expected)", 
-    gsub("incomplete_6mo", "Incomplete(% Expected)", gsub("missing_6mo", "Missing(% Expected)", 
-    gsub("early_6mo", "Early(% Complete)", gsub("late_6mo", "Late(% Complete)", 
-    gsub("not_started_6mo", "Not started(% Expected)", gsub("on_time_6mo", "On Time(% Complete)", 
-    gsub("expected_12mo", "Expected 12 Months", gsub("complete_12mo", "Complete(% Expected)", 
-    gsub("incomplete_12mo", "Incomplete(% Expected)", gsub("missing_12mo", "Missing(% Expected)", 
-    gsub("early_12mo", "Early(% Complete)", gsub("late_12mo", "Late(% Complete)", 
-    gsub("not_started_12mo", "Not started(% Expected)", gsub("on_time_12mo", "On Time(% Complete)", 
-    colnames(final_df)))))))))))))))))
+                                                   gsub("incomplete_6mo", "Incomplete(% Expected)", gsub("missing_6mo", "Missing(% Expected)", 
+                                                                                                         gsub("early_6mo", "Early(% Complete)", gsub("late_6mo", "Late(% Complete)", 
+                                                                                                                                                     gsub("not_started_6mo", "Not started(% Expected)", gsub("on_time_6mo", "On Time(% Complete)", 
+                                                                                                                                                                                                             gsub("expected_12mo", "Expected 12 Months", gsub("complete_12mo", "Complete(% Expected)", 
+                                                                                                                                                                                                                                                              gsub("incomplete_12mo", "Incomplete(% Expected)", gsub("missing_12mo", "Missing(% Expected)", 
+                                                                                                                                                                                                                                                                                                                     gsub("early_12mo", "Early(% Complete)", gsub("late_12mo", "Late(% Complete)", 
+                                                                                                                                                                                                                                                                                                                                                                  gsub("not_started_12mo", "Not started(% Expected)", gsub("on_time_12mo", "On Time(% Complete)", 
+                                                                                                                                                                                                                                                                                                                                                                                                                           colnames(final_df)))))))))))))))))
   
   footnotes_1 <- c("*Complete, Incomplete, Missing, and Not Started sums up to Expected")
   footnotes_2 <- c("**Early, On Time, and Late sums up to total Complete")
@@ -2485,7 +2485,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="
       select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
              facilitycode, all_of(discontinued), screened_date)
   }
-
+  
   colnames(df)[10] <- "discontinued"
   
   last14 <- Sys.Date() - days
@@ -2521,7 +2521,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="
       summarize('Discontinued' = sum(discontinued),
                 "Enrolled" = sum(enrolled)) 
   }
-
+  
   table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
     left_join(df_3rd, by = 'Facility') 
   
@@ -2886,9 +2886,9 @@ followup_12mo_status_by_site_tobra <- function(analytic){
 #' @description This function outputs a table with various injury characteristics for enrolled patients with "Ankle"
 #' injuries. This table is produced for Weight bearing main paper. 
 #'
-#' @param analytic injury_classification_weber, injury_classification_open_close, 
-#' injury_classification_lauge_hansen, injury_gustilo, injury_type, injury_classification_ankle_ota, 
-#' definitive_fixation_construct, definitive_fixation_type, soft_tissue_closure, enrolled
+#' @param analytic injury_classification_weber, injury_classification_lauge_hansen, injury_gustilo, 
+#' injury_type, injury_classification_ankle_ota, definitive_fixation_construct, 
+#' definitive_fixation_type, soft_tissue_closure, enrolled
 #'
 #' @return nothing
 #' @export
@@ -2899,14 +2899,15 @@ followup_12mo_status_by_site_tobra <- function(analytic){
 #' }
 wbs_main_paper_injury_characteristics <- function(analytic){
   df <- analytic %>% 
-    select(injury_classification_weber, injury_classification_open_close, injury_classification_lauge_hansen, injury_gustilo, injury_type, 
+    select(injury_classification_weber, injury_classification_lauge_hansen, injury_gustilo, injury_type, 
            injury_classification_ankle_ota, definitive_fixation_construct, definitive_fixation_type, 
            soft_tissue_closure, enrolled) %>% 
     filter(enrolled & injury_type == 'ankle')
   
+  total <- df %>% nrow()
+  
   df_injury_ota <- df %>% 
     select(injury_classification_ankle_ota) %>% 
-    filter(injury_classification_ankle_ota != '44B1') %>% 
     mutate(ota_classification = ifelse(injury_classification_ankle_ota %in% c('44A2', '44A3'), "44 A2/A3", 
                                        ifelse(injury_classification_ankle_ota %in% c('44B2', '44B3'), '44 B2/B3',
                                               ifelse(injury_classification_ankle_ota %in% c('44C1', '44C2', '44C3'), '44 C1/C2/C3', injury_classification_ankle_ota)))) %>% 
@@ -2933,24 +2934,13 @@ wbs_main_paper_injury_characteristics <- function(analytic){
     mutate(Category = "Lauge Hansen") %>% 
     mutate(heading = ifelse(is.na(heading), "Missing", heading))
   
-  df_gustilo_closed <- df %>% select(injury_classification_open_close) %>% 
-    filter(injury_classification_open_close == "Closed") %>% 
-    group_by(injury_classification_open_close) %>% 
-    count() %>% 
-    rename(heading = injury_classification_open_close) %>% 
-    mutate(Category = "Gustilo") %>% 
-    mutate(heading = ifelse(is.na(heading), "Missing", heading))
-  
   df_gustilo <- df %>% 
     select(injury_gustilo) %>% 
-    mutate(injury_gustilo = ifelse(!is.na(injury_gustilo), paste("Type", injury_gustilo), injury_gustilo)) %>% 
     group_by(injury_gustilo) %>% 
     count() %>% 
     rename(heading = injury_gustilo) %>% 
-    mutate(Category = "Gustilo") %>% 
-    mutate(heading = ifelse(is.na(heading), "Missing", heading))
+    mutate(Category = "Gustilo")
   
-  df_gustilo_final <- bind_rows(df_gustilo_closed, df_gustilo)
   
   df_fixation_construct <- df %>% 
     select(definitive_fixation_construct) %>% 
@@ -2969,8 +2959,7 @@ wbs_main_paper_injury_characteristics <- function(analytic){
     group_by(medial) %>% 
     count() %>% 
     rename(heading = medial) %>% 
-    mutate(Category = "Medial") %>% 
-    mutate(heading = ifelse(heading == 'NA', "Missing", heading))
+    mutate(Category = "Medial")
   
   df_fixation_lateral <- df %>% 
     select(definitive_fixation_type) %>% 
@@ -2981,8 +2970,7 @@ wbs_main_paper_injury_characteristics <- function(analytic){
     group_by(lateral) %>% 
     count() %>% 
     rename(heading = lateral) %>% 
-    mutate(Category = "Lateral") %>% 
-    mutate(heading = ifelse(heading == 'NA', "Missing", heading))
+    mutate(Category = "Lateral") 
   
   df_fixation_posterior <- df %>% 
     select(definitive_fixation_type) %>% 
@@ -2993,8 +2981,7 @@ wbs_main_paper_injury_characteristics <- function(analytic){
     group_by(posterior) %>% 
     count() %>% 
     rename(heading = posterior) %>% 
-    mutate(Category = "Posterior") %>% 
-    mutate(heading = ifelse(heading == 'NA', "Missing", heading))
+    mutate(Category = "Posterior") 
   
   empty_df <- tibble(
     soft_tissue_closure = c("Primary closure", "Delayed primary closure", "STSG", "Flap(rotational or free)"),
@@ -3018,30 +3005,44 @@ wbs_main_paper_injury_characteristics <- function(analytic){
     n = NA_real_
   )
   
-  bound_df <- bind_rows(df_injury_ota, df_weber, df_lauge_hansen, df_gustilo_final, df_fixation_construct, df_heading, df_fixation_medial, df_fixation_lateral, df_fixation_posterior,
-                        df_soft_tissue) 
+  bound_df <- bind_rows(df_injury_ota, df_weber, df_lauge_hansen, df_gustilo, df_fixation_construct, df_heading, df_fixation_medial, df_fixation_lateral, df_fixation_posterior,
+                        df_soft_tissue) %>% 
+    mutate(n = format_count_percent(n, total))
   
   
-  df_table_raw <- reorder_rows(bound_df, list('Category'=c("OTA", "Weber", "Lauge Hansen", "Gustilo", "Construct", 'Fixation Types', 'Medial', 'Lateral', 'Posterior', 'Tissue'), 
-                                              'heading'=c('No fixation', 'Ligament repair', 'Intrameddulary Device', 'Screws', 'Screws Only', 'Screws and Plates', 'Missing'))) 
+  df_table_raw <- reorder_rows(bound_df, list('Category'=c("OTA", "Weber", "Lauge Hansen", "Gustilo", "Construct", 
+                                                           'Fixation Types', 'Medial', 'Lateral', 'Posterior', 
+                                                           'Tissue'), 
+                                              'heading'=c('44 A2/A3', '44 B2/B3', '44 C1/C2/C3', '44B1',
+                                                          'Type B', 'Type C', 'Pronation-abduction (PA)',
+                                                          'Pronation-external rotation (PER)', 'Supination-adduction (SA)',
+                                                          'Supination-external rotation (SER)', 'Closed', 'Type I',
+                                                          'Type II', 'Type IIIA', 'Medial only', 'Lateral and Posterior', 'Medial and Lateral',
+                                                          'Medial, Lateral, and Posterior', 'No fixation', 'Ligament repair', 'Intramedullary Device',
+                                                          'Screws', 'Screws Only', 'Screws and Plates', 'Delayed primary closure', 'Flap(rotational or free)',
+                                                          'Primary closure', 'STSG', 'Missing'))) 
   
-  index_vec_a <- c("OTA Injury Classification" = 3, "Weber Classification" = 3, "Lauge-Hansen Classification" = 5,
-                   "Gustilo Type" = 5,  "Fixation Constructs"=5, "Fixation Types" = 12, "Soft Tissue Closure"= 5)
-  index_vec_b <- c(" " = 21, "Medial"=5, "Lateral"=4, "Posterior"=3,  " "= 5)
+  index_vec_a <- c("OTA Injury Classification" = 5, "Weber Classification" = 3, "Lauge-Hansen Classification" = 5,
+                   "Gustilo Type" = 5,  "Fixation Constructs"=5, "Fixation Types" = 13, "Soft Tissue Closure"= 5)
+  index_vec_b <- c(" " = 23, "Medial"=5, "Lateral"=4, "Posterior"=4,  " "= 5)
   
   
+  title <- paste("Total = ", total)
   
   df_for_table <- df_table_raw %>% 
     filter(!is.na(n)) %>% 
     select(-Category) %>% 
-    rename(" " = heading, "Enrolled" = n)
+    filter(!is.na(heading)) %>% 
+    rename(" " = heading) %>% 
+    rename(!!title := n) 
+  
   
   
   table_raw<- kable(df_for_table, align='l') %>%
     pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>% 
     pack_rows(index = index_vec_b, label_row_css = "text-align:left", bold = FALSE) %>% 
     kable_styling("striped", full_width = F, position='left') %>% 
-    row_spec(c(0,3,6,11,16,21,33,38), extra_css = "border-bottom: 1px solid;")
+    row_spec(c(0,5,8,13,18,23,36,41), extra_css = "border-bottom: 1px solid;")
   
   return(table_raw)
 }
@@ -3064,27 +3065,38 @@ wbs_main_paper_injury_characteristics <- function(analytic){
 #' wbs_main_paper_patient_characteristics()
 #' }
 wbs_main_paper_patient_characteristics <- function(analytic){
-  
   df <- analytic %>% select(enrolled, injury_type, sex, age, ethnicity_race, education_level,
                             patient_reported_self_efficacy_6mo, patient_reported_self_efficacy_12mo,
                             preinjury_usual_major_activity, preinjury_work_demand, preinjury_work_hours,
                             tobacco_use, bmi, preinjury_health, insurance_type) %>% 
     filter(enrolled, injury_type == 'ankle')
   
+  total <- df %>% nrow()
+  
+  df_age_missing <- df %>%  select(age) %>% mutate(age = ifelse(is.na(age), "Missing", age)) %>% 
+    filter(age == "Missing") %>% count(age) %>% 
+    rename(heading = age) %>% 
+    mutate(Category = "Age") %>% 
+    mutate(n = format_count_percent(n, total))
+  
   df_age <- df %>% 
     select(age) %>% 
-    mutate(age = as.numeric(age)) %>% 
+    mutate(age = as.numeric(age)) %>%
+    filter(!is.na(age)) %>% 
     summarise(age_mean = format_mean_sd(age)) %>% 
     mutate(heading = 'Mean age, (SD)') %>% 
     mutate(Category = "Age") %>% 
     rename(n = age_mean)
+  
+  df_age_final <- rbind(df_age, df_age_missing)
   
   df_sex <- df %>% select(sex) %>% 
     group_by(sex) %>% 
     count() %>% 
     mutate(Category = 'Sex') %>% 
     rename(heading = sex) %>% 
-    mutate(heading = ifelse(is.na(heading), "Missing", heading))
+    mutate(heading = ifelse(is.na(heading), "Missing", heading)) %>% 
+    mutate(n = format_count_percent(n, total))
   
   df_race_ethnicity <- df %>% 
     select(ethnicity_race) %>% 
@@ -3092,7 +3104,8 @@ wbs_main_paper_patient_characteristics <- function(analytic){
     count() %>% 
     mutate(Category = 'Race Ethnicity') %>% 
     rename(heading = ethnicity_race) %>% 
-    mutate(heading = ifelse(is.na(heading), "Missing", heading))
+    mutate(heading = ifelse(is.na(heading), "Missing", heading)) %>% 
+    mutate(n = format_count_percent(n, total))
   
   df_education <- df %>% 
     select(education_level) %>% 
@@ -3100,20 +3113,44 @@ wbs_main_paper_patient_characteristics <- function(analytic){
     count() %>% 
     mutate(Category = 'Education Level') %>% 
     rename(heading = education_level) %>% 
-    mutate(heading = ifelse(is.na(heading), "Missing", heading))
+    mutate(heading = ifelse(is.na(heading), "Missing", heading)) %>% 
+    mutate(n = format_count_percent(n, total))
   
-  df_self_efficacy <- df %>% 
-    select(patient_reported_self_efficacy_6mo, patient_reported_self_efficacy_12mo) %>% 
+  df_self_efficacy_missing_6mo <- df %>%  
+    select(patient_reported_self_efficacy_6mo) %>% 
+    mutate(patient_reported_self_efficacy_6mo = ifelse(is.na(patient_reported_self_efficacy_6mo), "Missing 6 months Self Efficacy", patient_reported_self_efficacy_6mo)) %>% 
+    filter(patient_reported_self_efficacy_6mo == "Missing 6 months Self Efficacy") %>% 
+    count(patient_reported_self_efficacy_6mo) %>% 
+    rename(heading = patient_reported_self_efficacy_6mo) %>% 
+    mutate(Category = "Self Efficacy") %>% 
+    mutate(n = format_count_percent(n, total))
+  
+  df_self_efficacy_missing_12mo <- df %>%  
+    select(patient_reported_self_efficacy_12mo) %>% 
+    mutate(patient_reported_self_efficacy_12mo = ifelse(is.na(patient_reported_self_efficacy_12mo), "Missing 12 months Self Efficacy", patient_reported_self_efficacy_12mo)) %>% 
+    filter(patient_reported_self_efficacy_12mo == "Missing 12 months Self Efficacy") %>% 
+    count(patient_reported_self_efficacy_12mo) %>% 
+    rename(heading = patient_reported_self_efficacy_12mo) %>% 
+    mutate(Category = "Self Efficacy") %>% 
+    mutate(n = format_count_percent(n, total))
+  
+  df_self_efficacy_6mo <- df %>% 
+    select(patient_reported_self_efficacy_6mo) %>% 
+    filter(!is.na(patient_reported_self_efficacy_6mo)) %>% 
     mutate(patient_reported_self_efficacy_6mo = as.numeric(patient_reported_self_efficacy_6mo)) %>% 
+    summarise(n = format_mean_sd(patient_reported_self_efficacy_6mo)) %>% 
+    mutate(heading = 'Within 6 Months') %>% 
+    mutate(Category = 'Self Efficacy')  
+  
+  df_self_efficacy_12mo <- df %>% 
+    select(patient_reported_self_efficacy_12mo) %>% 
+    filter(!is.na(patient_reported_self_efficacy_12mo)) %>% 
     mutate(patient_reported_self_efficacy_12mo = as.numeric(patient_reported_self_efficacy_12mo)) %>% 
-    summarise(se_6mo = format_mean_sd(patient_reported_self_efficacy_6mo),
-              se_12mo = format_mean_sd(patient_reported_self_efficacy_12mo)) %>% 
-    pivot_longer(cols = starts_with("se_"), names_to = "heading", values_to = "n") %>% 
-    mutate(heading = recode(heading,
-                            "se_6mo" = 'Within 6 Months',
-                            "se_12mo" = 'Within 1 year')) %>% 
-    mutate(Category = 'Self Efficacy')  %>% 
-    mutate(heading = ifelse(is.na(heading), "Missing", heading))
+    summarise(n = format_mean_sd(patient_reported_self_efficacy_12mo)) %>% 
+    mutate(heading = 'Within 1 year') %>% 
+    mutate(Category = 'Self Efficacy')  
+  
+  df_self_efficacy_final <- rbind(df_self_efficacy_6mo, df_self_efficacy_missing_6mo, df_self_efficacy_12mo, df_self_efficacy_missing_12mo)
   
   
   df_usual_major_activity <- df %>% 
@@ -3122,7 +3159,8 @@ wbs_main_paper_patient_characteristics <- function(analytic){
     count() %>% 
     mutate(Category = 'Major Activity') %>% 
     rename(heading = preinjury_usual_major_activity) %>% 
-    mutate(heading = ifelse(is.na(heading), "Missing", heading))
+    mutate(heading = ifelse(is.na(heading), "Missing", heading)) %>% 
+    mutate(n = format_count_percent(n, total))
   
   df_physical_demand <- df %>% 
     select(preinjury_work_demand) %>% 
@@ -3130,15 +3168,26 @@ wbs_main_paper_patient_characteristics <- function(analytic){
     count() %>% 
     mutate(Category = 'Work Demand') %>% 
     rename(heading = preinjury_work_demand) %>% 
-    mutate(heading = ifelse(is.na(heading), "Missing", heading))
+    mutate(heading = ifelse(is.na(heading), "Missing", heading)) %>% 
+    mutate(n = format_count_percent(n, total))
+  
+  df_work_hours_missing <- df %>%  select(preinjury_work_hours) %>% 
+    mutate(preinjury_work_hours = ifelse(is.na(preinjury_work_hours), "Missing", preinjury_work_hours)) %>% 
+    filter(preinjury_work_hours == "Missing") %>% count(preinjury_work_hours) %>% 
+    rename(heading = preinjury_work_hours) %>% 
+    mutate(Category = "Work hours") %>% 
+    mutate(n = format_count_percent(n, total))
   
   df_work_hours <- df %>% 
     select(preinjury_work_hours) %>% 
     mutate(preinjury_work_hours = as.numeric(preinjury_work_hours)) %>% 
+    filter(!is.na(preinjury_work_hours)) %>% 
     summarise(work_hours = format_mean_sd(preinjury_work_hours)) %>% 
     mutate(heading = 'Mean hours, (SD)') %>% 
     mutate(Category = "Work hours")  %>% 
     rename(n = work_hours)
+  
+  df_work_hours_final <- rbind(df_work_hours, df_work_hours_missing)
   
   
   df_tobacco <- df %>% 
@@ -3147,7 +3196,14 @@ wbs_main_paper_patient_characteristics <- function(analytic){
     count() %>% 
     rename(heading = tobacco_use) %>% 
     mutate(Category = 'Tobacco') %>% 
-    mutate(heading = ifelse(is.na(heading), "Missing", heading))
+    mutate(heading = ifelse(is.na(heading), "Missing", heading)) %>% 
+    mutate(n = format_count_percent(n, total))
+  
+  df_bmi_missing <- df %>%  select(bmi) %>% mutate(bmi = ifelse(is.na(bmi), "Missing", bmi)) %>% 
+    filter(bmi == "Missing") %>% count(bmi) %>% 
+    rename(heading = bmi) %>% 
+    mutate(Category = "BMI") %>% 
+    mutate(n = format_count_percent(n, total))
   
   df_bmi <- df %>% 
     select(bmi) %>% 
@@ -3157,44 +3213,54 @@ wbs_main_paper_patient_characteristics <- function(analytic){
     mutate(Category = "BMI")  %>% 
     rename(n = bmi_mean)
   
+  df_bmi_final <- rbind(df_bmi, df_bmi_missing)
+  
   df_preinjury_health <- df %>% 
     select(preinjury_health) %>% 
     group_by(preinjury_health) %>%
     count() %>% 
     rename(heading = preinjury_health) %>% 
     mutate(Category = 'Health') %>% 
-    mutate(heading = ifelse(is.na(heading), "Missing", heading))
+    mutate(heading = ifelse(is.na(heading), "Missing", heading)) %>% 
+    mutate(n = format_count_percent(n, total))
   
   df_insurance <- df %>% 
     select(insurance_type) %>% 
     mutate(insurance_type = ifelse(str_detect(insurance_type, "Medicaid"), "Medicaid", 
                                    ifelse(!is.na(insurance_type), "Other Insurance", NA))) %>% 
-    mutate(insurance_type = ifelse(!is.na(insurance_type), insurance_type, "None")) %>% 
+    mutate(insurance_type = ifelse(!is.na(insurance_type), insurance_type, "Missing")) %>% 
     group_by(insurance_type) %>%
     count() %>% 
     rename(heading = insurance_type) %>% 
-    mutate(Category = 'Insurance') %>% 
-    mutate(heading = ifelse(is.na(heading), "Missing", heading))
+    mutate(Category = 'Insurance')  %>% 
+    mutate(n = format_count_percent(n, total))
   
-  df_final <- rbind(df_age, df_sex, df_race_ethnicity, df_education, df_self_efficacy, df_usual_major_activity,
-                    df_physical_demand, df_work_hours, df_tobacco, df_bmi, df_preinjury_health, df_insurance) 
+  df_final <- rbind(df_age_final, df_sex, df_race_ethnicity, df_education, df_self_efficacy_final, df_usual_major_activity,
+                    df_physical_demand, df_work_hours_final, df_tobacco, df_bmi_final, df_preinjury_health, df_insurance) 
   
-  index_vec_a <- c("Age" = 1, "Sex" = 3, "Race Ethnicity" = 5,
-                   "Education" = 5,  "Self Efficacy for return to Usual Activities"=2, 
+  index_vec_a <- c("Age" = 2, "Sex" = 3, "Race Ethnicity" = 5,
+                   "Education" = 5,  "Self Efficacy for return to Usual Activities"=4, 
                    "Preinjury Usual Major Activity" = 6, "Physical Demand of Job"= 6,
-                   "Hours worked per week" = 1, "Tobacco Use" = 4, "BMI" = 1, "Preinjury Health" = 6, 
+                   "Hours worked per week" = 2, "Tobacco Use" = 4, "BMI" = 2, "Preinjury Health" = 6, 
                    "Insurance Type" = 3)
+  
+  title <- paste("Total = ", total)
   
   df_for_table <- df_final %>% 
     select(heading, n) %>% 
-    rename("Enrolled" = heading, " " = n)
-
+    rename("Enrolled" = heading) %>% 
+    rename(!!title := n) 
+  
   
   table_raw<- kable(df_for_table, align='l') %>%
     pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position='left') %>% 
-    row_spec(c(0,1,4,9,14,16,22,28,29,33,34,40,43), extra_css = "border-bottom: 1px solid;")
+    row_spec(c(0,2,5,10,15,19,25,31,33,37,39,45,48), extra_css = "border-bottom: 1px solid;")
+  
   
   return(table_raw)
 } 
+
+
+
 
