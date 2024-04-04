@@ -767,7 +767,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   
   deviation_p_df <- analytic %>% 
     select(study_id, enrolled, protocol_deviation_procedural) %>% 
-    separate_rows(protocol_deviation_procedural, sep=";")
+    separate_rows(protocol_deviation_procedural, sep=";") %>% 
   filter(enrolled == TRUE) %>% 
     count(protocol_deviation_procedural) %>%
     rename(type=protocol_deviation_procedural) %>% 
