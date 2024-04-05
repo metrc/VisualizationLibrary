@@ -3263,4 +3263,50 @@ wbs_main_paper_patient_characteristics <- function(analytic){
 
 
 
+#' adherence_sextant
+#'
+#' @description This function visualizes the treatment characteristics per protocol and assignmnet for Sextant. 
+#'
+#' @param analytic This is the analytic data set that must include adherence_to_intervention_dwc,
+#' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' adherence_sextant()
+#' }
+adherence_sextant <- function(analytic){
+  
+  df <- analytic %>% 
+    select(adherence_to_intervention_dwc,
+           adherence_to_intervention_post_dwc,
+           adherence_to_no_other_antibiotic_dwc)
+  result <- df %>%
+    group_by(adherence_to_intervention_dwc, adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc) %>%
+    summarize(count = n()) %>%
+    filter(!is.na(adherence_to_intervention_dwc) & !is.na(adherence_to_intervention_post_dwc) & !is.na(adherence_to_no_other_antibiotic_dwc)) %>% 
+    arrange(desc(count)) 
+  
+  total <- result %>%
+    pull(count) %>% 
+    sum()
+  
+  df <- result %>% 
+    mutate(count = format_count_percent(count, total)) %>% 
+    mutate_at(vars(-count), funs(ifelse(. == TRUE, "Adherent", "Not Adherent"))) %>% 
+    rename(`Local antibiotic treatment at DWC` = adherence_to_intervention_dwc,
+           `Systemic antibiotic treatment post DWC`= adherence_to_intervention_post_dwc,
+           `No other local antibiotic use at DWC` = adherence_to_no_other_antibiotic_dwc,
+           `Overall` = count) 
+  
+  colnames(df)[which(names(df) == "Overall")] <- paste("Overall (n =", total, ")", sep = " ")
+  
+  output <- kable(df, align='l', padding='2l') %>%
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
+}
+
 
