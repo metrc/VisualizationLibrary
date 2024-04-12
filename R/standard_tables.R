@@ -3303,7 +3303,7 @@ adherence_sextant <- function(analytic){
   
   colnames(df)[which(names(df) == "Overall")] <- paste("Overall (n =", total, ")", sep = " ")
   
-  output <- kable(df, align='l', padding='2l') %>%
+  output <- kable(df, align='l') %>%
     kable_styling("striped", full_width = F, position="left") 
   
   return(output)

@@ -1827,7 +1827,7 @@ closed_ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
     left_join(output_full, by = "Site") %>%
     select(Site, starts_with("Screened"), starts_with("Ineligible"), starts_with("Other Reasons"), everything())
   
-  vis <- kable(df_table, align = 'l', padding = '2l') %>%
+  vis <- kable(df_table, align = 'l') %>%
     add_header_above(header_names) %>%
     
     kable_styling("striped", full_width = FALSE, position = "left")
@@ -2112,7 +2112,7 @@ closed_expected_visits_by_followup_period <- function(analytic){
     left_join(final_full, by = "Status") %>%
     select(Status, ends_with(" (Group A)"), ends_with(" (Group B)"), ends_with("Weeks"))
   
-  vis <- kable(df_table, align = 'l', padding = '2l') %>%
+  vis <- kable(df_table, align = 'l') %>%
     add_header_above(c(" " = 1, "Group A" = 4, "Group B" = 4, "Overall" = 4)) %>%
     kable_styling("striped", full_width = F, position = "left") %>%
     add_indent(c(3, 4)) %>%
