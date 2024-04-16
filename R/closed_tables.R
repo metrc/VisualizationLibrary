@@ -127,7 +127,7 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
   
   index_vec <- c("OTA Classification"= ota_number+1, "Tibial Plateau"=schatzer_number+1) 
   
-  table_raw<- kable(df_table, align='l',  col.names = NULL) %>%
+  table_raw<- kable(df_table, format="html",, align='l',  col.names = NULL) %>%
     add_indent(c(seq(ota_number)+1, seq(schatzer_number)+1+ota_number+1)) %>% 
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left")
@@ -298,7 +298,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   header <- c(1,1)
   names(header)<-cnames
   
-  vis <- kable(table_final, align='l',  
+  vis <- kable(table_final, format="html",, align='l',
                col.names = c(" ","Group A", "Group B", "Total")) %>% 
     pack_rows(index = c('Sex' = sex_n, 'Age' = 1 + age_n, 'Race' = race_n, 
                         'Education' = education_n, 'Military' = military_n),
@@ -439,7 +439,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
   }
 
-  vis <- kable(df_table, align='l',  col.names = c(paste0("n=",total), "Group A", "Group B", "Total")) %>%
+  vis <- kable(df_table, format="html",, align='l',  col.names = c(paste0("n=",total), "Group A", "Group B", "Total")) %>%
     add_indent(c(seq(n_disc) + 1, 1 + n_disc + 1 + 1 + seq(1+n_dsc+1+n_dp+1+n_da))) %>% 
     add_indent(indents_vec) %>% 
     row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
@@ -611,7 +611,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
   index_vec <- c(" " = 1, "Grade 4" = 9, "Grade 3"= 9,"Grade 2,1"= 9, "Grade Unknown"= 9)
   subindex_vec <- c(" " = 1, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6,
                     "Infection" = 3, " " = 6)
-  table_raw<- kable(output, align='l') %>%  
+  table_raw<- kable(output, format="html",, align='l') %>%
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     pack_rows(index = subindex_vec,label_row_css = "text-align:left;padding-left: 2em;", bold = FALSE) %>% 
     add_header_above(c(" " = 1, "Group A" = 7, "Group B" = 7, "All" = 7)) %>%
@@ -872,7 +872,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 #                         table_full, by="Facility")
 #   
 #   
-#   table_raw<- kable(df_table, align='l',  col.names = str_remove(colnames(df_table),"\\.x|\\.y")) %>%
+#   table_raw<- kable(df_table, format="html",, align='l',  col.names = str_remove(colnames(df_table),"\\.x|\\.y")) %>%
 #     add_header_above(c(" " = 1, "Group A" = 6, "Group B" = 6, "All" = 6)) %>%
 #     kable_styling("striped", full_width = F, position="left")
 #   
@@ -933,7 +933,7 @@ closed_nonunion_surgery_outcome <- function(analytic){
   
   colname <- c("Treatment", "Enrolled", "Expected Three Month", "90 Day Non-Union", "Expected Twelve Month", "1 Year Non-Union")
   
-  table<- kable(df, align='l',  col.names = colname) %>% 
+  table<- kable(df, format="html",, align='l',  col.names = colname) %>%
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
@@ -1037,7 +1037,7 @@ closed_ao_gustillo_tscherne_injury_characteristics <- function(analytic){
                         table_full, by="Fracture Type") %>% 
     mutate("Fracture Type" = str_replace(`Fracture Type`,"Unknown [0-9]", "Unknown"))
   
-  output<- kable(df_table, align='l',  col.names = c("Fracture Type", "Group A", "Group B", "Total")) %>% 
+  output<- kable(df_table, format="html",, align='l',  col.names = c("Fracture Type", "Group A", "Group B", "Total")) %>%
     kable_styling("condensed", position="left") %>%
     pack_rows("Open Fracture", 1, nrow(inj_tsch), label_row_css = "text-align:left") %>%
     pack_rows("Closed Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
@@ -1156,7 +1156,7 @@ closed_enrollment_status_by_site <- function(analytic){
            starts_with("Not Enrolled for Other Reasons"), starts_with("Consented"), starts_with("Discontinued Pre-Randomization"),
            starts_with("Late Ineligible"), starts_with("Enrolled"))
   
-  table <- kable(df_table, align='l') %>% 
+  table <- kable(df_table, format="html",, align='l') %>%
     add_header_above(c(" " = 2, "Group A" = 8, "Group B" = 8, "Overall" = 8)) %>%
     kable_styling("striped", full_width = F, position="left")
   
@@ -1241,7 +1241,7 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
            starts_with("Not Consented"), starts_with("Consented"), starts_with("Randomized"),
            starts_with(discontinued_colname), starts_with("Enrolled"))
   
-  table <- kable(df_table, align='l') %>% 
+  table <- kable(df_table, format="html",, align='l') %>%
     add_header_above(c(" " = 2, "Group A" = 7, "Group B" = 7, "Overall" = 7)) %>%
     kable_styling("striped", full_width = F, position="left")
   
@@ -1402,7 +1402,7 @@ closed_ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     
     index_vec <- c("6 Weeks"=4,"3 Months"=4, "6 Months"=4)
     
-    table_raw_ankle<- kable(df_ankle, align='l',  col.names = str_replace(colnames(df_ankle),"^n.|^n"," ")) %>%
+    table_raw_ankle<- kable(df_ankle, format="html",, align='l',  col.names = str_replace(colnames(df_ankle),"^n.|^n"," ")) %>%
       pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
       kable_styling("striped", full_width = F, position='left')
     
@@ -1534,7 +1534,7 @@ closed_ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     
     index_vec <- c("6 Weeks"=4,"3 Months"=4, "6 Months"=4)
     
-    table_raw_plateau<- kable(df_plateau, align='l',  col.names = str_replace(colnames(df_plateau),"^n.|^n"," ")) %>%
+    table_raw_plateau<- kable(df_plateau, format="html",, align='l',  col.names = str_replace(colnames(df_plateau),"^n.|^n"," ")) %>%
       pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
       kable_styling("striped", full_width = F, position='left')
     
@@ -1740,7 +1740,7 @@ closed_adjudications_and_discontinuations_by_type <- function(analytic){
   header_names <- c("Discontinuous", rep("", n_disc_full), "SAE",
                     "Protocol Deviations", rep("", 4 + n_dsc_full + n_dp_full + n_da_full))
   
-  vis <- kable(df_table, align='l',  col.names = cnames) %>%
+  vis <- kable(df_table, format="html",, align='l',  col.names = cnames) %>%
     row_spec(header_names, bold=T) %>%
     add_indent(c(seq(n_disc_full) + 1, 1 + n_disc_full + 1 + 1 + seq(1 + n_dsc_full + 1 + n_dp_full + 1 + n_da_full)),
                indents = c(1,0), level_of_indent = "  ") %>%
@@ -1827,7 +1827,7 @@ closed_ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
     left_join(output_full, by = "Site") %>%
     select(Site, starts_with("Screened"), starts_with("Ineligible"), starts_with("Other Reasons"), everything())
   
-  vis <- kable(df_table, align = 'l') %>%
+  vis <- kable(df_table, format="html",, align = 'l') %>%
     add_header_above(header_names) %>%
     
     kable_styling("striped", full_width = FALSE, position = "left")
@@ -1871,7 +1871,7 @@ closed_certification_date_data <- function(analytic){
   
   vis <- bind_rows(df_a, df_b) %>%
     kable(align='l') %>%
-    add_header_above(c(" " = 1, "Group A" = 4, "Group B" = 4)) %>%
+    add_header_above(c(" " = 1, format="html",, "Group A" = 4, "Group B" = 4)) %>%
     kable_styling("striped", full_width = F, position="left")
   
   return(vis)
@@ -1999,7 +1999,7 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
   header <- c(1,1)
   names(header) <- cnames
   
-  vis <- kable(df_table, align='l',  col.names = cnames) %>%
+  vis <- kable(df_table, format="html",, align='l',  col.names = cnames) %>%
     pack_rows(index = c('Type of Injury' = nrow(df_table %>% filter(str_detect(type, "Blunt|Penetrating|Missing"))),
                         'Work Related Injury' = nrow(df_table %>% filter(str_detect(type, "Yes|No"))),
                         'Battlefield Injury' = nrow(df_table %>% filter(str_detect(type, "Yes|No"))),
@@ -2112,7 +2112,7 @@ closed_expected_visits_by_followup_period <- function(analytic){
     left_join(final_full, by = "Status") %>%
     select(Status, ends_with(" (Group A)"), ends_with(" (Group B)"), ends_with("Weeks"))
   
-  vis <- kable(df_table, align = 'l') %>%
+  vis <- kable(df_table, format="html",, align = 'l') %>%
     add_header_above(c(" " = 1, "Group A" = 4, "Group B" = 4, "Overall" = 4)) %>%
     kable_styling("striped", full_width = F, position = "left") %>%
     add_indent(c(3, 4)) %>%
@@ -2204,7 +2204,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
     left_join(combined_full, by = "Fracture Type") %>%
     select(`Fracture Type`, ends_with(" (Group A)"), ends_with(" (Group B)"), count)
   
-  output <- kable(df_table, align='l',  col.names = c(" ", "Group A", "Group B", "Overall")) %>%
+  output <- kable(df_table, format="html",, align='l',  col.names = c(" ", "Group A", "Group B", "Overall")) %>%
     kable_styling("striped", position = "left", full_width = F) %>%
     add_indent(positions = c(2,3,4,6,7,8,9,10,11,12)) %>%
     row_spec(c(1,5), bold=T,hline_after = T)
@@ -2276,7 +2276,7 @@ closed_refusal_reasons_by_site <- function(analytic){
   df_table <- full_join(df_final_a, df_final_b, by = "Clinical Site", suffix = c(" (Group A)", " (Group B)")) %>%
     select(`Clinical Site`, ends_with(" (Group A)"), ends_with(" (Group B)"))
   
-  output <- kable(df_table, align='l') %>%
+  output <- kable(df_table, format="html",, align='l') %>%
     add_header_above(c(" " = 1, "Group A" = (ncol(df_table)-1)/2, "Group B" = (ncol(df_table)-1)/2)) %>%
     kable_styling("striped", full_width = F, position="left")
   
@@ -2305,10 +2305,10 @@ closed_other_reason_refusal_by_site <- function(analytic){
   df1_a <- df1 %>% filter(treatment_arm == "Group A") %>% select(-treatment_arm)
   df1_b <- df1 %>% filter(treatment_arm == "Group B") %>% select(-treatment_arm)
   
-  output_a <- kable(df1_a, align='l',  col.names = gsub("_", " ", names(df1_a))) %>%
+  output_a <- kable(df1_a, format="html",, align='l',  col.names = gsub("_", " ", names(df1_a))) %>%
     kable_styling("striped", full_width = F, position="left")
   
-  output_b <- kable(df1_b, align='l',  col.names = gsub("_", " ", names(df1_b))) %>%
+  output_b <- kable(df1_b, format="html",, align='l',  col.names = gsub("_", " ", names(df1_b))) %>%
     kable_styling("striped", full_width = F, position="left")
   
   output <- paste0("<h3>Group A</h3>", output_a, "<h3>Group B</h3>", output_b)
@@ -2361,10 +2361,10 @@ closed_not_enrolled_for_other_reasons <- function(analytic){
   df1_a <- inner_not_enrolled_for_other_reasons(df_a)
   df1_b <- inner_not_enrolled_for_other_reasons(df_b)
   
-  output_a <- kable(df1_a, align='l') %>%
+  output_a <- kable(df1_a, format="html",, align='l') %>%
     kable_styling("striped", full_width = F, position="left")
   
-  output_b <- kable(df1_b, align='l') %>%
+  output_b <- kable(df1_b, format="html",, align='l') %>%
     kable_styling("striped", full_width = F, position="left")
   
   output <- paste0("<h3>Group A</h3>", output_a, "<h3>Group B</h3>", output_b)
@@ -2467,7 +2467,7 @@ closed_fracture_characteristics <- function(analytic){
   n_tscherne <- nrow(df_table %>% filter(str_detect(type, "Tscherne")))
   n_gustilo <- nrow(df_table %>% filter(str_detect(type, "Gustilo")))
   
-  vis <- kable(df_table, align='l',  col.names = cnames) %>%
+  vis <- kable(df_table, format="html",, align='l',  col.names = cnames) %>%
     pack_rows(index = c('Fractured Bone' = n_frac,
                         'Fracture Type' = (n_closed + n_tscherne + n_open + n_gustilo)),
               label_row_css = "text-align:left") %>%
@@ -2560,7 +2560,7 @@ closed_followup_2wk_status_by_site_sextant <- function(analytic){
   df_table <- full_join(table_raw_a, table_raw_b, by = "Clinical Site", suffix = c(" (Group A)", " (Group B)")) %>%
     select(`Clinical Site`, ends_with(" (Group A)"), ends_with(" (Group B)"))
   
-  output <- kable(df_table, align='l') %>%
+  output <- kable(df_table, format="html",, align='l') %>%
     add_header_above(c(" " = 1, "Group A" = (ncol(df_table)-1)/2, "Group B" = (ncol(df_table)-1)/2)) %>%
     add_header_above(c(" " = 1, "Group A" = 4, " " = 6, "Group B" = 4, " " = 6), align = "c") %>%
     add_header_above(c(" " = 1, "2 Weeks CRF12 (Clinical followup form)" = 10, "2 Weeks CRF14 & CRF15 (Patient reported outcomes)" = 10)) %>%
@@ -2650,7 +2650,7 @@ closed_followup_3mo_status_by_site_sextant <- function(analytic){
   df_table <- full_join(table_raw_a, table_raw_b, by = "Clinical Site", suffix = c(" (Group A)", " (Group B)")) %>%
     select(`Clinical Site`, ends_with(" (Group A)"), ends_with(" (Group B)"))
   
-  output <- kable(df_table, align='l') %>%
+  output <- kable(df_table, format="html",, align='l') %>%
     add_header_above(c(" " = 1, "Group A" = (ncol(df_table)-1)/2, "Group B" = (ncol(df_table)-1)/2)) %>%
     add_header_above(c(" " = 1, "Group A" = 4, " " = 6, "Group B" = 4, " " = 6), align = "c") %>%
     add_header_above(c(" " = 1, "3 Months CRF12 (Clinical followup form)" = 10, "3 Months CRF14 & CRF15 (Patient reported outcomes)" = 10)) %>%
@@ -2740,7 +2740,7 @@ closed_followup_6mo_status_by_site_sextant <- function(analytic){
   df_table <- full_join(table_raw_a, table_raw_b, by = "Clinical Site", suffix = c(" (Group A)", " (Group B)")) %>%
     select(`Clinical Site`, ends_with(" (Group A)"), ends_with(" (Group B)"))
   
-  output <- kable(df_table, align='l') %>%
+  output <- kable(df_table, format="html",, align='l') %>%
     add_header_above(c(" " = 1, "Group A" = (ncol(df_table)-1)/2, "Group B" = (ncol(df_table)-1)/2)) %>%
     add_header_above(c(" " = 1, "Group A" = 4, " " = 6, "Group B" = 4, " " = 6), align = "c") %>%
     add_header_above(c(" " = 1, "6 Months CRF12 (Clinical followup form)" = 10, "6 Months CRF14 & CRF15 (Patient reported outcomes)" = 10)) %>%
@@ -2871,7 +2871,7 @@ closed_followup_12mo_status_by_site_sextant <- function(analytic){
   df_table <- full_join(table_raw_a, table_raw_b, by = "Clinical Site", suffix = c(" (Group A)", " (Group B)")) %>%
     select(`Clinical Site`, ends_with(" (Group A)"), ends_with(" (Group B)"))
   
-  output <- kable(df_table, align='l') %>%
+  output <- kable(df_table, format="html",, align='l') %>%
     add_header_above(c(" " = 1, "Group A" = (ncol(df_table)-1)/2, "Group B" = (ncol(df_table)-1)/2)) %>%
     add_header_above(c(" " = 1, "Group A" = 4, " " = 6, " " = 6, "Group B" = 4, " " = 6, " " = 6), align = "c") %>%
     add_header_above(c(" " = 1,
@@ -2937,7 +2937,7 @@ closed_adherence_by_site <- function(analytic){
   df_table <- full_join(df4_a, df4_b, by = "Clinical Site", suffix = c(" (Group A)", " (Group B)")) %>%
     select(`Clinical Site`, ends_with(" (Group A)"), ends_with(" (Group B)"))
   
-  output <- kable(df_table, align='l') %>%
+  output <- kable(df_table, format="html",, align='l') %>%
     add_header_above(c(" " = 1, "Group A" = (ncol(df_table)-1)/2, "Group B" = (ncol(df_table)-1)/2)) %>%
     row_spec(nrow(df_table), bold = TRUE) %>%
     kable_styling("striped", full_width = F, position="left")
