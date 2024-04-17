@@ -2497,34 +2497,31 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="
     filter(!is.na(Facility)) %>% 
     mutate(weeks_site_certified = site_certified_days/7)
   
-  
+  if(include_safety_set){
   df_1st <- df %>% 
     group_by(Facility) %>% 
-    summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible))
+    summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible), 
+              Refused = sum(refused[eligible == TRUE]), 'Not Consented' = sum(not_consented[eligible == TRUE]), cnr = sum(consented_and_randomized[eligible == TRUE])) 
   
   df_2nd <- df %>% 
-    filter(eligible == TRUE) %>% 
     group_by(Facility) %>% 
-    summarize(Refused = sum(refused), 'Not Consented' = sum(not_consented), cnr = sum(consented_and_randomized))
-  
-  if(include_safety_set){
-    df_3rd <- df %>% 
-      filter(eligible == TRUE & consented_and_randomized == TRUE) %>% 
-      group_by(Facility) %>% 
-      summarize('Discontinued' = sum(discontinued),
-                "Enrolled" = sum(enrolled),
-                'Safety Set' = sum(safety_set)) 
+    summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 'Safety Set' = sum(safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+    select(Facility, Discontinued, Enrolled, `Safety Set`)
+    
   } else{
-    df_3rd <- df %>% 
-      filter(eligible == TRUE & consented_and_randomized == TRUE) %>% 
-      group_by(Facility) %>% 
-      summarize('Discontinued' = sum(discontinued),
-                "Enrolled" = sum(enrolled)) 
+  df_1st <- df %>% 
+    group_by(Facility) %>% 
+    summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible), 
+              Refused = sum(refused[eligible == TRUE]), 'Not Consented' = sum(not_consented[eligible == TRUE]), cnr = sum(consented_and_randomized[eligible == TRUE])) 
+ 
+  df_2nd <- df %>% 
+    group_by(Facility) %>% 
+    summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+    select(Facility, Discontinued, Enrolled)
   }
-  
-  table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
-    left_join(df_3rd, by = 'Facility') 
-  
+
+  table_raw <- left_join(df_1st, df_2nd, by = 'Facility')
+    
   facilities <- df %>% 
     select(Facility) %>% 
     unique()
@@ -2536,14 +2533,15 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="
     mutate(enrolled_last_fourteen = ifelse(screened_last_fourteen, enrolled, FALSE)) %>% 
     select(Facility, screened_last_fourteen, eligible_last_fourteen, enrolled_last_fourteen) %>% 
     group_by(Facility) %>% 
-    summarize('Screened1' = sum(screened_last_fourteen),
-              'Eligible1' = sum(eligible_last_fourteen),
-              'Enrolled1' = sum(enrolled_last_fourteen))
+    summarize('Screened1' = sum(screened_last_fourteen, na.rm = T),
+              'Eligible1' = sum(eligible_last_fourteen, na.rm = T),
+              'Enrolled1' = sum(enrolled_last_fourteen, na.rm = T))
   
   l14 <- left_join(facilities, last_fourteen) 
   
   by_week <- df %>%
     filter(!is.na(weeks_site_certified)) %>% 
+    select(Facility, screened, enrolled, weeks_site_certified) %>% 
     group_by(Facility) %>% 
     summarize(
       Screened2 = round(sum(screened, na.rm = TRUE) / first(weeks_site_certified), 2),
