@@ -40,7 +40,7 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
     mutate(`Discharge Crossover` = format_count_percent(`Discharge Crossover`, `Enrolled`))
   
   
-  table<- kable(table_raw, align='l') %>% 
+  table<- kable(table_raw, format="html",, align='l') %>%
     kable_styling("striped", full_width = F, position="left")
   
   return(table)
@@ -88,7 +88,7 @@ adherence_by_site <- function(analytic){
            `Received treatment per protocol and assignment(% DWC complete)` = treatment_completed) 
   
   
-  output <- kable(df4, align='l') %>%
+  output <- kable(df4, format="html",, align='l') %>%
     kable_styling("striped", full_width = F, position="left") %>% 
     row_spec(nrow(df4), bold = TRUE)
   
