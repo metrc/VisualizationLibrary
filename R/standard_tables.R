@@ -1000,18 +1000,29 @@ ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
     slice(1:n_top_reasons) %>% 
     pull(name) 
   
+  screened_total <- df %>% select(study_id, screened, ineligible) %>% boolean_column_counter() %>% 
+    mutate(Site = 'Total') 
+  
   total <- df %>% 
     column_unzipper('ineligibility_reasons', sep = '; ') %>% 
     boolean_column_counter() %>% 
     mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible)))) %>% 
+    select(-screened, -ineligible) %>% 
     mutate(Site = 'Total') %>% 
+    left_join(screened_total) %>% 
     select(Site, screened, ineligible, all_of(reasons), otherreasons)
+  
+  screened_total_sites <- df %>% select(facilitycode, screened, ineligible) %>% 
+    boolean_column_counter(groups = 'facilitycode') %>%
+    rename(Site = facilitycode) 
   
   sites <- df %>% 
     column_unzipper('ineligibility_reasons', sep = '; ') %>% 
     boolean_column_counter(groups = 'facilitycode') %>% 
     mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible, facilitycode)))) %>% 
     rename(Site = facilitycode) %>% 
+    select(-screened, -ineligible) %>% 
+    left_join(screened_total_sites) %>% 
     select(Site, screened, ineligible, all_of(reasons), otherreasons)
   
   output <- bind_rows(total, sites) %>% 
@@ -1984,6 +1995,9 @@ followup_2wk_status_by_site_sextant <- function(analytic){
               "expected"= sum(followup_expected_2wk, na.rm = TRUE)) %>% 
     left_join(df_crf12) %>% 
     left_join(df_crf14_crf15) %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=facilitycode=="Total") %>% 
+    arrange(desc(is_total), facilitycode) %>% 
     mutate(across(-one_of(exclude_columns),
                   ~ format_count_percent(., expected))) %>% 
     rename(`Clinical Site` = facilitycode,
@@ -2061,6 +2075,9 @@ followup_3mo_status_by_site_sextant <- function(analytic){
               "expected"= sum(followup_expected_3mo, na.rm = TRUE)) %>% 
     left_join(df_crf12) %>% 
     left_join(df_crf14_crf15) %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=facilitycode=="Total") %>% 
+    arrange(desc(is_total), facilitycode) %>% 
     mutate(across(-one_of(exclude_columns),
                   ~ format_count_percent(., expected))) %>% 
     rename(`Clinical Site` = facilitycode,
@@ -2138,6 +2155,9 @@ followup_6mo_status_by_site_sextant <- function(analytic){
               "expected"= sum(followup_expected_6mo, na.rm = TRUE)) %>% 
     left_join(df_crf12) %>% 
     left_join(df_crf14_crf15) %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=facilitycode=="Total") %>% 
+    arrange(desc(is_total), facilitycode) %>% 
     mutate(across(-one_of(exclude_columns),
                   ~ format_count_percent(., expected))) %>% 
     rename(`Clinical Site` = facilitycode,
@@ -2149,9 +2169,7 @@ followup_6mo_status_by_site_sextant <- function(analytic){
                                                                           gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
                                                                                                                    gsub("Late_crf14_15", "Late", gsub("Not Started_crf14_15", "Not started", 
                                                                                                                                                       colnames(df_expected_6mo)))))))
-  
-  
-  output <- kable(df_expected_6mo, format="html",, align='l') %>%
+    output <- kable(df_expected_6mo, format="html",, align='l') %>%
     add_header_above(c("", "", "", "", "6 Months CRF12 (Clinical followup form)" = 6, "6 Months CRF14 & CRF15 (Patient reported outcomes)" = 6), align = "c") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
@@ -2254,6 +2272,9 @@ followup_12mo_status_by_site_sextant <- function(analytic){
     left_join(df_crf12) %>% 
     left_join(df_crf1415) %>% 
     left_join(merged_crf09) %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=facilitycode=="Total") %>% 
+    arrange(desc(is_total), facilitycode) %>% 
     mutate(across(-one_of(exclude_columns),
                   ~ format_count_percent(., expected))) %>% 
     rename(`Clinical Site` = facilitycode,
