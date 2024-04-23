@@ -2003,7 +2003,8 @@ followup_2wk_status_by_site_sextant <- function(analytic){
     rename(`Clinical Site` = facilitycode,
            `Eligible & Enrolled` = eligible_and_enrolled,
            `DWC Complete` = dwc_completed,
-           `Expected` = expected) 
+           `Expected` = expected)  %>% 
+    select(-is_total)
   
   colnames(df_expected_2wk) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
                                                                           gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
@@ -2083,7 +2084,8 @@ followup_3mo_status_by_site_sextant <- function(analytic){
     rename(`Clinical Site` = facilitycode,
            `Eligible & Enrolled` = eligible_and_enrolled,
            `DWC Complete` = dwc_completed,
-           `Expected` = expected) 
+           `Expected` = expected)  %>% 
+    select(-is_total)
   
   colnames(df_expected_3mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
                                                                           gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
@@ -2163,7 +2165,8 @@ followup_6mo_status_by_site_sextant <- function(analytic){
     rename(`Clinical Site` = facilitycode,
            `Eligible & Enrolled` = eligible_and_enrolled,
            `DWC Complete` = dwc_completed,
-           `Expected` = expected) 
+           `Expected` = expected)  %>% 
+    select(-is_total)
   
   colnames(df_expected_6mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
                                                                           gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
@@ -2280,7 +2283,8 @@ followup_12mo_status_by_site_sextant <- function(analytic){
     rename(`Clinical Site` = facilitycode,
            `Eligible & Enrolled` = eligible_and_enrolled,
            `DWC Complete` = dwc_completed,
-           `Expected` = expected) 
+           `Expected` = expected) %>% 
+    select(-is_total)
   
   colnames(df_expected_12mo) <- gsub("Complete_crf14_15", "Complete", gsub("Incomplete_crf14_15", "Incomplete", 
                                                                            gsub("Missing_crf14_15", "Missing", gsub("Early_crf14_15", "Early", 
