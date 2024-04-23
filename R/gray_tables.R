@@ -144,3 +144,140 @@ adherence_by_site <- function(analytic){
   
   return(output)
 }
+
+
+
+
+#' adherence_sextant
+#'
+#' @description This function visualizes the treatment characteristics per protocol and assignmnet for Sextant. 
+#'
+#' @param analytic This is the analytic data set that must include adherence_to_intervention_dwc,
+#' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' adherence_sextant()
+#' }
+adherence_sextant <- function(analytic){
+  
+  df <- analytic %>% 
+    select(adherence_to_intervention_dwc,
+           adherence_to_intervention_post_dwc,
+           adherence_to_no_other_antibiotic_dwc, dwc_date, enrolled) %>% 
+    filter(!is.na(dwc_date) & enrolled) %>% 
+    select(-dwc_date, -enrolled)
+  
+  result <- df %>%
+    group_by(adherence_to_intervention_dwc, adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc) %>%
+    summarize(count = n()) %>%
+    arrange(desc(count)) 
+  
+  total <- result %>%
+    pull(count) %>% 
+    sum()
+  
+  df <- result %>% 
+    mutate(count = format_count_percent(count, total)) %>% 
+    mutate_at(vars(-count), funs(ifelse(. == TRUE, "Adherent", "Not Adherent"))) %>% 
+    rename(`Local antibiotic treatment at DWC` = adherence_to_intervention_dwc,
+           `Systemic antibiotic treatment post DWC`= adherence_to_intervention_post_dwc,
+           `No other local antibiotic use at DWC` = adherence_to_no_other_antibiotic_dwc,
+           `Overall` = count) 
+  
+  colnames(df)[which(names(df) == "Overall")] <- paste("Overall (n =", total, ")", sep = " ")
+  
+  output <- kable(df, format="html",, align='l') %>%
+    kable_styling("striped", full_width = F, position="left")  
+  
+  return(output)
+}
+
+
+
+#' characteristics_treatment
+#'
+#' @description This function visualizes the treatment characteristics per protocol and assignment for tobra. 
+#'
+#' @param analytic This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
+#' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' characteristics_treatment()
+#' }
+characteristics_treatment <- function(analytic){
+  df <- analytic %>% 
+    select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, adherence_to_intervention) %>% 
+    filter(enrolled)
+  
+  total <- sum(df$enrolled, na.rm=T)
+  df_total <- sum(!is.na(df$df_date))
+  
+  df_complete <- data.frame(type = 'Patients with Definitive Fixation Data Complete', percentage = format_count_percent(df_total, total))
+  
+  plat <- sum(!is.na(df$plat_df_surgical_incision))
+  pil <- sum(!is.na(df$pil_df_surgical_incision))
+  
+  avg_stages <- df %>% 
+    filter(!is.na(df_date)) %>% 
+    summarize(type = 'Mean Stages (SD)', percentage = format_mean_sd(df_number_procedures))
+  
+  stages <- df %>% 
+    filter(!is.na(df_date)) %>% 
+    count(df_number_procedures) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, df_total)) %>% 
+    select(-number) %>% 
+    rename(type = df_number_procedures) 
+  
+  plat_incisions <- df %>%
+    filter(!is.na(df_date)) %>% 
+    mutate(plat_incisions = str_count(plat_df_surgical_incision, ";") + 1) %>% 
+    summarize(type = paste0('Plateau Fractures (n = ', plat, ")"), percentage = format_mean_sd(plat_incisions))
+  
+  pil_incisions <- df %>%
+    filter(!is.na(df_date)) %>% 
+    mutate(pil_incisions = str_count(pil_df_surgical_incision, ";") + 1) %>% 
+    summarize(type = paste0('Pilon Fractures (n = ', pil, ")"), percentage = format_mean_sd(pil_incisions))
+  
+  adherence <- df %>% 
+    filter(!is.na(df_date)) %>% 
+    mutate(adherence_to_intervention = as.character(adherence_to_intervention)) %>%
+    mutate(adherence_to_intervention = replace_na(adherence_to_intervention, 'Missing')) %>% 
+    mutate(type = recode(adherence_to_intervention, 'TRUE' = "Yes", 
+                         'FALSE' = 'No')) %>% 
+    count(type) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, df_total)) %>% 
+    select(-number) %>% 
+    arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
+  
+  df_final <- rbind(df_complete, avg_stages, stages, plat_incisions, pil_incisions, adherence)
+  
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+  
+  n_df <- nrow(df_complete)
+  n_avg <- nrow(avg_stages)
+  n_stages <- nrow(stages)
+  
+  vis <- kable(df_final, format="html",, align='l', col.names = NULL) %>%
+    add_header_above(header) %>%  
+    pack_rows(index = c(" " = nrow(df_complete), 'Definitive Fixation' = (nrow(avg_stages) + nrow(stages)), 'Number of Incisions [Mean (SD)]' = (nrow(pil_incisions) + nrow(plat_incisions)),
+                        'Study Treatment Adhering to Protocol' = nrow(adherence)), label_row_css = "text-align:left") %>% 
+    kable_styling("striped", full_width = F, position="left") %>% 
+    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1, extra_css = 'border-bottom: 1px solid') %>% 
+    add_indent(seq(n_stages) + n_avg + n_df)
+  
+  return(vis)
+}
+
