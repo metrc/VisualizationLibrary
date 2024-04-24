@@ -2666,26 +2666,49 @@ followup_2wk_status_by_site_tobra <- function(analytic){
            missing2 = ifelse(str_detect(followup_status_crf09_2wk, "missing"), TRUE, FALSE),
            early2 = ifelse(str_detect(followup_status_crf09_2wk, "early"), TRUE, FALSE),
            late2 = ifelse(str_detect(followup_status_crf09_2wk, "late"), TRUE, FALSE),
-           not_started2 = ifelse(str_detect(followup_status_crf09_2wk, "not_started"), TRUE, FALSE)) %>%
+           not_started2 = ifelse(str_detect(followup_status_crf09_2wk, "not_started"), TRUE, FALSE)) %>% 
+    select(facilitycode, enrolled, expected, complete1, incomplete1, missing1, early1, late1, not_started1, complete2, incomplete2, missing2, early2, late2, not_started2)
+  
+  totals <- df %>% 
+    summarise("enrolled" = sum(enrolled, na.rm = TRUE),
+              'expected' = sum(expected, na.rm = TRUE),
+              "complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "not_started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "not_started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected)) %>% 
+    mutate(facilitycode = 'Total')
+  
+    finished <- df %>%  
     group_by(facilitycode) %>% 
     summarise("enrolled" = sum(enrolled, na.rm = TRUE),
               'expected' = sum(expected, na.rm = TRUE),
-              "Complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
-              "Incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
-              "Early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
-              "Late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
-              "Missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
-              "Not Started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
-              "Complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
-              "Incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
-              "Early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
-              "Late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
-              "Missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
-              "Not Started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected))
+              "complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "not_started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "not_started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected))
+    
+    finished <- bind_rows(totals, finished) %>% 
+      select(facilitycode, enrolled, expected, complete1, incomplete1, missing1, early1, late1, not_started1, complete2, incomplete2, missing2, early2, late2, not_started2)
   
-  colnames(df) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started')
+  colnames(finished) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started')
   
-  output <- kable(df, format="html",, align='l') %>%
+  output <- kable(finished, format="html",, align='l') %>%
     add_header_above(c("", '', '', "2 Weeks CRF08 (Medical Record Review)" = 6, "2 Weeks CRF09 (Clinical Followup)" = 6), align = "c") %>% 
     kable_styling("striped", full_width = F, position="left")  
   
@@ -2724,22 +2747,45 @@ followup_3mo_status_by_site_tobra <- function(analytic){
            missing2 = ifelse(str_detect(followup_status_crf09_3mo, "missing"), TRUE, FALSE),
            early2 = ifelse(str_detect(followup_status_crf09_3mo, "early"), TRUE, FALSE),
            late2 = ifelse(str_detect(followup_status_crf09_3mo, "late"), TRUE, FALSE),
-           not_started2 = ifelse(str_detect(followup_status_crf09_3mo, "not_started"), TRUE, FALSE)) %>%
+           not_started2 = ifelse(str_detect(followup_status_crf09_3mo, "not_started"), TRUE, FALSE)) %>% 
+    select(facilitycode, enrolled, expected, complete1, incomplete1, missing1, early1, late1, not_started1, complete2, incomplete2, missing2, early2, late2, not_started2)
+  
+  totals <- df %>% 
+    summarise("enrolled" = sum(enrolled, na.rm = TRUE),
+              'expected' = sum(expected, na.rm = TRUE),
+              "complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "not_started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "not_started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected)) %>% 
+    mutate(facilitycode = 'Total')
+  
+  finished <- df %>%  
     group_by(facilitycode) %>% 
     summarise("enrolled" = sum(enrolled, na.rm = TRUE),
               'expected' = sum(expected, na.rm = TRUE),
-              "Complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
-              "Incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
-              "Early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
-              "Late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
-              "Missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
-              "Not Started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
-              "Complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
-              "Incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
-              "Early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
-              "Late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
-              "Missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
-              "Not Started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected))
+              "complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "not_started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "not_started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected))
+  
+  finished <- bind_rows(totals, finished) %>% 
+    select(facilitycode, enrolled, expected, complete1, incomplete1, missing1, early1, late1, not_started1, complete2, incomplete2, missing2, early2, late2, not_started2)
   
   colnames(df) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started')
   
@@ -2793,30 +2839,44 @@ followup_6mo_status_by_site_tobra <- function(analytic){
     mutate(complete4 = ifelse(str_detect(followup_status_comp_6mo, "complete"), TRUE, FALSE),
            incomplete4 = ifelse(str_detect(followup_status_comp_6mo, "incomplete"), TRUE, FALSE),
            not_started4 = ifelse(str_detect(followup_status_comp_6mo, "not_started"), TRUE, FALSE)) %>% 
+    select(facilitycode, enrolled, expected, complete1, incomplete1, missing1, early1, late1, not_started1, complete2, incomplete2, missing2, early2, late2, not_started2)
+  
+  totals <- df %>% 
+    summarise("enrolled" = sum(enrolled, na.rm = TRUE),
+              'expected' = sum(expected, na.rm = TRUE),
+              "complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "not_started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "not_started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected)) %>% 
+    mutate(facilitycode = 'Total')
+  
+  finished <- df %>%  
     group_by(facilitycode) %>% 
     summarise("enrolled" = sum(enrolled, na.rm = TRUE),
               'expected' = sum(expected, na.rm = TRUE),
-              "Complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
-              "Incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
-              "Early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
-              "Late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
-              "Missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
-              "Not Started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
-              "Complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
-              "Incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
-              "Early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
-              "Late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
-              "Missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
-              "Not Started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected), 
-              "Complete3" = format_count_percent(sum(complete3, na.rm = TRUE), expected),
-              "Incomplete3" = format_count_percent(sum(incomplete3, na.rm = TRUE), expected),
-              "Early3" = format_count_percent(sum(early3, na.rm = TRUE), expected),
-              "Late3" = format_count_percent(sum(late3, na.rm = TRUE), expected),
-              "Missing3" = format_count_percent(sum(missing3, na.rm = TRUE), expected),
-              "Not Started3" = format_count_percent(sum(not_started3, na.rm = TRUE), expected),
-              "Complete4" = format_count_percent(sum(complete4, na.rm = TRUE), expected),
-              "Incomplete4" = format_count_percent(sum(incomplete4, na.rm = TRUE), expected),
-              "Not Started4" = format_count_percent(sum(not_started4, na.rm = TRUE), expected))
+              "complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "not_started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "not_started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected))
+  
+  finished <- bind_rows(totals, finished) %>% 
+    select(facilitycode, enrolled, expected, complete1, incomplete1, missing1, early1, late1, not_started1, complete2, incomplete2, missing2, early2, late2, not_started2)
   
   colnames(df) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Not Started')
   
@@ -2869,32 +2929,44 @@ followup_12mo_status_by_site_tobra <- function(analytic){
     mutate(complete4 = ifelse(str_detect(followup_status_comp_12mo, "complete"), TRUE, FALSE),
            incomplete4 = ifelse(str_detect(followup_status_comp_12mo, "incomplete"), TRUE, FALSE),
            not_started4 = ifelse(str_detect(followup_status_comp_12mo, "not_started"), TRUE, FALSE)) %>% 
+    select(facilitycode, enrolled, expected, complete1, incomplete1, missing1, early1, late1, not_started1, complete2, incomplete2, missing2, early2, late2, not_started2)
+  
+  totals <- df %>% 
+    summarise("enrolled" = sum(enrolled, na.rm = TRUE),
+              'expected' = sum(expected, na.rm = TRUE),
+              "complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "not_started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "not_started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected)) %>% 
+    mutate(facilitycode = 'Total')
+  
+  finished <- df %>%  
     group_by(facilitycode) %>% 
     summarise("enrolled" = sum(enrolled, na.rm = TRUE),
               'expected' = sum(expected, na.rm = TRUE),
-              "Complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
-              "Incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
-              "Early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
-              "Late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
-              "Missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
-              "Not Started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
-              "Complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
-              "Incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
-              "Early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
-              "Late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
-              "Missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
-              "Not Started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected), 
-              "Complete3" = format_count_percent(sum(complete3, na.rm = TRUE), expected),
-              "Incomplete3" = format_count_percent(sum(incomplete3, na.rm = TRUE), expected),
-              "Early3" = format_count_percent(sum(early3, na.rm = TRUE), expected),
-              "Late3" = format_count_percent(sum(late3, na.rm = TRUE), expected),
-              "Missing3" = format_count_percent(sum(missing3, na.rm = TRUE), expected),
-              "Not Started3" = format_count_percent(sum(not_started3, na.rm = TRUE), expected),
-              "Complete4" = format_count_percent(sum(complete4, na.rm = TRUE), expected),
-              "Incomplete4" = format_count_percent(sum(incomplete4, na.rm = TRUE), expected),
-              "Not Started4" = format_count_percent(sum(not_started4, na.rm = TRUE), expected))
+              "complete1" = format_count_percent(sum(complete1, na.rm = TRUE), expected),
+              "incomplete1" = format_count_percent(sum(incomplete1, na.rm = TRUE), expected),
+              "early1" = format_count_percent(sum(early1, na.rm = TRUE), expected),
+              "late1" = format_count_percent(sum(late1, na.rm = TRUE), expected),
+              "missing1" = format_count_percent(sum(missing1, na.rm = TRUE), expected),
+              "not_started1" = format_count_percent(sum(not_started1, na.rm = TRUE), expected),
+              "complete2" = format_count_percent(sum(complete2, na.rm = TRUE), expected),
+              "incomplete2" = format_count_percent(sum(incomplete2, na.rm = TRUE), expected),
+              "early2" = format_count_percent(sum(early2, na.rm = TRUE), expected),
+              "late2" = format_count_percent(sum(late2, na.rm = TRUE), expected),
+              "missing2" = format_count_percent(sum(missing2, na.rm = TRUE), expected),
+              "not_started2" = format_count_percent(sum(not_started2, na.rm = TRUE), expected))
   
-  colnames(df) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Not Started')
+  finished <- bind_rows(totals, finished) %>% 
+    select(facilitycode, enrolled, expected, complete1, incomplete1, missing1, early1, late1, not_started1, complete2, incomplete2, missing2, early2, late2, not_started2)
   
   output <- kable(df, format="html",, align='l') %>%
     add_header_above(c("", '', '', "12 Months CRF08 (Medical Record Review)" = 6, "12 Months CRF09 (Clinical Followup)" = 6, "12 Months PROMIS (Patient Reported Outcomes)" = 6, "12 Months Worker's Compensation (Patient Reported Outcomes)" = 3), align = "c") %>% 
