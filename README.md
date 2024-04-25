@@ -1,113 +1,86 @@
-# VisualizationLibrary
+# VisualizationLibrary 
 
-The VisualizationLibrary is a [METRC](https://metrc.org/)-specific R toolkit that is designed to generate data visualizations from study data.
+The VisualizationLibrary is an R package developed by METRC (Major Extremity Trauma and Rehabilitation Consortium) to generate standardized data visualizations from study analytic datasets.
 
-* **Consistent, data-matrix-driven workflow:** Common variables are available through standardised names and interfaces called *constructs*. These constructs are defined from the data matrix: which allows consistency across REDCap projects and enables analysts to leverage information across studies.
+## Project Description
 
-The [VisualizationLibrary](https://github.com/metrc/VisualizationLibrary) repository contains the base-level (i.e. 'user-level') code for the creation of data visualizations. Study-specific analytic datasets can be found in the private [AnalyticCodebase repository](https://github.com/metrc/AnalyticCodebase/).
+The VisualizationLibrary provides a consistent, data-matrix-driven workflow for generating visualizations commonly used in METRC studies. It defines common variables through standardized names and interfaces called *constructs*, which are defined from a data matrix. This allows consistency across REDCap projects and enables analysts to leverage information across studies.
 
-## Overview
+The package contains base-level (i.e., 'user-level') code for creating data visualizations. Study-specific analytic datasets can be found in the private [AnalyticCodebase repository](https://github.com/metrc/AnalyticCodebase/).
 
-Todo: overview of the package files and their functions.
+## Features
 
-## Development Setup
+- Generates standard tables and figures for METRC study reports
+- Uses a data-matrix driven approach for consistency across studies
+- Provides functions for visualizing:
+    - Enrollment status and totals
+    - Baseline characteristics 
+    - Injury characteristics
+    - Follow-up visit status
+    - Adverse events and protocol deviations
+    - And more
 
-The following setup instructions are for manually setting up a development environment on your local
-machine. It assumes a Ubuntu or Debian based operating system, and reasonable familiarity with
-the command line.
+## Installation 
 
-### Installing R
+To install the VisualizationLibrary package:
 
-First, ensure that you have R available on your system. In order to install R, navigate to the R Project website, and follow the instructions provided to add a new apt repository and download the packages.
+1. Ensure you have R installed. You can download it from the [R Project website](https://www.r-project.org/).
 
-* [R Project Website](https://www.r-project.org/)
+2. Install the `devtools` package if you haven't already. You can do this by running the following command in R:
 
-### Installing R Devtools
+   ```R
+   install.packages('devtools')
+   ```
 
-Now that we have the R environment, we must install the R devtools package, The R devtools includes all the programs and components that are needed to develop and build R packages from source. 
+   Install the VisualizationLibrary package using devtools:
+   ```R
+   devtools::install_github('metrc/VisualizationLibrary')
+   ```
 
-To begin, we must first install some system-level tools that R devtools depends upon. These libraries are often used for compiling R software:
+## Usage
 
-```bash
-sudo apt install build-essential libcurl4-openssl-dev libfontconfig1-dev libfreetype6-dev libfribidi-dev libharfbuzz-dev libjpeg-dev libpng-dev libssl-dev libtiff5-dev libxml2-dev
+Load the package in your R script or R Markdown file:
+
+```R
+library(VisualizationLibrary)
 ```
 
-Once those dependencies are installed, we may install devtools directly from within the R environment. This can be done either by starting an interactive R session (using `R`), or by using `RScript` to execute the installation command directly from the command line.
+Then use the package functions to generate visualizations from your analytic dataset. For example:
 
-```bash
-Rscript -e "install.packages('devtools', dependencies=TRUE)"
+```R
+enrollment_status_by_site(analytic)
+baseline_characteristics_percent(analytic)
+consort_diagram(analytic)
 ```
 
-Now your R environment should be properly setup with devtools.
+See the package documentation for a full list of available functions and their usage.
 
-### Installing R Packages that VisualizationLibrary depends on
+## Configuration
 
-Next, we must install the R packages which VisualizationLibrary depends on. These packages are:
+No additional configuration is necessary to use the VisualizationLibrary package. However, your input analytic dataset must contain the necessary variables (constructs) for each visualization function you wish to use. Refer to the function documentation for the required constructs.
 
-* [tidyverse](https://www.tidyverse.org/): R Packages for Data Science.
-* [httr](https://httr.r-lib.org/) R Library to work with URLs and HTTP.
-* [feather](https://posit.co/blog/feather/): Fast on-disk file format for tabular data.
-* [googlesheets4](https://googlesheets4.tidyverse.org/) R API Wrapper for Google Sheets.
-* [igraph](https://r.igraph.org): R package of the igraph network analysis library.
-* [writexl](https://cran.r-project.org/web/packages/writexl/index.html): Library to write to XLSX files.
-* [readr](https://readr.tidyverse.org/): Read rectangular Text Data.
+## Dependencies
 
-Just like with the R devtools installation process, we must first install some systems-level dependencies since we will be compiling them from source.
+The VisualizationLibrary depends on the following R packages:
 
-```bash
-sudo apt install libsodium-dev gfortran libglpk-dev
-```
+- tidyverse
+- janitor
+- kableExtra
+- DiagrammeR
+- DiagrammeRsvg
+- rsvg
+- base64enc
+- VisualizationTools
 
-Next, run the following to install the R packages.
+These will be automatically installed when you install the VisualizationLibrary.
 
-```bash
-sudo Rscript -e "install.packages(c('tidyverse', 'httr', 'feather', 'googlesheets4', 'igraph', 'writexl', 'readr'), dependencies=TRUE)"
-```
+## Contributing
 
-Now all of the R package dependencies for VisualizationLibrary should be installed.
+Contributions to the VisualizationLibrary package are welcome. If you encounter a bug or have a feature request, please open an issue on the GitHub repository. If you would like to contribute code, please fork the repository and open a pull request with your changes.
 
-### Cloning the VisualizationLibrary Repository
+## License
+This project is proprietary software developed by METRC. All rights reserved.
 
-In order to begin development on the VisualizationLibrary, you must switch to the `dev` branch of this repository.
-
-```bash
-git clone https://github.com/metrc/VisualizationLibrary.git
-cd VisualizationLibrary
-git switch dev
-git pull
-```
-
-Now you should have an up-to-date version of the development branch.
-
-### Building & Installing the VisualizationLibrary Package Manually
-
-Before building and installing the VisualizationLibrary from source, we must first run R-Check on the package to ensure it is free of errors. This step is especially important if you are developing on the VisualizationLibrary from source:
-
-```bash
-R CMD check VisualizationLibrary/
-```
-
-Once R-Check passes, it is time to build the VisualizationLibrary package. This will create a `.tar.gz` archive file which can be then installed.
-
-```bash
-R CMD build VisualizationLibrary/
-```
-
-If the build passes successfully, you should have a `.tar.gz` archive with the version number of the package. This file may look like `VisualizationLibrary_0.1.1.tar.gz`. In order to install it, simply run `R CMD INSTALL <package_name>`. Note that the command is case-sensitivie.
-
-```bash
-R CMD INSTALL VisualizationLibrary_0.1.1.tar.gz
-```
-
-Now this version of the VisualizationLibrary package should be installed and available for use within R.
-
-## Continuous Integration Pipelines
-
-In order to ensure stability, all commits will be built by [Github Actions](https://docs.github.com/en/actions). The GA workflows for VisualizationLibrary can be found in the [`.github/workflows/`](./github/workflows/) directory. For more information regarding the Github Actions workflows, please see the VisualizationLibrary Github Actions [documentation](.github/workflows/README.md).
-
-## `.gitmessage.txt` Configuration
-This project aims to follow the Linux Kernel commit message policy. For ease of use, a commit message template is provided at `gitmessage.txt`. In order to enable this commit message template locally (only for this repository), set `gitmessage.txt` as the [`commit.template`](https://www.git-scm.com/book/en/v2/Customizing-Git-Git-Configuration#_commit_template) in your git config:
-
-```bash
-git config --local commit.template ./gitmessage.txt
-```
+## Contact Information
+For any questions or support related to the AutoPayments package, please contact:
+- Elias Weston-Farber: eweston4@jhu.edu
