@@ -1152,8 +1152,7 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
   
   site_data <- df %>%
     separate(site_certified_date, cols, sep = ';') %>%
-    filter(!is.na(Facility)) %>% 
-    arrange(desc(.[[5]]))
+    filter(!is.na(Facility))
   
   site_data <- rbind(site_data %>% filter(.[[5]]!="NA days"),site_data %>% filter(.[[5]]=="NA days"))
   
@@ -2654,7 +2653,8 @@ followup_2wk_status_by_site_tobra <- function(analytic){
     select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk) %>% 
     filter(enrolled) %>%
     mutate(df_date = as.Date(df_date)) %>% 
-    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(expected = as.numeric(Sys.Date()-df_date)) %>% 
+    mutate(expected = ifelse(expected >= 14, TRUE, FALSE)) %>%
     mutate(complete1 = ifelse(str_detect(followup_status_crf08_2wk, "complete"), TRUE, FALSE),
            incomplete1 = ifelse(str_detect(followup_status_crf08_2wk, "incomplete"), TRUE, FALSE),
            missing1 = ifelse(str_detect(followup_status_crf08_2wk, "missing"), TRUE, FALSE),
@@ -2735,7 +2735,8 @@ followup_3mo_status_by_site_tobra <- function(analytic){
     select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_3mo, followup_status_crf09_3mo) %>% 
     filter(enrolled) %>%
     mutate(df_date = as.Date(df_date)) %>% 
-    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(expected = as.numeric(Sys.Date()-df_date)) %>% 
+    mutate(expected = ifelse(expected >= 90, TRUE, FALSE)) %>% 
     mutate(complete1 = ifelse(str_detect(followup_status_crf08_3mo, "complete"), TRUE, FALSE),
            incomplete1 = ifelse(str_detect(followup_status_crf08_3mo, "incomplete"), TRUE, FALSE),
            missing1 = ifelse(str_detect(followup_status_crf08_3mo, "missing"), TRUE, FALSE),
@@ -2816,7 +2817,8 @@ followup_6mo_status_by_site_tobra <- function(analytic){
     select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_6mo, followup_status_crf09_6mo, followup_status_crf12_6mo, followup_status_bank_6mo, followup_status_comp_6mo) %>% 
     filter(enrolled) %>%
     mutate(df_date = as.Date(df_date)) %>% 
-    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(expected = as.numeric(Sys.Date()-df_date)) %>% 
+    mutate(expected = ifelse(expected >= 180, TRUE, FALSE)) %>% 
     mutate(pro = ifelse(followup_status_bank_6mo != 'incomplete' & followup_status_crf12_6mo == 'incomplete', followup_status_bank_6mo, followup_status_crf12_6mo)) %>% 
     mutate(complete1 = ifelse(str_detect(followup_status_crf08_6mo, "complete"), TRUE, FALSE),
            incomplete1 = ifelse(str_detect(followup_status_crf08_6mo, "incomplete"), TRUE, FALSE),
@@ -2898,7 +2900,7 @@ followup_6mo_status_by_site_tobra <- function(analytic){
     select(facilitycode, enrolled, expected, complete1, incomplete1, missing1, early1, late1, not_started1, complete2, incomplete2, missing2, early2, late2, not_started2,
             complete3, incomplete3, early3, late3, missing3, not_started3, complete4, incomplete4, not_started4)
   
-  colnames(df) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Not Started')
+  colnames(finished) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Not Started')
   
   output <- kable(finished, format="html",, align='l') %>%
     add_header_above(c("", '', '', "6 Months CRF08 (Medical Record Review)" = 6, "6 Months CRF09 (Clinical Followup)" = 6, "6 Months PROMIS (Patient Reported Outcomes)" = 6, "6 Months Worker's Compensation (Patient Reported Outcomes)" = 3), align = "c") %>% 
@@ -2926,7 +2928,8 @@ followup_12mo_status_by_site_tobra <- function(analytic){
     select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_12mo, followup_status_crf09_12mo, followup_status_crf12_12mo, followup_status_bank_12mo, followup_status_comp_12mo) %>% 
     filter(enrolled) %>%
     mutate(df_date = as.Date(df_date)) %>% 
-    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(expected = as.numeric(Sys.Date()-df_date)) %>% 
+    mutate(expected = ifelse(expected >= 365, TRUE, FALSE)) %>% 
     mutate(pro = ifelse(followup_status_bank_12mo != 'incomplete' & followup_status_crf12_12mo == 'incomplete', followup_status_bank_12mo, followup_status_crf12_12mo)) %>% 
     mutate(complete1 = ifelse(str_detect(followup_status_crf08_12mo, "complete"), TRUE, FALSE),
            incomplete1 = ifelse(str_detect(followup_status_crf08_12mo, "incomplete"), TRUE, FALSE),
