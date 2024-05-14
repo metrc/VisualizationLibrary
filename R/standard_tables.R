@@ -53,7 +53,9 @@ enrollment_status_by_site <- function(analytic){
     select(-is_total) %>% 
     mutate(`Discontinued Pre-Randomization` = format_count_percent(`Discontinued Pre-Randomization`, Consented)) %>% 
     mutate(`Late Ineligible` = format_count_percent(`Late Ineligible`, Consented)) %>% 
+    rename("Discontinued Post-Randomization (late refusal/late ineligible)" = `Late Ineligible`) %>% 
     mutate(Enrolled = format_count_percent(Enrolled, Consented)) %>% 
+    rename("Enrolled & Eligible" = `Enrolled`) %>% 
     mutate(Consented = format_count_percent(Consented, Eligible)) %>% 
     mutate(Refused = format_count_percent(Refused, Eligible)) %>% 
     mutate(`Not Enrolled for Other Reasons` = format_count_percent(`Not Enrolled for Other Reasons`, Eligible)) %>% 
@@ -1113,10 +1115,26 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
                                   'Unknown', 
                                   `Fracture Type`)) 
   
+  total_closed <- inj_gust %>%
+    filter(value == "Gustilo Type Closed") %>%
+    pull(n)
+  
+  total_open <- inj_gust %>%
+    filter(value != "Gustilo Type Closed") %>%
+    summarize(total_n = sum(n)) %>%
+    pull(total_n)
+  
+  inj_gust <- inj_gust %>% 
+    filter(value != 'Gustilo Type Closed') 
+  
+  out <- out %>% 
+    filter(`Fracture Type` != 'Gustilo Type Closed')
+  
+  
   output<- kable(out, format="html",, align='l', col.names = c("Fracture Type", paste0("n=",total))) %>%
     kable_styling("condensed", position="left") %>%
-    pack_rows("Open Fracture", 1, nrow(inj_tsch), label_row_css = "text-align:left") %>%
-    pack_rows("Closed Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows(paste0("Open Fracture n=", total_open), 1, nrow(inj_gust), label_row_css = "text-align:left") %>%
+    pack_rows(paste0("Closed Fracture n=", total_closed), nrow(inj_tsch), nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
     pack_rows("AO Class", nrow(inj_gust)+nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)+nrow(inj_ao), label_row_css = "text-align:left") %>%
     kable_styling("striped", full_width = F, position="left")
   
@@ -1162,6 +1180,9 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
     site_data <- site_data %>% 
       select(all_of(cols))
   }
+  
+  site_data <- site_data %>% 
+    arrange(Facility)
   
   vis <- kable(site_data, format="html",, align='l') %>%
     kable_styling("striped", full_width = F, position="left") 
@@ -1405,7 +1426,7 @@ expected_and_followup_visit <- function(analytic){
            "Status" = followup_status_12mo) 
   
   
-  level_order <- c('Early', 'On Time', 'Late', 'Missing', 'Not Started')
+  level_order <- c('Early', 'On Time', 'Late', 'Missing', 'Not Started', 'Incomplete')
   
   bound_df <- full_join(df_3mo, df_6mo) %>% full_join(df_12mo) %>% 
     mutate(Status = factor(Status, level_order)) %>% 
