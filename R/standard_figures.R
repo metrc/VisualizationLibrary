@@ -172,7 +172,6 @@ dsmb_nsaid_consort_diagram <- function(analytic){
                         filter(eligible) %>% 
                         filter(consented) %>% 
                         filter(randomized) %>%
-                        filter(enrolled) %>% 
                         pull(adjudicated_discontinued), na.rm=TRUE)
   Definitive_Fixation_Complete <- sum(analytic %>% 
                         filter(eligible) %>% 
