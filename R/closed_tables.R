@@ -562,9 +562,10 @@ closed_complications_by_severity_relatedness <- function(analytic){
       mutate(complications = "Overall")
     
     severity_categories <- c('Grade 4', 'Grade 3', 'Grade 2,1', 'Grade Unknown')
-    level_order <- c("Superficial", "Deep - Involving Bone", "Deep - Not Involving Bone",
-                     "Wound Dehiscence", "Wound Seroma/Hematoma", "Fixation failure", "Malunion", "Peri-implant Fracture",
-                     "Other")
+    level_order <- c("Superficial", "Deep - Involving Bone", "Deep - Not Involving Bone", "Deep- Septic Joint",
+                     "Nonunion", "Malunion", "Flap Failure", "Loss of Limb/Amputation", "Fixation failure", "Peri-implant Fracture",
+                     "Reaction to Hardware", "Wound Dehiscence", "Wound Seroma/Hematoma", "Tendon Injury", 
+                     "Delayed Wound Healing", "Cellulitis", "DVT/PE", "Joint Arthritis", "Other")
     
     df_template <- tibble(
       severity = c(severity_categories),
@@ -608,9 +609,9 @@ closed_complications_by_severity_relatedness <- function(analytic){
   
   colnames(output)[1] <- " "
   
-  index_vec <- c(" " = 1, "Grade 4" = 9, "Grade 3"= 9,"Grade 2,1"= 9, "Grade Unknown"= 9)
-  subindex_vec <- c(" " = 1, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6, "Infection" = 3, " " = 6,
-                    "Infection" = 3, " " = 6)
+  index_vec <- c(" " = 1, "Grade 4" = 19, "Grade 3"= 19,"Grade 2,1"= 19, "Grade Unknown"= 19)
+  subindex_vec <- c(" " = 1, "Infection" = 4, " " = 15, "Infection" = 4, " " = 15, "Infection" = 4, " " = 15,
+                    "Infection" = 4, " " = 15)
   table_raw<- kable(output, format="html",, align='l') %>%
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     pack_rows(index = subindex_vec,label_row_css = "text-align:left;padding-left: 2em;", bold = FALSE) %>% 
