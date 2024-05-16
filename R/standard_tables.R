@@ -53,7 +53,9 @@ enrollment_status_by_site <- function(analytic){
     select(-is_total) %>% 
     mutate(`Discontinued Pre-Randomization` = format_count_percent(`Discontinued Pre-Randomization`, Consented)) %>% 
     mutate(`Late Ineligible` = format_count_percent(`Late Ineligible`, Consented)) %>% 
+    rename("Discontinued Post-Randomization (late refusal/late ineligible)" = `Late Ineligible`) %>% 
     mutate(Enrolled = format_count_percent(Enrolled, Consented)) %>% 
+    rename("Enrolled & Eligible" = `Enrolled`) %>% 
     mutate(Consented = format_count_percent(Consented, Eligible)) %>% 
     mutate(Refused = format_count_percent(Refused, Eligible)) %>% 
     mutate(`Not Enrolled for Other Reasons` = format_count_percent(`Not Enrolled for Other Reasons`, Eligible)) %>% 
@@ -1112,10 +1114,26 @@ ao_gustillo_tscherne_injury_characteristics <- function(analytic){
                                   'Unknown', 
                                   `Fracture Type`)) 
   
+  total_closed <- inj_gust %>%
+    filter(value == "Gustilo Type Closed") %>%
+    pull(n)
+  
+  total_open <- inj_gust %>%
+    filter(value != "Gustilo Type Closed") %>%
+    summarize(total_n = sum(n)) %>%
+    pull(total_n)
+  
+  inj_gust <- inj_gust %>% 
+    filter(value != 'Gustilo Type Closed') 
+  
+  out <- out %>% 
+    filter(`Fracture Type` != 'Gustilo Type Closed')
+  
+  
   output<- kable(out, format="html",, align='l', col.names = c("Fracture Type", paste0("n=",total))) %>%
     kable_styling("condensed", position="left") %>%
-    pack_rows("Open Fracture", 1, nrow(inj_tsch), label_row_css = "text-align:left") %>%
-    pack_rows("Closed Fracture", nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
+    pack_rows(paste0("Open Fracture n=", total_open), 1, nrow(inj_gust), label_row_css = "text-align:left") %>%
+    pack_rows(paste0("Closed Fracture n=", total_closed), nrow(inj_tsch), nrow(inj_gust)+nrow(inj_tsch), label_row_css = "text-align:left") %>%
     pack_rows("AO Class", nrow(inj_gust)+nrow(inj_tsch)+1, nrow(inj_gust)+nrow(inj_tsch)+nrow(inj_ao), label_row_css = "text-align:left") %>%
     kable_styling("striped", full_width = F, position="left")
   
@@ -1151,8 +1169,7 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
   
   site_data <- df %>%
     separate(site_certified_date, cols, sep = ';') %>%
-    filter(!is.na(Facility)) %>% 
-    arrange(desc(.[[5]]))
+    filter(!is.na(Facility))
   
   site_data <- rbind(site_data %>% filter(.[[5]]!="NA days"),site_data %>% filter(.[[5]]=="NA days"))
   
@@ -1161,6 +1178,9 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
     site_data <- site_data %>% 
       select(all_of(cols))
   }
+  
+  site_data <- site_data %>% 
+    arrange(Facility)
   
   vis <- kable(site_data, format="html",, align='l') %>%
     kable_styling("striped", full_width = F, position="left") 
@@ -1404,7 +1424,7 @@ expected_and_followup_visit <- function(analytic){
            "Status" = followup_status_12mo) 
   
   
-  level_order <- c('Early', 'On Time', 'Late', 'Missing', 'Not Started')
+  level_order <- c('Early', 'On Time', 'Late', 'Missing', 'Not Started', 'Incomplete')
   
   bound_df <- full_join(df_3mo, df_6mo) %>% full_join(df_12mo) %>% 
     mutate(Status = factor(Status, level_order)) %>% 
@@ -2653,7 +2673,8 @@ followup_2wk_status_by_site_tobra <- function(analytic){
     select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk) %>% 
     filter(enrolled) %>%
     mutate(df_date = as.Date(df_date)) %>% 
-    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(expected = as.numeric(Sys.Date()-df_date)) %>% 
+    mutate(expected = ifelse(expected >= 14, TRUE, FALSE)) %>%
     mutate(complete1 = ifelse(str_detect(followup_status_crf08_2wk, "complete"), TRUE, FALSE),
            incomplete1 = ifelse(str_detect(followup_status_crf08_2wk, "incomplete"), TRUE, FALSE),
            missing1 = ifelse(str_detect(followup_status_crf08_2wk, "missing"), TRUE, FALSE),
@@ -2734,7 +2755,8 @@ followup_3mo_status_by_site_tobra <- function(analytic){
     select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_3mo, followup_status_crf09_3mo) %>% 
     filter(enrolled) %>%
     mutate(df_date = as.Date(df_date)) %>% 
-    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(expected = as.numeric(Sys.Date()-df_date)) %>% 
+    mutate(expected = ifelse(expected >= 90, TRUE, FALSE)) %>% 
     mutate(complete1 = ifelse(str_detect(followup_status_crf08_3mo, "complete"), TRUE, FALSE),
            incomplete1 = ifelse(str_detect(followup_status_crf08_3mo, "incomplete"), TRUE, FALSE),
            missing1 = ifelse(str_detect(followup_status_crf08_3mo, "missing"), TRUE, FALSE),
@@ -2815,7 +2837,8 @@ followup_6mo_status_by_site_tobra <- function(analytic){
     select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_6mo, followup_status_crf09_6mo, followup_status_crf12_6mo, followup_status_bank_6mo, followup_status_comp_6mo) %>% 
     filter(enrolled) %>%
     mutate(df_date = as.Date(df_date)) %>% 
-    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(expected = as.numeric(Sys.Date()-df_date)) %>% 
+    mutate(expected = ifelse(expected >= 180, TRUE, FALSE)) %>% 
     mutate(pro = ifelse(followup_status_bank_6mo != 'incomplete' & followup_status_crf12_6mo == 'incomplete', followup_status_bank_6mo, followup_status_crf12_6mo)) %>% 
     mutate(complete1 = ifelse(str_detect(followup_status_crf08_6mo, "complete"), TRUE, FALSE),
            incomplete1 = ifelse(str_detect(followup_status_crf08_6mo, "incomplete"), TRUE, FALSE),
@@ -2897,7 +2920,7 @@ followup_6mo_status_by_site_tobra <- function(analytic){
     select(facilitycode, enrolled, expected, complete1, incomplete1, missing1, early1, late1, not_started1, complete2, incomplete2, missing2, early2, late2, not_started2,
             complete3, incomplete3, early3, late3, missing3, not_started3, complete4, incomplete4, not_started4)
   
-  colnames(df) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Not Started')
+  colnames(finished) <- c('Clinical Site', 'Enrolled & Eligible', 'Expected', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Early', 'Late', 'Missing', 'Not Started', 'Complete', 'Incomplete', 'Not Started')
   
   output <- kable(finished, format="html",, align='l') %>%
     add_header_above(c("", '', '', "6 Months CRF08 (Medical Record Review)" = 6, "6 Months CRF09 (Clinical Followup)" = 6, "6 Months PROMIS (Patient Reported Outcomes)" = 6, "6 Months Worker's Compensation (Patient Reported Outcomes)" = 3), align = "c") %>% 
@@ -2925,7 +2948,8 @@ followup_12mo_status_by_site_tobra <- function(analytic){
     select(study_id, df_date, enrolled, facilitycode, followup_status_crf08_12mo, followup_status_crf09_12mo, followup_status_crf12_12mo, followup_status_bank_12mo, followup_status_comp_12mo) %>% 
     filter(enrolled) %>%
     mutate(df_date = as.Date(df_date)) %>% 
-    mutate(expected = ifelse(!is.na(df_date), TRUE, FALSE)) %>% 
+    mutate(expected = as.numeric(Sys.Date()-df_date)) %>% 
+    mutate(expected = ifelse(expected >= 365, TRUE, FALSE)) %>% 
     mutate(pro = ifelse(followup_status_bank_12mo != 'incomplete' & followup_status_crf12_12mo == 'incomplete', followup_status_bank_12mo, followup_status_crf12_12mo)) %>% 
     mutate(complete1 = ifelse(str_detect(followup_status_crf08_12mo, "complete"), TRUE, FALSE),
            incomplete1 = ifelse(str_detect(followup_status_crf08_12mo, "incomplete"), TRUE, FALSE),
