@@ -158,51 +158,41 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
 #' closed_baseline_characteristics_percent()
 #' }
 closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicity_race", education="education_level", military="military_status",
-                                                    sex_levels=c("Female","Male", "Missing"), 
-                                                    race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
-                                                    education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
-                                                    military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
+                                                    sex_levels=c("Female","Male", "Missing Sex"), 
+                                                    race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing Race"), 
+                                                    education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing Education"), 
+                                                    military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing Military")){
   
-  constructs <- c(sex, race, education, military)
+  confirm_stability_of_related_visual('baseline_characteristics_percent', 'bd099b941338d591d41b4716902355b6')
+  
+  constructs <- c(sex, race, education, military, 'treatment_arm')
   
   sex_default <- tibble(type=sex_levels)
   race_default <- tibble(type=race_levels)
   education_default <- tibble(type=education_levels)
   military_default <- tibble(type=military_levels)
   
-  sex_n <- -1
-  age_n <- -1
-  race_n <- -1
-  education_n <- -1
-  military_n <- -1
-  
   df <- analytic %>% 
-    filter(enrolled == TRUE)
+    select(enrolled, age_group, age, all_of(constructs)) %>% 
+    filter(enrolled) %>% 
+    rename(sex = !!sym(sex)) %>% 
+    rename(race = !!sym(race)) %>% 
+    rename(education = !!sym(education)) %>% 
+    rename(military = !!sym(military)) %>% 
+    mutate(age = as.numeric(age))
   
   total <- sum(df$enrolled, na.rm=T)
   
-  df_a <- analytic %>% 
-    filter(treatment_arm=="Group A") %>% 
-    filter(enrolled == TRUE)
+  df_a <- df %>% 
+    filter(treatment_arm=="Group A")
   
-  df_b <- analytic %>% 
-    filter(treatment_arm=="Group B") %>% 
-    filter(enrolled == TRUE)
+  df_b <- df %>% 
+    filter(treatment_arm=="Group B") 
   
-  inner_closed_baseline_characteristics_percent <- function(analytic){
-    
-    df <- analytic %>% 
-      select(enrolled, age_group, age, all_of(constructs)) %>% 
-      filter(enrolled) %>% 
-      rename(sex = !!sym(sex)) %>% 
-      rename(race = !!sym(race)) %>% 
-      rename(education = !!sym(education)) %>% 
-      rename(military = !!sym(military)) %>% 
-      mutate(age = as.numeric(age)) %>% 
-      mutate(df = "age")
-    
-    sex_df <- df %>% 
-      mutate(sex = replace_na(sex, "Missing")) %>% 
+  inner_closed_baseline_characteristics_percent <- function(inner_df){
+    total <- sum(inner_df$enrolled, na.rm=T)
+    sex_df <- inner_df %>% 
+      mutate(sex = replace_na(sex, "Missing Sex")) %>% 
       group_by(sex) %>% 
       count(sex) %>% 
       rename(number = n) %>% 
@@ -212,26 +202,23 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(sex_default) %>% 
       mutate(order = factor(type, sex_levels)) %>% 
       arrange(order) %>% 
-      select(-order) %>% 
-      mutate(df = "sex")
+      select(-order)
     
-    age_df <- df %>% 
-      summarize( type = 'Mean (SD)', percentage = format_mean_sd(age)) %>% 
-      mutate(df = "age_n")
+    age_df <- inner_df %>% 
+      summarize( type = 'Mean Age (SD)', percentage = format_mean_sd(age))
     
     
-    age_group_df <- df %>% 
-      mutate(age_group = replace_na(age_group, "Missing")) %>% 
+    age_group_df <- inner_df %>% 
+      mutate(age_group = replace_na(age_group, "Missing Age")) %>% 
       group_by(age_group) %>% 
       count(age_group) %>% 
       rename(number = n) %>% 
       mutate(percentage = format_count_percent(number, total)) %>% 
       select(-number) %>% 
-      rename(type = age_group) %>% 
-      mutate(df = "age")
+      rename(type = age_group)
     
-    education_df <- df %>% 
-      mutate(education = replace_na(education, "Missing")) %>% 
+    education_df <- inner_df %>% 
+      mutate(education = replace_na(education, "Missing Education")) %>% 
       group_by(education) %>% 
       count(education) %>% 
       rename(number = n) %>% 
@@ -241,11 +228,10 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(education_default) %>% 
       mutate(order = factor(type, education_levels)) %>% 
       arrange(order) %>% 
-      select(-order) %>% 
-      mutate(df = "education")
+      select(-order)
     
-    race_df <- df %>% 
-      mutate(race = replace_na(race, "Missing")) %>% 
+    race_df <- inner_df %>% 
+      mutate(race = replace_na(race, "Missing Race")) %>% 
       group_by(race) %>% 
       count(race) %>% 
       rename(number = n) %>% 
@@ -255,11 +241,10 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(race_default) %>% 
       mutate(order = factor(type, race_levels)) %>% 
       arrange(order) %>% 
-      select(-order) %>% 
-      mutate(df = "race")
+      select(-order)
     
-    military_df <- df %>% 
-      mutate(military = ifelse(is.na(military), "Missing", military)) %>% 
+    military_df <- inner_df %>% 
+      mutate(military = ifelse(is.na(military), "Missing Military", military)) %>% 
       group_by(military) %>% 
       count(military) %>% 
       rename(number = n) %>% 
@@ -269,17 +254,10 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(military_default) %>% 
       mutate(order = factor(type, military_levels)) %>% 
       arrange(order) %>% 
-      select(-order) %>% 
-      mutate(df = "military")
+      select(-order)
     
     df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) %>% 
       mutate() 
-    
-    sex_n <<- nrow(sex_df)
-    age_n <<- nrow(age_group_df)
-    race_n <<- nrow(race_df)
-    education_n <<- nrow(education_df)
-    military_n <<- nrow(military_df)
     
     return(df_final)
   }
@@ -288,20 +266,19 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   table_b <- inner_closed_baseline_characteristics_percent(df_b)
   table_full <- inner_closed_baseline_characteristics_percent(df)
   
-  table_final <- left_join(table_full, full_join(table_a, table_b, by=c("df","type")), 
-                                       by=c("df","type")) %>% 
-    select(-df) %>% 
-    mutate_all(replace_na, "0 (0%)") %>% 
-    select(type, percentage.x,  percentage.y, percentage)
+  combined_table <- full_join(table_a, table_b, by = 'type') %>%
+    full_join(table_full, by = 'type')
   
   cnames <- c(' ', paste('n = ', total))
-  header <- c(1,1)
+  header <- c(2,2)
   names(header)<-cnames
   
-  vis <- kable(table_final, format="html",, align='l',
-               col.names = c(" ","Group A", "Group B", "Total")) %>% 
-    pack_rows(index = c('Sex' = sex_n, 'Age' = 1 + age_n, 'Race' = race_n, 
-                        'Education' = education_n, 'Military' = military_n),
+  #TODO find better numbers for packed rows
+  vis <- kable(combined_table, format="html",, align='l',
+               col.names = c(" ","Group A", "Group B", "Total")) %>%
+    add_header_above(header) %>%  
+    pack_rows(index = c('Sex' = length(sex_levels), 'Age' = 6, 'Race' = length(race_levels), 
+                        'Education' = length(education_levels), 'Military' = length(military_levels)),
               label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
@@ -324,6 +301,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #' closed_discontinuation_sae_deviation_by_type()
 #' }
 closed_discontinuation_sae_deviation_by_type <- function(analytic){
+  confirm_stability_of_related_visual('discontinuation_sae_deviation_by_type', '9cbdfa0e479969ea2ec5eea8a54716e2')
+  
   df_full <- analytic
   
   df_a <- analytic %>% 
@@ -2390,6 +2369,8 @@ closed_not_enrolled_for_other_reasons <- function(analytic){
 #' closed_fracture_characteristics(analytic)
 #' }
 closed_fracture_characteristics <- function(analytic){
+  confirm_stability_of_related_visual('fracture_characteristics', '39fae01eb7c76ab2d779c0400b13472c')
+  
   inner_fracture_characteristics <- function(df) {
     total <- sum(df$enrolled)
     closed_total <- sum(df$closed)
@@ -2899,19 +2880,28 @@ closed_followup_12mo_status_by_site_sextant <- function(analytic){
 #' closed_adherence_by_site(analytic)
 #' }
 closed_adherence_by_site <- function(analytic){
+  #confirm_stability_of_related_visual('fracture_characteristics', '39fae01eb7c76ab2d779c0400b13472c')
   
-  inner_adherence_by_site <- function(df) {
-    treatment_total <- sum(df$treatment_arm, na.rm = TRUE)
+  inner_adherence_by_site <- function(inner_df) {
+    treatment_total <- inner_df %>%
+      filter(!is.na(treatment_arm)) %>%
+      nrow()
     
-    df2 <- df %>% 
+    df2 <- inner_df %>% 
       group_by(facilitycode) %>% 
-      summarize(elig_enr = sum(enrolled, na.rm = TRUE), df_total = sum(df_complete, na.rm = TRUE), treatment_completed = sum(treatment_arm, na.rm = TRUE)) %>% 
-      mutate(treatment_completed = format_count_percent(treatment_completed, df_total)) 
+      summarize(elig_enr = sum(enrolled, na.rm = TRUE), 
+                df_total = sum(df_complete, na.rm = TRUE), 
+                # TODO ask about this math, does treatment_arm
+                treatment_completed = sum(!is.na(treatment_arm))) %>% 
+      mutate(treatment_completed = format_count_percent(df_total, treatment_completed)) 
     
     enrolled_total <- sum(df2$elig_enr, na.rm = TRUE)
     df_total <- sum(df2$df_total, na.rm = TRUE)
     
-    df3 <- data.frame(facilitycode = 'TOTAL', elig_enr = enrolled_total, df_total = df_total, treatment_completed = format_count_percent(treatment_total, df_total))
+    df3 <- data.frame(facilitycode = 'TOTAL', 
+                      elig_enr = enrolled_total, 
+                      df_total = df_total, 
+                      treatment_completed = format_count_percent(df_total, sum(!is.na(inner_df$treatment_arm))))
     
     df4 <- rbind(df2, df3) %>% 
       rename(`Clinical Site` = facilitycode,
@@ -2923,7 +2913,7 @@ closed_adherence_by_site <- function(analytic){
   }
   
   df <- analytic %>%
-    select(facilitycode, enrolled, df_date, treatment_arm, treatment_arm) %>%
+    select(facilitycode, enrolled, df_date, treatment_arm) %>%
     filter(enrolled) %>%
     mutate(df_date = na_if(df_date, "NA")) %>%
     mutate(df_complete = ifelse(!is.na(df_date), TRUE, FALSE))
@@ -2936,6 +2926,12 @@ closed_adherence_by_site <- function(analytic){
   
   df_table <- full_join(df4_a, df4_b, by = "Clinical Site", suffix = c(" (Group A)", " (Group B)")) %>%
     select(`Clinical Site`, ends_with(" (Group A)"), ends_with(" (Group B)"))
+  
+  total_row <- df_table %>%
+    filter(`Clinical Site` == "TOTAL")
+  df_table <- df_table %>%
+    filter(`Clinical Site` != "TOTAL")
+  df_table <- bind_rows(df_table, total_row)
   
   output <- kable(df_table, format="html",, align='l') %>%
     add_header_above(c(" " = 1, "Group A" = (ncol(df_table)-1)/2, "Group B" = (ncol(df_table)-1)/2)) %>%
@@ -2964,6 +2960,8 @@ closed_adherence_by_site <- function(analytic){
 #' closed_enrollment_by_site_last_days_var_disc()
 #' }
 closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="discontinued", discontinued_colname="Discontinued", include_safety_set=FALSE){
+  confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'f351648895498f7100bb8edba2fc425b')
+  
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
   
@@ -2973,7 +2971,58 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discont
   out <- paste0("<h4>Group A</h4><br />",
                 enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set),
                 "<h4>Group B</h4><br />",
-                enrollment_by_site_var_disc_tobra_sextant(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set))
+                enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set))
+  
+  return(out)
+}
+
+
+
+#' Closed enrollment_by_site tobra and sextant (var discontinued)
+#'
+#' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week by treatment arm
+#'
+#' @param analytic This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+#' facilitycode, screened_date
+#' @param days the number of last days to include in the last days summary section of the table
+#' @param discontinued this is a meta construct where you can specify your discontinued construct like 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
+#' @param discontinued_colname this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')
+#' @param include_safety_set this is a toggle that will include a safety_set construct if you want it included (defaults to FALSE)
+#'
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_enrollment_by_site_last_days_var_disc()
+#' }
+closed_treatment_characteristics <- function(analytic){
+  #confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'f351648895498f7100bb8edba2fc425b') no analagous visual
+  
+  df <- analytic %>%
+    select(enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision,
+           df_number_procedures, 
+           injury_classification_plat_ao, df_surg_staged, df_surg_n_forms,
+           randomized, fracture_type, treatment_arm)
+  
+
+  
+  df_a <- df %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- df %>% 
+    filter(treatment_arm=="Group B")
+  
+  inner_treatment_characteristics <- function(inner_df) {
+     out <- inner_df
+    
+     return(out)
+  }
+  
+  out <- paste0("<h4>Group A</h4><br />",
+                enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set),
+                "<h4>Group B</h4><br />",
+                enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set))
   
   return(out)
 }

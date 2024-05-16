@@ -708,7 +708,6 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
   header <- c(1,1)
   names(header)<-cnames
   
-  
   vis <- kable(df_final, format="html",, align='l',  col.names = NULL) %>%
     add_header_above(header) %>%  
     pack_rows(index = c('Sex' = nrow(sex_df), 'Age' = (nrow(age_df) + nrow(age_group_df)), 'Race' = nrow(race_df), 
