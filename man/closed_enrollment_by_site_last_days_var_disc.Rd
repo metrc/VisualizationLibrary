@@ -9,7 +9,8 @@ closed_enrollment_by_site_last_days_var_disc(
   days,
   discontinued = "discontinued",
   discontinued_colname = "Discontinued",
-  include_safety_set = FALSE
+  include_safety_set = FALSE,
+  footnotes = NULL
 )
 }
 \arguments{
