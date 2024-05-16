@@ -168,12 +168,11 @@ dsmb_nsaid_consort_diagram <- function(analytic){
                     filter(consented) %>% 
                     filter(randomized) %>% 
                     pull(enrolled), na.rm=TRUE)
-  Early_Discontinuation <- sum(analytic %>% 
+  Adjudicated_Discontinuation <- sum(analytic %>% 
                         filter(eligible) %>% 
                         filter(consented) %>% 
                         filter(randomized) %>%
-                        filter(enrolled) %>% 
-                        pull(censored), na.rm=TRUE)
+                        pull(adjudicated_discontinued), na.rm=TRUE)
   Definitive_Fixation_Complete <- sum(analytic %>% 
                         filter(eligible) %>% 
                         filter(consented) %>% 
@@ -198,7 +197,7 @@ dsmb_nsaid_consort_diagram <- function(analytic){
       rand [style="rounded,filled", fillcolor="#ccccff", pos="6,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
       
       enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',Enrolled,')"];
-      discon [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (n=',Early_Discontinuation,')"];
+      discon [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (n=',Adjudicated_Discontinuation,')"];
 
       compl [style="rounded,filled", fillcolor="#ccccff", pos="6,1!", shape = box, width=2.4, height=1, label = "Definitive Fixation Complete (n=',Definitive_Fixation_Complete,')"];
       
@@ -263,7 +262,7 @@ cumulative_percentage_ankle_injuries <- function(analytic){
   
   g <- ggplot(yyyy_mm, aes(x = factor(year_month), y = cumulative_percentage)) +
     geom_bar(stat = "identity", fill = "yellow", color = "black", size = 0.3) +
-    labs(title = "Cumulative Percentage Enrollment for Ankles fracture type (of 526)", x = "Month", y = "Cumulative Percent") +
+    labs(x = "Month", y = "Cumulative Percent") +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +  # Rotate labels vertically
     scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0,1))
@@ -316,7 +315,7 @@ cumulative_percentage_plateau_injuries <- function(analytic){
   
   g <- ggplot(yyyy_mm, aes(x = factor(year_month), y = cumulative_percentage)) +
     geom_bar(stat = "identity", fill = "blue", color = "black", size = 0.3) +
-    labs(title = "Cumulative Percentage Enrollment for Ankles fracture type (of 526)", x = "Month", y = "Cumulative Percent") +
+    labs(x = "Month", y = "Cumulative Percent") +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +  # Rotate labels vertically
     scale_y_continuous(labels = scales::percent_format(), limits = c(0,1))

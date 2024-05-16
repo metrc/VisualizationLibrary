@@ -182,11 +182,11 @@ adherence_sextant <- function(analytic){
   
   df <- result %>% 
     mutate(count = format_count_percent(count, total)) %>% 
-    mutate_at(vars(-count), funs(ifelse(. == TRUE, "Adherent", "Not Adherent"))) %>% 
+    mutate_at(vars(-count), funs(ifelse(is.na(.), 'Missing Data', ifelse(. == TRUE, "Adherent", "Not Adherent")))) %>% 
     rename(`Local antibiotic treatment at DWC` = adherence_to_intervention_dwc,
            `Systemic antibiotic treatment post DWC`= adherence_to_intervention_post_dwc,
            `No other local antibiotic use at DWC` = adherence_to_no_other_antibiotic_dwc,
-           `Overall` = count) 
+           `Overall` = count)  
   
   colnames(df)[which(names(df) == "Overall")] <- paste("Overall (n =", total, ")", sep = " ")
   
