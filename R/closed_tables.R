@@ -2978,34 +2978,33 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discont
 
 
 
-#' Closed enrollment_by_site tobra and sextant (var discontinued)
+#' Closed treatment_characteristics (var discontinued)
 #'
 #' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week by treatment arm
 #'
-#' @param analytic This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+#' @param analytic This is the analytic data set that must include screened, 
+#' eligible, refused, not_consented, not_randomized, consented_and_randomized, 
+#' enrolled, site_certified_days, 
 #' facilitycode, screened_date
-#' @param days the number of last days to include in the last days summary section of the table
-#' @param discontinued this is a meta construct where you can specify your discontinued construct like 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
-#' @param discontinued_colname this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')
-#' @param include_safety_set this is a toggle that will include a safety_set construct if you want it included (defaults to FALSE)
 #'
 #' @return html table
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' closed_enrollment_by_site_last_days_var_disc()
+#' closed_treatment_characteristics()
 #' }
 closed_treatment_characteristics <- function(analytic){
   #confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'f351648895498f7100bb8edba2fc425b') no analagous visual
   
   df <- analytic %>%
-    select(enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision,
-           df_number_procedures, 
+    select(study_id, enrolled, df_date, 
+           plat_df_surgical_incision, pil_df_surgical_incision,
+           df_number_procedures, df_randomized_treatment,
            injury_classification_plat_ao, df_surg_staged, df_surg_n_forms,
-           randomized, fracture_type, treatment_arm)
-  
-
+           randomized, fracture_type, treatment_arm) %>% 
+    filter(enrolled) %>%
+    select(-enrolled)
   
   df_a <- df %>% 
     filter(treatment_arm=="Group A")
@@ -3014,15 +3013,105 @@ closed_treatment_characteristics <- function(analytic){
     filter(treatment_arm=="Group B")
   
   inner_treatment_characteristics <- function(inner_df) {
-     out <- inner_df
+    total <- nrow(inner_df)
     
-     return(out)
+    one_form_complete <- inner_df %>%
+      count(df_surg_staged) %>%
+      filter(!is.na(df_surg_staged)) 
+    
+    one_form_complete <- tibble(
+      type = 'Patients with Definitive Fixation Data Complete',
+      n = format_count_percent(sum(one_form_complete$n), total)
+    )
+    
+    stages <- inner_df %>%
+      count(df_number_procedures) %>%
+      mutate(type=ifelse(!is.na(df_number_procedures), df_number_procedures, 'Missing Stages')) %>%
+      mutate(n=format_count_percent(n, total))
+    
+    stages_stats <- inner_df %>%
+      pull(df_number_procedures) %>%
+      format_mean_sd()
+    
+    stages <- tibble(
+      type = c('Number of Stages [Mean (SD)]', stages$type),
+      n = c(stages_stats, stages$n)
+    )
+    
+    incisions <- inner_df %>%
+      group_by(study_id) %>%
+      separate_rows(plat_df_surgical_incision, pil_df_surgical_incision) %>%
+      count(plat_df_surgical_incision, pil_df_surgical_incision)
+    
+    incisions_count <- tibble(
+      type = c('Plateau Count', 'Pilon Count'),
+      n = c(incisions %>% filter(!is.na(plat_df_surgical_incision)) %>% nrow() %>% as.character(),
+            incisions %>% filter(!is.na(pil_df_surgical_incision)) %>% nrow() %>% as.character())
+    )
+    
+    plat_num_incisions <- incisions %>%
+      filter(!is.na(plat_df_surgical_incision)) %>%
+      summarize(n=n())
+    
+    pil_num_incisions <- incisions %>%
+      filter(!is.na(pil_df_surgical_incision)) %>%
+      summarize(n=n())
+    
+    incisions <- full_join(incisions_count, 
+                           tibble(
+        #can't add number to row here
+        type = c('Plateau [Mean(SD)]','Pilon [Mean(SD)]'),
+        n = c(format_mean_sd(plat_num_incisions$n), format_mean_sd(pil_num_incisions$n))
+      )
+    )
+    
+    protocol_followed <- inner_df %>%
+      count(df_randomized_treatment) %>%
+      mutate(type=ifelse(!is.na(df_randomized_treatment), 
+                         ifelse(df_randomized_treatment, 'Yes', 'No'), 
+                         'Missing Protocol Adherence')) %>%
+      mutate(n=format_count_percent(n, total))
+    protocol_followed <- protocol_followed[order(-protocol_followed$df_randomized_treatment, na.last = TRUE), ]
+    
+    out <- full_join(one_form_complete, stages) %>%
+      full_join(incisions) %>%
+      full_join(protocol_followed) %>%
+      select(type, n) %>%
+      rename_with(~paste0('(N=', as.character(total),')'), n)
+    
+    return(list('table'=out, 
+                'com_rows'=nrow(one_form_complete), 
+                'stage_rows'=nrow(stages), 
+                'inc_rows'=nrow(incisions), 
+                'pro_rows'=nrow(protocol_followed), 
+                'total_n'=total))
   }
   
-  out <- paste0("<h4>Group A</h4><br />",
-                enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set),
-                "<h4>Group B</h4><br />",
-                enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set))
+  full_table <- inner_treatment_characteristics(df)
+  a_table <- inner_treatment_characteristics(df_a)$table
+  b_table <- inner_treatment_characteristics(df_b)$table
+  
+  df_table <- full_join(a_table, b_table) %>%
+    full_join(full_table$table) %>%
+    rename(' ' = 'type') %>%
+    rename_with(~ paste0('Group A ', .), 2) %>%
+    rename_with(~ paste0('Group B ', .), 3) %>%
+    rename_with(~ paste0('Overall ', .), 4)
+  
+  #TODO find better numbers for packed rows
+  vis <- kable(df_table, format="html",, align='l') %>%
+    pack_rows(index = c(' ' = full_table$com_rows, 
+                        'Definitive Fixation' = full_table$stage_rows, 
+                        'Incision Locations' = full_table$inc_rows, 
+                        'Study Treatment Adhering to Protocol' = full_table$pro_rows),
+              label_row_css = "text-align:left") %>% 
+    add_indent((1+full_table$com_rows+full_table$stage_rows):
+               (full_table$com_rows+full_table$stage_rows+full_table$inc_rows)) %>%
+    row_spec(0, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(full_table$com_rows, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(full_table$com_rows+full_table$inc_rows+full_table$stage_rows+full_table$pro_rows, 
+             extra_css = "border-bottom: 1px solid") %>%
+    kable_styling(full_width = F, position="left") 
   
   return(out)
 }
