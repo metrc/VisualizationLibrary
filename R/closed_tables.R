@@ -158,51 +158,39 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
 #' closed_baseline_characteristics_percent()
 #' }
 closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicity_race", education="education_level", military="military_status",
-                                                    sex_levels=c("Female","Male", "Missing"), 
-                                                    race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
-                                                    education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
-                                                    military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
+                                                    sex_levels=c("Female","Male", "Missing Sex"), 
+                                                    race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing Race"), 
+                                                    education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing Education"), 
+                                                    military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing Military")){
   
-  constructs <- c(sex, race, education, military)
+  confirm_stability_of_related_visual('baseline_characteristics_percent', 'bd099b941338d591d41b4716902355b6')
+  
+  constructs <- c(sex, race, education, military, 'treatment_arm')
   
   sex_default <- tibble(type=sex_levels)
   race_default <- tibble(type=race_levels)
   education_default <- tibble(type=education_levels)
   military_default <- tibble(type=military_levels)
   
-  sex_n <- -1
-  age_n <- -1
-  race_n <- -1
-  education_n <- -1
-  military_n <- -1
-  
   df <- analytic %>% 
-    filter(enrolled == TRUE)
+    select(enrolled, age_group, age, all_of(constructs)) %>% 
+    filter(enrolled) %>% 
+    rename(sex = !!sym(sex)) %>% 
+    rename(race = !!sym(race)) %>% 
+    rename(education = !!sym(education)) %>% 
+    rename(military = !!sym(military)) %>% 
+    mutate(age = as.numeric(age))
   
-  total <- sum(df$enrolled, na.rm=T)
+  df_a <- df %>% 
+    filter(treatment_arm=="Group A")
   
-  df_a <- analytic %>% 
-    filter(treatment_arm=="Group A") %>% 
-    filter(enrolled == TRUE)
+  df_b <- df %>% 
+    filter(treatment_arm=="Group B") 
   
-  df_b <- analytic %>% 
-    filter(treatment_arm=="Group B") %>% 
-    filter(enrolled == TRUE)
-  
-  inner_closed_baseline_characteristics_percent <- function(analytic){
-    
-    df <- analytic %>% 
-      select(enrolled, age_group, age, all_of(constructs)) %>% 
-      filter(enrolled) %>% 
-      rename(sex = !!sym(sex)) %>% 
-      rename(race = !!sym(race)) %>% 
-      rename(education = !!sym(education)) %>% 
-      rename(military = !!sym(military)) %>% 
-      mutate(age = as.numeric(age)) %>% 
-      mutate(df = "age")
-    
-    sex_df <- df %>% 
-      mutate(sex = replace_na(sex, "Missing")) %>% 
+  inner_closed_baseline_characteristics_percent <- function(inner_df){
+    total <- sum(inner_df$enrolled, na.rm=T)
+    sex_df <- inner_df %>% 
+      mutate(sex = replace_na(sex, "Missing Sex")) %>% 
       group_by(sex) %>% 
       count(sex) %>% 
       rename(number = n) %>% 
@@ -212,26 +200,23 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(sex_default) %>% 
       mutate(order = factor(type, sex_levels)) %>% 
       arrange(order) %>% 
-      select(-order) %>% 
-      mutate(df = "sex")
+      select(-order)
     
-    age_df <- df %>% 
-      summarize( type = 'Mean (SD)', percentage = format_mean_sd(age)) %>% 
-      mutate(df = "age_n")
+    age_df <- inner_df %>% 
+      summarize( type = 'Mean Age (SD)', percentage = format_mean_sd(age))
     
     
-    age_group_df <- df %>% 
-      mutate(age_group = replace_na(age_group, "Missing")) %>% 
+    age_group_df <- inner_df %>% 
+      mutate(age_group = replace_na(age_group, "Missing Age")) %>% 
       group_by(age_group) %>% 
       count(age_group) %>% 
       rename(number = n) %>% 
       mutate(percentage = format_count_percent(number, total)) %>% 
       select(-number) %>% 
-      rename(type = age_group) %>% 
-      mutate(df = "age")
+      rename(type = age_group)
     
-    education_df <- df %>% 
-      mutate(education = replace_na(education, "Missing")) %>% 
+    education_df <- inner_df %>% 
+      mutate(education = replace_na(education, "Missing Education")) %>% 
       group_by(education) %>% 
       count(education) %>% 
       rename(number = n) %>% 
@@ -241,11 +226,10 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(education_default) %>% 
       mutate(order = factor(type, education_levels)) %>% 
       arrange(order) %>% 
-      select(-order) %>% 
-      mutate(df = "education")
+      select(-order)
     
-    race_df <- df %>% 
-      mutate(race = replace_na(race, "Missing")) %>% 
+    race_df <- inner_df %>% 
+      mutate(race = replace_na(race, "Missing Race")) %>% 
       group_by(race) %>% 
       count(race) %>% 
       rename(number = n) %>% 
@@ -255,11 +239,10 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(race_default) %>% 
       mutate(order = factor(type, race_levels)) %>% 
       arrange(order) %>% 
-      select(-order) %>% 
-      mutate(df = "race")
+      select(-order)
     
-    military_df <- df %>% 
-      mutate(military = ifelse(is.na(military), "Missing", military)) %>% 
+    military_df <- inner_df %>% 
+      mutate(military = ifelse(is.na(military), "Missing Military", military)) %>% 
       group_by(military) %>% 
       count(military) %>% 
       rename(number = n) %>% 
@@ -269,17 +252,10 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(military_default) %>% 
       mutate(order = factor(type, military_levels)) %>% 
       arrange(order) %>% 
-      select(-order) %>% 
-      mutate(df = "military")
+      select(-order)
     
     df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) %>% 
       mutate() 
-    
-    sex_n <<- nrow(sex_df)
-    age_n <<- nrow(age_group_df)
-    race_n <<- nrow(race_df)
-    education_n <<- nrow(education_df)
-    military_n <<- nrow(military_df)
     
     return(df_final)
   }
@@ -288,20 +264,17 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   table_b <- inner_closed_baseline_characteristics_percent(df_b)
   table_full <- inner_closed_baseline_characteristics_percent(df)
   
-  table_final <- left_join(table_full, full_join(table_a, table_b, by=c("df","type")), 
-                                       by=c("df","type")) %>% 
-    select(-df) %>% 
-    mutate_all(replace_na, "0 (0%)") %>% 
-    select(type, percentage.x,  percentage.y, percentage)
+  combined_table <- full_join(table_a, table_b, by = 'type') %>%
+    full_join(table_full, by = 'type')
   
-  cnames <- c(' ', paste('n = ', total))
-  header <- c(1,1)
-  names(header)<-cnames
-  
-  vis <- kable(table_final, format="html",, align='l',
-               col.names = c(" ","Group A", "Group B", "Total")) %>% 
-    pack_rows(index = c('Sex' = sex_n, 'Age' = 1 + age_n, 'Race' = race_n, 
-                        'Education' = education_n, 'Military' = military_n),
+  #TODO find better numbers for packed rows
+  vis <- kable(combined_table, format="html",, align='l',
+               col.names = c(" ",
+                             paste0(c("Group A (n=", nrow(df_a), ")")), 
+                             paste0(c("Group B (n=", nrow(df_b), ")")), 
+                             paste0(c("Total", nrow(df), ")"))))  %>%
+    pack_rows(index = c('Sex' = length(sex_levels), 'Age' = 6, 'Race' = length(race_levels), 
+                        'Education' = length(education_levels), 'Military' = length(military_levels)),
               label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
@@ -324,7 +297,10 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #' closed_discontinuation_sae_deviation_by_type()
 #' }
 closed_discontinuation_sae_deviation_by_type <- function(analytic){
-  df_full <- analytic
+  confirm_stability_of_related_visual('discontinuation_sae_deviation_by_type', '9cbdfa0e479969ea2ec5eea8a54716e2')
+  
+  df_full <- analytic %>%
+    filter(enrolled)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -336,7 +312,6 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
   n_dsc <- -1
   n_dp <- -1
   n_da <- -1
-  total <- sum(analytic$enrolled, na.rm=T)
   
   inner_closed_discontinuation_sae_deviation_by_type <- function(df){
     discontinuation_df <- df %>% 
@@ -439,13 +414,16 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
   }
 
-  vis <- kable(df_table, format="html",, align='l',  col.names = c(paste0("n=",total), "Group A", "Group B", "Total")) %>%
+  vis <- kable(df_table, format="html",, align='l',  col.names = c(' ', 
+                                                                   paste0("Group A n=(", nrow(df_a), ")"), 
+                                                                   paste0("Group B n=(", nrow(df_b), ")"), 
+                                                                   paste0("Total n=(", nrow(df_full), ")"))) %>%
     add_indent(c(seq(n_disc) + 1, 1 + n_disc + 1 + 1 + seq(1+n_dsc+1+n_dp+1+n_da))) %>% 
     add_indent(indents_vec) %>% 
-    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1+ n_disc, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(0, extra_css = "border-bottom: 2px solid") %>% 
+    row_spec(1+ n_disc, extra_css = "border-bottom: 2px solid") %>% 
+    row_spec(1 + n_disc + 1, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 2px solid") %>%
     kable_styling("striped", full_width = F, position="left") 
   
   return(vis)
@@ -616,7 +594,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     pack_rows(index = subindex_vec,label_row_css = "text-align:left;padding-left: 2em;", bold = FALSE) %>% 
     add_header_above(c(" " = 1, "Group A" = 7, "Group B" = 7, "All" = 7)) %>%
-    row_spec(1, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1, extra_css = "border-bottom: 2px solid") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
   return(table_raw)
@@ -1748,10 +1726,10 @@ closed_adjudications_and_discontinuations_by_type <- function(analytic){
     add_indent(indents_vec_a, indents = 1, level_of_indent = "    ", columns = 2) %>% 
     add_indent(indents_vec_b, indents = 1, level_of_indent = " ", columns = 3) %>% 
     add_indent(indents_vec_full, indents = 1, level_of_indent = " ", columns = 4) %>% 
-    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_disc_full, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_disc_full + 1, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_disc_full + 1 + 1 + 1 + n_dsc_full + 1 + n_dp_full + 1 + n_da_full, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(0, extra_css = "border-bottom: 2px solid") %>% 
+    row_spec(1 + n_disc_full, extra_css = "border-bottom: 2px solid") %>% 
+    row_spec(1 + n_disc_full + 1, extra_css = "border-bottom: 2px solid") %>% 
+    row_spec(1 + n_disc_full + 1 + 1 + 1 + n_dsc_full + 1 + n_dp_full + 1 + n_da_full, extra_css = "border-bottom: 2px solid") %>% 
     kable_styling("striped", full_width = F, position = "left")
   return(vis)
 }
@@ -1856,7 +1834,7 @@ closed_certification_date_data <- function(analytic){
   
   cols <- c('Facility', 'Local (or sIRB) Approval Date', 'DoD Approval Date',
             'Certified by MCC to Start Screening',
-            paste0('Days Number of Days Certified (as of ', as.character(date_today), ')'))
+            paste0('Number of Days Certified (as of ', as.character(date_today), ')'))
   
   df <- analytic %>%
     filter(!is.na(treatment_arm)) %>%
@@ -2117,10 +2095,10 @@ closed_expected_visits_by_followup_period <- function(analytic){
     add_header_above(c(" " = 1, "Group A" = 4, "Group B" = 4, "Overall" = 4)) %>%
     kable_styling("striped", full_width = F, position = "left") %>%
     add_indent(c(3, 4)) %>%
-    row_spec(1, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(4, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(5, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(6, extra_css = "border-bottom: 1px solid")
+    row_spec(1, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(4, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(5, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(6, extra_css = "border-bottom: 2px solid")
   
   return(vis)
 }
@@ -2391,6 +2369,8 @@ closed_not_enrolled_for_other_reasons <- function(analytic){
 #' closed_fracture_characteristics(analytic)
 #' }
 closed_fracture_characteristics <- function(analytic){
+  confirm_stability_of_related_visual('fracture_characteristics', '39fae01eb7c76ab2d779c0400b13472c')
+  
   inner_fracture_characteristics <- function(df) {
     total <- sum(df$enrolled)
     closed_total <- sum(df$closed)
@@ -2456,9 +2436,9 @@ closed_fracture_characteristics <- function(analytic){
     left_join(df_final_full, by = "type") %>%
     select(type, ends_with(" (Group A)"), ends_with(" (Group B)"), percentage)
   
-  cnames <- c(' ', paste('Group A (n=', sum(df_a$enrolled), ')'),
-              paste('Group B (n=', sum(df_b$enrolled), ')'),
-              paste('Overall (n=', total, ')'))
+  cnames <- c(' ', paste0('Group A (n=', sum(df_a$enrolled), ')'),
+              paste0('Group B (n=', sum(df_b$enrolled), ')'),
+              paste0('Overall (n=', total, ')'))
   header <- c(1,1,1,1)
   names(header) <- cnames
   
@@ -2900,19 +2880,28 @@ closed_followup_12mo_status_by_site_sextant <- function(analytic){
 #' closed_adherence_by_site(analytic)
 #' }
 closed_adherence_by_site <- function(analytic){
+  #confirm_stability_of_related_visual('fracture_characteristics', '39fae01eb7c76ab2d779c0400b13472c')
   
-  inner_adherence_by_site <- function(df) {
-    treatment_total <- sum(df$treatment_arm, na.rm = TRUE)
+  inner_adherence_by_site <- function(inner_df) {
+    treatment_total <- inner_df %>%
+      filter(!is.na(treatment_arm)) %>%
+      nrow()
     
-    df2 <- df %>% 
+    df2 <- inner_df %>% 
       group_by(facilitycode) %>% 
-      summarize(elig_enr = sum(enrolled, na.rm = TRUE), df_total = sum(df_complete, na.rm = TRUE), treatment_completed = sum(treatment_arm, na.rm = TRUE)) %>% 
-      mutate(treatment_completed = format_count_percent(treatment_completed, df_total)) 
+      summarize(elig_enr = sum(enrolled, na.rm = TRUE), 
+                df_total = sum(df_complete, na.rm = TRUE), 
+                # TODO ask about this math, does treatment_arm
+                treatment_completed = sum(!is.na(treatment_arm))) %>% 
+      mutate(treatment_completed = format_count_percent(df_total, treatment_completed)) 
     
     enrolled_total <- sum(df2$elig_enr, na.rm = TRUE)
     df_total <- sum(df2$df_total, na.rm = TRUE)
     
-    df3 <- data.frame(facilitycode = 'TOTAL', elig_enr = enrolled_total, df_total = df_total, treatment_completed = format_count_percent(treatment_total, df_total))
+    df3 <- data.frame(facilitycode = 'TOTAL', 
+                      elig_enr = enrolled_total, 
+                      df_total = df_total, 
+                      treatment_completed = format_count_percent(df_total, sum(!is.na(inner_df$treatment_arm))))
     
     df4 <- rbind(df2, df3) %>% 
       rename(`Clinical Site` = facilitycode,
@@ -2924,7 +2913,7 @@ closed_adherence_by_site <- function(analytic){
   }
   
   df <- analytic %>%
-    select(facilitycode, enrolled, df_date, treatment_arm, treatment_arm) %>%
+    select(facilitycode, enrolled, df_date, treatment_arm) %>%
     filter(enrolled) %>%
     mutate(df_date = na_if(df_date, "NA")) %>%
     mutate(df_complete = ifelse(!is.na(df_date), TRUE, FALSE))
@@ -2938,8 +2927,13 @@ closed_adherence_by_site <- function(analytic){
   df_table <- full_join(df4_a, df4_b, by = "Clinical Site", suffix = c(" (Group A)", " (Group B)")) %>%
     select(`Clinical Site`, ends_with(" (Group A)"), ends_with(" (Group B)"))
   
+  total_row <- df_table %>%
+    filter(`Clinical Site` == "TOTAL")
+  df_table <- df_table %>%
+    filter(`Clinical Site` != "TOTAL")
+  df_table <- bind_rows(df_table, total_row)
+  
   output <- kable(df_table, format="html",, align='l') %>%
-    add_header_above(c(" " = 1, "Group A" = (ncol(df_table)-1)/2, "Group B" = (ncol(df_table)-1)/2)) %>%
     row_spec(nrow(df_table), bold = TRUE) %>%
     kable_styling("striped", full_width = F, position="left")
   
@@ -2965,6 +2959,8 @@ closed_adherence_by_site <- function(analytic){
 #' closed_enrollment_by_site_last_days_var_disc()
 #' }
 closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="discontinued", discontinued_colname="Discontinued", include_safety_set=FALSE){
+  confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'f351648895498f7100bb8edba2fc425b')
+  
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
   
@@ -2974,10 +2970,11 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discont
   out <- paste0("<h4>Group A</h4><br />",
                 enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set),
                 "<h4>Group B</h4><br />",
-                enrollment_by_site_var_disc_tobra_sextant(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set))
+                enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set))
   
   return(out)
 }
+
 
 
 #' Closed Deep Surgical Site Infection reported & adjudicated
@@ -3165,5 +3162,143 @@ closed_complications_overall <- function(analytic, days=NULL){
   processed_df_table_raw <- process_severity_grade_4(df_table_raw)
   
   return(processed_df_table_raw)
+}
+
+
+#' Closed treatment_characteristics (var discontinued)
+#'
+#' @description This function visualizes the characteristics of the definitive 
+#' fixation process. Data included is completeness, number of df stages, 
+#' statistics on distribution, incision location counts and distribution,
+#' and adherence by treatment arm
+#'
+#' @param analytic This is the analytic data set that must include study_id, 
+#' enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision,
+#' df_number_procedures, df_randomized_treatment,
+#' injury_classification_plat_ao, df_surg_staged, df_surg_n_forms,
+#' randomized, fracture_type, treatment_arm
+#'
+#' @return html table
+#' closed_treatment_characteristics()
+#' }
+closed_treatment_characteristics <- function(analytic){
+  
+  df <- analytic %>%
+    select(study_id, enrolled, df_date, 
+           plat_df_surgical_incision, pil_df_surgical_incision,
+           df_number_procedures, df_randomized_treatment,
+           injury_classification_plat_ao, df_surg_staged, df_surg_n_forms,
+           randomized, fracture_type, treatment_arm) %>% 
+    filter(enrolled) %>%
+    select(-enrolled)
+  
+  df_a <- df %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- df %>% 
+    filter(treatment_arm=="Group B")
+  
+  inner_treatment_characteristics <- function(inner_df) {
+    total <- nrow(inner_df)
+    
+    one_form_complete <- inner_df %>%
+      count(df_surg_staged) %>%
+      filter(!is.na(df_surg_staged)) 
+    
+    one_form_complete <- tibble(
+      type = 'Patients with Definitive Fixation Data Complete',
+      n = format_count_percent(sum(one_form_complete$n), total)
+    )
+    
+    stages <- inner_df %>%
+      count(df_number_procedures) %>%
+      mutate(type=ifelse(!is.na(df_number_procedures), df_number_procedures, 'Missing Stages')) %>%
+      mutate(n=format_count_percent(n, total))
+    
+    stages_stats <- inner_df %>%
+      pull(df_number_procedures) %>%
+      format_mean_sd()
+    
+    stages <- tibble(
+      type = c('Number of Stages [Mean (SD)]', stages$type),
+      n = c(stages_stats, stages$n)
+    )
+    
+    incisions <- inner_df %>%
+      group_by(study_id) %>%
+      separate_rows(plat_df_surgical_incision, pil_df_surgical_incision) %>%
+      count(plat_df_surgical_incision, pil_df_surgical_incision)
+    
+    incisions_count <- tibble(
+      type = c('Plateau Count', 'Pilon Count'),
+      n = c(incisions %>% filter(!is.na(plat_df_surgical_incision)) %>% nrow() %>% as.character(),
+            incisions %>% filter(!is.na(pil_df_surgical_incision)) %>% nrow() %>% as.character())
+    )
+    
+    plat_num_incisions <- incisions %>%
+      filter(!is.na(plat_df_surgical_incision)) %>%
+      summarize(n=n())
+    
+    pil_num_incisions <- incisions %>%
+      filter(!is.na(pil_df_surgical_incision)) %>%
+      summarize(n=n())
+    
+    incisions <- full_join(incisions_count, 
+                           tibble(
+        #can't add number to row here
+        type = c('Plateau [Mean(SD)]','Pilon [Mean(SD)]'),
+        n = c(format_mean_sd(plat_num_incisions$n), format_mean_sd(pil_num_incisions$n))
+      )
+    )
+    
+    protocol_followed <- inner_df %>%
+      count(df_randomized_treatment) %>%
+      mutate(type=ifelse(!is.na(df_randomized_treatment), 
+                         ifelse(df_randomized_treatment, 'Yes', 'No'), 
+                         'Missing Protocol Adherence')) %>%
+      mutate(n=format_count_percent(n, total))
+    protocol_followed <- protocol_followed[order(-protocol_followed$df_randomized_treatment, na.last = TRUE), ]
+    
+    out <- full_join(one_form_complete, stages) %>%
+      full_join(incisions) %>%
+      full_join(protocol_followed) %>%
+      select(type, n) %>%
+      rename_with(~paste0('(N=', as.character(total),')'), n)
+    
+    return(list('table'=out, 
+                'com_rows'=nrow(one_form_complete), 
+                'stage_rows'=nrow(stages), 
+                'inc_rows'=nrow(incisions), 
+                'pro_rows'=nrow(protocol_followed), 
+                'total_n'=total))
+  }
+  
+  full_table <- inner_treatment_characteristics(df)
+  a_table <- inner_treatment_characteristics(df_a)$table
+  b_table <- inner_treatment_characteristics(df_b)$table
+  
+  df_table <- full_join(a_table, b_table) %>%
+    full_join(full_table$table) %>%
+    rename(' ' = 'type') %>%
+    rename_with(~ paste0('Group A ', .), 2) %>%
+    rename_with(~ paste0('Group B ', .), 3) %>%
+    rename_with(~ paste0('Overall ', .), 4)
+  
+  #TODO find better numbers for packed rows
+  vis <- kable(df_table, format="html",, align='l') %>%
+    pack_rows(index = c(' ' = full_table$com_rows, 
+                        'Definitive Fixation' = full_table$stage_rows, 
+                        'Incision Locations' = full_table$inc_rows, 
+                        'Study Treatment Adhering to Protocol' = full_table$pro_rows),
+              label_row_css = "text-align:left") %>% 
+    add_indent((1+full_table$com_rows+full_table$stage_rows):
+               (full_table$com_rows+full_table$stage_rows+full_table$inc_rows)) %>%
+    row_spec(0, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(full_table$com_rows, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(full_table$com_rows+full_table$inc_rows+full_table$stage_rows+full_table$pro_rows, 
+             extra_css = "border-bottom: 2px solid") %>%
+    kable_styling("striped", full_width = F, position="left")
+  
+  return(vis)
 }
 
