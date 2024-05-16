@@ -3112,7 +3112,7 @@ closed_treatment_characteristics <- function(analytic){
     row_spec(full_table$com_rows, extra_css = "border-bottom: 1px solid") %>%
     row_spec(full_table$com_rows+full_table$inc_rows+full_table$stage_rows+full_table$pro_rows, 
              extra_css = "border-bottom: 1px solid") %>%
-    kable_styling(full_width = F, position="left") 
+    kable_styling("striped", full_width = F, position="left")
   
   return(vis)
 }
