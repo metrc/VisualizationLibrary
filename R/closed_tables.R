@@ -2049,6 +2049,9 @@ closed_expected_visits_by_followup_period <- function(analytic){
 #' closed_amputations_and_gustilo_injury_characteristics(analytic)
 #' }
 closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
+  
+  confirm_stability_of_related_visual("amputations_and_gustilo_injury_characteristics", "a7acd8c27097a6c099b238cd609960fe")
+  
   inner_amputations_and_gustilo_injury_characteristics <- function(pull) {
     inj_gust <- pull %>%
       select(injury_gustilo_type) %>%  
