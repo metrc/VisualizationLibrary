@@ -2891,7 +2891,7 @@ closed_adherence_by_site <- function(analytic){
 #' \dontrun{
 #' closed_enrollment_by_site_last_days_var_disc()
 #' }
-closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="discontinued", discontinued_colname="Discontinued", include_safety_set=FALSE){
+closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="discontinued", discontinued_colname="Discontinued", include_safety_set=FALSE, footnotes=NULL){
   confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'f351648895498f7100bb8edba2fc425b')
   
   df_a <- analytic %>% 
@@ -2900,11 +2900,18 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discont
   df_b <- analytic %>% 
     filter(treatment_arm=="Group B")
   
-  out <- paste0("<h4>Group A</h4><br />",
-                enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set),
-                "<h4>Group B</h4><br />",
-                enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set))
-  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set),
+                  "<h4>Group B</h4><br />",
+                  enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_safety_set=include_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+
   return(out)
 }
 
