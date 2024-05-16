@@ -299,7 +299,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 closed_discontinuation_sae_deviation_by_type <- function(analytic){
   confirm_stability_of_related_visual('discontinuation_sae_deviation_by_type', '9cbdfa0e479969ea2ec5eea8a54716e2')
   
-  df_full <- analytic
+  df_full <- analytic %>%
+    filter(enrolled)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -311,7 +312,6 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
   n_dsc <- -1
   n_dp <- -1
   n_da <- -1
-  total <- sum(analytic$enrolled, na.rm=T)
   
   inner_closed_discontinuation_sae_deviation_by_type <- function(df){
     discontinuation_df <- df %>% 
@@ -414,13 +414,16 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
   }
 
-  vis <- kable(df_table, format="html",, align='l',  col.names = c(paste0("n=",total), "Group A", "Group B", "Total")) %>%
+  vis <- kable(df_table, format="html",, align='l',  col.names = c(' ', 
+                                                                   paste0("Group A n=(", nrow(df_a), ")"), 
+                                                                   paste0("Group B n=(", nrow(df_b), ")"), 
+                                                                   paste0("Total n=(", nrow(df_full), ")"))) %>%
     add_indent(c(seq(n_disc) + 1, 1 + n_disc + 1 + 1 + seq(1+n_dsc+1+n_dp+1+n_da))) %>% 
     add_indent(indents_vec) %>% 
-    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1+ n_disc, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(0, extra_css = "border-bottom: 2px solid") %>% 
+    row_spec(1+ n_disc, extra_css = "border-bottom: 2px solid") %>% 
+    row_spec(1 + n_disc + 1, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 2px solid") %>%
     kable_styling("striped", full_width = F, position="left") 
   
   return(vis)
@@ -591,7 +594,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     pack_rows(index = subindex_vec,label_row_css = "text-align:left;padding-left: 2em;", bold = FALSE) %>% 
     add_header_above(c(" " = 1, "Group A" = 7, "Group B" = 7, "All" = 7)) %>%
-    row_spec(1, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1, extra_css = "border-bottom: 2px solid") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
   return(table_raw)
@@ -1723,10 +1726,10 @@ closed_adjudications_and_discontinuations_by_type <- function(analytic){
     add_indent(indents_vec_a, indents = 1, level_of_indent = "    ", columns = 2) %>% 
     add_indent(indents_vec_b, indents = 1, level_of_indent = " ", columns = 3) %>% 
     add_indent(indents_vec_full, indents = 1, level_of_indent = " ", columns = 4) %>% 
-    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_disc_full, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_disc_full + 1, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_disc_full + 1 + 1 + 1 + n_dsc_full + 1 + n_dp_full + 1 + n_da_full, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(0, extra_css = "border-bottom: 2px solid") %>% 
+    row_spec(1 + n_disc_full, extra_css = "border-bottom: 2px solid") %>% 
+    row_spec(1 + n_disc_full + 1, extra_css = "border-bottom: 2px solid") %>% 
+    row_spec(1 + n_disc_full + 1 + 1 + 1 + n_dsc_full + 1 + n_dp_full + 1 + n_da_full, extra_css = "border-bottom: 2px solid") %>% 
     kable_styling("striped", full_width = F, position = "left")
   return(vis)
 }
@@ -1831,7 +1834,7 @@ closed_certification_date_data <- function(analytic){
   
   cols <- c('Facility', 'Local (or sIRB) Approval Date', 'DoD Approval Date',
             'Certified by MCC to Start Screening',
-            paste0('Days Number of Days Certified (as of ', as.character(date_today), ')'))
+            paste0('Number of Days Certified (as of ', as.character(date_today), ')'))
   
   df <- analytic %>%
     filter(!is.na(treatment_arm)) %>%
@@ -2092,10 +2095,10 @@ closed_expected_visits_by_followup_period <- function(analytic){
     add_header_above(c(" " = 1, "Group A" = 4, "Group B" = 4, "Overall" = 4)) %>%
     kable_styling("striped", full_width = F, position = "left") %>%
     add_indent(c(3, 4)) %>%
-    row_spec(1, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(4, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(5, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(6, extra_css = "border-bottom: 1px solid")
+    row_spec(1, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(4, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(5, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(6, extra_css = "border-bottom: 2px solid")
   
   return(vis)
 }
@@ -2433,9 +2436,9 @@ closed_fracture_characteristics <- function(analytic){
     left_join(df_final_full, by = "type") %>%
     select(type, ends_with(" (Group A)"), ends_with(" (Group B)"), percentage)
   
-  cnames <- c(' ', paste('Group A (n=', sum(df_a$enrolled), ')'),
-              paste('Group B (n=', sum(df_b$enrolled), ')'),
-              paste('Overall (n=', total, ')'))
+  cnames <- c(' ', paste0('Group A (n=', sum(df_a$enrolled), ')'),
+              paste0('Group B (n=', sum(df_b$enrolled), ')'),
+              paste0('Overall (n=', total, ')'))
   header <- c(1,1,1,1)
   names(header) <- cnames
   
@@ -2931,7 +2934,6 @@ closed_adherence_by_site <- function(analytic){
   df_table <- bind_rows(df_table, total_row)
   
   output <- kable(df_table, format="html",, align='l') %>%
-    add_header_above(c(" " = 1, "Group A" = (ncol(df_table)-1)/2, "Group B" = (ncol(df_table)-1)/2)) %>%
     row_spec(nrow(df_table), bold = TRUE) %>%
     kable_styling("striped", full_width = F, position="left")
   
@@ -3108,10 +3110,10 @@ closed_treatment_characteristics <- function(analytic){
               label_row_css = "text-align:left") %>% 
     add_indent((1+full_table$com_rows+full_table$stage_rows):
                (full_table$com_rows+full_table$stage_rows+full_table$inc_rows)) %>%
-    row_spec(0, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(full_table$com_rows, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(0, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(full_table$com_rows, extra_css = "border-bottom: 2px solid") %>%
     row_spec(full_table$com_rows+full_table$inc_rows+full_table$stage_rows+full_table$pro_rows, 
-             extra_css = "border-bottom: 1px solid") %>%
+             extra_css = "border-bottom: 2px solid") %>%
     kable_styling("striped", full_width = F, position="left")
   
   return(vis)
