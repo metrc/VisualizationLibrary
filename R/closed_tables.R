@@ -158,39 +158,42 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
 #' closed_baseline_characteristics_percent()
 #' }
 closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicity_race", education="education_level", military="military_status",
-                                                    sex_levels=c("Female","Male", "Missing Sex"), 
-                                                    race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing Race"), 
-                                                    education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing Education"), 
-                                                    military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing Military")){
+                                                       sex_levels=c("Female","Male", "Missing"), 
+                                                       race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
+                                                       education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
+                                                       military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
   
-  confirm_stability_of_related_visual('baseline_characteristics_percent', 'bd099b941338d591d41b4716902355b6')
+  confirm_stability_of_related_visual("baseline_characteristics_percent", "bd099b941338d591d41b4716902355b6")
   
-  constructs <- c(sex, race, education, military, 'treatment_arm')
+  sex_df <- tibble()
+  age_df <- tibble()
+  age_group_df <- tibble()
+  race_df <- tibble()
+  education_df <- tibble()
+  military_df <- tibble()
   
-  sex_default <- tibble(type=sex_levels)
-  race_default <- tibble(type=race_levels)
-  education_default <- tibble(type=education_levels)
-  military_default <- tibble(type=military_levels)
-  
-  df <- analytic %>% 
-    select(enrolled, age_group, age, all_of(constructs)) %>% 
-    filter(enrolled) %>% 
-    rename(sex = !!sym(sex)) %>% 
-    rename(race = !!sym(race)) %>% 
-    rename(education = !!sym(education)) %>% 
-    rename(military = !!sym(military)) %>% 
-    mutate(age = as.numeric(age))
-  
-  df_a <- df %>% 
-    filter(treatment_arm=="Group A")
-  
-  df_b <- df %>% 
-    filter(treatment_arm=="Group B") 
-  
-  inner_closed_baseline_characteristics_percent <- function(inner_df){
-    total <- sum(inner_df$enrolled, na.rm=T)
-    sex_df <- inner_df %>% 
-      mutate(sex = replace_na(sex, "Missing Sex")) %>% 
+  inner_baseline_characteristics_percent <- function(inner_analytic){
+    constructs <- c(sex, race, education, military)
+    
+    sex_default <- tibble(type=sex_levels)
+    race_default <- tibble(type=race_levels)
+    education_default <- tibble(type=education_levels)
+    military_default <- tibble(type=military_levels)
+    
+    
+    df <- inner_analytic %>% 
+      select(enrolled, age_group, age, all_of(constructs)) %>% 
+      filter(enrolled) %>% 
+      rename(sex = !!sym(sex)) %>% 
+      rename(race = !!sym(race)) %>% 
+      rename(education = !!sym(education)) %>% 
+      rename(military = !!sym(military)) %>% 
+      mutate(age = as.numeric(age))
+    
+    total <- sum(df$enrolled)
+    
+    sex_df <<- df %>% 
+      mutate(sex = replace_na(sex, "Missing")) %>% 
       group_by(sex) %>% 
       count(sex) %>% 
       rename(number = n) %>% 
@@ -202,12 +205,12 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       arrange(order) %>% 
       select(-order)
     
-    age_df <- inner_df %>% 
-      summarize( type = 'Mean Age (SD)', percentage = format_mean_sd(age))
+    age_df <<- df %>% 
+      summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))
     
     
-    age_group_df <- inner_df %>% 
-      mutate(age_group = replace_na(age_group, "Missing Age")) %>% 
+    age_group_df <<- df %>% 
+      mutate(age_group = replace_na(age_group, "Missing")) %>% 
       group_by(age_group) %>% 
       count(age_group) %>% 
       rename(number = n) %>% 
@@ -215,8 +218,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       select(-number) %>% 
       rename(type = age_group)
     
-    education_df <- inner_df %>% 
-      mutate(education = replace_na(education, "Missing Education")) %>% 
+    education_df <<- df %>% 
+      mutate(education = replace_na(education, "Missing")) %>% 
       group_by(education) %>% 
       count(education) %>% 
       rename(number = n) %>% 
@@ -228,8 +231,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       arrange(order) %>% 
       select(-order)
     
-    race_df <- inner_df %>% 
-      mutate(race = replace_na(race, "Missing Race")) %>% 
+    race_df <<- df %>% 
+      mutate(race = replace_na(race, "Missing")) %>% 
       group_by(race) %>% 
       count(race) %>% 
       rename(number = n) %>% 
@@ -241,8 +244,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       arrange(order) %>% 
       select(-order)
     
-    military_df <- inner_df %>% 
-      mutate(military = ifelse(is.na(military), "Missing Military", military)) %>% 
+    military_df <<- df %>% 
+      mutate(military = ifelse(is.na(military), "Missing", military)) %>% 
       group_by(military) %>% 
       count(military) %>% 
       rename(number = n) %>% 
@@ -255,31 +258,37 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       select(-order)
     
     df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) %>% 
-      mutate() 
-    
+      mutate_all(replace_na, "0 (0%)") %>% 
+      ungroup()
     return(df_final)
   }
   
-  table_a <- inner_closed_baseline_characteristics_percent(df_a)
-  table_b <- inner_closed_baseline_characteristics_percent(df_b)
-  table_full <- inner_closed_baseline_characteristics_percent(df)
+  df_a <- analytic %>% filter(treatment_arm=="Group A")
+  df_b <- analytic %>% filter(treatment_arm=="Group B")
   
-  combined_table <- full_join(table_a, table_b, by = 'type') %>%
-    full_join(table_full, by = 'type')
+  output_a <- inner_baseline_characteristics_percent(df_a)
+  output_b <- inner_baseline_characteristics_percent(df_b)
+  output_total <- inner_baseline_characteristics_percent(analytic)
   
-  #TODO find better numbers for packed rows
-  vis <- kable(combined_table, format="html",, align='l',
-               col.names = c(" ",
-                             paste0(c("Group A (n=", nrow(df_a), ")")), 
-                             paste0(c("Group B (n=", nrow(df_b), ")")), 
-                             paste0(c("Total", nrow(df), ")"))))  %>%
-    pack_rows(index = c('Sex' = length(sex_levels), 'Age' = 6, 'Race' = length(race_levels), 
-                        'Education' = length(education_levels), 'Military' = length(military_levels)),
-              label_row_css = "text-align:left") %>% 
+  output_b <- output_b %>% select(percentage)
+  output_total <- output_total %>% select(percentage)
+  
+  full_output <- cbind(output_a, output_b , output_total)
+  
+  colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a),")"), paste0("Group B (n=",nrow(df_b),")"), paste0("Total (n=",nrow(df_a)+nrow(df_b),")"))
+  
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+  
+  vis <- kable(full_output, format="html",, align='l') %>%
+    pack_rows(index = c('Sex' = nrow(sex_df), 'Age' = (nrow(age_df) + nrow(age_group_df)), 'Race' = nrow(race_df), 
+                        'Education' = nrow(education_df), 'Military' = nrow(military_df)), label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left") 
   
- return(vis) 
+  return(vis) 
 } 
+
 
 
 #' Closed Number of Discontinued Participants, SAEs, and Protocol Deviations by type
@@ -1734,85 +1743,6 @@ closed_adjudications_and_discontinuations_by_type <- function(analytic){
   return(vis)
 }
 
-#' Closed Number of patients Ineligible by Top 5 reasons of Exclusion
-#'
-#' @description This function visualizes the number of patients Ineligible by Top 5 reasons of Exclusion criteria by treatment arm
-#'
-#' @param analytic This is the analytic data set that must include facilitycode,  screened, ineligible, ineligibility_reasons, treatment_arm
-#'
-#' @return A kable table
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' closed_ineligibility_by_reasons(analytic)
-#' }
-closed_ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
-  inner_ineligibility_by_reasons <- function(df) {
-    reasons <- df %>%  select(study_id, facilitycode, ineligibility_reasons) %>%
-      column_unzipper('ineligibility_reasons', sep = '; ') %>%
-      boolean_column_counter() %>%
-      pivot_longer(everything()) %>%
-      arrange(desc(value)) %>%
-      slice(1:n_top_reasons) %>%
-      pull(name)
-    
-    total <- df %>% 
-        column_unzipper('ineligibility_reasons', sep = '; ') %>% 
-        boolean_column_counter() %>% 
-        mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible)))) %>% 
-        mutate(Site = 'Total') %>% 
-        select(Site, screened, ineligible, all_of(reasons), otherreasons)
-      
-    sites <- df %>% 
-      column_unzipper('ineligibility_reasons', sep = '; ') %>% 
-      boolean_column_counter(groups = 'facilitycode') %>% 
-      mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible, facilitycode)))) %>% 
-      rename(Site = facilitycode) %>% 
-      select(Site, screened, ineligible, all_of(reasons), otherreasons)
-    
-    output <- bind_rows(total, sites) %>% 
-      rename(Screened = screened,
-             Ineligible = ineligible,
-             `Other Reasons` = otherreasons) %>% 
-      arrange(desc(Screened)) %>% 
-      mutate(Ineligible = format_count_percent(Ineligible, Screened))
-    
-    return(output)
-    
-  }
-  
-  df <- analytic %>%
-    select(study_id, facilitycode,  screened, ineligible, ineligibility_reasons, treatment_arm) %>%
-    filter(screened == TRUE)
-  
-  df_a <- df %>% filter(treatment_arm == "Group A")
-  df_b <- df %>% filter(treatment_arm == "Group B")
-  
-  output_a <- inner_ineligibility_by_reasons(df_a)
-  output_b <- inner_ineligibility_by_reasons(df_b)
-  output_full <- inner_ineligibility_by_reasons(df)
-  
-  top_n_header_text <- paste0("Top ", n_top_reasons, " Ineligibility Reasons =")
-  
-  header_names <- c(" " = 3,
-                    "Group A" = n_top_reasons, " " = 1,
-                    "Group B" = n_top_reasons, " " = 1,
-                    top_n_header_text = n_top_reasons, " " = 1)
-  
-  names(header_names)[4+2*n_top_reasons] <- top_n_header_text
-  
-  df_table <- full_join(output_a, output_b, by = "Site", suffix = c(" (Group A)", " (Group B)")) %>%
-    left_join(output_full, by = "Site") %>%
-    select(Site, starts_with("Screened"), starts_with("Ineligible"), starts_with("Other Reasons"), everything())
-  
-  vis <- kable(df_table, format="html",, align = 'l') %>%
-    add_header_above(header_names) %>%
-    
-    kable_styling("striped", full_width = FALSE, position = "left")
-  
-  return(vis)
-}
 
 #' Closed Status of IRB Approvals and Certification by Site
 #'
