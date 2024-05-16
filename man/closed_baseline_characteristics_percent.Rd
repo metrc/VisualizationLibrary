@@ -10,13 +10,12 @@ closed_baseline_characteristics_percent(
   race = "ethnicity_race",
   education = "education_level",
   military = "military_status",
-  sex_levels = c("Female", "Male", "Missing Sex"),
+  sex_levels = c("Female", "Male", "Missing"),
   race_levels = c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other",
-    "Missing Race"),
+    "Missing"),
   education_levels = c("Less than High School", "GED or High School Diploma",
-    "More than High School", "Refused / Don't know", "Missing Education"),
-  military_levels = c("Active Military", "Active Reserves", "Not Active Duty",
-    "Missing Military")
+    "More than High School", "Refused / Don't know", "Missing"),
+  military_levels = c("Active Military", "Active Reserves", "Not Active Duty", "Missing")
 )
 }
 \arguments{
