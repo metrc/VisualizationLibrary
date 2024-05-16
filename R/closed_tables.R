@@ -2977,6 +2977,194 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discont
 
 
 
+#' Closed Deep Surgical Site Infection reported & adjudicated
+#'
+#' @description This function visualizes the treatment crossover or any nonadherence occured during the Tobra
+#' study by treatment arm.
+#'
+#' @param analytic This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, infection_reported_6mo, infection_adjudicated_6mo, 
+#' infection_adjudication_pending_6mo
+#'
+#' @return A kable table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_dssi_reported_adjudicated(analytic)
+#' }
+closed_dssi_reported_adjudicated <- function(analytic){
+  
+  df <- analytic %>% 
+    select(study_id, enrolled, followup_expected_6mo, infection_reported_6mo, infection_adjudicated_6mo, 
+           infection_adjudication_pending_6mo)
+  
+  total_ids_dssi <- df %>% 
+    filter(infection_reported_6mo & enrolled) %>% 
+    distinct(study_id) %>% 
+    nrow() 
+  
+  df_1 <- df %>%
+    filter(enrolled) %>%
+    select(-enrolled, -study_id) %>%
+    summarize(
+      `Number of participants with visits expected at 6 months` = paste(sum(followup_expected_6mo, na.rm = TRUE)), 
+      `Deep surgical site infections reported within 6 months` = paste0(sum(infection_reported_6mo, na.rm = TRUE), " (", total_ids_dssi, ")"),
+      `Deep surgical site infection adjudicated at 6 months` = paste(sum(infection_adjudicated_6mo, na.rm = TRUE)),
+      `Participant with infections yet to be adjudicated within 6 months from time zero` = paste(sum(infection_adjudication_pending_6mo, na.rm = TRUE))) %>% 
+    pivot_longer(everything()) %>% 
+    rename(" " = name,
+           "Total" = value)
+  
+  output <- kable(df_1, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
+}
+
+
+
+#' Closed complications reported overall from time_zero
+#'
+#' @description This function visualizes the number of complications(number of subjects) reported at all time points(Overall) 
+#' from time_zero overall, and by each treatment arm. 
+#'
+#' @param analytic This is the analytic data set that must include study_id, complication_data
+#' @param days it is a keyword argument to pass in the number of days to get cut off date for complications
+#' 
+#' @return A kable table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_complications_overall(analytic)
+#' }
+closed_complications_overall <- function(analytic, days=NULL){
+  
+  df <- analytic %>%  
+    select(study_id, complication_data, time_zero) %>% 
+    filter(!is.na(complication_data))
+  
+  
+  
+  unzipped_complication <- df %>%
+    separate_rows(complication_data, sep = ";new_row: ") %>% 
+    separate(complication_data, into = c('redcap_event_name', 'form_name', 'event_type', 'complication',
+                                         'notes', 'diagnosis_date', 'severity', 'treatment', 'other_info'), 
+             sep='\\|') 
+  
+ 
+  if(is.null(days)){
+    df_pre_filter <- unzipped_complication 
+  } else {
+    df_pre_filter <- unzipped_complication %>% 
+      mutate(cut_off = as.Date(time_zero) + days) %>% 
+      filter(diagnosis_date <= cut_off)
+  }
+  
+  df_1 <-  df_pre_filter %>% 
+    mutate(severity = case_when(
+      severity %in% c('Mild', 'Moderate') ~ "Grade 2,1",
+      severity == "Severe and Undesirable" ~ "Grade 3",
+      severity == "Life-threatening or disabling" ~ "Grade 4",
+      severity == "Fatal" ~ "Unknown",
+      TRUE ~ NA_character_
+    )) %>% 
+    select(study_id, complication, severity) %>% 
+    group_by(study_id, severity,complication) %>%
+    summarise(Total = n()) %>%
+    ungroup() %>% 
+    mutate(complication = recode(complication, 
+                                 "other1" = "Other",  
+                                 "other2" = "Other",
+                                 "other3" = "Other",
+                                 "other4" = "Other")) 
+  
+  
+  unique_study_df <- df_1%>%
+    group_by(complication, severity) %>%
+    summarize(
+      unique_ids = n_distinct(study_id)  
+    ) %>%
+    ungroup()
+  
+  new_df <- df_1 %>% select(-study_id) %>% 
+    group_by(complication, severity) %>% 
+    summarize(Total = sum(Total, na.rm = TRUE))
+  
+  
+  combined_df <- left_join(new_df, unique_study_df) %>% 
+    mutate(Total = paste0(Total, "[", unique_ids, "]")) %>% 
+    select(-unique_ids) %>% 
+    mutate(severity = ifelse(is.na(severity), "Unknown", severity))
+  
+  
+  severity_categories <- c('Grade 4', 'Grade 3', 'Grade 2,1', 'Unknown')
+  level_order <- c("Deep Surgical Site Infection", "Cellulitis/Skin Infection", "Pin tract infection - treated with antibiotics and/or pin removal", 
+                   "Nonunion", "Malunion", "Flap Failure", "Loss of limb / amputation", "Fixation failure", 
+                   "Peri-implant Fracture", "Wound dehiscence", "Wound Seroma/Hematoma", "Tendon Rupture", 
+                   "Symptomatic Hardware", "Reaction to Vancomycin", "Reaction to Tobramycin", "Renal Insufficiency", "Other")
+  
+  
+  df_template <- tibble(
+    severity = c(severity_categories),
+  ) %>% group_by(severity) %>% 
+    reframe(complication = level_order)
+  
+  output_complication <- left_join(df_template, combined_df) 
+  
+  df_table_raw <- reorder_rows(output_complication, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
+  
+  
+  process_severity_grade_4 <- function(df_table_raw) {
+    grade_4_all_na <- all(is.na(df_table_raw$Total[df_table_raw$severity == "Grade 4"]))
+    
+    if (grade_4_all_na) {
+      df_table_raw <- df_table_raw %>%
+        filter(severity != "Grade 4") %>%
+        bind_rows(data.frame(complication = "None", severity = "Grade 4", Total = NA))
+      
+      df_table_raw <- reorder_rows( df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
+      
+      df_final <- df_table_raw %>% select(-severity)
+      
+      
+      index_vec <- c("Grade 4" = 1, "Grade 3"= 17,"Grade 2,1"= 17, "Unknown"= 17)
+      subindex_vec <- c(" "= 1, "Infections" = 2, "Other Complications" = 15, "Infections" = 2, 
+                        "Other Complications" = 15,"Infections" = 2, "Other Complications" = 15)
+      
+      table_raw <- kable(df_final, format="html", align='l') %>%
+        pack_rows(index = index_vec, label_row_css = "text-align:left") %>%
+        pack_rows(index = subindex_vec, label_row_css = "text-align:left", bold = FALSE) %>%
+        kable_styling("striped", full_width = F, position='left') 
+      
+    } else {
+      
+      df_table_raw <- reorder_rows( df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
+      
+      df_final <- df_table_raw %>% select(-severity)
+      
+      index_vec <- c("Grade 4" = 17, "Grade 3"= 17,"Grade 2,1"= 17, "Unknown"= 17)
+      subindex_vec <- c("Infections" = 2, "Other Complications " = 15, "Infections" = 2, "Other Complications" = 15, "Infections" = 2, 
+                        "Other Complications" = 15,"Infections" = 2, "Other Complications" = 15)
+      
+      table_raw <- kable(df_final, format="html", align='l') %>%
+        pack_rows(index = index_vec, label_row_css = "text-align:left") %>%
+        pack_rows(index = subindex_vec, label_row_css = "text-align:left", bold = FALSE) %>%
+        kable_styling("striped", full_width = F, position='left') %>%
+        row_spec(c(0,5,8,13,18,23,36,41), extra_css = "border-bottom: 1px solid;")
+    }
+    
+    print(table_raw)
+    
+    return(df_table_raw)
+  }
+ 
+  processed_df_table_raw <- process_severity_grade_4(df_table_raw)
+  
+  return(processed_df_table_raw)
+}
+
+
 #' Closed treatment_characteristics (var discontinued)
 #'
 #' @description This function visualizes the characteristics of the definitive 
@@ -2991,14 +3179,9 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discont
 #' randomized, fracture_type, treatment_arm
 #'
 #' @return html table
-#' @export
-#'
-#' @examples
-#' \dontrun{
 #' closed_treatment_characteristics()
 #' }
 closed_treatment_characteristics <- function(analytic){
-  #confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'f351648895498f7100bb8edba2fc425b') no analagous visual
   
   df <- analytic %>%
     select(study_id, enrolled, df_date, 
@@ -3118,5 +3301,4 @@ closed_treatment_characteristics <- function(analytic){
   
   return(vis)
 }
-
 
