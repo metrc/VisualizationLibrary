@@ -181,8 +181,6 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
     rename(military = !!sym(military)) %>% 
     mutate(age = as.numeric(age))
   
-  total <- sum(df$enrolled, na.rm=T)
-  
   df_a <- df %>% 
     filter(treatment_arm=="Group A")
   
@@ -269,14 +267,12 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   combined_table <- full_join(table_a, table_b, by = 'type') %>%
     full_join(table_full, by = 'type')
   
-  cnames <- c(' ', paste('n = ', total))
-  header <- c(2,2)
-  names(header)<-cnames
-  
   #TODO find better numbers for packed rows
   vis <- kable(combined_table, format="html",, align='l',
-               col.names = c(" ","Group A", "Group B", "Total")) %>%
-    add_header_above(header) %>%  
+               col.names = c(" ",
+                             paste0(c("Group A (n=", nrow(df_a), ")")), 
+                             paste0(c("Group B (n=", nrow(df_b), ")")), 
+                             paste0(c("Total", nrow(df), ")"))))  %>%
     pack_rows(index = c('Sex' = length(sex_levels), 'Age' = 6, 'Race' = length(race_levels), 
                         'Education' = length(education_levels), 'Military' = length(military_levels)),
               label_row_css = "text-align:left") %>% 
@@ -2981,12 +2977,16 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discont
 
 #' Closed treatment_characteristics (var discontinued)
 #'
-#' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week by treatment arm
+#' @description This function visualizes the characteristics of the definitive 
+#' fixation process. Data included is completeness, number of df stages, 
+#' statistics on distribution, incision location counts and distribution,
+#' and adherence by treatment arm
 #'
-#' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, not_consented, not_randomized, consented_and_randomized, 
-#' enrolled, site_certified_days, 
-#' facilitycode, screened_date
+#' @param analytic This is the analytic data set that must include study_id, 
+#' enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision,
+#' df_number_procedures, df_randomized_treatment,
+#' injury_classification_plat_ao, df_surg_staged, df_surg_n_forms,
+#' randomized, fracture_type, treatment_arm
 #'
 #' @return html table
 #' @export
@@ -3114,5 +3114,7 @@ closed_treatment_characteristics <- function(analytic){
              extra_css = "border-bottom: 1px solid") %>%
     kable_styling(full_width = F, position="left") 
   
-  return(out)
+  return(vis)
 }
+
+
