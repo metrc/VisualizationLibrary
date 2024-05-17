@@ -3620,4 +3620,98 @@ table_raw<- kable(df_final, format="html", align='l') %>%
   kable_styling("striped", full_width = F, position='left')  
 
 return(table_raw)
+
+#' Expected visit status for 3 Months, 6 Months, and 12 Months followup for tobra
+#'
+#' @description This function onlt looks at the clinical followup form (CRF09) for tobra, designations may have to be looked at
+#'
+#' @param analytic This is the analytic data set that must include study_id, time_zero, followup_status_crf09_2wk, followup_status_crf09_3mo, followup_status_crf09_6mo, 
+#' followup_status_crf09_12mo
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' expected_and_followup_visit_tobra()
+#' }
+expected_and_followup_visit_tobra <- function(analytic){
+  df <- analytic %>% 
+    select(study_id, time_zero, followup_status_crf09_2wk, followup_status_crf09_3mo, followup_status_crf09_6mo, 
+           followup_status_crf09_12mo) %>% 
+    filter(!is.na(time_zero))
+  
+  ####expected#####
+  expected <- df %>% 
+    mutate(time_zero = as.Date(time_zero)) %>% 
+    mutate(expected = as.numeric(Sys.Date()-time_zero)) %>% 
+    mutate(expected2wk = ifelse(expected >= 14, TRUE, FALSE)) %>% 
+    mutate(expected3mo = ifelse(expected >= 90, TRUE, FALSE)) %>% 
+    mutate(expected6mo = ifelse(expected >= 180, TRUE, FALSE)) %>% 
+    mutate(expected12mo = ifelse(expected >= 365, TRUE, FALSE))
+  
+  two_week_expected <- sum(expected$expected2wk, na.rm = TRUE)
+  three_month_expected <- sum(expected$expected3mo, na.rm = TRUE)
+  six_month_expected <- sum(expected$expected6mo, na.rm = TRUE)
+  twelve_month_expected <- sum(expected$expected12mo, na.rm = TRUE)
+  
+  ######complete######
+  
+  two_week_09_complete <- sum(grepl('complete', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
+  three_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
+  six_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
+  twelve_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
+  
+  ##### early ######
+  
+  two_week_09_early <- sum(grepl('early', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
+  three_month_09_early <- sum(grepl('early', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
+  six_month_09_early <- sum(grepl('early', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
+  twelve_month_09_early <- sum(grepl('early', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
+  
+  ###late###
+  
+  two_week_09_late <- sum(grepl('late', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
+  three_month_09_late <- sum(grepl('late', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
+  six_month_09_late <- sum(grepl('late', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
+  twelve_month_09_late <- sum(grepl('late', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
+  
+  ###missing###
+  
+  two_week_09_missing <- sum(grepl('missing', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
+  three_month_09_missing <- sum(grepl('missing', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
+  six_month_09_missing <- sum(grepl('missing', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
+  twelve_month_09_missing <- sum(grepl('missing', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
+  
+  ###not started ####
+  
+  two_week_09_not_started <- sum(grepl('not_started', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
+  three_month_09_not_started <- sum(grepl('not_started', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
+  six_month_09_not_started <- sum(grepl('not_started', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
+  twelve_month_09_not_started <- sum(grepl('not_started', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
+  
+  ###incomplete####
+  
+  two_week_09_incomplete <- sum(grepl('incomplete', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
+  three_month_09_incomplete <- sum(grepl('incomplete', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
+  six_month_09_incomplete <- sum(grepl('incomplete', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
+  twelve_month_09_incomplete <- sum(grepl('incomplete', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
+  
+  final <- data.frame("Status" = c('Expected', 'Completed', 'Early', 'Late', 'Missing', 'Not Started', 'Incomplete'),
+                      '2 Week' = c(two_week_expected, two_week_09_complete, two_week_09_early, two_week_09_late, two_week_09_missing, 
+                                   two_week_09_not_started, two_week_09_incomplete),
+                      '3 Month' = c(three_month_expected, three_month_09_complete, three_month_09_early, three_month_09_late, three_month_09_missing, 
+                                    three_month_09_not_started, three_month_09_incomplete),
+                      '6 Month' = c(six_month_expected, six_month_09_complete, six_month_09_early, six_month_09_late, six_month_09_missing, 
+                                    six_month_09_not_started, six_month_09_incomplete),
+                      '12 Month' = c(twelve_month_expected, twelve_month_09_complete, twelve_month_09_early, twelve_month_09_late, twelve_month_09_missing, 
+                                     twelve_month_09_not_started, twelve_month_09_incomplete))
+  colnames(final) <- c('Status', '2 Week', '3 Month', '6 Month', '12 Month')
+  
+  vis <- kable(final, format="html", align='l') %>%
+    add_indent(c(3,4)) %>% 
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
 } 
