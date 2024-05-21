@@ -2859,7 +2859,7 @@ followup_2wk_status_by_site_tobra <- function(analytic){
 #' @description This function visualizes 3mo followup status by site for Clinical followup form(crf09) and patient
 #' medical record review(crf08) for tobra weekly report 
 #'
-#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_12mo, followup_status_crf09_12mo
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_3mo, followup_status_crf09_3mo
 #'
 #' @return nothing
 #' @export
