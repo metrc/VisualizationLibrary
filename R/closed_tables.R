@@ -2892,7 +2892,7 @@ closed_adherence_by_site <- function(analytic){
 #' closed_enrollment_by_site_last_days_var_disc()
 #' }
 closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="discontinued", discontinued_colname="Discontinued", include_safety_set=FALSE, footnotes=NULL){
-  confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'f351648895498f7100bb8edba2fc425b')
+  confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'c16437f52d455f3bdd76caffcc105659')
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -3242,3 +3242,259 @@ closed_treatment_characteristics <- function(analytic){
   return(vis)
 }
 
+#' Closed followup followup_2wk_status_by_site_tobra
+#'
+#' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk
+#' 
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_followup_2wk_status_by_site_tobra()
+#' }
+closed_followup_2wk_status_by_site_tobra <- function(analytic, footnotes=NULL){
+  confirm_stability_of_related_visual('followup_2wk_status_by_site_tobra', 'ecbae8bfd2504d2c3376e1700bcd17e0')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_2wk_status_by_site_tobra(df_a),
+                  "<h4>Group B</h4><br />",
+                  followup_2wk_status_by_site_tobra(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_2wk_status_by_site_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  followup_2wk_status_by_site_tobra(df_b,) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Closed followup followup_3mo_status_by_site_tobra
+#'
+#' @description This function visualizes 6 month followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_3mo, followup_status_crf09_3mo
+#' 
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_followup_3mo_status_by_site_tobra()
+#' }
+closed_followup_3mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
+  confirm_stability_of_related_visual('followup_3mo_status_by_site_tobra', '06834c342ba11d08329abda918af06a5')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_3mo_status_by_site_tobra(df_a),
+                  "<h4>Group B</h4><br />",
+                  followup_3mo_status_by_site_tobra(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_3mo_status_by_site_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  followup_3mo_status_by_site_tobra(df_b,) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Closed followup followup_6mo_status_by_site_tobra
+#'
+#' @description This function visualizes 3 month followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_6mo, followup_status_crf09_6mo, followup_status_crf12_6mo, followup_status_bank_6mo, followup_status_comp_6mo
+#' 
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_followup_6mo_status_by_site_tobra()
+#' }
+closed_followup_6mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
+  confirm_stability_of_related_visual('followup_6mo_status_by_site_tobra', '460f162206057877c9ad67cf43e2c0bf')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_6mo_status_by_site_tobra(df_a),
+                  "<h4>Group B</h4><br />",
+                  followup_6mo_status_by_site_tobra(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_6mo_status_by_site_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  followup_6mo_status_by_site_tobra(df_b,) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Closed followup followup_12mo_status_by_site_tobra
+#'
+#' @description This function visualizes 3 month followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_12mo, followup_status_crf09_12mo, followup_status_crf12_12mo, followup_status_bank_12mo, followup_status_comp_12mo
+#' 
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_followup_12mo_status_by_site_tobra()
+#' }
+closed_followup_12mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
+  confirm_stability_of_related_visual('followup_12mo_status_by_site_tobra', 'd21e7b2f99dba575fc7eaf65542ec94e')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_12mo_status_by_site_tobra(df_a),
+                  "<h4>Group B</h4><br />",
+                  followup_12mo_status_by_site_tobra(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_12mo_status_by_site_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  followup_12mo_status_by_site_tobra(df_b,) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+
+#' closed characteristics_treatment
+#'
+#' @description This function visualizes the treatment characteristics per protocol and assignment for tobra. 
+#'
+#' @param analytic This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
+#' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_characteristics_treatment()
+#' }
+closed_characteristics_treatment <- function(analytic){
+  confirm_stability_of_related_visual('characteristics_treatment', 'da790cf8c715e5b060788e7865bfdbcd')
+  
+  inner_characteristics_treatment <- function(df){
+    total <- sum(df$enrolled, na.rm=T)
+    df_total <- sum(!is.na(df$df_date))
+    
+    df_complete <- data.frame(type = 'Patients with Definitive Fixation Data Complete', percentage = format_count_percent(df_total, total))
+    
+    plat <- sum(!is.na(df$plat_df_surgical_incision))
+    pil <- sum(!is.na(df$pil_df_surgical_incision))
+    
+    avg_stages <- df %>% 
+      filter(!is.na(df_date)) %>% 
+      summarize(type = 'Mean Stages (SD)', percentage = format_mean_sd(df_number_procedures))
+    
+    stages <- df %>% 
+      filter(!is.na(df_date)) %>% 
+      count(df_number_procedures) %>% 
+      rename(number = n) %>% 
+      mutate(percentage = format_count_percent(number, df_total)) %>% 
+      select(-number) %>% 
+      rename(type = df_number_procedures) 
+    
+    plat_incisions <- df %>%
+      filter(!is.na(df_date)) %>% 
+      mutate(plat_incisions = str_count(plat_df_surgical_incision, ";") + 1) %>% 
+      summarize(type = paste0('Plateau Fractures (n = ', plat, ")"), percentage = format_mean_sd(plat_incisions))
+    
+    pil_incisions <- df %>%
+      filter(!is.na(df_date)) %>% 
+      mutate(pil_incisions = str_count(pil_df_surgical_incision, ";") + 1) %>% 
+      summarize(type = paste0('Pilon Fractures (n = ', pil, ")"), percentage = format_mean_sd(pil_incisions))
+    
+    adherence <- df %>% 
+      filter(!is.na(df_date)) %>% 
+      mutate(adherence_to_intervention = as.character(adherence_to_intervention)) %>%
+      mutate(adherence_to_intervention = replace_na(adherence_to_intervention, 'Missing')) %>% 
+      mutate(type = recode(adherence_to_intervention, 'TRUE' = "Yes", 
+                           'FALSE' = 'No')) %>% 
+      count(type) %>% 
+      rename(number = n) %>% 
+      mutate(percentage = format_count_percent(number, df_total)) %>% 
+      select(-number) %>% 
+      arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
+    
+    df_final <- rbind(df_complete, avg_stages, stages, plat_incisions, pil_incisions, adherence)
+    
+    return(df_final)
+  }
+  
+  df_all <- analytic %>% 
+    select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm) %>% 
+    filter(enrolled)
+  
+  df_a <- df_all %>% filter(treatment_arm == 'Group A')
+  df_b <- df_all %>% filter(treatment_arm == 'Group B')
+  
+  all <- inner_characteristics_treatment(df_all) %>% 
+    mutate(pall = percentage)
+  a <- inner_characteristics_treatment(df_a) %>% 
+    mutate(pa = percentage)
+  b <- inner_characteristics_treatment(df_b) %>% 
+    mutate(pb = percentage)
+  
+  total <- sum(df_all$enrolled, na.rm = TRUE)
+  atot <- sum(df_a$enrolled)
+  btot <- sum(df_b$enrolled)
+  
+  df_table <- cbind(a, b, all) %>% 
+    select('type', 'pa', 'pb', 'pall')
+  
+  n <- nrow(df_table)
+  
+  cnames <- c(' ', paste0('Group A (n = ', atot, ')'), paste0('Group A (n = ', btot, ')'), paste0('Overall (n = ', total, ')'))
+  header <- c(1,1,1,1)
+  names(header)<-cnames
+  
+  vis <- kable(df_table, format="html",, align='l', col.names = NULL) %>%
+    add_header_above(header) %>%  
+    pack_rows(index = c(" " = 1, 'Definitive Fixation' = (n-6), 'Number of Incisions [Mean (SD)]' = 2,
+                        'Study Treatment Adhering to Protocol' = (3)), label_row_css = "text-align:left") %>% 
+    kable_styling("striped", full_width = F, position="left") %>% 
+    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1, extra_css = 'border-bottom: 1px solid') %>% 
+    add_indent(seq(2) + 2)
+  
+  return(vis)
+}

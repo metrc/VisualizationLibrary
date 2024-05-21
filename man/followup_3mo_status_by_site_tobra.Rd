@@ -7,7 +7,7 @@
 followup_3mo_status_by_site_tobra(analytic)
 }
 \arguments{
-\item{analytic}{study_id, df_date, enrolled, facilitycode, followup_status_crf08_12mo, followup_status_crf09_12mo}
+\item{analytic}{study_id, df_date, enrolled, facilitycode, followup_status_crf08_3mo, followup_status_crf09_3mo}
 }
 \value{
 nothing
