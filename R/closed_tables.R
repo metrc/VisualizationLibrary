@@ -2892,7 +2892,7 @@ closed_adherence_by_site <- function(analytic){
 #' closed_enrollment_by_site_last_days_var_disc()
 #' }
 closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="discontinued", discontinued_colname="Discontinued", include_safety_set=FALSE, footnotes=NULL){
-  confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'f351648895498f7100bb8edba2fc425b')
+  confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'c16437f52d455f3bdd76caffcc105659')
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -3242,3 +3242,154 @@ closed_treatment_characteristics <- function(analytic){
   return(vis)
 }
 
+#' Closed followup followup_2wk_status_by_site_tobra
+#'
+#' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk
+#' 
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_followup_2wk_status_by_site_tobra()
+#' }
+closed_followup_2wk_status_by_site_tobra <- function(analytic, footnotes=NULL){
+  confirm_stability_of_related_visual('followup_2wk_status_by_site_tobra', 'ecbae8bfd2504d2c3376e1700bcd17e0')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_2wk_status_by_site_tobra(df_a),
+                  "<h4>Group B</h4><br />",
+                  followup_2wk_status_by_site_tobra(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_2wk_status_by_site_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  followup_2wk_status_by_site_tobra(df_b,) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Closed followup followup_3mo_status_by_site_tobra
+#'
+#' @description This function visualizes 6 month followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_3mo, followup_status_crf09_3mo
+#' 
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_followup_3mo_status_by_site_tobra()
+#' }
+closed_followup_3mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
+  confirm_stability_of_related_visual('followup_3mo_status_by_site_tobra', '06834c342ba11d08329abda918af06a5')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_3mo_status_by_site_tobra(df_a),
+                  "<h4>Group B</h4><br />",
+                  followup_3mo_status_by_site_tobra(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_3mo_status_by_site_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  followup_3mo_status_by_site_tobra(df_b,) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Closed followup followup_6mo_status_by_site_tobra
+#'
+#' @description This function visualizes 3 month followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_6mo, followup_status_crf09_6mo, followup_status_crf12_6mo, followup_status_bank_6mo, followup_status_comp_6mo
+#' 
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_followup_6mo_status_by_site_tobra()
+#' }
+closed_followup_6mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
+  confirm_stability_of_related_visual('followup_6mo_status_by_site_tobra', '460f162206057877c9ad67cf43e2c0bf')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_6mo_status_by_site_tobra(df_a),
+                  "<h4>Group B</h4><br />",
+                  followup_6mo_status_by_site_tobra(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_6mo_status_by_site_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  followup_6mo_status_by_site_tobra(df_b,) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Closed followup followup_12mo_status_by_site_tobra
+#'
+#' @description This function visualizes 3 month followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_12mo, followup_status_crf09_12mo, followup_status_crf12_12mo, followup_status_bank_12mo, followup_status_comp_12mo
+#' 
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_followup_12mo_status_by_site_tobra()
+#' }
+closed_followup_12mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
+  confirm_stability_of_related_visual('followup_12mo_status_by_site_tobra', 'd21e7b2f99dba575fc7eaf65542ec94e')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_12mo_status_by_site_tobra(df_a),
+                  "<h4>Group B</h4><br />",
+                  followup_12mo_status_by_site_tobra(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  followup_12mo_status_by_site_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  followup_12mo_status_by_site_tobra(df_b,) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
