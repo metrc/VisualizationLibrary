@@ -20,6 +20,8 @@
 #' }
 closed_visit_status_for_followup_by_form <- function(analytic){
   
+  confirm_stability_of_related_visual('closed_visit_status_for_followup_by_form', '38ab0c7ce6ab914813011c54283e905e')
+  
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
   
@@ -50,6 +52,8 @@ closed_visit_status_for_followup_by_form <- function(analytic){
 #' closed_injury_ankle_plateau_characteristics()
 #' }
 closed_injury_ankle_plateau_characteristics <- function(analytic){
+   
+  confirm_stability_of_related_visual('injury_ankle_plateau_characteristics', 'f58c138ba4639aad9d8cb71bd6bc9d3d')
   
   df <- analytic %>% 
     select(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled) %>%  
@@ -125,14 +129,18 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
   colnames(df_table) <- c("Name", "Group A", "Group B", "Total")
   
   
-  index_vec <- c("OTA Classification"= ota_number+1, "Tibial Plateau"=schatzer_number+1) 
+  df_table <- df_table %>%
+    mutate_all(~ ifelse(is.na(.), "-", .))
   
-  table_raw<- kable(df_table, format="html", align='l',  col.names = NULL) %>%
-    add_indent(c(seq(ota_number)+1, seq(schatzer_number)+1+ota_number+1)) %>% 
+  
+  index_vec <- c("OTA Classification"= ota_number + 1, "Tibial Plateau" = schatzer_number + 1)
+  
+ 
+  table_raw <- kable(df_table, format = "html", align = 'l', col.names = colnames(df_table)) %>%
+    add_indent(c(seq(ota_number) + 1, seq(schatzer_number) + 1 + ota_number + 1)) %>% 
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
-    kable_styling("striped", full_width = F, position="left")
-  
-  
+    kable_styling("striped", full_width = FALSE, position = "left")
+
   return(table_raw)
 }
 
@@ -163,7 +171,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
                                                        education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
                                                        military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
   
-  confirm_stability_of_related_visual("baseline_characteristics_percent", "bd099b941338d591d41b4716902355b6")
+  confirm_stability_of_related_visual("baseline_characteristics_percent", "7aadae1abf473348fab0c8b12f86228e")
   
   sex_df <- tibble()
   age_df <- tibble()
@@ -306,7 +314,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #' closed_discontinuation_sae_deviation_by_type()
 #' }
 closed_discontinuation_sae_deviation_by_type <- function(analytic){
-  confirm_stability_of_related_visual('discontinuation_sae_deviation_by_type', '9cbdfa0e479969ea2ec5eea8a54716e2')
+  confirm_stability_of_related_visual('discontinuation_sae_deviation_by_type', 'd1533c6c962841734b6dd39995a01297')
   
   df_full <- analytic %>%
     filter(enrolled)
@@ -453,6 +461,8 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
 #' closed_complications_by_severity_relatedness()
 #' }
 closed_complications_by_severity_relatedness <- function(analytic){
+  
+  confirm_stability_of_related_visual('closed_complications_by_severity_relatedness', 'fb6f098439ae536036ade8aa4930bdc0')
   
   inner_closed_complications_by_severity_relatedness <- function(analytic){
     comp <- analytic %>%  select(study_id, complication_data) %>% 
@@ -627,6 +637,8 @@ closed_complications_by_severity_relatedness <- function(analytic){
 #' }
 closed_appendix_A_SAEs <- function(analytic){
   
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
+  
   df <- analytic %>% 
     select(study_id, sae_data) %>% 
     filter(!is.na(sae_data))
@@ -678,6 +690,8 @@ closed_appendix_A_SAEs <- function(analytic){
 #' }
 closed_appendix_B_deaths <- function(analytic){
   
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
+  
   df <- analytic %>% 
     select(study_id, sae_data, death_date) 
   
@@ -711,6 +725,8 @@ closed_appendix_B_deaths <- function(analytic){
 #' closed_appendix_C_discontinuations()
 #' }
 closed_appendix_C_discontinuations <- function(analytic){
+  
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   df <- analytic %>% 
     select(study_id, discontinuation_data) %>% 
@@ -755,6 +771,8 @@ closed_appendix_C_discontinuations <- function(analytic){
 #' closed_appendix_D_protocol_deviation()
 #' }
 closed_appendix_D_protocol_deviation <- function(analytic){
+  
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   df <- analytic %>% 
     select(study_id, protocol_deviation_data) %>% 
@@ -1966,7 +1984,7 @@ closed_expected_visits_by_followup_period <- function(analytic){
 #' }
 closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
   
-  confirm_stability_of_related_visual("amputations_and_gustilo_injury_characteristics", "a7acd8c27097a6c099b238cd609960fe")
+  confirm_stability_of_related_visual("amputations_and_gustilo_injury_characteristics", "11da8d8c3b7ef63d4bca5ce8c8351c42")
   
   inner_amputations_and_gustilo_injury_characteristics <- function(pull) {
     inj_gust <- pull %>%
@@ -2848,9 +2866,13 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discont
 #' \dontrun{
 #' closed_dssi_reported_adjudicated(analytic)
 #' }
-closed_dssi_reported_adjudicated <- function(analytic){
+closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
   
-  df <- analytic %>% 
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
+  
+  inner_dssi_reported_adjudicated <- function(pull) {
+    
+  df <- pull %>% 
     select(study_id, enrolled, followup_expected_6mo, infection_reported_6mo, infection_adjudicated_6mo, 
            infection_adjudication_pending_6mo)
   
@@ -2871,7 +2893,27 @@ closed_dssi_reported_adjudicated <- function(analytic){
     rename(" " = name,
            "Total" = value)
   
-  output <- kable(df_1, format="html", align='l') %>%
+  return(df_1)
+  }
+  
+  pull <- analytic %>%
+    filter(enrolled) %>%
+    select(study_id, enrolled, followup_expected_6mo, infection_reported_6mo, infection_adjudicated_6mo, 
+           infection_adjudication_pending_6mo, treatment_arm)
+  
+  pull_a <- pull %>% filter(treatment_arm == "Group A")
+  pull_b <- pull %>% filter(treatment_arm == "Group B")
+  
+  combined_a <- inner_dssi_reported_adjudicated(pull_a)
+  combined_b <- inner_dssi_reported_adjudicated(pull_b)
+  
+  combined_full <- inner_dssi_reported_adjudicated(pull)
+  
+  df_table <- full_join(combined_a, combined_b, by = " ", suffix = c(" (Group A)", " (Group B)")) %>%
+    left_join(combined_full, by = " ") %>%
+    select(" ", ends_with(" (Group A)"), ends_with(" (Group B)"), `Total`)
+  
+  output <- kable(df_table, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position="left") 
   
   return(output)
@@ -2895,6 +2937,8 @@ closed_dssi_reported_adjudicated <- function(analytic){
 #' closed_complications_overall(analytic)
 #' }
 closed_complications_overall <- function(analytic, days=NULL){
+  
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   df <- analytic %>%  
     select(study_id, complication_data, time_zero) %>% 
@@ -2981,7 +3025,7 @@ closed_complications_overall <- function(analytic, days=NULL){
       
       df_table_raw <- reorder_rows( df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
       
-      df_final <- df_table_raw %>% select(-severity)
+      df_final <- df_table_raw %>% select(-severity) %>%  mutate_all(replace_na, "-")
       
       
       index_vec <- c("Grade 4" = 1, "Grade 3"= 17,"Grade 2,1"= 17, "Unknown"= 17)
@@ -2997,7 +3041,7 @@ closed_complications_overall <- function(analytic, days=NULL){
       
       df_table_raw <- reorder_rows( df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
       
-      df_final <- df_table_raw %>% select(-severity)
+      df_final <- df_table_raw %>% select(-severity) %>%  mutate_all(replace_na, "-")
       
       index_vec <- c("Grade 4" = 17, "Grade 3"= 17,"Grade 2,1"= 17, "Unknown"= 17)
       subindex_vec <- c("Infections" = 2, "Other Complications " = 15, "Infections" = 2, "Other Complications" = 15, "Infections" = 2, 
@@ -3158,6 +3202,60 @@ closed_treatment_characteristics <- function(analytic){
   return(vis)
 }
 
+
+
+#' Closed adherence_sextant
+#'
+#' @description This function visualizes the treatment characteristics per protocol and assignmnet for Sextant for
+#' each treatment group
+#'
+#' @param analytic This is the analytic data set that must include adherence_to_intervention_dwc,
+#' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, treatment_arm
+#'
+#' @return nothing
+#' 
+#' Closed followup followup_2wk_status_by_site_tobra
+#'
+#' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk
+#' 
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' 
+#' closed_adherence_sextant()
+#' }
+closed_adherence_sextant <- function(analytic, footnotes=NULL){
+  
+  confirm_stability_of_related_visual('adherence_sextant', 'a7970bc0e7a68c4a3210c478baa0fdbc')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  adherence_sextant(df_a),
+                  "<h4>Group B</h4><br />",
+                  adherence_sextant(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  adherence_sextant(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  adherence_sextant(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+
+
 #' Closed followup followup_2wk_status_by_site_tobra
 #'
 #' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
@@ -3311,6 +3409,66 @@ closed_followup_12mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
 }
 
 
+#' Closed Expected visit status for 3 Months, 6 Months, and 12 Months followup for Sextant
+#'
+#' @description This function uses status constructs but treats early, late and complete as mutually exclusive.
+#' Therefore, complete is renamed to "On Time" and all three of them combined to Complete. 
+#'
+#' @param analytic This is the analytic data set that must include followup_expected_2wk, followup_expected_3mo, 
+#' followup_expected_6mo, followup_expected_12mo, followup_complete_crf12_2wk, followup_incomplete_crf12_2wk, 
+#' followup_early_crf12_2wk, followup_late_crf12_2wk, followup_missing_crf12_2wk, followup_not_started_crf12_2wk,
+#' followup_complete_crf12_3mo, followup_incomplete_crf12_3mo, followup_early_crf12_3mo, followup_late_crf12_3mo, 
+#' followup_missing_crf12_3mo, followup_not_started_crf12_3mo, followup_complete_crf12_6mo, 
+#' followup_incomplete_crf12_6mo, followup_early_crf12_6mo, followup_early_crf12_6mo, followup_late_crf12_6mo, 
+#' followup_late_crf12_6mo, followup_missing_crf12_6mo, followup_missing_crf12_6mo, followup_not_started_crf12_6mo, 
+#' followup_not_started_crf12_6mo, followup_complete_crf12_12mo, followup_incomplete_crf12_12mo, 
+#' followup_early_crf12_12mo, followup_early_crf12_12mo, followup_late_crf12_12mo, followup_late_crf12_12mo, 
+#' followup_missing_crf12_12mo, followup_missing_crf12_12mo, followup_not_started_crf12_12mo, 
+#' followup_not_started_crf12_12mo, treatment_arm
+#'
+#' @return nothing
+
+#' Closed followup followup_3mo_status_by_site_tobra
+#'
+#' @description This function visualizes 6 month followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_3mo, followup_status_crf09_3mo
+#' 
+#' @return html table
+#' 
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' 
+#' closed_expected_and_followup_visit_sextant()
+#' }
+closed_expected_and_followup_visit_sextant <- function(analytic, footnotes=NULL){
+
+  confirm_stability_of_related_visual('expected_and_followup_visit_sextant', '8fb626afbfad7ddb5931ec1856229b14')
+
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit_sextant(df_a),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit_sextant(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit_sextant(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit_sextant(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
 #' closed characteristics_treatment
 #'
 #' @description This function visualizes the treatment characteristics per protocol and assignment for tobra. 
@@ -3326,6 +3484,7 @@ closed_followup_12mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
 #' closed_characteristics_treatment()
 #' }
 closed_characteristics_treatment <- function(analytic){
+  
   confirm_stability_of_related_visual('characteristics_treatment', 'da790cf8c715e5b060788e7865bfdbcd')
   
   inner_characteristics_treatment <- function(df){
@@ -3414,3 +3573,4 @@ closed_characteristics_treatment <- function(analytic){
   
   return(vis)
 }
+
