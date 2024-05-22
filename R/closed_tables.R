@@ -180,6 +180,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   education_df <- tibble()
   military_df <- tibble()
   
+  
   inner_baseline_characteristics_percent <- function(inner_analytic){
     constructs <- c(sex, race, education, military)
     
@@ -271,6 +272,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
     return(df_final)
   }
   
+  
   df_a <- analytic %>% filter(treatment_arm=="Group A")
   df_b <- analytic %>% filter(treatment_arm=="Group B")
   
@@ -284,10 +286,6 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   full_output <- cbind(output_a, output_b , output_total)
   
   colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a),")"), paste0("Group B (n=",nrow(df_b),")"), paste0("Total (n=",nrow(df_a)+nrow(df_b),")"))
-  
-  cnames <- c(' ', paste('n = ', total))
-  header <- c(1,1)
-  names(header)<-cnames
   
   vis <- kable(full_output, format="html", align='l') %>%
     pack_rows(index = c('Sex' = nrow(sex_df), 'Age' = (nrow(age_df) + nrow(age_group_df)), 'Race' = nrow(race_df), 
@@ -2936,16 +2934,14 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
 #' \dontrun{
 #' closed_complications_overall(analytic)
 #' }
-closed_complications_overall <- function(analytic, days=NULL){
+closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = NULL){
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   df <- analytic %>%  
     select(study_id, complication_data, time_zero) %>% 
     filter(!is.na(complication_data))
-  
-  
-  
+ 
   unzipped_complication <- df %>%
     separate_rows(complication_data, sep = ";new_row: ") %>% 
     separate(complication_data, into = c('redcap_event_name', 'form_name', 'event_type', 'complication',
@@ -2953,12 +2949,21 @@ closed_complications_overall <- function(analytic, days=NULL){
              sep='\\|') 
   
  
-  if(is.null(days)){
+  if(is.null(min_days)){
     df_pre_filter <- unzipped_complication 
   } else {
     df_pre_filter <- unzipped_complication %>% 
-      mutate(cut_off = as.Date(time_zero) + days) %>% 
-      filter(diagnosis_date <= cut_off)
+      mutate(cut_off = as.Date(time_zero) + min_days) %>% 
+      filter(diagnosis_date >= cut_off)
+  }
+  
+  
+  if(is.null(cutoff_days)){
+    df_pre_filter <- df_pre_filter 
+  } else {
+    df_pre_filter <- df_pre_filter %>% 
+      mutate(cut_off = as.Date(time_zero) + cutoff_days) %>% 
+      filter(diagnosis_date < cut_off)
   }
   
   df_1 <-  df_pre_filter %>% 
