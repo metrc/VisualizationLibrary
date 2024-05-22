@@ -3574,3 +3574,122 @@ closed_characteristics_treatment <- function(analytic){
   return(vis)
 }
 
+#' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled (Variable Discontinued)
+#'
+#' @description This function visualizes the enrollment totals for each site
+#'
+#' @param analytic This is the analytic data set that must include screened, 
+#' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode, treatment_arm
+#' @param discontinued meta construct for discontinued
+#' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_enrollment_status_by_site_var_discontinued()
+#' }
+closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued", footnotes = NULL){
+  confirm_stability_of_related_visual('enrollment_status_by_site_var_discontinued', '30515ee8f6b919d954480625ed99d214')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+
+#' Crossover Monitoring by Site since 01/01/2024
+#'
+#' @description This function visualizes the crossovers by site in hospital and at discharge 
+#' after 01/01/2021
+#'
+#' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
+#' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, treatment_arm
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date()
+#' }
+closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
+  confirm_stability_of_related_visual('ih_and_dc_crossover_monitoring_by_site_cutoff_date', '313fd341fe57d315cae3c2bdd3ed3774')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_a),
+                  "<h4>Group B</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Expected visit status for 3 Months, 6 Months, and 12 Months followup by EACH SITE
+#'
+#' @description This function outputs the expected and followup visit status by each site and  uses status 
+#' constructs but treats early, late and complete as mutually exclusive.
+#' Therefore, complete is renamed to "On Time" and all three of them combined to Complete.
+#'
+#' @param analytic This is the analytic data set that must include facilitycode, followup_due_3mo, 
+#' followup_due_6mo, followup_due_12mo, followup_status_3mo, followup_status_6mo, followup_status_12mo, treatment_arm
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_expected_and_followup_visit_by_site()
+#' }
+closed_expected_and_followup_visit_by_site <- function(analytic){
+  confirm_stability_of_related_visual('expected_and_followup_visit_by_site', '4debf83a19a53017ea299ac04f5a79c3')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit_by_site(df_a),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit_by_site(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit_by_site(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit_by_site(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
