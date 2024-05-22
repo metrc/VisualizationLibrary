@@ -637,7 +637,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
 #' }
 closed_appendix_A_SAEs <- function(analytic){
   
-  confirm_stability_of_related_visual('closed_appendix_A_SAEs', '226825c7c942077ac727a39f855fdfdb')
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
   
   df <- analytic %>% 
     select(study_id, sae_data) %>% 
@@ -690,7 +690,7 @@ closed_appendix_A_SAEs <- function(analytic){
 #' }
 closed_appendix_B_deaths <- function(analytic){
   
-  confirm_stability_of_related_visual('closed_appendix_B_deaths', 'e3808fdb69531098ac00fbaa61254e06')
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
   
   df <- analytic %>% 
     select(study_id, sae_data, death_date) 
@@ -726,7 +726,7 @@ closed_appendix_B_deaths <- function(analytic){
 #' }
 closed_appendix_C_discontinuations <- function(analytic){
   
-  confirm_stability_of_related_visual('closed_appendix_C_discontinuations', 'f1d4fc0ae5ce0ecfdad6b656759e6ffc')
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
   
   df <- analytic %>% 
     select(study_id, discontinuation_data) %>% 
@@ -772,7 +772,7 @@ closed_appendix_C_discontinuations <- function(analytic){
 #' }
 closed_appendix_D_protocol_deviation <- function(analytic){
   
-  confirm_stability_of_related_visual('closed_appendix_D_protocol_deviation', 'd857f5a312538d56303343b3e70df478')
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
   
   df <- analytic %>% 
     select(study_id, protocol_deviation_data) %>% 
@@ -2952,7 +2952,7 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discont
 #' }
 closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
   
-  confirm_stability_of_related_visual('closed_dssi_reported_adjudicated', '012cc5d0b25eccf72bca7866a31ff671')
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
   
   inner_dssi_reported_adjudicated <- function(pull) {
     
@@ -3022,7 +3022,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
 #' }
 closed_complications_overall <- function(analytic, days=NULL){
   
-  confirm_stability_of_related_visual('closed_complications_overall', 'c856d6dad6362684e158e5fb57fd0e8f')
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
   
   df <- analytic %>%  
     select(study_id, complication_data, time_zero) %>% 
@@ -3314,6 +3314,8 @@ closed_treatment_characteristics <- function(analytic){
 #' closed_adherence_sextant()
 #' }
 closed_adherence_sextant <- function(analytic, footnotes=NULL){
+  
+  confirm_stability_of_related_visual('adherence_sextant', 'a7970bc0e7a68c4a3210c478baa0fdbc')
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
