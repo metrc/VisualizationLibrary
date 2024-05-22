@@ -637,7 +637,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
 #' }
 closed_appendix_A_SAEs <- function(analytic){
   
-  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   df <- analytic %>% 
     select(study_id, sae_data) %>% 
@@ -690,7 +690,7 @@ closed_appendix_A_SAEs <- function(analytic){
 #' }
 closed_appendix_B_deaths <- function(analytic){
   
-  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   df <- analytic %>% 
     select(study_id, sae_data, death_date) 
@@ -726,7 +726,7 @@ closed_appendix_B_deaths <- function(analytic){
 #' }
 closed_appendix_C_discontinuations <- function(analytic){
   
-  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   df <- analytic %>% 
     select(study_id, discontinuation_data) %>% 
@@ -772,7 +772,7 @@ closed_appendix_C_discontinuations <- function(analytic){
 #' }
 closed_appendix_D_protocol_deviation <- function(analytic){
   
-  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   df <- analytic %>% 
     select(study_id, protocol_deviation_data) %>% 
@@ -2952,7 +2952,7 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discont
 #' }
 closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
   
-  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   inner_dssi_reported_adjudicated <- function(pull) {
     
@@ -3022,7 +3022,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
 #' }
 closed_complications_overall <- function(analytic, days=NULL){
   
-  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE(05/22/2024)
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   df <- analytic %>%  
     select(study_id, complication_data, time_zero) %>% 
