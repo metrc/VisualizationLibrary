@@ -7,27 +7,27 @@
 expected_and_followup_visit_sextant(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, time_zero, followup_status_crf09_2wk, followup_status_crf09_3mo, followup_status_crf09_6mo, 
-followup_status_crf09_12mo}
+\item{analytic}{This is the analytic data set that must include followup_expected_2wk, followup_expected_3mo, 
+followup_expected_6mo, followup_expected_12mo, followup_complete_crf12_2wk, followup_incomplete_crf12_2wk, 
+followup_early_crf12_2wk, followup_late_crf12_2wk, followup_missing_crf12_2wk, followup_not_started_crf12_2wk,
+followup_complete_crf12_3mo, followup_incomplete_crf12_3mo, followup_early_crf12_3mo, followup_late_crf12_3mo, 
+followup_missing_crf12_3mo, followup_not_started_crf12_3mo, followup_complete_crf12_6mo, 
+followup_incomplete_crf12_6mo, followup_early_crf12_6mo, followup_early_crf12_6mo, followup_late_crf12_6mo, 
+followup_late_crf12_6mo, followup_missing_crf12_6mo, followup_missing_crf12_6mo, followup_not_started_crf12_6mo, 
+followup_not_started_crf12_6mo, followup_complete_crf12_12mo, followup_incomplete_crf12_12mo, 
+followup_early_crf12_12mo, followup_early_crf12_12mo, followup_late_crf12_12mo, followup_late_crf12_12mo, 
+followup_missing_crf12_12mo, followup_missing_crf12_12mo, followup_not_started_crf12_12mo, 
+followup_not_started_crf12_12mo}
 }
 \value{
-nothing
-
 nothing
 }
 \description{
 This function uses status constructs but treats early, late and complete as mutually exclusive.
 Therefore, complete is renamed to "On Time" and all three of them combined to Complete.
-
-This function onlt looks at the clinical followup form (CRF09) for tobra, designations may have to be looked at
 }
 \examples{
 \dontrun{
 expected_and_followup_visit_sextant()
-}
-Expected visit status for 3 Months, 6 Months, and 12 Months followup for tobra
-
-\dontrun{
-expected_and_followup_visit_tobra()
 }
 }
