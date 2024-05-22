@@ -4,7 +4,10 @@
 \alias{closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date}
 \title{Crossover Monitoring by Site since 01/01/2024}
 \usage{
-closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date(analytic)
+closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date(
+  analytic,
+  footnotes = NULL
+)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, df_surg_completed, 

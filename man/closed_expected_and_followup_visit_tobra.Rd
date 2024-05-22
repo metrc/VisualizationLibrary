@@ -4,7 +4,7 @@
 \alias{closed_expected_and_followup_visit_tobra}
 \title{Expected visit status for 3 Months, 6 Months, and 12 Months followup for tobra}
 \usage{
-closed_expected_and_followup_visit_tobra(analytic)
+closed_expected_and_followup_visit_tobra(analytic, footnotes = NULL)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, time_zero, followup_status_crf09_2wk, followup_status_crf09_3mo, followup_status_crf09_6mo, 
