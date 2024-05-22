@@ -1167,90 +1167,6 @@ closed_enrollment_status_by_site <- function(analytic){
   return(table)
 }
 
-#' Closed Number of Subjects Screened, Eligible, Enrolled and Not Enrolled (Variable Discontinued)
-#'
-#' @description This function visualizes the enrollment totals for each site by treatment arm
-#'
-#' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode, treatment_arm
-#' @param discontinued meta construct for discontinued
-#' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
-#'
-#' @return A kable table
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' closed_enrollment_status_by_site_var_discontinued(analytic, discontinued = "adjudicated_discontinued", 
-#'                                                   discontinued_colname = "Adjudicated Discontinued")
-#' }
-closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued"){
-  
-  inner_enrollment_status_by_site_var_discontinued <- function(df) {
-    colnames(df)[11] <- "discontinued"
-    
-    df_1st <- df %>% 
-      group_by(Facility) %>% 
-      summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible))
-    
-    df_2nd <- df %>% 
-      filter(eligible == TRUE) %>% 
-      group_by(Facility) %>% 
-      summarize(Refused = sum(refused), 'Not Consented' = sum(not_consented), Consented = sum(consented))
-    
-    df_3rd <- df %>% 
-      filter(eligible == TRUE & consented == TRUE) %>% 
-      group_by(Facility) %>% 
-      summarize("Randomized" = sum(randomized),
-                !!discontinued_colname := sum(discontinued),
-                "Enrolled" = sum(enrolled)) 
-    
-    table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
-      left_join(df_3rd, by = 'Facility') %>% 
-      mutate_all(~ifelse(is.na(.), 0, .)) %>% 
-      adorn_totals("row") %>% 
-      mutate(is_total=Facility=="Total") %>% 
-      mutate(`Days Certified`=ifelse(is_total,NA,`Days Certified`)) %>% 
-      arrange(desc(is_total), Facility) %>% 
-      select(-is_total) %>% 
-      mutate(!!discontinued_colname := format_count_percent(!!sym(discontinued_colname), Consented)) %>% 
-      mutate(Randomized = format_count_percent(Randomized, Consented)) %>% 
-      mutate(Enrolled = format_count_percent(Enrolled, Consented)) %>% 
-      mutate(Consented = format_count_percent(Consented, Eligible)) %>% 
-      mutate(Refused = format_count_percent(Refused, Eligible)) %>% 
-      mutate(`Not Consented` = format_count_percent(`Not Consented`, Eligible)) %>% 
-      mutate(Eligible = format_count_percent(Eligible, Screened))
-    
-    return(table_raw)
-  }
-  
-  df <- analytic %>%
-    select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, site_certified_days, 
-           facilitycode, all_of(discontinued), treatment_arm) %>%
-    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certified_days))) %>% 
-    rename(Facility = facilitycode) %>% 
-    filter(!is.na(Facility))
-  
-  df_a <- df %>% filter(treatment_arm == "Group A")
-  df_b <- df %>% filter(treatment_arm == "Group B") 
-  
-  table_raw_a <- inner_enrollment_status_by_site_var_discontinued(df_a)
-  table_raw_b <- inner_enrollment_status_by_site_var_discontinued(df_b)
-  table_raw_full <- inner_enrollment_status_by_site_var_discontinued(df)
-  
-  df_table <- full_join(table_raw_a, table_raw_b, by = "Facility", suffix = c(" (Group A)", " (Group B)")) %>%
-    left_join(table_raw_full, by = "Facility") %>%
-    select(Facility, `Days Certified`, starts_with("Screened"), starts_with("Eligible"), starts_with("Refused"), 
-           starts_with("Not Consented"), starts_with("Consented"), starts_with("Randomized"),
-           starts_with(discontinued_colname), starts_with("Enrolled"))
-  
-  table <- kable(df_table, format="html", align='l') %>%
-    add_header_above(c(" " = 2, "Group A" = 7, "Group B" = 7, "Overall" = 7)) %>%
-    kable_styling("striped", full_width = F, position="left")
-  
-  return(table)
-}
 
 #' Closed Ankle and Plateau X-Ray and Measurement Status
 #'
@@ -3663,3 +3579,122 @@ closed_characteristics_treatment <- function(analytic){
   return(vis)
 }
 
+#' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled (Variable Discontinued)
+#'
+#' @description This function visualizes the enrollment totals for each site
+#'
+#' @param analytic This is the analytic data set that must include screened, 
+#' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode, treatment_arm
+#' @param discontinued meta construct for discontinued
+#' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_enrollment_status_by_site_var_discontinued()
+#' }
+closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued", footnotes = NULL){
+  confirm_stability_of_related_visual('enrollment_status_by_site_var_discontinued', '30515ee8f6b919d954480625ed99d214')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+
+#' Crossover Monitoring by Site since 01/01/2024
+#'
+#' @description This function visualizes the crossovers by site in hospital and at discharge 
+#' after 01/01/2021
+#'
+#' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
+#' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, treatment_arm
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date()
+#' }
+closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
+  confirm_stability_of_related_visual('ih_and_dc_crossover_monitoring_by_site_cutoff_date', '313fd341fe57d315cae3c2bdd3ed3774')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_a),
+                  "<h4>Group B</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Expected visit status for 3 Months, 6 Months, and 12 Months followup by EACH SITE
+#'
+#' @description This function outputs the expected and followup visit status by each site and  uses status 
+#' constructs but treats early, late and complete as mutually exclusive.
+#' Therefore, complete is renamed to "On Time" and all three of them combined to Complete.
+#'
+#' @param analytic This is the analytic data set that must include facilitycode, followup_due_3mo, 
+#' followup_due_6mo, followup_due_12mo, followup_status_3mo, followup_status_6mo, followup_status_12mo, treatment_arm
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_expected_and_followup_visit_by_site()
+#' }
+closed_expected_and_followup_visit_by_site <- function(analytic){
+  confirm_stability_of_related_visual('expected_and_followup_visit_by_site', '4debf83a19a53017ea299ac04f5a79c3')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit_by_site(df_a),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit_by_site(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit_by_site(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit_by_site(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}

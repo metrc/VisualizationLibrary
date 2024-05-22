@@ -2,12 +2,13 @@
 % Please edit documentation in R/closed_tables.R
 \name{closed_enrollment_status_by_site_var_discontinued}
 \alias{closed_enrollment_status_by_site_var_discontinued}
-\title{Closed Number of Subjects Screened, Eligible, Enrolled and Not Enrolled (Variable Discontinued)}
+\title{Number of Subjects Screened, Eligible, Enrolled and Not Enrolled (Variable Discontinued)}
 \usage{
 closed_enrollment_status_by_site_var_discontinued(
   analytic,
   discontinued = "discontinued",
-  discontinued_colname = "Discontinued"
+  discontinued_colname = "Discontinued",
+  footnotes = NULL
 )
 }
 \arguments{
@@ -19,14 +20,13 @@ eligible, refused, consented, enrolled, not_consented, site_certified_days, faci
 \item{discontinued_colname}{column name for discontinued to appear in visualization like "Adjudicated Discontinued"}
 }
 \value{
-A kable table
+nothing
 }
 \description{
-This function visualizes the enrollment totals for each site by treatment arm
+This function visualizes the enrollment totals for each site
 }
 \examples{
 \dontrun{
-closed_enrollment_status_by_site_var_discontinued(analytic, discontinued = "adjudicated_discontinued", 
-                                                  discontinued_colname = "Adjudicated Discontinued")
+closed_enrollment_status_by_site_var_discontinued()
 }
 }
