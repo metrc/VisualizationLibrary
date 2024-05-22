@@ -3693,3 +3693,41 @@ closed_expected_and_followup_visit_by_site <- function(analytic){
   
   return(out)
 }
+
+#' Expected visit status for 3 Months, 6 Months, and 12 Months followup for tobra
+#'
+#' @description This function onlt looks at the clinical followup form (CRF09) for tobra, designations may have to be looked at
+#'
+#' @param analytic This is the analytic data set that must include study_id, time_zero, followup_status_crf09_2wk, followup_status_crf09_3mo, followup_status_crf09_6mo, 
+#' followup_status_crf09_12mo
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_expected_and_followup_visit_tobra()
+#' }
+closed_expected_and_followup_visit_tobra <- function(analytic){
+  confirm_stability_of_related_visual('expected_and_followup_visit_tobra', '95c5ddb8a777a2a27255054fa6ea2967')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit_tobra(df_a),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit_tobra(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit_tobra(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
