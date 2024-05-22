@@ -128,17 +128,16 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
   
   colnames(df_table) <- c("Name", "Group A", "Group B", "Total")
   
+  
+  df_table <- df_table %>%
+    mutate_all(~ ifelse(is.na(.), "-", .))
+  
+  
   index_vec <- c("OTA Classification"= ota_number + 1, "Tibial Plateau" = schatzer_number + 1)
   
-<<<<<<< HEAD
+ 
   table_raw <- kable(df_table, format = "html", align = 'l', col.names = colnames(df_table)) %>%
     add_indent(c(seq(ota_number) + 1, seq(schatzer_number) + 1 + ota_number + 1)) %>% 
-=======
-  index_vec <- c("OTA Classification"= ota_number+1, "Tibial Plateau"=schatzer_number+1) 
-  
-  table_raw<- kable(df_table, format="html", align='l',  col.names = NULL) %>%
-    add_indent(c(seq(ota_number)+1, seq(schatzer_number)+1+ota_number+1)) %>% 
->>>>>>> 06aa4babfe5167b48f4e1b64065e6a220b558563
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = FALSE, position = "left")
 
@@ -3287,7 +3286,6 @@ closed_treatment_characteristics <- function(analytic){
   return(vis)
 }
 
-<<<<<<< HEAD
 
 
 #' Closed adherence_sextant
@@ -3299,7 +3297,7 @@ closed_treatment_characteristics <- function(analytic){
 #' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, treatment_arm
 #'
 #' @return nothing
-=======
+#' 
 #' Closed followup followup_2wk_status_by_site_tobra
 #'
 #' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
@@ -3308,22 +3306,14 @@ closed_treatment_characteristics <- function(analytic){
 #' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk
 #' 
 #' @return html table
->>>>>>> 06aa4babfe5167b48f4e1b64065e6a220b558563
 #' @export
 #'
 #' @examples
 #' \dontrun{
-<<<<<<< HEAD
+#' 
 #' closed_adherence_sextant()
 #' }
 closed_adherence_sextant <- function(analytic, footnotes=NULL){
-  
-=======
-#' closed_followup_2wk_status_by_site_tobra()
-#' }
-closed_followup_2wk_status_by_site_tobra <- function(analytic, footnotes=NULL){
-  confirm_stability_of_related_visual('followup_2wk_status_by_site_tobra', 'ecbae8bfd2504d2c3376e1700bcd17e0')
->>>>>>> 06aa4babfe5167b48f4e1b64065e6a220b558563
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -3333,7 +3323,6 @@ closed_followup_2wk_status_by_site_tobra <- function(analytic, footnotes=NULL){
   
   if(is.null(footnotes)){
     out <- paste0("<h4>Group A</h4><br />",
-<<<<<<< HEAD
                   adherence_sextant(df_a),
                   "<h4>Group B</h4><br />",
                   adherence_sextant(df_b))
@@ -3342,67 +3331,29 @@ closed_followup_2wk_status_by_site_tobra <- function(analytic, footnotes=NULL){
                   adherence_sextant(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
                   adherence_sextant(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
-=======
-                  followup_2wk_status_by_site_tobra(df_a),
-                  "<h4>Group B</h4><br />",
-                  followup_2wk_status_by_site_tobra(df_b))
-  } else{
-    out <- paste0("<h4>Group A</h4><br />",
-                  followup_2wk_status_by_site_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
-                  "<h4>Group B</h4><br />",
-                  followup_2wk_status_by_site_tobra(df_b,) %>% add_footnote(footnotes, notation="number", escape = FALSE))
->>>>>>> 06aa4babfe5167b48f4e1b64065e6a220b558563
   }
   
   return(out)
 }
 
-<<<<<<< HEAD
 
-#' Closed Expected visit status for 3 Months, 6 Months, and 12 Months followup for Sextant
+
+#' Closed followup followup_2wk_status_by_site_tobra
 #'
-#' @description This function uses status constructs but treats early, late and complete as mutually exclusive.
-#' Therefore, complete is renamed to "On Time" and all three of them combined to Complete. 
-#'
-#' @param analytic This is the analytic data set that must include followup_expected_2wk, followup_expected_3mo, 
-#' followup_expected_6mo, followup_expected_12mo, followup_complete_crf12_2wk, followup_incomplete_crf12_2wk, 
-#' followup_early_crf12_2wk, followup_late_crf12_2wk, followup_missing_crf12_2wk, followup_not_started_crf12_2wk,
-#' followup_complete_crf12_3mo, followup_incomplete_crf12_3mo, followup_early_crf12_3mo, followup_late_crf12_3mo, 
-#' followup_missing_crf12_3mo, followup_not_started_crf12_3mo, followup_complete_crf12_6mo, 
-#' followup_incomplete_crf12_6mo, followup_early_crf12_6mo, followup_early_crf12_6mo, followup_late_crf12_6mo, 
-#' followup_late_crf12_6mo, followup_missing_crf12_6mo, followup_missing_crf12_6mo, followup_not_started_crf12_6mo, 
-#' followup_not_started_crf12_6mo, followup_complete_crf12_12mo, followup_incomplete_crf12_12mo, 
-#' followup_early_crf12_12mo, followup_early_crf12_12mo, followup_late_crf12_12mo, followup_late_crf12_12mo, 
-#' followup_missing_crf12_12mo, followup_missing_crf12_12mo, followup_not_started_crf12_12mo, 
-#' followup_not_started_crf12_12mo, treatment_arm
-#'
-#' @return nothing
-=======
-#' Closed followup followup_3mo_status_by_site_tobra
-#'
-#' @description This function visualizes 6 month followup status by site for Clinical followup form(crf09) and patient
+#' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
 #' medical record review(crf08) for tobra weekly report 
 #'
-#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_3mo, followup_status_crf09_3mo
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk
 #' 
 #' @return html table
->>>>>>> 06aa4babfe5167b48f4e1b64065e6a220b558563
 #' @export
 #'
 #' @examples
 #' \dontrun{
-<<<<<<< HEAD
-#' closed_expected_and_followup_visit_sextant()
+#' closed_followup_2wk_status_by_site_tobra()
 #' }
-closed_expected_and_followup_visit_sextant <- function(analytic, footnotes=NULL){
-
-  confirm_stability_of_related_visual('expected_and_followup_visit_sextant', '8fb626afbfad7ddb5931ec1856229b14')
-=======
-#' closed_followup_3mo_status_by_site_tobra()
-#' }
-closed_followup_3mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
-  confirm_stability_of_related_visual('followup_3mo_status_by_site_tobra', '06834c342ba11d08329abda918af06a5')
->>>>>>> 06aa4babfe5167b48f4e1b64065e6a220b558563
+closed_followup_2wk_status_by_site_tobra <- function(analytic, footnotes=NULL){
+  confirm_stability_of_related_visual('followup_2wk_status_by_site_tobra', 'ecbae8bfd2504d2c3376e1700bcd17e0')
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -3412,16 +3363,44 @@ closed_followup_3mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
   
   if(is.null(footnotes)){
     out <- paste0("<h4>Group A</h4><br />",
-<<<<<<< HEAD
-                  expected_and_followup_visit_sextant(df_a),
+                  followup_2wk_status_by_site_tobra(df_a),
                   "<h4>Group B</h4><br />",
-                  expected_and_followup_visit_sextant(df_b))
+                  followup_2wk_status_by_site_tobra(df_b))
   } else{
     out <- paste0("<h4>Group A</h4><br />",
-                  expected_and_followup_visit_sextant(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  followup_2wk_status_by_site_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  expected_and_followup_visit_sextant(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
-=======
+                  followup_2wk_status_by_site_tobra(df_b,) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Closed followup followup_3mo_status_by_site_tobra
+#'
+#' @description This function visualizes 6 month followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_3mo, followup_status_crf09_3mo
+#' 
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_followup_3mo_status_by_site_tobra()
+#' }
+closed_followup_3mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
+  confirm_stability_of_related_visual('followup_3mo_status_by_site_tobra', '06834c342ba11d08329abda918af06a5')
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
                   followup_3mo_status_by_site_tobra(df_a),
                   "<h4>Group B</h4><br />",
                   followup_3mo_status_by_site_tobra(df_b))
@@ -3430,13 +3409,10 @@ closed_followup_3mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
                   followup_3mo_status_by_site_tobra(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
                   followup_3mo_status_by_site_tobra(df_b,) %>% add_footnote(footnotes, notation="number", escape = FALSE))
->>>>>>> 06aa4babfe5167b48f4e1b64065e6a220b558563
   }
   
   return(out)
 }
-<<<<<<< HEAD
-=======
 
 #' Closed followup followup_6mo_status_by_site_tobra
 #'
@@ -3515,6 +3491,66 @@ closed_followup_12mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
 }
 
 
+#' Closed Expected visit status for 3 Months, 6 Months, and 12 Months followup for Sextant
+#'
+#' @description This function uses status constructs but treats early, late and complete as mutually exclusive.
+#' Therefore, complete is renamed to "On Time" and all three of them combined to Complete. 
+#'
+#' @param analytic This is the analytic data set that must include followup_expected_2wk, followup_expected_3mo, 
+#' followup_expected_6mo, followup_expected_12mo, followup_complete_crf12_2wk, followup_incomplete_crf12_2wk, 
+#' followup_early_crf12_2wk, followup_late_crf12_2wk, followup_missing_crf12_2wk, followup_not_started_crf12_2wk,
+#' followup_complete_crf12_3mo, followup_incomplete_crf12_3mo, followup_early_crf12_3mo, followup_late_crf12_3mo, 
+#' followup_missing_crf12_3mo, followup_not_started_crf12_3mo, followup_complete_crf12_6mo, 
+#' followup_incomplete_crf12_6mo, followup_early_crf12_6mo, followup_early_crf12_6mo, followup_late_crf12_6mo, 
+#' followup_late_crf12_6mo, followup_missing_crf12_6mo, followup_missing_crf12_6mo, followup_not_started_crf12_6mo, 
+#' followup_not_started_crf12_6mo, followup_complete_crf12_12mo, followup_incomplete_crf12_12mo, 
+#' followup_early_crf12_12mo, followup_early_crf12_12mo, followup_late_crf12_12mo, followup_late_crf12_12mo, 
+#' followup_missing_crf12_12mo, followup_missing_crf12_12mo, followup_not_started_crf12_12mo, 
+#' followup_not_started_crf12_12mo, treatment_arm
+#'
+#' @return nothing
+
+#' Closed followup followup_3mo_status_by_site_tobra
+#'
+#' @description This function visualizes 6 month followup status by site for Clinical followup form(crf09) and patient
+#' medical record review(crf08) for tobra weekly report 
+#'
+#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_3mo, followup_status_crf09_3mo
+#' 
+#' @return html table
+#' 
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' 
+#' closed_expected_and_followup_visit_sextant()
+#' }
+closed_expected_and_followup_visit_sextant <- function(analytic, footnotes=NULL){
+
+  confirm_stability_of_related_visual('expected_and_followup_visit_sextant', '8fb626afbfad7ddb5931ec1856229b14')
+
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit_sextant(df_a),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit_sextant(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit_sextant(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit_sextant(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
 #' closed characteristics_treatment
 #'
 #' @description This function visualizes the treatment characteristics per protocol and assignment for tobra. 
@@ -3530,6 +3566,7 @@ closed_followup_12mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
 #' closed_characteristics_treatment()
 #' }
 closed_characteristics_treatment <- function(analytic){
+  
   confirm_stability_of_related_visual('characteristics_treatment', 'da790cf8c715e5b060788e7865bfdbcd')
   
   inner_characteristics_treatment <- function(df){
@@ -3618,4 +3655,4 @@ closed_characteristics_treatment <- function(analytic){
   
   return(vis)
 }
->>>>>>> 06aa4babfe5167b48f4e1b64065e6a220b558563
+

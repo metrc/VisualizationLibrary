@@ -3715,7 +3715,4 @@ expected_and_followup_visit_tobra <- function(analytic){
   
   return(vis)
 }
-<<<<<<< HEAD
-}
-=======
->>>>>>> 06aa4babfe5167b48f4e1b64065e6a220b558563
+
