@@ -4,7 +4,7 @@
 \alias{closed_dssi_reported_adjudicated}
 \title{Closed Deep Surgical Site Infection reported & adjudicated}
 \usage{
-closed_dssi_reported_adjudicated(analytic)
+closed_dssi_reported_adjudicated(analytic, footnotes = NULL)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, infection_reported_6mo, infection_adjudicated_6mo, 
