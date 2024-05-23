@@ -20,7 +20,7 @@
 #' }
 closed_visit_status_for_followup_by_form <- function(analytic){
   
-  confirm_stability_of_related_visual('closed_visit_status_for_followup_by_form', '38ab0c7ce6ab914813011c54283e905e')
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -473,7 +473,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
 #' }
 closed_complications_by_severity_relatedness <- function(analytic){
   
-  confirm_stability_of_related_visual('closed_complications_by_severity_relatedness', 'fb6f098439ae536036ade8aa4930bdc0')
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-23)
   
   inner_closed_complications_by_severity_relatedness <- function(analytic){
     comp <- analytic %>%  select(study_id, complication_data) %>% 
@@ -715,6 +715,20 @@ closed_appendix_B_deaths <- function(analytic){
   if (nrow(unzipped_death) == 0) {
     return(paste0("<br />\nNone at this time.<br />\n"))
   }
+  
+  output_df <- unzipped_death %>% 
+    mutate(text = paste0(
+      "<b>Participant ID</b>: ", study_id, "-", facilitycode, "<br /> ",
+      "<b>Date Enrolled</b>: ", consent_date, "<br /> ",
+      "<b>Tx Group</b>: ", treatment_arm, "<br /> ",
+      "<b>Date of SAE</b>: ", sae_dt_event, "<br /> ",
+      "<b>Age</b>: ", age, "<br /> ",
+      "<b>Treatment Received</b>: ", treatment_received, "<br /> ",
+      "<b>Related to Injury(per Site)</b>: ", sae_relatedness_injury, "<br /> ",
+      "<b>Related to Treatment (per Medical Monitor)</b>: ", sae_relatedness_treatment, "<br /> ",
+      "<b>Outcome</b>: ", sae_outcome, "<br /> ",
+      "<b>Description</b>: ", sae_describe, "<br /> ",
+      "<br />")) 
   
   output_text <- output_df %>% 
     paste(collapse = "<br />\n")
