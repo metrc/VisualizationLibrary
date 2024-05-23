@@ -291,10 +291,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   
   full_output <- full_join(full_output, output_total, by = c('Category', 'type')) %>% 
     reorder_rows(list(Category = c('Sex', '0 (0%)', 'Age', 'Race', 'Education', 'Military'))) %>% 
-    mutate_all(replace_na, "0 (0%)") 
-  
-  
-  
+    mutate_all(replace_na, "0 (0%)") %>% 
+    select(-Category)
   
   colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a),")"), paste0("Group B (n=",nrow(df_b),")"), paste0("Total (n=",nrow(df_a)+nrow(df_b),")"))
   
