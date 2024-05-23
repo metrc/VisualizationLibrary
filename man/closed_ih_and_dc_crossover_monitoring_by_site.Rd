@@ -4,7 +4,7 @@
 \alias{closed_ih_and_dc_crossover_monitoring_by_site}
 \title{Crossover Monitoring by Site Closed}
 \usage{
-closed_ih_and_dc_crossover_monitoring_by_site(analytic)
+closed_ih_and_dc_crossover_monitoring_by_site(analytic, footnotes = NULL)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, df_surg_completed, 
