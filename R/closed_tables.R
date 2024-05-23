@@ -827,7 +827,8 @@ closed_appendix_D_protocol_deviation <- function(analytic){
 #' \dontrun{
 #' closed_ih_and_dc_crossover_monitoring_by_site()
 #' }
-closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
+closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = NULL){
+  confirm_stability_of_related_visual('ih_and_dc_crossover_monitoring_by_site', '1a7b5d1f609833623e6a3a48a3bcc5c2')
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -835,65 +836,20 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   df_b <- analytic %>% 
     filter(treatment_arm=="Group B")
   
-  out <- paste0("<h4>Group A</h4><br />",
-                ih_and_dc_crossover_monitoring_by_site(df_a),
-                "<h4>Group B</h4><br />",
-                ih_and_dc_crossover_monitoring_by_site(df_b))
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site(df_a),
+                  "<h4>Group B</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  ih_and_dc_crossover_monitoring_by_site(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
   return(out)
 }
-# closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic){
-#   
-#   df <- analytic %>% 
-#     filter(enrolled == TRUE)
-#   
-#   df_a <- analytic %>% 
-#     filter(treatment_arm=="Group A") %>% 
-#     filter(enrolled == TRUE)
-#   
-#   df_b <- analytic %>% 
-#     filter(treatment_arm=="Group B") %>% 
-#     filter(enrolled == TRUE)
-#   
-#   inner_closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic_df){
-#     
-#     df <- analytic_df %>% 
-#       select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero) %>% 
-#       mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-#       rename(Facility = facilitycode) %>% 
-#       filter(enrolled) %>% 
-#       mutate(ih_discharge_date = !is.na(ih_discharge_date)) %>% 
-#       group_by(Facility) %>% 
-#       summarize('Enrolled' = sum(enrolled),
-#                 "Definitive Fixation Complete" = sum(df_surg_completed), 
-#                 "Discharged from Index Hospitalization" = sum(ih_discharge_date),
-#                 "Discharged on Radomization Date" = sum(ih_discharge_date_on_time_zero),
-#                 "Inpatient Crossover" = sum(crossover_inpatient),
-#                 "Discharge Crossover" = sum(crossover_discharge))
-#     
-#     table_raw <- df %>% 
-#       adorn_totals("row") %>% 
-#       mutate(is_total=Facility=="Total") %>% 
-#       arrange(desc(is_total), Facility) %>% 
-#       select(-is_total)
-#     
-#     return(table_raw)
-#   }
-#   
-#   table_a <- inner_closed_ih_and_dc_crossover_monitoring_by_site(df_a)
-#   table_b <- inner_closed_ih_and_dc_crossover_monitoring_by_site(df_b)
-#   table_full <- inner_closed_ih_and_dc_crossover_monitoring_by_site(df)
-#   
-#   df_table <- full_join(full_join(table_a, table_b, by="Facility"), 
-#                         table_full, by="Facility")
-#   
-#   
-#   table_raw<- kable(df_table, format="html", align='l',  col.names = str_remove(colnames(df_table),"\\.x|\\.y")) %>%
-#     add_header_above(c(" " = 1, "Group A" = 6, "Group B" = 6, "All" = 6)) %>%
-#     kable_styling("striped", full_width = F, position="left")
-#   
-#   return(table_raw)
-# }
-
 
 
 
@@ -1078,19 +1034,27 @@ closed_ao_gustillo_tscherne_injury_characteristics <- function(analytic){
 #' \dontrun{
 #' closed_expected_and_followup_visit()
 #' }
-closed_expected_and_followup_visit <- function(analytic){
-
+closed_expected_and_followup_visit <- function(analytic, footnotes = NULL){
+  confirm_stability_of_related_visual('expected_and_followup_visit', '15a9c8ff935cb8a8a879f4dbac1b16c4')
+  
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
   
   df_b <- analytic %>% 
     filter(treatment_arm=="Group B")
   
-  out <- paste0("<h4>Group A</h4><br />",
-                expected_and_followup_visit(df_a),
-                "<h4>Group B</h4><br />",
-                expected_and_followup_visit(df_b))
-    
+  if(is.null(footnotes)){
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit(df_a),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit(df_b))
+  } else{
+    out <- paste0("<h4>Group A</h4><br />",
+                  expected_and_followup_visit(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  expected_and_followup_visit(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
   return(out)
 }
 
