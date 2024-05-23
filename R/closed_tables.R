@@ -340,6 +340,8 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
   n_da <- -1
   
   inner_closed_discontinuation_sae_deviation_by_type <- function(df){
+    total <- sum(df$enrolled, na.rm = T)
+    
     discontinuation_df <- df %>% 
       select(enrolled, censored_reason) %>% 
       filter(enrolled == TRUE) %>% 
@@ -1035,7 +1037,7 @@ closed_ao_gustillo_tscherne_injury_characteristics <- function(analytic){
 #' closed_expected_and_followup_visit()
 #' }
 closed_expected_and_followup_visit <- function(analytic, footnotes = NULL){
-  confirm_stability_of_related_visual('expected_and_followup_visit', '15a9c8ff935cb8a8a879f4dbac1b16c4')
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -3059,6 +3061,10 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
 #' randomized, fracture_type, treatment_arm
 #'
 #' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
 #' closed_treatment_characteristics()
 #' }
 closed_treatment_characteristics <- function(analytic){
@@ -3571,7 +3577,7 @@ closed_characteristics_treatment <- function(analytic){
 #' closed_enrollment_status_by_site_var_discontinued()
 #' }
 closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued", footnotes = NULL){
-  confirm_stability_of_related_visual('enrollment_status_by_site_var_discontinued', '30515ee8f6b919d954480625ed99d214')
+   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -3611,7 +3617,7 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
 #' closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date()
 #' }
 closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, footnotes = NULL){
-  confirm_stability_of_related_visual('ih_and_dc_crossover_monitoring_by_site_cutoff_date', '313fd341fe57d315cae3c2bdd3ed3774')
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -3651,7 +3657,7 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #' closed_expected_and_followup_visit_by_site()
 #' }
 closed_expected_and_followup_visit_by_site <- function(analytic, footnotes = NULL){
-  confirm_stability_of_related_visual('expected_and_followup_visit_by_site', '4debf83a19a53017ea299ac04f5a79c3')
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -3689,7 +3695,7 @@ closed_expected_and_followup_visit_by_site <- function(analytic, footnotes = NUL
 #' closed_expected_and_followup_visit_tobra()
 #' }
 closed_expected_and_followup_visit_tobra <- function(analytic, footnotes = NULL){
-  confirm_stability_of_related_visual('expected_and_followup_visit_tobra', '95c5ddb8a777a2a27255054fa6ea2967')
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
