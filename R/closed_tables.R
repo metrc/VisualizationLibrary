@@ -3646,7 +3646,7 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
 #' \dontrun{
 #' closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date()
 #' }
-closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
+closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, footnotes = NULL){
   confirm_stability_of_related_visual('ih_and_dc_crossover_monitoring_by_site_cutoff_date', '313fd341fe57d315cae3c2bdd3ed3774')
   
   df_a <- analytic %>% 
@@ -3686,7 +3686,7 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
 #' \dontrun{
 #' closed_expected_and_followup_visit_by_site()
 #' }
-closed_expected_and_followup_visit_by_site <- function(analytic){
+closed_expected_and_followup_visit_by_site <- function(analytic, footnotes = NULL){
   confirm_stability_of_related_visual('expected_and_followup_visit_by_site', '4debf83a19a53017ea299ac04f5a79c3')
   
   df_a <- analytic %>% 
@@ -3724,7 +3724,7 @@ closed_expected_and_followup_visit_by_site <- function(analytic){
 #' \dontrun{
 #' closed_expected_and_followup_visit_tobra()
 #' }
-closed_expected_and_followup_visit_tobra <- function(analytic){
+closed_expected_and_followup_visit_tobra <- function(analytic, footnotes = NULL){
   confirm_stability_of_related_visual('expected_and_followup_visit_tobra', '95c5ddb8a777a2a27255054fa6ea2967')
   
   df_a <- analytic %>% 
