@@ -658,7 +658,7 @@ closed_appendix_A_SAEs <- function(analytic){
     separate_rows(sae_data, sep = ";new_row: ") %>% 
     separate(sae_data, into = c("facilitycode", "treatment_arm", "treatment_received", "consent_date", "sae_dt_event", "age", "sae_relatedness_injury",
                                 "sae_relatedness_treatment", "sae_outcome", "sae_describe"), sep='\\|') 
-  
+
   
   output_df <- unzipped_sae %>% 
     mutate(text = paste0(
@@ -708,7 +708,7 @@ closed_appendix_B_deaths <- function(analytic){
   
   unzipped_death <- df %>%
     separate_rows(sae_data, sep = ";new_row: ") %>% 
-    separate(sae_data, into = c("facilitycode", "consent_date", "sae_dt_event", "age", "sae_relatedness_injury", 
+    separate(sae_data, into = c("facilitycode","treatment_arm", "treatment_received", "consent_date", "sae_dt_event", "age", "sae_relatedness_injury", 
                                 "sae_relatedness_treatment", "sae_outcome", "sae_describe"), sep='\\|') %>% 
     filter(sae_outcome == "Death" | !is.na(death_date))
   
