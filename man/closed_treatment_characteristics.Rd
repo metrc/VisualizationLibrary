@@ -14,11 +14,16 @@ injury_classification_plat_ao, df_surg_staged, df_surg_n_forms,
 randomized, fracture_type, treatment_arm}
 }
 \value{
-
+html table
 }
 \description{
 This function visualizes the characteristics of the definitive 
 fixation process. Data included is completeness, number of df stages, 
 statistics on distribution, incision location counts and distribution,
 and adherence by treatment arm
+}
+\examples{
+\dontrun{
+closed_treatment_characteristics()
+}
 }
