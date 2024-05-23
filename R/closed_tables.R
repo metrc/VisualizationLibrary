@@ -2225,7 +2225,7 @@ closed_not_enrolled_for_other_reasons <- function(analytic){
 #' closed_fracture_characteristics(analytic)
 #' }
 closed_fracture_characteristics <- function(analytic){
-  confirm_stability_of_related_visual('fracture_characteristics', '39fae01eb7c76ab2d779c0400b13472c')
+  confirm_stability_of_related_visual('fracture_characteristics', '18791cc2b2fb3c9f95e46cb421ddc67e')
   
   inner_fracture_characteristics <- function(df) {
     total <- sum(df$enrolled)
@@ -3052,7 +3052,7 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
     
     print(table_raw)
     
-    return(df_table_raw)
+    return(table_raw)
   }
  
   processed_df_table_raw <- process_severity_grade_4(df_table_raw)
