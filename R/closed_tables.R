@@ -212,7 +212,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(sex_default) %>% 
       mutate(order = factor(type, sex_levels)) %>% 
       arrange(order) %>% 
-      select(-order)
+      select(-order) %>% 
+      mutate(Category = 'Sex')
     
     age_df <<- df %>% 
       summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))
@@ -225,7 +226,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       rename(number = n) %>% 
       mutate(percentage = format_count_percent(number, total)) %>% 
       select(-number) %>% 
-      rename(type = age_group)
+      rename(type = age_group)%>% 
+      mutate(Category = 'Age')
     
     education_df <<- df %>% 
       mutate(education = replace_na(education, "Missing")) %>% 
@@ -238,7 +240,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(education_default) %>% 
       mutate(order = factor(type, education_levels)) %>% 
       arrange(order) %>% 
-      select(-order)
+      select(-order)%>% 
+      mutate(Category = 'Education')
     
     race_df <<- df %>% 
       mutate(race = replace_na(race, "Missing")) %>% 
@@ -251,7 +254,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(race_default) %>% 
       mutate(order = factor(type, race_levels)) %>% 
       arrange(order) %>% 
-      select(-order)
+      select(-order)%>% 
+      mutate(Category = 'Race')
     
     military_df <<- df %>% 
       mutate(military = ifelse(is.na(military), "Missing", military)) %>% 
@@ -264,7 +268,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       full_join(military_default) %>% 
       mutate(order = factor(type, military_levels)) %>% 
       arrange(order) %>% 
-      select(-order)
+      select(-order)%>% 
+      mutate(Category = 'Military')
     
     df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) %>% 
       mutate_all(replace_na, "0 (0%)") %>% 
@@ -276,14 +281,20 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   df_a <- analytic %>% filter(treatment_arm=="Group A")
   df_b <- analytic %>% filter(treatment_arm=="Group B")
   
-  output_a <- inner_baseline_characteristics_percent(df_a)
-  output_b <- inner_baseline_characteristics_percent(df_b)
-  output_total <- inner_baseline_characteristics_percent(analytic)
+  output_a <- inner_baseline_characteristics_percent(df_a) %>% mutate(percentage = replace_na(percentage, "NA")) 
+  output_b <- inner_baseline_characteristics_percent(df_b) %>% mutate(percentage = replace_na(percentage, "NA"))
+  output_total <- inner_baseline_characteristics_percent(analytic) %>% mutate(percentage = replace_na(percentage, "NA"))
   
-  output_b <- output_b %>% select(percentage)
-  output_total <- output_total %>% select(percentage)
   
-  full_output <- cbind(output_a, output_b , output_total)
+  full_output <- full_join(output_a, output_b, by = c('Category', 'type'))
+  
+  
+  full_output <- full_join(full_output, output_total, by = c('Category', 'type')) %>% 
+    reorder_rows(list(Category = c('Sex', '0 (0%)', 'Age', 'Race', 'Education', 'Military'))) %>% 
+    mutate_all(replace_na, "0 (0%)") 
+  
+  
+  
   
   colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a),")"), paste0("Group B (n=",nrow(df_b),")"), paste0("Total (n=",nrow(df_a)+nrow(df_b),")"))
   
@@ -2824,7 +2835,7 @@ closed_adherence_by_site <- function(analytic){
 #' closed_enrollment_by_site_last_days_var_disc()
 #' }
 closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="discontinued", discontinued_colname="Discontinued", include_safety_set=FALSE, footnotes=NULL){
-  confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'c16437f52d455f3bdd76caffcc105659')
+  confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'f3bb72ca1a3ca21695900292fc6d0e2b')
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
