@@ -2913,7 +2913,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
 #' @description This function visualizes the number of complications(number of subjects) reported at all time points(Overall) 
 #' from time_zero overall, and by each treatment arm. 
 #'
-#' @param analytic This is the analytic data set that must include study_id, complication_data
+#' @param analytic This is the analytic data set that must include study_id, complication_data, treatment_arm
 #' @param days it is a keyword argument to pass in the number of days to get cut off date for complications
 #' 
 #' @return A kable table
@@ -2926,8 +2926,8 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
 closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = NULL){
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
-  
-  df <- analytic %>%  
+ inner_complications_overall <- function(df){ 
+  df <- df %>%  
     select(study_id, complication_data, time_zero) %>% 
     filter(!is.na(complication_data))
  
@@ -3008,8 +3008,24 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
   
   df_table_raw <- reorder_rows(output_complication, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
   
-  
-  process_severity_grade_4 <- function(df_table_raw) {
+ }
+ 
+ df_a <- analytic %>% 
+   filter(treatment_arm == 'Group A')
+ 
+ df_b <- analytic %>% 
+   filter(treatment_arm == 'Group B')
+ 
+ analytic_final <- inner_complications_overall(analytic)
+ a_final <- inner_complications_overall(df_a)
+ b_final <- inner_complications_overall(df_b)
+ 
+ colnames(b_final) <- c('sevb', 'compb', 'countb')
+ colnames(analytic_final) <- c('seva', 'compa', 'counta')
+ 
+ df_table_raw <- cbind(a_final, b_final, analytic_final) %>%
+   select(severity, complication, Total, countb, counta)
+ 
     grade_4_all_na <- all(is.na(df_table_raw$Total[df_table_raw$severity == "Grade 4"]))
     
     if (grade_4_all_na) {
@@ -3017,10 +3033,11 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
         filter(severity != "Grade 4") %>%
         bind_rows(data.frame(complication = "None", severity = "Grade 4", Total = NA))
       
-      df_table_raw <- reorder_rows( df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
+      df_table_raw <- reorder_rows(df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
       
       df_final <- df_table_raw %>% select(-severity) %>%  mutate_all(replace_na, "-")
       
+      colnames(df_final) <- c('Complication', 'Group A', 'Group B', 'Overall')
       
       index_vec <- c("Grade 4" = 1, "Grade 3"= 17,"Grade 2,1"= 17, "Unknown"= 17)
       subindex_vec <- c(" "= 1, "Infections" = 2, "Other Complications" = 15, "Infections" = 2, 
@@ -3033,9 +3050,11 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
       
     } else {
       
-      df_table_raw <- reorder_rows( df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
+      df_table_raw <- reorder_rows(df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
       
       df_final <- df_table_raw %>% select(-severity) %>%  mutate_all(replace_na, "-")
+      
+      colnames(df_final) <- c('Complication', 'Group A', 'Group B', 'Overall')
       
       index_vec <- c("Grade 4" = 17, "Grade 3"= 17,"Grade 2,1"= 17, "Unknown"= 17)
       subindex_vec <- c("Infections" = 2, "Other Complications " = 15, "Infections" = 2, "Other Complications" = 15, "Infections" = 2, 
@@ -3047,15 +3066,8 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
         kable_styling("striped", full_width = F, position='left') %>%
         row_spec(c(0,5,8,13,18,23,36,41), extra_css = "border-bottom: 1px solid;")
     }
-    
-    print(table_raw)
-    
-    return(table_raw)
-  }
- 
-  processed_df_table_raw <- process_severity_grade_4(df_table_raw)
   
-  return(processed_df_table_raw)
+  return(table_raw)
 }
 
 
