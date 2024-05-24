@@ -4,7 +4,7 @@
 \alias{closed_expected_and_followup_visit}
 \title{Closed Expected visit status for 3 Months, 6 Months, and 12 Months followup}
 \usage{
-closed_expected_and_followup_visit(analytic)
+closed_expected_and_followup_visit(analytic, footnotes = NULL)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include followup_due_3mo, followup_due_6mo, 

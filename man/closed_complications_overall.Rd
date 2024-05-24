@@ -4,10 +4,10 @@
 \alias{closed_complications_overall}
 \title{Closed complications reported overall from time_zero}
 \usage{
-closed_complications_overall(analytic, days = NULL)
+closed_complications_overall(analytic, min_days = NULL, cutoff_days = NULL)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, complication_data}
+\item{analytic}{This is the analytic data set that must include study_id, complication_data, treatment_arm}
 
 \item{days}{it is a keyword argument to pass in the number of days to get cut off date for complications}
 }
