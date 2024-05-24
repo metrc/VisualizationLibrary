@@ -3642,7 +3642,6 @@ expected_and_followup_visit_tobra <- function(analytic){
            followup_status_crf09_12mo) %>% 
     filter(!is.na(time_zero))
   
-  ####expected#####
   expected <- df %>% 
     mutate(time_zero = as.Date(time_zero)) %>% 
     mutate(expected = as.numeric(Sys.Date()-time_zero)) %>% 
@@ -3656,42 +3655,30 @@ expected_and_followup_visit_tobra <- function(analytic){
   six_month_expected <- sum(expected$expected6mo, na.rm = TRUE)
   twelve_month_expected <- sum(expected$expected12mo, na.rm = TRUE)
   
-  ######complete######
-  
   two_week_09_complete <- sum(grepl('complete', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
   three_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
   six_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
   twelve_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
-  
-  ##### early ######
   
   two_week_09_early <- sum(grepl('early', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
   three_month_09_early <- sum(grepl('early', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
   six_month_09_early <- sum(grepl('early', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
   twelve_month_09_early <- sum(grepl('early', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
   
-  ###late###
-  
   two_week_09_late <- sum(grepl('late', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
   three_month_09_late <- sum(grepl('late', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
   six_month_09_late <- sum(grepl('late', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
   twelve_month_09_late <- sum(grepl('late', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
-  
-  ###missing###
   
   two_week_09_missing <- sum(grepl('missing', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
   three_month_09_missing <- sum(grepl('missing', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
   six_month_09_missing <- sum(grepl('missing', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
   twelve_month_09_missing <- sum(grepl('missing', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
   
-  ###not started ####
-  
   two_week_09_not_started <- sum(grepl('not_started', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
   three_month_09_not_started <- sum(grepl('not_started', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
   six_month_09_not_started <- sum(grepl('not_started', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
   twelve_month_09_not_started <- sum(grepl('not_started', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
-  
-  ###incomplete####
   
   two_week_09_incomplete <- sum(grepl('incomplete', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
   three_month_09_incomplete <- sum(grepl('incomplete', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
