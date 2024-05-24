@@ -116,7 +116,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
   temp_png_path <- tempfile(fileext = ".png")
   rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 1200, height = 1200)
   image_data <- base64enc::base64encode(temp_png_path)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 80%%;">', image_data)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 1200px;">', image_data)
   file.remove(c(temp_svg_path, temp_png_path))
   return(img_tag)
 }
@@ -220,7 +220,7 @@ dsmb_nsaid_consort_diagram <- function(analytic){
   temp_png_path <- tempfile(fileext = ".png")
   rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 1200, height = 1200)
   image_data <- base64enc::base64encode(temp_png_path)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 80%%;">', image_data)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 1200px;">', image_data)
   file.remove(c(temp_svg_path, temp_png_path))
   return(img_tag)
 }
@@ -630,7 +630,7 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
   temp_png_path <- tempfile(fileext = ".png")
   rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 1200, height = 1200)
   image_data <- base64enc::base64encode(temp_png_path)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 80%%;">', image_data)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 1200px;">', image_data)
   file.remove(c(temp_svg_path, temp_png_path))
   return(img_tag)
 }
