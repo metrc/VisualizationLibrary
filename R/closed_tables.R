@@ -728,7 +728,7 @@ closed_appendix_B_deaths <- function(analytic){
       "<b>Description</b>: ", sae_describe, "<br /> ",
       "<br />")) 
   
-  output_text <- output_df %>% 
+  output_text <- output_df$text %>% 
     paste(collapse = "<br />\n")
   
   return(output_text)
