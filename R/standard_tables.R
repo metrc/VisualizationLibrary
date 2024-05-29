@@ -3655,10 +3655,10 @@ expected_and_followup_visit_tobra <- function(analytic){
   six_month_expected <- sum(expected$expected6mo, na.rm = TRUE)
   twelve_month_expected <- sum(expected$expected12mo, na.rm = TRUE)
   
-  two_week_09_complete <- sum(grepl('complete', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
-  three_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
-  six_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
-  twelve_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
+  two_week_09_complete <- sum(str_detect(df$followup_status_crf09_2wk, '^complete'), na.rm = TRUE)
+  three_month_09_complete <- sum(str_detect(df$followup_status_crf09_3mo, '^complete'), na.rm = TRUE)
+  six_month_09_complete <- sum(str_detect(df$followup_status_crf09_6mo, '^complete'), na.rm = TRUE)
+  twelve_month_09_complete <- sum(str_detect(df$followup_status_crf09_12mo, '^complete'), na.rm = TRUE)
   
   two_week_09_early <- sum(grepl('early', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
   three_month_09_early <- sum(grepl('early', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
@@ -3684,11 +3684,6 @@ expected_and_followup_visit_tobra <- function(analytic){
   three_month_09_incomplete <- sum(grepl('incomplete', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
   six_month_09_incomplete <- sum(grepl('incomplete', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
   twelve_month_09_incomplete <- sum(grepl('incomplete', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
-  
-  two_week_09_complete <- two_week_09_complete - two_week_09_incomplete
-  three_month_09_complete <- three_month_09_complete - three_month_09_incomplete
-  six_month_09_complete <- six_month_09_complete - six_month_09_incomplete
-  twelve_month_09_complete <- twelve_month_09_complete - twelve_month_09_incomplete
   
   final <- data.frame("Status" = c('Expected', 'Completed', 'Early', 'Late', 'Missing', 'Not Started', 'Incomplete'),
                       '2 Week' = c(two_week_expected, two_week_09_complete, two_week_09_early, two_week_09_late, two_week_09_missing, 
