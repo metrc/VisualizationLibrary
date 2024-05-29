@@ -3648,17 +3648,17 @@ expected_and_followup_visit_tobra <- function(analytic){
     mutate(expected2wk = ifelse(expected >= 14, TRUE, FALSE)) %>% 
     mutate(expected3mo = ifelse(expected >= 90, TRUE, FALSE)) %>% 
     mutate(expected6mo = ifelse(expected >= 180, TRUE, FALSE)) %>% 
-    mutate(expected12mo = ifelse(expected >= 365, TRUE, FALSE))
+    mutate(expected12mo = ifelse(expected >= 360, TRUE, FALSE))
   
   two_week_expected <- sum(expected$expected2wk, na.rm = TRUE)
   three_month_expected <- sum(expected$expected3mo, na.rm = TRUE)
   six_month_expected <- sum(expected$expected6mo, na.rm = TRUE)
   twelve_month_expected <- sum(expected$expected12mo, na.rm = TRUE)
   
-  two_week_09_complete <- sum(grepl('complete', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
-  three_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
-  six_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_6mo, fixed = TRUE), na.rm = TRUE)
-  twelve_month_09_complete <- sum(grepl('complete', df$followup_status_crf09_12mo, fixed = TRUE), na.rm = TRUE)
+  two_week_09_complete <- sum(str_detect(df$followup_status_crf09_2wk, '^complete'), na.rm = TRUE)
+  three_month_09_complete <- sum(str_detect(df$followup_status_crf09_3mo, '^complete'), na.rm = TRUE)
+  six_month_09_complete <- sum(str_detect(df$followup_status_crf09_6mo, '^complete'), na.rm = TRUE)
+  twelve_month_09_complete <- sum(str_detect(df$followup_status_crf09_12mo, '^complete'), na.rm = TRUE)
   
   two_week_09_early <- sum(grepl('early', df$followup_status_crf09_2wk, fixed = TRUE), na.rm = TRUE)
   three_month_09_early <- sum(grepl('early', df$followup_status_crf09_3mo, fixed = TRUE), na.rm = TRUE)
