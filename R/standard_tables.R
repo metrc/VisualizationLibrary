@@ -3614,6 +3614,41 @@ df_final <- rbind(df_expected, df_complete, df_early, df_late, df_missing, df_no
 
 level_order <- c('Early', 'Late', 'Missing', 'Not Started', 'Incomplete')
 
+expected2wk <- df_final$`2 Week`[1]
+expected3mo <- df_final$`3 Month`[1]
+expected6mo <- df_final$`6 Month`[1]
+expected12mo <- df_final$`12 Month`[1]
+
+complete2wk <- df_final$`2 Week`[2]
+complete3mo <- df_final$`3 Month`[2]
+complete6mo <- df_final$`6 Month`[2]
+complete12mo <- df_final$`12 Month`[2]
+
+top <- df_final %>% slice_head(n=1)
+complete <- df_final %>% slice_tail(n=6) %>% slice_head(n=1)
+earlylate <- df_final %>% slice_tail(n=5) %>% slice_head(n=2)
+bottom <- df_final %>% slice_tail(n=3)
+
+countscomp <- complete %>% 
+  mutate('2 Week' = format_count_percent(`2 Week`, expected2wk),
+         '3 Month' = format_count_percent(`3 Month`, expected3mo),
+         '6 Month' = format_count_percent(`6 Month`, expected6mo),
+         '12 Month' = format_count_percent(`12 Month`, expected12mo))
+
+countsel <- earlylate %>% 
+  mutate('2 Week' = format_count_percent(`2 Week`, complete2wk),
+         '3 Month' = format_count_percent(`3 Month`, complete3mo),
+         '6 Month' = format_count_percent(`6 Month`,  complete6mo),
+         '12 Month' = format_count_percent(`12 Month`, complete12mo))
+
+countsbottom <- bottom %>% 
+  mutate('2 Week' = format_count_percent(`2 Week`, expected2wk),
+         '3 Month' = format_count_percent(`3 Month`, expected3mo),
+         '6 Month' = format_count_percent(`6 Month`, expected6mo),
+         '12 Month' = format_count_percent(`12 Month`, expected12mo))
+
+df_final <- rbind(top, countscomp, countsel, countsbottom)
+
 
 table_raw<- kable(df_final, format="html", align='l') %>%
   add_indent(c(3,4)) %>% 
