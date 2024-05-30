@@ -3455,7 +3455,7 @@ closed_followup_12mo_status_by_site_tobra <- function(analytic, footnotes=NULL){
 #' }
 closed_expected_and_followup_visit_sextant <- function(analytic, footnotes=NULL){
 
-  confirm_stability_of_related_visual('expected_and_followup_visit_sextant', '8fb626afbfad7ddb5931ec1856229b14')
+  confirm_stability_of_related_visual('expected_and_followup_visit_sextant', '4b3d09402e21c3978354a316f51011e7')
 
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
