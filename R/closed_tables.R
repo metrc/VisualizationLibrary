@@ -323,41 +323,45 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 closed_discontinuation_sae_deviation_by_type <- function(analytic){
   confirm_stability_of_related_visual('discontinuation_sae_deviation_by_type', 'd1533c6c962841734b6dd39995a01297')
   
+  n_disc <- NA
+  n_dsc <- NA
+  n_dp <- NA
+  n_da <- NA
+  
   df_full <- analytic %>%
     filter(enrolled)
   
-  df_a <- analytic %>% 
+  df_a <- analytic  %>%
+    filter(enrolled) %>%  
     filter(treatment_arm=="Group A")
   
   df_b <- analytic %>% 
+    filter(enrolled) %>%  
     filter(treatment_arm=="Group B")
   
-  n_disc <- -1
-  n_dsc <- -1
-  n_dp <- -1
-  n_da <- -1
-  
-  inner_closed_discontinuation_sae_deviation_by_type <- function(df){
-    total <- sum(df$enrolled, na.rm = T)
-    
-    discontinuation_df <- df %>% 
+
+  inner_closed_discontinuation_sae_deviation_by_type <- function(analytic){
+    total <- sum(analytic$enrolled, na.rm=T)
+    discontinuation_df <- analytic %>% 
       select(enrolled, censored_reason) %>% 
       filter(enrolled == TRUE) %>% 
       count(censored_reason) %>%
       rename(type=censored_reason) %>% 
       filter(!is.na(type)) %>% 
-      mutate(type = as.character(type))
+      mutate(type = as.character(type)) %>% 
+      mutate(group="A")
     
     discontinuation_df_tot <- tibble(type="Discontinuations", n=sum(discontinuation_df$n))
     
-    sae_df <- df %>% 
+    sae_df <- analytic %>% 
       select(study_id, enrolled, sae_count) %>% 
       filter(enrolled & sae_count>0) %>% 
       mutate(sae_count = "SAE") %>% 
       count(sae_count) %>%
       rename(type=sae_count) %>% 
       filter(!is.na(type)) %>% 
-      mutate(type = as.character(type))
+      mutate(type = as.character(type)) %>% 
+      mutate(group="B")
     
     
     deviation_sc_df <- analytic %>% 
@@ -367,7 +371,8 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       count(protocol_deviation_screen_consent) %>%
       rename(type=protocol_deviation_screen_consent) %>% 
       filter(!is.na(type)) %>% 
-      mutate(type = as.character(type))
+      mutate(type = as.character(type)) %>% 
+      mutate(group="C")
     
     
     deviation_p_df <- analytic %>% 
@@ -377,7 +382,8 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       count(protocol_deviation_procedural) %>%
       rename(type=protocol_deviation_procedural) %>% 
       filter(!is.na(type)) %>% 
-      mutate(type = as.character(type))
+      mutate(type = as.character(type)) %>% 
+      mutate(group="D")
     
     
     deviation_a_df <- analytic %>% 
@@ -389,25 +395,18 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       rename(type=protocol_deviation_administrative) %>% 
       filter(!is.na(type)) %>% 
       mutate(type = str_replace(type,"Other: .+","Other")) %>% 
-      mutate(type = as.character(type))
-  
+      mutate(type = as.character(type)) %>% 
+      mutate(group="E")
+    
     deviation_sc_tot <- tibble(type="Screen and Consent",n=sum(deviation_sc_df$n))
     deviation_p_tot <- tibble(type="Procedural",n=sum(deviation_p_df$n))
     deviation_a_tot <- tibble(type="Administrative/Other",n=sum(deviation_a_df$n))
     deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
     
-    df_final <- bind_rows(discontinuation_df_tot %>% mutate(group=as.numeric(rep(1,length(type)))), 
-                          discontinuation_df %>% mutate(group=as.numeric(rep(2,length(type)))),
-                          sae_df %>% mutate(group=as.numeric(rep(3,length(type)))),
-                          deviation_df_tot %>% mutate(group=as.numeric(rep(4,length(type)))), 
-                          deviation_sc_tot %>% mutate(group=as.numeric(rep(5,length(type)))),
-                          deviation_sc_df %>% mutate(group=as.numeric(rep(6,length(type)))),
-                          deviation_p_tot %>% mutate(group=as.numeric(rep(7,length(type)))),
-                          deviation_p_df %>% mutate(group=as.numeric(rep(8,length(type)))), 
-                          deviation_a_tot %>% mutate(group=as.numeric(rep(9,length(type)))), 
-                          deviation_a_df %>% mutate(group=as.numeric(rep(10,length(type))))) %>% 
-      mutate(n = format_count_percent(n, total, decimals=2))
     
+    df_final <- bind_rows(discontinuation_df_tot, discontinuation_df, sae_df, deviation_df_tot, 
+                          deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
+      mutate(n = format_count_percent(n, total, decimals=2))
     
     n_disc <<- nrow(discontinuation_df)
     n_dsc <<- nrow(deviation_sc_df)
