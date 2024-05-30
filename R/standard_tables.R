@@ -3696,7 +3696,32 @@ expected_and_followup_visit_tobra <- function(analytic){
                                      twelve_month_09_not_started, twelve_month_09_incomplete))
   colnames(final) <- c('Status', '2 Week', '3 Month', '6 Month', '12 Month')
   
-  vis <- kable(final, format="html", align='l') %>%
+  top <- final %>% slice_head(n=1)
+  complete <- final %>% slice_tail(n=6) %>% slice_head(n=1)
+  earlylate <- final %>% slice_tail(n=5) %>% slice_head(n=2)
+  bottom <- final %>% slice_tail(n=3)
+  
+countscomp <- complete %>% 
+  mutate('2 Week' = format_count_percent(`2 Week`, two_week_expected),
+         '3 Month' = format_count_percent(`3 Month`, three_month_expected),
+         '6 Month' = format_count_percent(`6 Month`, three_month_expected),
+         '12 Month' = format_count_percent(`12 Month`, twelve_month_expected))
+
+countsel <- earlylate %>% 
+  mutate('2 Week' = format_count_percent(`2 Week`, two_week_09_complete),
+         '3 Month' = format_count_percent(`3 Month`, three_month_09_complete),
+         '6 Month' = format_count_percent(`6 Month`, three_month_09_complete),
+         '12 Month' = format_count_percent(`12 Month`, twelve_month_09_complete))
+
+countsbottom <- bottom %>% 
+  mutate('2 Week' = format_count_percent(`2 Week`, two_week_expected),
+         '3 Month' = format_count_percent(`3 Month`, three_month_expected),
+         '6 Month' = format_count_percent(`6 Month`, three_month_expected),
+         '12 Month' = format_count_percent(`12 Month`, twelve_month_expected))
+
+df_final <- rbind(top, countscomp, countsel, countsbottom)
+  
+  vis <- kable(df_final, format="html", align='l') %>%
     add_indent(c(3,4)) %>% 
     kable_styling("striped", full_width = F, position='left')
   
