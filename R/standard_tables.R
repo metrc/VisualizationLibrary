@@ -3680,10 +3680,10 @@ expected_and_followup_visit_tobra <- function(analytic){
   expected <- df %>% 
     mutate(time_zero = as.Date(time_zero)) %>% 
     mutate(expected = as.numeric(Sys.Date()-time_zero)) %>% 
-    mutate(expected2wk = ifelse(expected >= 14, TRUE, FALSE)) %>% 
-    mutate(expected3mo = ifelse(expected >= 90, TRUE, FALSE)) %>% 
-    mutate(expected6mo = ifelse(expected >= 180, TRUE, FALSE)) %>% 
-    mutate(expected12mo = ifelse(expected >= 360, TRUE, FALSE))
+    mutate(expected2wk = ifelse(expected > 14, TRUE, FALSE)) %>% 
+    mutate(expected3mo = ifelse(expected > 91, TRUE, FALSE)) %>% 
+    mutate(expected6mo = ifelse(expected > 182, TRUE, FALSE)) %>% 
+    mutate(expected12mo = ifelse(expected > 365, TRUE, FALSE))
   
   two_week_expected <- sum(expected$expected2wk, na.rm = TRUE)
   three_month_expected <- sum(expected$expected3mo, na.rm = TRUE)
