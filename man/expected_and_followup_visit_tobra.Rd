@@ -5,19 +5,27 @@
 \title{Expected visit status for 3 Months, 6 Months, and 12 Months followup for tobra}
 \usage{
 expected_and_followup_visit_tobra(analytic)
+
+expected_and_followup_visit_tobra(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, time_zero, followup_status_crf09_2wk, followup_status_crf09_3mo, followup_status_crf09_6mo, 
-followup_status_crf09_12mo}
+\item{analytic}{This is the analytic data set that must include study_id, time_zero, followup_data}
 }
 \value{
+nothing
+
 nothing
 }
 \description{
 This function onlt looks at the clinical followup form (CRF09) for tobra, designations may have to be looked at
+
+This function only looks at the designated overall form(s) for a given study, as designated in the respective followup_data long file
 }
 \examples{
 \dontrun{
 expected_and_followup_visit_tobra()
+}
+\dontrun{
+expected_and_followup_visit_overall()
 }
 }
