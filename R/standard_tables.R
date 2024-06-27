@@ -3806,9 +3806,7 @@ expected_and_followup_visit_overall <- function(analytic){
     filter(!is.na(status)) %>% 
     separate_rows(status, sep = '; ') %>% 
     count(status) %>% 
-    rename(two = n) %>%
-    mutate(status = factor(status, levels = c("complete", "early", "late", 'missing', 'not_started', 'incomplete'))) %>% 
-    arrange(status)
+    rename(two = n)
  
   three <- df %>% 
     filter(followup_period == '3 Month',
@@ -3817,9 +3815,7 @@ expected_and_followup_visit_overall <- function(analytic){
     filter(!is.na(status)) %>% 
     separate_rows(status, sep = '; ') %>% 
     count(status) %>% 
-    rename(three = n) %>%
-    mutate(status = factor(status, levels = c("complete", "early", "late", 'missing', 'not_started', 'incomplete'))) %>% 
-    arrange(status)
+    rename(three = n)
   
   six <- df %>% 
     filter(followup_period == '6 Month',
@@ -3828,9 +3824,7 @@ expected_and_followup_visit_overall <- function(analytic){
     filter(!is.na(status)) %>% 
     separate_rows(status, sep = '; ') %>% 
     count(status) %>% 
-    rename(six = n) %>%
-    mutate(status = factor(status, levels = c("complete", "early", "late", 'missing', 'not_started', 'incomplete'))) %>% 
-    arrange(status)
+    rename(six = n)
 
   twelve <- df %>% 
     filter(followup_period == '12 Month',
@@ -3839,9 +3833,7 @@ expected_and_followup_visit_overall <- function(analytic){
     filter(!is.na(status)) %>% 
     separate_rows(status, sep = '; ') %>% 
     count(status) %>% 
-    rename(twelve = n) %>%
-    mutate(status = factor(status, levels = c("complete", "early", "late", 'missing', 'not_started', 'incomplete'))) %>% 
-    arrange(status)
+    rename(twelve = n)
   
   expected_final <- data.frame("status" = 'Expected',
                                'two' = two_week_expected,
@@ -3849,9 +3841,13 @@ expected_and_followup_visit_overall <- function(analytic){
                                'six' = six_month_expected,
                                'twelve' = twelve_month_expected)
   
-  final_raw <- left_join(two, three, by = 'status') %>% 
-    right_join(six) %>% 
-    right_join(twelve)
+  df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+  
+  final_raw <- left_join(df_empty, two, by = 'status') %>% 
+    left_join(three) %>% 
+    left_join(six) %>% 
+    left_join(twelve) %>% 
+    mutate(across(everything(), ~replace_na(., 0)))
   
   two_week_complete <- final_raw$two[1]
   three_month_complete <- final_raw$three[1]
