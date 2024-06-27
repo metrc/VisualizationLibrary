@@ -3777,7 +3777,7 @@ df_final <- rbind(top, countscomp, countsel, countsbottom)
 #' \dontrun{
 #' expected_and_followup_visit_overall()
 #' }
-expected_and_followup_visit_tobra <- function(analytic){
+expected_and_followup_visit_overall <- function(analytic){
   df <- analytic %>% 
     select(study_id, followup_data, time_zero) %>% 
     filter(!is.na(time_zero)) %>% 
