@@ -3834,7 +3834,6 @@ expected_and_followup_visit_overall <- function(analytic){
                   ~ format_count_percent(., divisor_expected[cur_column()]),
                   .names = "{.col}"))
   
-  
   middle <-  final_raw %>% 
     slice_head(n=3) %>% 
     slice_tail(n=2) %>% 
