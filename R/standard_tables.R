@@ -3785,100 +3785,64 @@ expected_and_followup_visit_overall <- function(analytic){
     separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep="/,") %>% 
     mutate_all(na_if, 'NA')
   
-  expected <- analytic %>% 
-    select(study_id, time_zero) %>% 
-    mutate(time_zero = as.Date(time_zero)) %>% 
-    mutate(expected = as.numeric(Sys.Date()-time_zero)) %>% 
-    mutate(expected2wk = ifelse(expected >= 14, TRUE, FALSE)) %>% 
-    mutate(expected3mo = ifelse(expected >= 91, TRUE, FALSE)) %>% 
-    mutate(expected6mo = ifelse(expected >= 182, TRUE, FALSE)) %>% 
-    mutate(expected12mo = ifelse(expected >= 365, TRUE, FALSE))
+  fu_levels <- df$followup_period %>% unique()
   
-  two_week_expected <- sum(expected$expected2wk, na.rm = TRUE)
-  three_month_expected <- sum(expected$expected3mo, na.rm = TRUE)
-  six_month_expected <- sum(expected$expected6mo, na.rm = TRUE)
-  twelve_month_expected <- sum(expected$expected12mo, na.rm = TRUE)
+  result_list <- list()
   
-  two <- df %>% 
-    filter(followup_period == '2 Week',
-           form == 'Overall') %>% 
-    select(study_id, status) %>%
-    filter(!is.na(status)) %>% 
-    separate_rows(status, sep = '; ') %>% 
-    count(status) %>% 
-    rename(two = n)
- 
-  three <- df %>% 
-    filter(followup_period == '3 Month',
-           form == 'Overall') %>% 
-    select(study_id, status) %>%
-    filter(!is.na(status)) %>% 
-    separate_rows(status, sep = '; ') %>% 
-    count(status) %>% 
-    rename(three = n)
+  for (i in fu_levels) {
+    result <- df %>% 
+      filter(followup_period == i,
+             form == 'Overall') %>% 
+      select(study_id, status) %>%
+      filter(!is.na(status)) %>% 
+      separate_rows(status, sep = '; ') %>% 
+      count(status) %>% 
+      rename(!!i := n)
+    
+    result_list[[i]] <- result
+  }
   
-  six <- df %>% 
-    filter(followup_period == '6 Month',
-           form == 'Overall') %>% 
-    select(study_id, status) %>%
-    filter(!is.na(status)) %>% 
-    separate_rows(status, sep = '; ') %>% 
-    count(status) %>% 
-    rename(six = n)
-
-  twelve <- df %>% 
-    filter(followup_period == '12 Month',
-           form == 'Overall') %>% 
-    select(study_id, status) %>%
-    filter(!is.na(status)) %>% 
-    separate_rows(status, sep = '; ') %>% 
-    count(status) %>% 
-    rename(twelve = n)
-  
-  expected_final <- data.frame("status" = 'Expected',
-                               'two' = two_week_expected,
-                               'three' = three_month_expected,
-                               'six' = six_month_expected,
-                               'twelve' = twelve_month_expected)
+  combined <- Reduce(function(x, y) full_join(x, y, by = "status"), result_list)
   
   df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
   
-  final_raw <- left_join(df_empty, two, by = 'status') %>% 
-    left_join(three) %>% 
-    left_join(six) %>% 
-    left_join(twelve) %>% 
+  final_raw <- left_join(df_empty, combined, by = 'status') %>% 
     mutate(across(everything(), ~replace_na(., 0)))
   
-  two_week_complete <- final_raw$two[1]
-  three_month_complete <- final_raw$three[1]
-  six_month_complete <- final_raw$six[1]
-  twelve_month_complete <- final_raw$twelve[1]
+  summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
   
-  top <- final_raw %>% 
-    slice_head(n=1) %>% 
-    mutate(two = format_count_percent(two, two_week_expected),
-           three = format_count_percent(three, three_month_expected),
-           six = format_count_percent(six, six_month_expected),
-           twelve = format_count_percent(twelve, twelve_month_expected))
+  expected_row <- final_result %>%
+    filter(status %in% summed_statuses) %>%
+    summarise(across(-status, sum, na.rm = TRUE)) %>%
+    mutate(status = "Expected") %>%
+    select(status, everything())
   
-  bottom <- final_raw %>% 
+  divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
+  names(divisor_expected) <- names(final_pre_pct)[-1]
+  divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+  names(divisor_complete) <- names(final_pre_pct)[-1]
+  
+  top <-  final_raw %>% 
+    slice_head(n=1) %>%  
+    mutate(across(-status, 
+                  ~ format_count_percent(., divisor_expected[cur_column()]),
+                  .names = "{.col}"))
+  
+  bottom <-  final_raw %>% 
     slice_tail(n=3) %>% 
-    mutate(two = format_count_percent(two, two_week_expected),
-           three = format_count_percent(three, three_month_expected),
-           six = format_count_percent(six, six_month_expected),
-           twelve = format_count_percent(twelve, twelve_month_expected))
+    mutate(across(-status, 
+                  ~ format_count_percent(., divisor_expected[cur_column()]),
+                  .names = "{.col}"))
   
   
-  middle <- final_raw %>% 
+  middle <-  final_raw %>% 
     slice_head(n=3) %>% 
     slice_tail(n=2) %>% 
-    mutate(two = format_count_percent(two, two_week_complete),
-           three = format_count_percent(three, three_month_complete),
-           six = format_count_percent(six, six_month_complete),
-           twelve = format_count_percent(twelve, twelve_month_complete))
+    mutate(across(-status, 
+                  ~ format_count_percent(., divisor_complete[cur_column()]),
+                  .names = "{.col}"))
   
-  final_last <- rbind(expected_final, top, middle, bottom)
-  colnames(final_last) <- c('Status', '2 Week', '3 Month', '6 Month', '12 Month')
+  final_last <- rbind(expected_row, top, middle, bottom)
   
   vis <- kable(final_last, format="html", align='l') %>%
     add_indent(c(3,4)) %>% 
