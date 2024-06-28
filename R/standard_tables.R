@@ -3811,31 +3811,34 @@ expected_and_followup_visit_overall <- function(analytic){
   
   summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
   
-  expected_row <- final_result %>%
+  expected_row <- final_pre_pct %>%
     filter(status %in% summed_statuses) %>%
-    summarise(across(-status, sum, na.rm = TRUE)) %>%
+    summarize(across(-status, sum, na.rm = TRUE)) %>%
     mutate(status = "Expected") %>%
     select(status, everything())
+  
+  final_pre_pct <- rbind(expected_row, final_raw)
   
   divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
   names(divisor_expected) <- names(final_pre_pct)[-1]
   divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
   names(divisor_complete) <- names(final_pre_pct)[-1]
   
-  top <-  final_raw %>% 
-    slice_head(n=1) %>%  
+  top <- final_pre_pct %>% 
+    slice_head(n=2) %>%
+    slice_tail(n=1) %>% 
     mutate(across(-status, 
                   ~ format_count_percent(., divisor_expected[cur_column()]),
                   .names = "{.col}"))
   
-  bottom <-  final_raw %>% 
+  bottom <- final_pre_pct %>% 
     slice_tail(n=3) %>% 
     mutate(across(-status, 
                   ~ format_count_percent(., divisor_expected[cur_column()]),
                   .names = "{.col}"))
   
-  middle <-  final_raw %>% 
-    slice_head(n=3) %>% 
+  middle <- final_pre_pct %>% 
+    slice_head(n=4) %>% 
     slice_tail(n=2) %>% 
     mutate(across(-status, 
                   ~ format_count_percent(., divisor_complete[cur_column()]),
