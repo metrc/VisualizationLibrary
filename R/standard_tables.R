@@ -3764,11 +3764,12 @@ df_final <- rbind(top, countscomp, countsel, countsbottom)
 }
 
 
-#' Expected visit status for 3 Months, 6 Months, and 12 Months followup for Overall
+#' Expected visit status for Overall Followup
 #'
 #' @description This function only looks at the designated overall form(s) for a given study, as designated in the respective followup_data long file 
+#' and organizes them by its detected levels of followup periods. 
 #'
-#' @param analytic This is the analytic data set that must include study_id, time_zero, followup_data
+#' @param analytic This is the analytic data set that must include study_id, followup_data
 #'
 #' @return nothing
 #' @export
@@ -3779,8 +3780,7 @@ df_final <- rbind(top, countscomp, countsel, countsbottom)
 #' }
 expected_and_followup_visit_overall <- function(analytic){
   df <- analytic %>% 
-    select(study_id, followup_data, time_zero) %>% 
-    filter(!is.na(time_zero)) %>% 
+    select(study_id, followup_data) %>% 
     separate_rows(followup_data, sep="/;") %>% 
     separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep="/,") %>% 
     mutate_all(na_if, 'NA')
