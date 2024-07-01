@@ -3811,7 +3811,7 @@ expected_and_followup_visit_overall <- function(analytic){
   
   summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
   
-  expected_row <- final_pre_pct %>%
+  expected_row <- final_raw %>%
     filter(status %in% summed_statuses) %>%
     summarize(across(-status, sum, na.rm = TRUE)) %>%
     mutate(status = "Expected") %>%
