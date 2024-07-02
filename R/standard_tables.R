@@ -3811,7 +3811,7 @@ expected_and_followup_visit_overall <- function(analytic){
   
   summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
   
-  expected_row <- final_pre_pct %>%
+  expected_row <- final_raw %>%
     filter(status %in% summed_statuses) %>%
     summarize(across(-status, sum, na.rm = TRUE)) %>%
     mutate(status = "Expected") %>%
@@ -3844,7 +3844,8 @@ expected_and_followup_visit_overall <- function(analytic){
                   ~ format_count_percent(., divisor_complete[cur_column()]),
                   .names = "{.col}"))
   
-  final_last <- rbind(expected_row, top, middle, bottom)
+  final_last <- rbind(expected_row, top, middle, bottom) %>% 
+    rename(Status = status)
   
   vis <- kable(final_last, format="html", align='l') %>%
     add_indent(c(3,4)) %>% 
