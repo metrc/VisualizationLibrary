@@ -3781,8 +3781,8 @@ df_final <- rbind(top, countscomp, countsel, countsbottom)
 expected_and_followup_visit_overall <- function(analytic){
   df <- analytic %>% 
     select(study_id, followup_data) %>% 
-    separate_rows(followup_data, sep="/;") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep="/,") %>% 
+    separate_rows(followup_data, sep=";") %>% 
+    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
     mutate_all(na_if, 'NA')
   
   fu_levels <- df$followup_period %>% unique()
@@ -3795,7 +3795,7 @@ expected_and_followup_visit_overall <- function(analytic){
              form == 'Overall') %>% 
       select(study_id, status) %>%
       filter(!is.na(status)) %>% 
-      separate_rows(status, sep = '; ') %>% 
+      separate_rows(status, sep = ': ') %>% 
       count(status) %>% 
       rename(!!i := n)
     
