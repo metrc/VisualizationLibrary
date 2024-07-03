@@ -13,7 +13,8 @@ expected_and_followup_visit_overall(analytic)
 nothing
 }
 \description{
-This function only looks at the designated overall form(s) for a given study, as designated in the respective followup_data long file 
+This function only looks at the designated overall form(s) for a 
+given study, as designated in the respective followup_data long file 
 and organizes them by its detected levels of followup periods.
 }
 \examples{
