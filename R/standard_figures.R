@@ -456,6 +456,54 @@ cumulative_enrolled <- function(analytic){
   return(img_tag)
 }
 
+
+#' Cumulative enrollment for Length of Stay for NSAID
+#'
+#' @description This function visualizes the Cumulative number of patients enrolled for each bucket of number
+#' of days stay during the admission
+#'
+#' @param analytic This is the analytic data set that must include study_id, ih_los_days
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' cumulative_enrolled_los()
+#' }
+cumulative_enrolled_los <- function(analytic){
+  
+  df <- analytic %>%  select(study_id, ih_los_days) %>% 
+    filter(ih_los_days != 'Missing' & !is.na(ih_los_days))
+  
+  count_data <- data %>% 
+    group_by(ih_los_days) %>% 
+    summarise(count = n()) %>% 
+    arrange(desc(count))
+  
+  data$ih_los_days <- factor(data$ih_los_days, levels = count_data$ih_los_days)
+  
+  g <- ggplot(data, aes(x = ih_los_days)) +
+    geom_bar(fill = "blue", color = "white") +
+    geom_text(stat = "count", aes(label = paste("N =", ..count..)), vjust = -0.5,size = 2) +
+    labs(title = "Histogram of LOS Days",
+         x = "Hospital Length of Stay(Number of Days)",
+         y = "Cumulative Enrollment, N") +
+    theme_minimal() +
+    scale_x_discrete(limits = count_data$ih_los_days)
+  
+  temp_png_path <- tempfile(fileext = ".png")
+  ggsave(temp_png_path, plot = g, width = 2100, height = 1000, units = 'px')
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Enrollment with Discrete Enrollment by Month" style="max-width: 100%%; width: 80%%;">', image_data)
+  file.remove(temp_png_path)
+  
+  return(img_tag)
+}
+
+
+
+
 #' Cumulative Enrollment with Goals
 #'
 #' @description This function visualizes the cumulative number of patients enrolled, accompanied by 
