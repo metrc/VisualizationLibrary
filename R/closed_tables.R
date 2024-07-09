@@ -3740,3 +3740,125 @@ closed_expected_and_followup_visit_tobra <- function(analytic, footnotes = NULL)
   
   return(out)
 }
+
+
+#' Expected visit status for Overall Followup
+#'
+#' @description This function only looks at the designated overall form(s) for a 
+#' given study, as designated in the respective followup_data long file 
+#' and organizes them by its detected levels of followup periods. 
+#' 
+#' The function separates the data for the two study groups by treatment arm
+#'
+#' @param analytic This is the analytic data set that must include study_id, followup_data
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_expected_and_followup_visit_overall()
+#' }
+closed_expected_and_followup_visit_overall <- function(analytic){
+  pull <- analytic %>% 
+    select(study_id, followup_data, treatment_arm) %>% 
+    separate_rows(followup_data, sep=";") %>% 
+    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    mutate_all(na_if, 'NA')
+  
+  df_a <- pull %>%
+    filter(treatment_arm=='Group A')
+  df_b <- pull %>%
+    filter(treatment_arm=='Group B')
+  
+  fu_levels <- pull$followup_period %>% unique()
+  fu_levels <- fu_levels[!is.na(fu_levels)]
+  
+
+  split_arm <- list('Group A' = c(), 'Group B' = c())
+  
+  arm_statuses <- function(df) {
+    result_list <- list()
+    for (i in fu_levels) {
+      result <- df %>% 
+        filter(followup_period == i,
+               form == 'Overall') %>% 
+        select(study_id, status) %>%
+        filter(!is.na(status)) %>% 
+        separate_rows(status, sep = ': ') %>% 
+        count(status) %>% 
+        rename(!!i := n)
+      
+      result_list[[i]] <- result
+    }
+    
+    combined <- Reduce(function(x, y) full_join(x, y, by = "status"), result_list) %>%
+      mutate(status = tools::toTitleCase(status)) %>%
+      mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
+    
+    df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+    
+    final_raw <- left_join(df_empty, combined, by = 'status') %>% 
+      mutate(across(everything(), ~replace_na(., 0)))
+    
+    summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+    
+    expected_row <- final_raw %>%
+      filter(status %in% summed_statuses) %>%
+      summarize(across(-status, \(x) sum(x, na.rm = TRUE))) %>%
+      mutate(status = "Expected") %>%
+      select(status, everything())
+    
+    final_pre_pct <- rbind(expected_row, final_raw)
+    
+    divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
+    names(divisor_expected) <- names(final_pre_pct)[-1]
+    divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+    names(divisor_complete) <- names(final_pre_pct)[-1]
+    
+    top <- final_pre_pct %>% 
+      slice_head(n=2) %>%
+      slice_tail(n=1) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_expected[cur_column()]),
+                    .names = "{.col}"))
+    
+    bottom <- final_pre_pct %>% 
+      slice_tail(n=3) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_expected[cur_column()]),
+                    .names = "{.col}"))
+    
+    middle <- final_pre_pct %>% 
+      slice_head(n=4) %>% 
+      slice_tail(n=2) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_complete[cur_column()]),
+                    .names = "{.col}"))
+    
+    final_last <- rbind(expected_row, top, middle, bottom) %>% 
+      rename(Status = status)
+    
+    return(final_last)
+  }
+  
+  a_statuses <- arm_statuses(df_a)
+  b_statuses <- arm_statuses(df_b)
+  
+  combined_statuses <- a_statuses %>%
+    rename_with(~paste0("", .x), -Status) %>%
+    inner_join(b_statuses %>%
+                 rename_with(~paste0("", .x), -Status),
+               by = "Status")
+  
+  colnames(combined_statuses) <- c('Status', '3 Month', '6 Month', '12 Month',
+                                   '3 Month', '6 Month', '12 Month')
+  
+  
+  vis <- kable(combined_statuses, format = "html", align = 'l') %>%
+    add_indent(c(3, 4)) %>%
+    add_header_above(c(' ', 'Group A' = 3, 'Group B' = 3)) %>%
+    kable_styling("striped", full_width = F, position = 'left')
+  
+  return(vis)
+}
