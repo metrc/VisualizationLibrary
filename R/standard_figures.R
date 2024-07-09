@@ -493,7 +493,7 @@ cumulative_enrolled_los <- function(analytic){
     scale_x_discrete(limits = count_data$ih_los_days)
   
   temp_png_path <- tempfile(fileext = ".png")
-  ggsave(temp_png_path, plot = g, width = 2100, height = 1000, units = 'px')
+  ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
   image_data <- base64enc::base64encode(temp_png_path)
   img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Enrollment with Discrete Enrollment by Month" style="max-width: 100%%; width: 80%%;">', image_data)
   file.remove(temp_png_path)
