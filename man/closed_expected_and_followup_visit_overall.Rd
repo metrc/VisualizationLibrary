@@ -4,7 +4,7 @@
 \alias{closed_expected_and_followup_visit_overall}
 \title{Expected visit status for Overall Followup}
 \usage{
-closed_expected_and_followup_visit_overall(analytic)
+closed_expected_and_followup_visit_overall(analytic, footnotes = NULL)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, followup_data}
