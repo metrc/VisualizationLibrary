@@ -3759,7 +3759,7 @@ closed_expected_and_followup_visit_tobra <- function(analytic, footnotes = NULL)
 #' \dontrun{
 #' closed_expected_and_followup_visit_overall()
 #' }
-closed_expected_and_followup_visit_overall <- function(analytic){
+closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL){
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -3859,6 +3859,10 @@ closed_expected_and_followup_visit_overall <- function(analytic){
     add_indent(c(3, 4)) %>%
     add_header_above(c(' ', 'Group A' = 3, 'Group B' = 3)) %>%
     kable_styling("striped", full_width = F, position = 'left')
+  
+  if (!is.null(footnote)) {
+    vis <- add_footnote(vis, footnotes)
+  }
   
   return(vis)
 }
