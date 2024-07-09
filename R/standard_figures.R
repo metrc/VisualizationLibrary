@@ -476,14 +476,14 @@ cumulative_enrolled_los <- function(analytic){
   df <- analytic %>%  select(study_id, ih_los_days) %>% 
     filter(ih_los_days != 'Missing' & !is.na(ih_los_days))
   
-  count_data <- data %>% 
+  count_data <- df %>% 
     group_by(ih_los_days) %>% 
     summarise(count = n()) %>% 
     arrange(desc(count))
   
-  data$ih_los_days <- factor(data$ih_los_days, levels = count_data$ih_los_days)
+  df$ih_los_days <- factor(df$ih_los_days, levels = count_data$ih_los_days)
   
-  g <- ggplot(data, aes(x = ih_los_days)) +
+  g <- ggplot(df, aes(x = ih_los_days)) +
     geom_bar(fill = "blue", color = "white") +
     geom_text(stat = "count", aes(label = paste("N =", ..count..)), vjust = -0.5,size = 2) +
     labs(title = "Histogram of LOS Days",
