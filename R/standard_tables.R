@@ -3766,7 +3766,8 @@ df_final <- rbind(top, countscomp, countsel, countsbottom)
 
 #' Expected visit status for Overall Followup
 #'
-#' @description This function only looks at the designated overall form(s) for a given study, as designated in the respective followup_data long file 
+#' @description This function only looks at the designated overall form(s) for a 
+#' given study, as designated in the respective followup_data long file 
 #' and organizes them by its detected levels of followup periods. 
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
@@ -3786,6 +3787,7 @@ expected_and_followup_visit_overall <- function(analytic){
     mutate_all(na_if, 'NA')
   
   fu_levels <- df$followup_period %>% unique()
+  fu_levels <- fu_levels[!is.na(fu_levels)]
   
   result_list <- list()
   
@@ -3802,7 +3804,9 @@ expected_and_followup_visit_overall <- function(analytic){
     result_list[[i]] <- result
   }
   
-  combined <- Reduce(function(x, y) full_join(x, y, by = "status"), result_list)
+  combined <- Reduce(function(x, y) full_join(x, y, by = "status"), result_list) %>%
+    mutate(status = tools::toTitleCase(status)) %>%
+    mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
   
   df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
   
@@ -3853,3 +3857,6 @@ expected_and_followup_visit_overall <- function(analytic){
   
   return(vis)
 }
+
+
+
