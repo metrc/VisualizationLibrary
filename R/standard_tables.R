@@ -3860,3 +3860,110 @@ expected_and_followup_visit_overall <- function(analytic){
 
 
 
+#' Followup Data Single Form and Timepoint By Site
+#'
+#' @description Returns the designated followup form status by site
+#'
+#' @param analytic This is the analytic data set that must include study_id, followup_data
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' followup_form_at_timepoint_by_site()
+#' }
+followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
+  df <- analytic %>%
+    select(study_id, facilitycode, followup_data) %>% 
+    separate_rows(followup_data, sep=";") %>% 
+    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    mutate_all(na_if, 'NA')
+  
+  form_collected <- function(form_selection, facility = 'TOTAL'){
+    if (facility!='TOTAL') {
+      df <- df %>%
+        filter(facilitycode == facility)
+    }
+    
+    result <- df %>% 
+      filter(followup_period == timepoint,
+             form == form_selection) %>% 
+      select(study_id, status) %>%
+      filter(!is.na(status)) %>% 
+      separate_rows(status, sep = ': ') %>% 
+      count(status) %>% 
+      rename(!!form_selection := n)
+    
+    df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+    
+    final_raw <- left_join(df_empty, result, by = 'status') %>% 
+      mutate(across(everything(), ~replace_na(., 0)))
+    
+    summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+    
+    expected_row <- final_raw %>%
+      filter(status %in% summed_statuses) %>%
+      summarize(across(-status, sum, na.rm = TRUE)) %>%
+      mutate(status = "Expected") %>%
+      select(status, everything())
+    
+    final_pre_pct <- rbind(expected_row, final_raw)
+    
+    divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
+    names(divisor_expected) <- names(final_pre_pct)[-1]
+    divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+    names(divisor_complete) <- names(final_pre_pct)[-1]
+    
+    top <- final_pre_pct %>% 
+      slice_head(n=2) %>%
+      slice_tail(n=1) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_expected[cur_column()]),
+                    .names = "{.col}"))
+    
+    bottom <- final_pre_pct %>% 
+      slice_tail(n=3) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_expected[cur_column()]),
+                    .names = "{.col}"))
+    
+    middle <- final_pre_pct %>% 
+      slice_head(n=4) %>% 
+      slice_tail(n=2) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_complete[cur_column()]),
+                    .names = "{.col}"))
+    
+    out <- rbind(expected_row, top, middle, bottom) %>% 
+      rename(Status = status) %>%
+      pivot_wider(values_from = -Status, names_from = Status) %>%
+      mutate(Facility = facility) %>%
+      select(Facility, everything())
+    out
+  }
+  
+  facilities <- df %>%
+    pull(facilitycode) %>%
+    unique()
+  facilities <- c('TOTAL', facilities)
+  facilities <- facilities[!is.na(facilities)]
+  
+  form_df <- tibble()
+  for (code in facilities) {
+    form_df <- bind_rows(form_df, form_collected('Overall', code))
+  }
+  
+  header <- c(1,7)
+  names(header) <- c(' ', ifelse(is.null(name),
+                                 paste0(form_selection, ' Status at ', timepoint, ' Period'),
+                                 paste0(name, ' Status at ', timepoint, ' Period')))
+  
+  vis <- kable(form_df, format="html", align='l') %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
+
+
