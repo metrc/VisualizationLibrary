@@ -3880,6 +3880,10 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
     separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
     mutate_all(na_if, 'NA')
   
+  df <- df %>%
+    mutate(status = gsub('_', ' ', status)) %>%
+    mutate(status = tools::toTitleCase(status))
+  
   form_collected <- function(form_selection, facility = 'TOTAL'){
     if (facility!='TOTAL') {
       df <- df %>%
@@ -3954,6 +3958,9 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
     form_df <- bind_rows(form_df, form_collected(form_selection, code))
   }
   
+  form_df <- form_df %>%
+    filter(!is.na(Facility)&Facility!='NA')
+  
   header <- c(1,7)
   names(header) <- c(' ', ifelse(is.null(name),
                                  paste0(form_selection, ' Status at ', timepoint, ' Period'),
@@ -3986,6 +3993,10 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
     separate_rows(followup_data, sep=";") %>% 
     separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
     mutate_all(na_if, 'NA')
+  
+  df <- df %>%
+    mutate(status = gsub('_', ' ', status)) %>%
+    mutate(status = tools::toTitleCase(status))
   
   form_collected <- function(form_selection, timepoint, facility = 'TOTAL'){
     if (facility!='TOTAL') {
@@ -4069,11 +4080,11 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
     for (code in facilities) {
       period_df <- bind_rows(period_df, form_collected(form_selection, timepoint, code))
     }
-
-    print(period_df)
     form_df <- full_join(form_df, period_df, by = 'Facility')
   }
   
+  form_df <- form_df %>%
+    filter(!is.na(Facility)&Facility!='NA')
   colnames(form_df) <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missing', 
                                            'Not Started', 'Incomplete'), times = length(timepoints)))
 
@@ -4103,12 +4114,16 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
 #' \dontrun{
 #' followup_forms_at_timepoint_by_site()
 #' }
-followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name = NULL){
+followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
     separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
     mutate_all(na_if, 'NA')
+  
+  df <- df %>%
+    mutate(status = gsub('_', ' ', status)) %>%
+    mutate(status = tools::toTitleCase(status))
   
   output <- tibble(
     Facility = c('TOTAL', unique(df$facilitycode))
@@ -4188,7 +4203,8 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
     for (code in facilities) {
       form_df <- bind_rows(form_df, form_collected(form_selection, code))
     }
-    output <- full_join(output, form_df, by = 'Facility')
+    output <- full_join(output, form_df, by = 'Facility') %>%
+      filter(!is.na(Facility)&Facility!='NA')
   }
   
   cols <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missing', 'Not Started', 
