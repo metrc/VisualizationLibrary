@@ -8,7 +8,7 @@ ankle_and_plateau_x_ray_and_measurement_status(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include followup_expected_6wk, 
-followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type,
+followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type, followup_data,
 radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo,
 plat_tib_fib_overlap_6mo, plat_sagittal_pl_alignment_6mo, plat_patella_centered_6mo, 
 plat_medial_prox_tibia_deg_6mo, plat_medial_lateral_diff_6mo, plat_condylar_width_6mo, plat_art_step_off_medial_6mo, 
