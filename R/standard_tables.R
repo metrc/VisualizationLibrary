@@ -144,7 +144,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #' @description This function visualizes Ankle and Plateau X-Ray and Measurement Status
 #'
 #' @param analytic This is the analytic data set that must include followup_expected_6wk, 
-#' followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type,
+#' followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type, followup_data,
 #' radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo,
 #' plat_tib_fib_overlap_6mo, plat_sagittal_pl_alignment_6mo, plat_patella_centered_6mo, 
 #' plat_medial_prox_tibia_deg_6mo, plat_medial_lateral_diff_6mo, plat_condylar_width_6mo, plat_art_step_off_medial_6mo, 
@@ -175,14 +175,23 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_ankle <- analytic %>% 
     filter(injury_type=="ankle") %>% 
-    select(cfu_status_6wk, cfu_status_3mo, cfu_status_6mo) %>% 
-    pivot_longer(everything()) %>% 
-    mutate(value = ifelse(str_detect(value,"Complete"),"Complete",value)) %>% 
-    group_by(name, value) %>%
+    select(followup_data) %>% 
+    separate_rows(followup_data, sep=";") %>% 
+    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    mutate_all(na_if, 'NA') %>% 
+    filter(form == 'Clinical Follow-up') %>% 
+    mutate(status = ifelse(str_detect(status,"Complete"),"Complete",status)) %>% 
+    group_by(form, followup_period, status) %>%
     count() %>%
-    filter(!is.na(value)) %>%
+    filter(!is.na(status)) %>%
     ungroup() %>% 
-    mutate(name = str_replace(str_replace(str_remove(name, "cfu_status_"),"mo", " Months"),"wk", " Weeks"))
+    mutate(name = recode(followup_period, 
+                         "6 Week" = "6 Weeks", 
+                         "3 Month" = "3 Months",
+                         "6 Month" = "6 Months",
+                         "12 Month" = "12 Months")) %>% 
+    rename(value = status) %>% 
+    select(name, n, value)
   
   
   df1_expected_ankle <- analytic %>% 
@@ -294,7 +303,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   index_vec <- c("6 Weeks"=4,"3 Months"=4, "6 Months"=4)
   
-  table_raw_ankle<- kable(df_ankle, format="html", align='l', col.names = str_replace(colnames(df),"^n.|^n"," ")) %>%
+  table_raw_ankle<- kable(df_ankle, format="html", align='l', col.names = str_replace(colnames(df_ankle),"^n.|^n"," ")) %>%
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position='left')
   
@@ -302,14 +311,23 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_plateau <- analytic %>% 
     filter(injury_type=="plateau") %>% 
-    select(cfu_status_6wk, cfu_status_3mo, cfu_status_6mo) %>% 
-    pivot_longer(everything()) %>% 
-    mutate(value = ifelse(str_detect(value,"Complete"),"Complete",value)) %>% 
-    group_by(name, value) %>%
+    select(followup_data) %>% 
+    separate_rows(followup_data, sep=";") %>% 
+    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    mutate_all(na_if, 'NA') %>% 
+    filter(form == 'Clinical Follow-up') %>% 
+    mutate(status = ifelse(str_detect(status,"Complete"),"Complete",status)) %>% 
+    group_by(form, followup_period, status) %>%
     count() %>%
-    filter(!is.na(value)) %>%
+    filter(!is.na(status)) %>%
     ungroup() %>% 
-    mutate(name = str_replace(str_replace(str_remove(name, "cfu_status_"),"mo", " Months"),"wk", " Weeks"))
+    mutate(name = recode(followup_period, 
+                         "6 Week" = "6 Weeks", 
+                         "3 Month" = "3 Months",
+                         "6 Month" = "6 Months",
+                         "12 Month" = "12 Months")) %>% 
+    rename(value = status) %>% 
+    select(name, n, value)
   
   
   df1_expected_plateau <- analytic %>% 
@@ -427,7 +445,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   index_vec <- c("6 Weeks"=4,"3 Months"=4, "6 Months"=4)
   
-  table_raw_plateau<- kable(df_plateau, format="html", align='l', col.names = str_replace(colnames(df),"^n.|^n"," ")) %>%
+  table_raw_plateau<- kable(df_plateau, format="html", align='l', col.names = str_replace(colnames(df_plateau),"^n.|^n"," ")) %>%
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position='left')
   
