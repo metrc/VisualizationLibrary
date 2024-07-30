@@ -2716,3 +2716,109 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
   
   return(vis)
 }
+
+
+#' Closed Fracture Characteristics
+#'
+#' @description This function visualizes fracture characteristics, broken down by tibial plateau or pilon,
+#' and then closed or open fracture with tscherne grades and gustilo types respectively by treatment arm
+#'
+#' @param analytic This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
+#' treatment_arm
+#'
+#' @return A kable table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_fracture_characteristics(analytic)
+#' }
+closed_fracture_characteristics <- function(analytic){
+  confirm_stability_of_related_visual('fracture_characteristics', '18791cc2b2fb3c9f95e46cb421ddc67e')
+  
+  inner_fracture_characteristics <- function(df) {
+    total <- sum(df$enrolled)
+    closed_total <- sum(df$closed)
+    open_total <- sum(df$open)
+    closed <- data.frame(type = 'Closed Fracture', percentage = format_count_percent(closed_total, total))
+    open <- data.frame(type = 'Open Fracture', percentage = format_count_percent(open_total, total))
+    
+    fracture_type <- df %>% 
+      mutate(fracture_type = replace_na(fracture_type, "Unknown")) %>% 
+      group_by(fracture_type) %>% 
+      count(fracture_type) %>% 
+      mutate(percentage = format_count_percent(n, total)) %>% 
+      rename(type = fracture_type) %>% 
+      select(-n) %>% 
+      arrange(factor(type, levels = c('Tibial Plateau', 'Tibial Pilon', 'Unknown')))
+    
+    tscherne <- df %>% 
+      filter(closed) %>% 
+      group_by(injury_classification_tscherne) %>% 
+      mutate(injury_classification_tscherne = recode(injury_classification_tscherne, 'C0' ='Tscherne Grade 0',
+                                                     'CI' = 'Tscherne Grade 1',
+                                                     'CII' = 'Tscherne Grade 2',
+                                                     'CIII' = 'Tscherne Grade 3')) %>% 
+      count(injury_classification_tscherne) %>% 
+      mutate(percentage = format_count_percent(n, closed_total)) %>% 
+      rename(type = injury_classification_tscherne) %>% 
+      select(-n) %>% 
+      arrange(factor(type, levels = c("Tscherne Grade 0","Tscherne Grade 1","Tscherne Grade 2","Tscherne Grade 3","N/A (low velocity GSW)")))
+    
+    gustilo <- df %>% 
+      filter(open) %>% 
+      group_by(injury_gustilo) %>% 
+      mutate(injury_gustilo = recode(injury_gustilo, 'I' = 'Gustilo Type I',
+                                     'II' = 'Gustilo Type II',
+                                     'IIIA' = 'Gustilo Type IIIa')) %>% 
+      count(injury_gustilo) %>% 
+      mutate(percentage = format_count_percent(n, open_total)) %>% 
+      rename(type = injury_gustilo) %>% 
+      select(-n) %>% 
+      arrange(factor(type, levels = c('I' = 'Gustilo Type I','II' = 'Gustilo Type II','III' = 'Gustilo Type IIIa')))
+    
+    df_final <- rbind(fracture_type, closed, tscherne, open, gustilo)
+    
+    return(df_final)
+  }
+  
+  df <- analytic %>%
+    select(study_id, enrolled, fracture_type, injury_gustilo, injury_classification_tscherne, treatment_arm) %>%
+    filter(enrolled) %>%
+    mutate(closed = ifelse(!is.na(injury_classification_tscherne), TRUE, FALSE)) %>%
+    mutate(open = ifelse(!is.na(injury_gustilo), TRUE, FALSE))
+  
+  total <- sum(df$enrolled)
+  
+  df_a <- df %>% filter(treatment_arm == "Group A")
+  df_b <- df %>% filter(treatment_arm == "Group B")
+  
+  df_final_a <- inner_fracture_characteristics(df_a)
+  df_final_b <- inner_fracture_characteristics(df_b)
+  df_final_full <- inner_fracture_characteristics(df)
+  
+  df_table <- full_join(df_final_a, df_final_b, by = "type", suffix = c(" (Group A)", " (Group B)")) %>%
+    left_join(df_final_full, by = "type") %>%
+    select(type, ends_with(" (Group A)"), ends_with(" (Group B)"), percentage)
+  
+  cnames <- c(' ', paste0('Group A (n=', sum(df_a$enrolled), ')'),
+              paste0('Group B (n=', sum(df_b$enrolled), ')'),
+              paste0('Overall (n=', total, ')'))
+  header <- c(1,1,1,1)
+  names(header) <- cnames
+  
+  n_closed <- nrow(df_table %>% filter(str_detect(type, "Closed Fracture")))
+  n_open <- nrow(df_table %>% filter(str_detect(type, "Open Fracture")))
+  n_frac <- nrow(df_table %>% filter(str_detect(type, "Tibial")|str_detect(type, 'Unknown')))
+  n_tscherne <- nrow(df_table %>% filter(str_detect(type, "Tscherne")))
+  n_gustilo <- nrow(df_table %>% filter(str_detect(type, "Type")))
+  
+  vis <- kable(df_table, format="html", align='l',  col.names = cnames) %>%
+    pack_rows(index = c('Fractured Bone' = n_frac,
+                        'Fracture Type' = (n_closed + n_tscherne + n_open + n_gustilo)),
+              label_row_css = "text-align:left") %>%
+    add_indent(c(seq(n_tscherne) + n_frac + n_closed, seq(n_gustilo) + n_frac + n_closed + n_open + n_tscherne)) %>%
+    kable_styling("striped", full_width = F, position="left")
+  
+  return(vis)
+}
