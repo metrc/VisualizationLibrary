@@ -568,8 +568,10 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #'
 #' @description This function visualizes the categorical percentages of study status as well as followup completions
 #'
-#' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
-#' adjudicated_early_discontinued, followup_complete_12mo, safety_set
+#' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible,
+#' refused, consented, randomized, enrolled, time_zero, adjudicated_early_discontinued, followup_data, 
+#' safety_set
+#'  
 #' @param definitive_event Event either DF or DWC
 #'
 #' @return nothing
@@ -583,7 +585,7 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
-           adjudicated_early_discontinued, followup_complete_12mo, safety_set) %>% 
+           adjudicated_early_discontinued, followup_data, safety_set) %>% 
     mutate(time_zero = ifelse(!is.na(time_zero), TRUE, FALSE))
   
   screened <- sum(analytic$screened, na.rm = TRUE)
@@ -630,7 +632,16 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
   fu_df <- enrolled_df %>% 
     filter(time_zero)
   
-  fu_complete_12mo <- sum(fu_df$followup_complete_12mo, na.rm = TRUE)
+  
+  fu_complete_12mo_df <- fu_df %>% 
+    select(study_id, followup_data) %>% 
+    separate_rows(followup_data, sep=";") %>% 
+    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    mutate_all(na_if, 'NA') %>% 
+    filter(followup_period == '12 Month' & form == 'CFU') %>% 
+    mutate(followup_complete_12mo = ifelse(status %in% c('complete', 'complete: early', 'complete: late'), TRUE, FALSE)) 
+  
+  fu_complete_12mo <- sum(fu_complete_12mo_df$followup_complete_12mo, na.rm = TRUE)
   
   consort_diagram <- grViz(paste0('
     digraph g {
