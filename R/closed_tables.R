@@ -2822,3 +2822,8 @@ closed_fracture_characteristics <- function(analytic){
   
   return(vis)
 }
+
+
+
+
+
