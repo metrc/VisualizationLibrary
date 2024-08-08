@@ -2678,6 +2678,7 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
   facilities <- facilities[!is.na(facilities)]
   
   timepoints <- df %>%
+    filter(form == form_selection) %>%
     pull(followup_period) %>%
     unique()
   timepoints <- timepoints[!is.na(timepoints)]
@@ -2697,7 +2698,6 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
     filter(!is.na(Facility)&Facility!='NA')
   colnames(form_df) <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missing', 
                                            'Not Started', 'Incomplete'), times = length(timepoints)))
-  
   
   header <- c(1,rep(7, length(timepoints)))
   names(header) <- c(' ', timepoints)
