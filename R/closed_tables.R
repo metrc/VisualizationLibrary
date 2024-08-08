@@ -79,7 +79,7 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
     df_table <- summary_table %>% 
       select(-Category)
     
-    return(df_table)
+    df_table
   }
   
   table_a <- inner_closed_injury_ankle_plateau_characteristics(df_a)
@@ -237,7 +237,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
     df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) %>% 
       mutate_all(replace_na, "0 (0%)") %>% 
       ungroup()
-    return(df_final)
+    df_final
   }
   
   
@@ -376,7 +376,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     n_dp <<- nrow(deviation_p_df)
     n_da <<- nrow(deviation_a_df)
     
-    return(df_final)
+    df_final
   }
   
   table_a <- inner_closed_discontinuation_sae_deviation_by_type(df_a)
@@ -555,7 +555,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
       stop("bad complications alignment")
     }
     
-    return(output)
+    output
   }
   
   df_full <- analytic
@@ -973,6 +973,7 @@ closed_ao_gustillo_tscherne_injury_characteristics <- function(analytic){
       mutate(`Fracture Type`=ifelse(`Fracture Type`=='Tscherne Unknown', 
                                     'Unknown', 
                                     `Fracture Type`)) 
+    out
     
   }
   
@@ -1045,7 +1046,7 @@ closed_enrollment_status_by_site <- function(analytic){
       mutate(`Not Enrolled for Other Reasons` = format_count_percent(`Not Enrolled for Other Reasons`, Eligible)) %>% 
       mutate(Eligible = format_count_percent(Eligible, Screened))
     
-    return(table_raw)
+    table_raw
   }
   
   df <- analytic %>% 
@@ -1368,7 +1369,7 @@ closed_ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
       pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
       kable_styling("striped", full_width = F, position='left')
     
-    return(list(table_raw_ankle, table_raw_plateau))
+    list(table_raw_ankle, table_raw_plateau)
   }
   
   df_a <- analytic %>% filter(treatment_arm == "Group A")
@@ -1480,7 +1481,7 @@ closed_adjudications_and_discontinuations_by_type <- function(analytic){
     df_final <- rbind(disc, study_discontinuation_df, sae_count_df, protocol_deviations, sc, protocol_deviation_screen_consent_df, 
                       dp, protocol_deviation_procedural_df, da, protocol_deviation_administrative_df)
     
-    return(list(n_disc, n_dsc, n_dp, n_da, df_final))
+    list(n_disc, n_dsc, n_dp, n_da, df_final)
   }
   
   df <- analytic %>%
@@ -1723,7 +1724,7 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
     df_final <- rbind(type_df, work_df, battle_df, blast_df, side_df, tscherne_df, ao_df) %>% 
       mutate_all(replace_na, "0 (0%)")
     
-    return(df_final)
+    df_final
   }
   
   df <- analytic %>%
@@ -1830,7 +1831,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
     combined <- bind_rows(n_amputations, out_amputations,n_gustilo, out_gustilo) %>%
       relocate(count, .after = `Fracture Type`)
     
-    return(combined)
+    combined
   }
   
   pull <- analytic %>%
@@ -1904,7 +1905,7 @@ closed_adherence_by_site <- function(analytic){
              `Definitive Wound Closure completed` = df_total,
              `Received treatment per protocol and assignment(% DWC complete)` = treatment_completed)
     
-    return(df4)
+    df4
   }
   
   df <- analytic %>%
@@ -2021,7 +2022,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
     rename(" " = name,
            "Total" = value)
   
-  return(df_1)
+  df_1
   }
   
   pull <- analytic %>%
@@ -2148,6 +2149,7 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
   output_complication <- left_join(df_template, combined_df) 
   
   df_table_raw <- reorder_rows(output_complication, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
+  df_table_raw
   
  }
  
@@ -2316,12 +2318,12 @@ closed_treatment_characteristics <- function(analytic){
       select(type, n) %>%
       rename_with(~paste0('(N=', as.character(total),')'), n)
     
-    return(list('table'=out, 
+    list('table'=out, 
                 'com_rows'=nrow(one_form_complete), 
                 'stage_rows'=nrow(stages), 
                 'inc_rows'=nrow(incisions), 
                 'pro_rows'=nrow(protocol_followed), 
-                'total_n'=total))
+                'total_n'=total)
   }
   
   full_table <- inner_treatment_characteristics(df)
