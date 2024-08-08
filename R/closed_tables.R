@@ -2779,7 +2779,7 @@ closed_fracture_characteristics <- function(analytic){
     
     df_final <- rbind(fracture_type, closed, tscherne, open, gustilo)
     
-    return(df_final)
+    df_final
   }
   
   df <- analytic %>%
