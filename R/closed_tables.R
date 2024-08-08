@@ -2957,7 +2957,7 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
     kable_styling("striped", full_width = F, position='left')
   
   return(vis)
-  }
+}
 
 
 
