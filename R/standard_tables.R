@@ -2702,8 +2702,12 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
   header <- c(1,rep(7, length(timepoints)))
   names(header) <- c(' ', timepoints)
   
+  over_header <- c(1, 7*length(timepoints))
+  names(over_header) <- c(' ', paste(form_selection, 'Form Status'))
+  
   vis <- kable(form_df, format="html", align='l') %>%
     add_header_above(header) %>%
+    add_header_above(over_header) %>%
     kable_styling("striped", full_width = F, position='left')
   
   return(vis)
@@ -2712,9 +2716,10 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
 
 
 
-#' Followup Data Single Forms and Timepoint By Site
+#' Followup Data Multiple Forms and Single Timepoints By Site
 #'
-#' @description Returns the designated followup form status by site
+#' @description Returns the designated followup forms status by site at a specifict
+#' period
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
 #'
