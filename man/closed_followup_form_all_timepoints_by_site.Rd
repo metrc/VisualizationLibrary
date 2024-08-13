@@ -11,10 +11,11 @@ closed_followup_form_all_timepoints_by_site(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, followup_data}
-}
-\value{
-nothing
+\item{analytic}{This is the analytic data set that must include study_id, followup_data, treatment_arm}
+
+\item{form_selection}{the form to be considered in the visualization}
+
+\item{footnotes}{optional argument for changing the names of the followup forms, for aesthetic use}
 }
 \description{
 Returns the designated followup form status by site, for all timepoints,

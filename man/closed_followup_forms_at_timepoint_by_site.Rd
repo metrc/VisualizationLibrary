@@ -13,6 +13,12 @@ closed_followup_forms_at_timepoint_by_site(
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, followup_data}
+
+\item{timepoint}{the point in time to be considered in the visualization}
+
+\item{forms}{the form to be considered in the visualization}
+
+\item{names}{This is the analytic data set that must include study_id, followup_data}
 }
 \value{
 nothing
