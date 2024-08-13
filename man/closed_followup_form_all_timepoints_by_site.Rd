@@ -6,7 +6,8 @@
 \usage{
 closed_followup_form_all_timepoints_by_site(
   analytic,
-  form_selection = "Overall"
+  form_selection = "Overall",
+  footnotes = NULL
 )
 }
 \arguments{
