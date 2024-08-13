@@ -2974,7 +2974,7 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 #' \dontrun{
 #' closed-followup_form_all_timepoints_by_site()
 #' }
-closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall'){
+closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', footnotes = NULL){
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -3101,6 +3101,10 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
                         'Total' = nrow(total_collected)),
               label_row_css = "text-align:left") %>%
     kable_styling("striped", full_width = F, position='left')
+  
+  if (!is.null(footnotes)) {
+    vis <- add_footnote(vis, footnotes)
+  }
   
   return(vis)
 }
