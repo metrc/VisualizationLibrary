@@ -2472,9 +2472,13 @@ expected_and_followup_visit_overall <- function(analytic){
 
 #' Followup Data Single Form and Timepoint By Site
 #'
-#' @description Returns the designated followup form status by site
+#' @description Returns the designated followup form status across all sites, 
+#' for a single timepoint and separated by the treatment_arm variable
 #'
-#' @param analytic This is the analytic data set that must include study_id, followup_data
+#' @param analytic This is the analytic data set that must include study_id, followup_data, treatment_arm
+#' @param timepoint the point in time to be considered in the visualization
+#' @param form_selection the form to be considered in the visualization
+#' @param name optional argument for changing the name of the followup form, for aesthetic use
 #'
 #' @return nothing
 #' @export
