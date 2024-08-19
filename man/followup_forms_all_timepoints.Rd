@@ -2,7 +2,7 @@
 % Please edit documentation in R/standard_tables.R
 \name{followup_forms_all_timepoints}
 \alias{followup_forms_all_timepoints}
-\title{Followup Data Multiple Forms and Single Timepoints By Site}
+\title{Followup Data Multiple Forms and All Timepoints}
 \usage{
 followup_forms_all_timepoints(analytic, forms, timepoints)
 }
@@ -22,6 +22,6 @@ of timepoints, not specified by site
 }
 \examples{
 \dontrun{
-followup_forms_at_timepoint_by_site()
+followup_forms_all_timepoints()
 }
 }

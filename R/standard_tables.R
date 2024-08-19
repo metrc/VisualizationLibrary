@@ -2848,7 +2848,7 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
 }
 
 
-#' Followup Data Multiple Forms and Single Timepoints By Site
+#' Followup Data Multiple Forms and All Timepoints
 #'
 #' @description Returns the designated followup forms status at a specified range
 #' of timepoints, not specified by site
@@ -2862,7 +2862,7 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
 #'
 #' @examples
 #' \dontrun{
-#' followup_forms_at_timepoint_by_site()
+#' followup_forms_all_timepoints()
 #' }
 followup_forms_all_timepoints <- function(analytic, forms, timepoints){
   df <- analytic %>%
