@@ -2829,9 +2829,13 @@ closed_fracture_characteristics <- function(analytic){
 
 #' Closed Followup Data Single Form and Timepoint By Site
 #'
-#' @description Returns the designated followup form status by site, by treatment data
+#' @description Returns the designated followup form status across all sites, 
+#' for a single timepoint and separated by the treatment_arm variable
 #'
-#' @param analytic This is the analytic data set that must include study_id, followup_data
+#' @param analytic This is the analytic data set that must include study_id, followup_data, treatment_arm
+#' @param timepoint the point in time to be considered in the visualization
+#' @param form_selection the form to be considered in the visualization
+#' @param name optional argument for changing the name of the followup form, for aesthetic use
 #'
 #' @return nothing
 #' @export
@@ -2965,16 +2969,17 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 #' @description Returns the designated followup form status by site, for all timepoints,
 #' separated by treatment_arm
 #'
-#' @param analytic This is the analytic data set that must include study_id, followup_data
+#' @param analytic This is the analytic data set that must include study_id, followup_data, treatment_arm
+#' @param form_selection the form to be considered in the visualization
+#' @param footnotes optional argument for changing the names of the followup forms, for aesthetic use
 #'
-#' @return nothing
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' closed-followup_form_all_timepoints_by_site()
 #' }
-closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall'){
+closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', footnotes = NULL){
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -3102,6 +3107,10 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
               label_row_css = "text-align:left") %>%
     kable_styling("striped", full_width = F, position='left')
   
+  if (!is.null(footnotes)) {
+    vis <- add_footnote(vis, footnotes)
+  }
+  
   return(vis)
 }
 
@@ -3111,6 +3120,9 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' @description Returns the designated followup form status by site
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
+#' @param timepoint the point in time to be considered in the visualization
+#' @param forms the form to be considered in the visualization
+#' @param names This is the analytic data set that must include study_id, followup_data
 #'
 #' @return nothing
 #' @export
