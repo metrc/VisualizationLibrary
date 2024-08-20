@@ -1275,7 +1275,7 @@ complications_by_severity_relatedness <- function(analytic){
 #' @description This function visualizes the Nonunion surgery outcome
 #'
 #' @param analytic This is the analytic data set that must include enrolled, 
-#' followup_due_3mo, followup_due_12mo, nonunion_90days,  nonunion_1yr
+#' followup_expected_3mo, followup_expected_12mo, nonunion_90days,  nonunion_1yr
 #'
 #' @return nothing
 #' @export
@@ -1286,12 +1286,12 @@ complications_by_severity_relatedness <- function(analytic){
 #' }
 nonunion_surgery_outcome <- function(analytic){
   df <- analytic %>% 
-    select(enrolled, followup_due_3mo, nonunion_90days, followup_due_12mo, nonunion_1yr) %>% 
+    select(enrolled, followup_expected_3mo, nonunion_90days, followup_expected_12mo, nonunion_1yr) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
     filter(enrolled) %>% 
     boolean_column_counter() %>% 
-    mutate(nonunion_90days = format_count_percent(nonunion_90days, followup_due_3mo),
-           nonunion_1yr = format_count_percent(nonunion_1yr, followup_due_12mo))
+    mutate(nonunion_90days = format_count_percent(nonunion_90days, followup_expected_3mo),
+           nonunion_1yr = format_count_percent(nonunion_1yr, followup_expected_12mo))
   
   colname <- c("Enrolled", "Expected Three Month", "90 Day Non-Union", "Expected Twelve Month", "1 Year Non-Union")
   
@@ -2603,8 +2603,8 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
 #' constructs but treats early, late and complete as mutually exclusive.
 #' Therefore, complete is renamed to "On Time" and all three of them combined to Complete.
 #'
-#' @param analytic This is the analytic data set that must include facilitycode, followup_due_3mo, 
-#' followup_due_6mo, followup_due_12mo, followup_data
+#' @param analytic This is the analytic data set that must include facilitycode, followup_expected_3mo, 
+#' followup_expected_6mo, followup_expected_12mo, followup_data
 #'
 #' @return nothing
 #' @export
@@ -2632,10 +2632,10 @@ expected_and_followup_visit_by_site <- function(analytic){
               "Not Started" = sum(not_started, na.rm = TRUE))
   
   df_expected <- analytic %>% 
-    select(facilitycode, followup_due_3mo, followup_due_6mo, followup_due_12mo) %>% 
+    select(facilitycode, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo) %>% 
     group_by(facilitycode) %>% 
-    summarize("Status" = "Expected", "3 Month" = sum(followup_due_3mo, na.rm = TRUE), "6 Month" = sum(followup_due_6mo, na.rm = TRUE),
-              "12 Month" = sum(followup_due_12mo, na.rm = TRUE)) %>% 
+    summarize("Status" = "Expected", "3 Month" = sum(followup_expected_3mo, na.rm = TRUE), "6 Month" = sum(followup_expected_6mo, na.rm = TRUE),
+              "12 Month" = sum(followup_expected_12mo, na.rm = TRUE)) %>% 
     rename(three_month_expected = `3 Month`,
            six_month_expected = `6 Month`,
            twelve_month_expected = `12 Month`) %>% 

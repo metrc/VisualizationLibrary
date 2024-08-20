@@ -8,7 +8,7 @@ nonunion_surgery_outcome(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, 
-followup_due_3mo, followup_due_12mo, nonunion_90days,  nonunion_1yr}
+followup_expected_3mo, followup_expected_12mo, nonunion_90days,  nonunion_1yr}
 }
 \value{
 nothing
