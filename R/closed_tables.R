@@ -2612,6 +2612,8 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #' closed_expected_and_followup_visit_overall()
 #' }
 closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL){
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', 'c775704ce8301618d56419205a167f87')
+  
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -2845,6 +2847,8 @@ closed_fracture_characteristics <- function(analytic){
 #' closed_followup_form_at_timepoint_by_site()
 #' }
 closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
+  confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', '9c5925aff1ea0d4735404debdf061957')
+  
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -2980,6 +2984,8 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 #' closed-followup_form_all_timepoints_by_site()
 #' }
 closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', footnotes = NULL){
+  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', 'a1cc824358c28898f006f88dca983f08')
+  
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -3132,6 +3138,8 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' closex_followup_forms_at_timepoint_by_site()
 #' }
 closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
+  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '5bfa962197af703ad041b77d484abf64')
+  
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -3251,6 +3259,150 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
   names(header) <- header_names
   
   vis <- kable(full_collected, format="html", align='l') %>%
+    add_header_above(header) %>%
+    pack_rows(index = c('Group A' = nrow(df_a_collected),
+                        'Group B' = nrow(df_b_collected),
+                        'Total' = nrow(total_collected))) %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
+
+
+#' Closed Followup Data Multiple Forms and All Timepoints
+#'
+#' @description Returns the designated followup forms status at a specified range
+#' of timepoints, not specified by site, separated vertically by treatment_arm
+#'
+#' @param analytic This is the analytic data set that must include study_id, followup_data, treatment_arm
+#' @param forms followup forms to output, as found in the followup_data construct
+#' @param timepoints timepoints to output, as found in the followup_data construct
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_followup_forms_all_timepoints()
+#' }
+closed_followup_forms_all_timepoints <- function(analytic, forms, timepoints){
+  confirm_stability_of_related_visual('followup_forms_all_timepoints', '7872a487edccf907a203d1042c3cf5bb')
+  
+  df <- analytic %>%
+    select(study_id, facilitycode, followup_data, treatment_arm) %>% 
+    separate_rows(followup_data, sep=";") %>% 
+    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    mutate_all(na_if, 'NA')
+  
+  df <- df %>%
+    mutate(status = gsub('_', ' ', status)) %>%
+    mutate(status = tools::toTitleCase(status))
+  
+  df_a <- df %>% filter(treatment_arm == 'Group A') %>% select(-treatment_arm)
+  df_b <- df %>% filter(treatment_arm == 'Group B') %>% select(-treatment_arm)
+  df_all <- df %>% select(-treatment_arm)
+  
+  per_form <- function(form_name, in_df) {
+    
+    form_df <- in_df %>%
+      filter(form==form_name)
+    
+    if (nrow(form_df)==0) {
+      stop('function call asks for form not in followup_data construct!')
+    }
+    
+    fu_levels <- timepoints
+    
+    result_list <- list()
+    
+    for (i in fu_levels) {
+      result <- form_df %>% 
+        filter(followup_period == i) %>% 
+        select(study_id, status) %>%
+        filter(!is.na(status)) %>% 
+        separate_rows(status, sep = ': ') %>% 
+        count(status) %>% 
+        rename(!!i := n)
+      
+      result_list[[i]] <- result
+    }
+    
+    combined <- Reduce(function(x, y) full_join(x, y, by = "status"), result_list) %>%
+      mutate(status = tools::toTitleCase(status)) %>%
+      mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
+    
+    form_df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+    
+    final_raw <- left_join(form_df_empty, combined, by = 'status') %>% 
+      mutate(across(everything(), ~replace_na(., 0)))
+    
+    summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+    
+    expected_row <- final_raw %>%
+      filter(status %in% summed_statuses) %>%
+      summarize(across(-status, sum, na.rm = TRUE)) %>%
+      mutate(status = "Expected") %>%
+      select(status, everything())
+    
+    final_pre_pct <- rbind(expected_row, final_raw)
+    
+    divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
+    names(divisor_expected) <- names(final_pre_pct)[-1]
+    divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+    names(divisor_complete) <- names(final_pre_pct)[-1]
+    
+    top <- final_pre_pct %>% 
+      slice_head(n=2) %>%
+      slice_tail(n=1) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_expected[cur_column()]),
+                    .names = "{.col}"))
+    
+    bottom <- final_pre_pct %>% 
+      slice_tail(n=3) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_expected[cur_column()]),
+                    .names = "{.col}"))
+    
+    middle <- final_pre_pct %>% 
+      slice_head(n=4) %>% 
+      slice_tail(n=2) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_complete[cur_column()]),
+                    .names = "{.col}"))
+    
+    final_last <- rbind(expected_row, top, middle, bottom) %>% 
+      rename(Status = status)
+    
+    final_last
+  }
+  
+  per_group <- function(df) {
+    out <- NULL
+    for (form_name in forms) {
+      if (is.null(out)) {
+        out <- per_form(form_name, df)
+      } else {
+        out <- full_join(out, per_form(form_name, df), by = 'Status')
+      }
+    }
+    out
+  }
+  
+  df_a_collected <- per_group(df_a)
+  df_b_collected <- per_group(df_b)
+  total_collected <- per_group(df_all)
+  
+  full_collected <- rbind(df_a_collected, df_b_collected, total_collected)
+  
+  colnames(full_collected) <- c('Status', rep(timepoints, times = length(forms)))
+  header <- c(1, rep(length(timepoints), times = length(forms)))
+  names(header) <- c(' ', paste(forms, 'Form Status'))
+  
+  vis <- kable(full_collected, format="html", align='l') %>%
+    add_indent(c(3,4)) %>%
+    add_indent(c(10,11)) %>%
+    add_indent(c(17,18)) %>%
     add_header_above(header) %>%
     pack_rows(index = c('Group A' = nrow(df_a_collected),
                         'Group B' = nrow(df_b_collected),
