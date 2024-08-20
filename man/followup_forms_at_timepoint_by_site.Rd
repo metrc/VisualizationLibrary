@@ -2,7 +2,7 @@
 % Please edit documentation in R/standard_tables.R
 \name{followup_forms_at_timepoint_by_site}
 \alias{followup_forms_at_timepoint_by_site}
-\title{Followup Data Single Forms and Timepoint By Site}
+\title{Followup Data Multiple Forms and Single Timepoints By Site}
 \usage{
 followup_forms_at_timepoint_by_site(analytic, timepoint, forms, names = NULL)
 }
@@ -13,7 +13,8 @@ followup_forms_at_timepoint_by_site(analytic, timepoint, forms, names = NULL)
 nothing
 }
 \description{
-Returns the designated followup form status by site
+Returns the designated followup forms status by site at a specifict
+period
 }
 \examples{
 \dontrun{
