@@ -3290,7 +3290,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms, timepoints){
   
   df_a <- df %>% filter(treatment_arm == 'Group A') %>% select(-treatment_arm)
   df_b <- df %>% filter(treatment_arm == 'Group B') %>% select(-treatment_arm)
-  df <- df %>% select(-treatment_arm)
+  df_all <- df %>% select(-treatment_arm)
   
   per_form <- function(form_name, in_df) {
     
