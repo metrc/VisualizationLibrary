@@ -2848,6 +2848,130 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
 }
 
 
+#' Followup Data Multiple Forms and All Timepoints
+#'
+#' @description Returns the designated followup forms status at a specified range
+#' of timepoints, not specified by site
+#'
+#' @param analytic This is the analytic data set that must include study_id, followup_data
+#' @param forms followup forms to output, as found in the followup_data construct
+#' @param timepoints timepoints to output, as found in the followup_data construct
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' followup_forms_all_timepoints()
+#' }
+followup_forms_all_timepoints <- function(analytic, forms, timepoints){
+  df <- analytic %>%
+    select(study_id, facilitycode, followup_data) %>% 
+    separate_rows(followup_data, sep=";") %>% 
+    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    mutate_all(na_if, 'NA')
+  
+  df <- df %>%
+    mutate(status = gsub('_', ' ', status)) %>%
+    mutate(status = tools::toTitleCase(status))
+  
+  per_form <- function(form_name) {
+    
+    form_df <- df %>%
+      filter(form==form_name)
+    
+    if (nrow(form_df)==0) {
+      stop('function call asks for form not in followup_data construct!')
+    }
+  
+    fu_levels <- timepoints
+    
+    result_list <- list()
+    
+    for (i in fu_levels) {
+      result <- form_df %>% 
+        filter(followup_period == i) %>% 
+        select(study_id, status) %>%
+        filter(!is.na(status)) %>% 
+        separate_rows(status, sep = ': ') %>% 
+        count(status) %>% 
+        rename(!!i := n)
+      
+      result_list[[i]] <- result
+    }
+    
+    combined <- Reduce(function(x, y) full_join(x, y, by = "status"), result_list) %>%
+      mutate(status = tools::toTitleCase(status)) %>%
+      mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
+    
+    form_df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+    
+    final_raw <- left_join(form_df_empty, combined, by = 'status') %>% 
+      mutate(across(everything(), ~replace_na(., 0)))
+    
+    summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+    
+    expected_row <- final_raw %>%
+      filter(status %in% summed_statuses) %>%
+      summarize(across(-status, sum, na.rm = TRUE)) %>%
+      mutate(status = "Expected") %>%
+      select(status, everything())
+    
+    final_pre_pct <- rbind(expected_row, final_raw)
+    
+    divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
+    names(divisor_expected) <- names(final_pre_pct)[-1]
+    divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+    names(divisor_complete) <- names(final_pre_pct)[-1]
+    
+    top <- final_pre_pct %>% 
+      slice_head(n=2) %>%
+      slice_tail(n=1) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_expected[cur_column()]),
+                    .names = "{.col}"))
+    
+    bottom <- final_pre_pct %>% 
+      slice_tail(n=3) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_expected[cur_column()]),
+                    .names = "{.col}"))
+    
+    middle <- final_pre_pct %>% 
+      slice_head(n=4) %>% 
+      slice_tail(n=2) %>% 
+      mutate(across(-status, 
+                    ~ format_count_percent(., divisor_complete[cur_column()]),
+                    .names = "{.col}"))
+    
+    final_last <- rbind(expected_row, top, middle, bottom) %>% 
+      rename(Status = status)
+    
+    final_last
+  }
+  
+  out <- NULL
+  for (form_name in forms) {
+    if (is.null(out)) {
+      out <- per_form(form_name)
+    } else {
+      out <- full_join(out, per_form(form_name), by = 'Status')
+    }
+  }
+  
+  colnames(out) <- c('Status', rep(timepoints, times = length(forms)))
+  header <- c(1, rep(length(timepoints), times = length(forms)))
+  names(header) <- c(' ', paste(forms, 'Form Status'))
+  
+  vis <- kable(out, format="html", align='l') %>%
+    add_indent(c(3,4)) %>% 
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
+
+
 
 #' Expected visit status for 3 Months, 6 Months, and 12 Months followup by EACH SITE
 #'
