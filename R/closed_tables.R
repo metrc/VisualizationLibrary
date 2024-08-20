@@ -2612,6 +2612,8 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #' closed_expected_and_followup_visit_overall()
 #' }
 closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL){
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', 'c775704ce8301618d56419205a167f87')
+  
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -2845,6 +2847,8 @@ closed_fracture_characteristics <- function(analytic){
 #' closed_followup_form_at_timepoint_by_site()
 #' }
 closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
+  confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', '9c5925aff1ea0d4735404debdf061957')
+  
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -2980,6 +2984,8 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 #' closed-followup_form_all_timepoints_by_site()
 #' }
 closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', footnotes = NULL){
+  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', 'a1cc824358c28898f006f88dca983f08')
+  
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -3132,6 +3138,8 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' closex_followup_forms_at_timepoint_by_site()
 #' }
 closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
+  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '5bfa962197af703ad041b77d484abf64')
+  
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -3278,6 +3286,8 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
 #' closed_followup_forms_all_timepoints()
 #' }
 closed_followup_forms_all_timepoints <- function(analytic, forms, timepoints){
+  confirm_stability_of_related_visual('followup_forms_all_timepoints', '7872a487edccf907a203d1042c3cf5bb')
+  
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
