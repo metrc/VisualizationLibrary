@@ -1,6 +1,3 @@
-
-
-
 #' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled
 #'
 #' @description This function visualizes the enrollment totals for each site
@@ -3161,4 +3158,100 @@ expected_and_followup_visit_by_site <- function(analytic){
   
   return(output)
 }
+
+
+#' Overview of enrollment and follow-up activities
+#'
+#' @description Returns the screened, overall, and follow-up data, separated by sites
+#'
+#' @param analytic This is the analytic data set that must include study_id, followup_data,
+#'    facilitycode, screened, enrolled, eligible, screened_date
+#'
+#' @return visualization
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' enrollment_and_followup_activities_overview()
+#' }
+enrollment_and_followup_activities_overview <- function(analytic){
+  followups <- analytic %>%
+    select(study_id, facilitycode, followup_data) %>% 
+    separate_rows(followup_data, sep=";") %>% 
+    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    mutate_all(na_if, 'NA') %>%
+    filter(form == 'Overall')
+  
+  followups <- followups %>%
+    mutate(status = gsub('_', ' ', status)) %>%
+    mutate(status = tools::toTitleCase(status))
+  
+  study_status <- analytic %>%
+    select(study_id, facilitycode, screened, enrolled, eligible, screened_date)
+  
+  last30 <- Sys.Date() - 30
+  
+  per_site <- function(site = 'TOTAL') {
+    if (site != 'TOTAL') {
+      site_followups <-  followups %>%
+        filter(facilitycode == site)
+      site_study_status <- study_status %>%
+        filter(facilitycode == site)
+    } else {
+      site_followups <- followups
+      site_study_status <- study_status
+    }
+    
+    last_month <- site_study_status %>%
+      filter(screened_date > last30) %>%
+      mutate(elig_not_enr = eligible & !enrolled) %>%
+      reframe(Screened = sum(screened, na.rm = TRUE),
+              Enrolled = sum(enrolled, na.rm = TRUE),
+              `Eligible, Not Enrolled` = sum(elig_not_enr, na.rm = TRUE)) %>%
+      mutate(Enrolled = format_count_percent(Enrolled, Screened),
+             `Eligible, Not Enrolled` = format_count_percent(`Eligible, Not Enrolled`, Screened))
+    
+    historical <- site_study_status %>%
+      mutate(elig_not_enr = eligible & !enrolled) %>%
+      reframe(Screened = sum(screened, na.rm = TRUE),
+              Enrolled = sum(enrolled, na.rm = TRUE),
+              `Eligible, Not Enrolled` = sum(elig_not_enr, na.rm = TRUE)) %>%
+      mutate(Enrolled = format_count_percent(Enrolled, Screened),
+             `Eligible, Not Enrolled` = format_count_percent(`Eligible, Not Enrolled`, Screened))
+    
+    followup_counts <- site_followups %>%
+      separate(status, c('status', 'modifier'), sep = ': ', fill = 'right') %>%
+      reframe(`2 Week Follow-up` = sum(followup_period=='2 Week'&status=='Complete', 
+                                       na.rm = TRUE),
+              `3 Month Follow-up` = sum(followup_period=='3 Month'&status=='Complete', 
+                                        na.rm = TRUE),
+              `6 Month Follow-up` = sum(followup_period=='6 Month'&status=='Complete', 
+                                        na.rm = TRUE),
+              `12 Month Follow-up` = sum(followup_period=='12 Month'&status=='Complete', 
+                                         na.rm = TRUE))
+    
+    site_combined <- cbind(last_month, historical, followup_counts)
+    site_counts <- tibble(
+      Site=site, site_combined, .name_repair = 'minimal'
+    )
+    
+    site_counts
+  }
+  
+  all_sites <- study_status$facilitycode %>% unique() %>% sort()
+  sites_combined <- tibble()
+  for (site in c('TOTAL', all_sites)) {
+    sites_combined <- rbind(sites_combined, per_site(site))
+  }
+  
+  header <- c(1, 3, 3, 4)
+  names(header) <- c(' ', 'Last 30 Days', 'Study Length', 'Follow-up Completion Status')
+  
+  vis <- kable(sites_combined, format="html", align='l') %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
+
 
