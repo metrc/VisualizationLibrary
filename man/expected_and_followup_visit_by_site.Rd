@@ -7,8 +7,8 @@
 expected_and_followup_visit_by_site(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include facilitycode, followup_due_3mo, 
-followup_due_6mo, followup_due_12mo, followup_status_3mo, followup_status_6mo, followup_status_12mo}
+\item{analytic}{This is the analytic data set that must include facilitycode, followup_expected_3mo, 
+followup_expected_6mo, followup_expected_12mo, followup_data}
 }
 \value{
 nothing
