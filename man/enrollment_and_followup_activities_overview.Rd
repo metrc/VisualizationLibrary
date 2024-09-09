@@ -4,11 +4,14 @@
 \alias{enrollment_and_followup_activities_overview}
 \title{Overview of enrollment and follow-up activities}
 \usage{
-enrollment_and_followup_activities_overview(analytic)
+enrollment_and_followup_activities_overview(analytic, form_name = "Overall")
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, followup_data,
 facilitycode, screened, enrolled, eligible, screened_date}
+
+\item{form_name}{The exact name (specified in followup_data) that you want
+to find the data for}
 }
 \value{
 visualization
