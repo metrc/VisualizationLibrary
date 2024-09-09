@@ -3165,7 +3165,9 @@ expected_and_followup_visit_by_site <- function(analytic){
 #' @description Returns the screened, overall, and follow-up data, separated by sites
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data,
-#'    facilitycode, screened, enrolled, eligible, screened_date
+#' facilitycode, screened, enrolled, eligible, screened_date
+#' @param form_name The exact name (specified in followup_data) that you want
+#' to find the data for
 #'
 #' @return visualization
 #' @export
@@ -3174,13 +3176,14 @@ expected_and_followup_visit_by_site <- function(analytic){
 #' \dontrun{
 #' enrollment_and_followup_activities_overview()
 #' }
-enrollment_and_followup_activities_overview <- function(analytic){
+enrollment_and_followup_activities_overview <- function(analytic, form_name = 'Overall'){
   followups <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 
+                              'status', 'form_dates'), sep=",") %>% 
     mutate_all(na_if, 'NA') %>%
-    filter(form == 'Overall')
+    filter(form == form_name)
   
   followups <- followups %>%
     mutate(status = gsub('_', ' ', status)) %>%
@@ -3219,16 +3222,23 @@ enrollment_and_followup_activities_overview <- function(analytic){
       mutate(Enrolled = format_count_percent(Enrolled, Screened),
              `Eligible, Not Enrolled` = format_count_percent(`Eligible, Not Enrolled`, Screened))
     
-    followup_counts <- site_followups %>%
-      separate(status, c('status', 'modifier'), sep = ': ', fill = 'right') %>%
-      reframe(`2 Week Follow-up` = sum(followup_period=='2 Week'&status=='Complete', 
-                                       na.rm = TRUE),
-              `3 Month Follow-up` = sum(followup_period=='3 Month'&status=='Complete', 
-                                        na.rm = TRUE),
-              `6 Month Follow-up` = sum(followup_period=='6 Month'&status=='Complete', 
-                                        na.rm = TRUE),
-              `12 Month Follow-up` = sum(followup_period=='12 Month'&status=='Complete', 
-                                         na.rm = TRUE))
+    periods <- site_followups %>%
+      pull(followup_period) %>%
+      unique()
+    
+    followup_counts <- tibble()
+    
+    count_list <- list()
+    
+    for (period in periods) {
+      complete_count <- site_followups %>%
+        filter(followup_period == period, status == 'Complete') %>%
+        nrow()
+      
+      count_list[[paste(period, "Follow-up")]] <- complete_count
+    }
+    
+    followup_counts <- as_tibble(count_list)  
     
     site_combined <- cbind(last_month, historical, followup_counts)
     site_counts <- tibble(
@@ -3239,12 +3249,20 @@ enrollment_and_followup_activities_overview <- function(analytic){
   }
   
   all_sites <- study_status$facilitycode %>% unique() %>% sort()
+  all_sites_followup <- followups$facilitycode %>% unique() %>% sort()
+  
+  if (length(all_sites) != length(all_sites_followup)){
+    sites_wo_followups <- all_sites[!all_sites %in% all_sites_followup]
+    warning(paste("Site(s)", sites_wo_followups, "not found in followup_data, will not be included in final visualization"))
+    all_sites <- all_sites[all_sites %in% all_sites_followup]
+  }
+  
   sites_combined <- tibble()
   for (site in c('TOTAL', all_sites)) {
     sites_combined <- rbind(sites_combined, per_site(site))
   }
   
-  header <- c(1, 3, 3, 4)
+  header <- c(1, 3, 3, ncol(sites_combined)-7)
   names(header) <- c(' ', 'Last 30 Days', 'Study Length', 'Follow-up Completion Status')
   
   vis <- kable(sites_combined, format="html", align='l') %>%
