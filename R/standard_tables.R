@@ -3273,3 +3273,118 @@ enrollment_and_followup_activities_overview <- function(analytic, form_name = 'O
 }
 
 
+#' Ineligibility reasons info
+#'
+#' @description \
+#' The ineligibility reasons info function returns the counts of ineligibility
+#' reasons specified in the ineligibility_reasons construct. The output visualization
+#' is split up by site, with a total row. Note that the counts are for specific
+#' reasons, not people, and so will not total the number of participants considered
+#' ineligible.
+#'
+#' @param analytic This is the analytic data set that must include study_id,
+#' facilitycode, screened, ineligible, and ineligibility_reasons
+#'
+#' @return visualization
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' top_5_ineligibility_reasons()
+#' }
+ineligibility_reasons_info <- function(analytic){
+  raw <- analytic %>%
+    select(study_id, facilitycode, ineligibility_reasons, screened, ineligible)
+  
+  split <- raw %>%
+    separate_rows(ineligibility_reasons, sep='; ')
+  
+  top_reasons <- split %>%
+    filter(!is.na(ineligibility_reasons)) %>%
+    count(ineligibility_reasons) %>%
+    arrange(desc(n)) %>%
+    slice(1:5) %>%
+    pull(ineligibility_reasons)
+  
+  top_reasons_tbl <-
+    tibble(
+      ineligibility_reasons = top_reasons
+    )
+  
+  per_site <- function(site) {
+    if (site != 'TOTAL') {
+      only_site <-  split %>%
+        filter(facilitycode == site)
+    } else {
+      only_site <- split
+    }
+    
+    top_5_counts <- only_site %>%
+      filter(!is.na(ineligibility_reasons)) %>%
+      count(ineligibility_reasons) %>%
+      filter(ineligibility_reasons %in% top_reasons)
+    
+    other_counts <- only_site %>%
+      filter(!is.na(ineligibility_reasons)) %>%
+      count(ineligibility_reasons) %>%
+      filter(!ineligibility_reasons %in% top_reasons) %>%
+      pull(n) %>%
+      sum()
+    
+    with_other <- top_reasons_tbl %>%
+      left_join(top_5_counts) %>%
+      rbind(tibble(
+        ineligibility_reasons = "Other Reasons",
+        n = other_counts
+      ))
+    
+    pivoted <- with_other %>%
+      pivot_wider(
+        names_from = ineligibility_reasons,
+        values_from = n
+      )
+    
+    # This will give number of people screened and ineligible so will not equal number of reasons
+    screened_count <- only_site %>%
+      select(study_id, screened) %>%
+      unique() %>%
+      filter(screened) %>%
+      nrow()
+    ineligible_count <-only_site %>%
+      select(study_id, ineligible) %>%
+      unique() %>%
+      filter(ineligible) %>%
+      nrow()
+    
+    with_statuses <- pivoted %>%
+      mutate(Site = site,
+             Screened = screened_count,
+             Ineligible = ineligible_count) %>%
+      select(Site, Screened, Ineligible, 1:6) %>%
+      mutate_all(~ ifelse(is.na(.), 0, .))
+    
+    with_statuses
+  }
+  
+  all_sites <- raw %>%
+    pull(facilitycode) %>%
+    unique()
+  all_sites <- sites[!is.na(all_sites)]
+  
+  sites_combined <- tibble()
+  for (site in c('TOTAL', all_sites)) {
+    print(site)
+    sites_combined <- rbind(sites_combined, per_site(site))
+  }
+  
+  header <- c(1, 2, 5, 1)
+  names(header) <- c(' ', ' ', 'Top 5 Ineligibility Reasons', ' ')
+  
+  vis <- kable(sites_combined, format="html", align='l') %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
+
+
