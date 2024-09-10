@@ -20,6 +20,15 @@ Suggests:
   scales
 Remotes:
   metrc/VisualizationTools@*release
+Imports:
+  tidyverse,
+  janitor,
+  kableExtra,
+  DiagrammeR,
+  DiagrammeRsvg,
+  rsvg,
+  base64enc,
+  VisualizationTools
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3
