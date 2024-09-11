@@ -1985,8 +1985,8 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discont
 #' @description This function visualizes the treatment crossover or any nonadherence occured during the Tobra
 #' study by treatment arm.
 #'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, infection_reported_6mo, infection_adjudicated_6mo, 
-#' infection_adjudication_pending_6mo
+#' @param analytic This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
+#' dssi_adjudication_pending_6mo
 #'
 #' @return A kable table
 #' @export
@@ -2002,11 +2002,11 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
   inner_dssi_reported_adjudicated <- function(pull) {
     
   df <- pull %>% 
-    select(study_id, enrolled, followup_expected_6mo, infection_reported_6mo, infection_adjudicated_6mo, 
-           infection_adjudication_pending_6mo)
+    select(study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
+           dssi_adjudication_pending_6mo)
   
   total_ids_dssi <- df %>% 
-    filter(infection_reported_6mo & enrolled) %>% 
+    filter(dssi_reported_6mo & enrolled) %>% 
     distinct(study_id) %>% 
     nrow() 
   
@@ -2015,9 +2015,9 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
     select(-enrolled, -study_id) %>%
     summarize(
       `Number of participants with visits expected at 6 months` = paste(sum(followup_expected_6mo, na.rm = TRUE)), 
-      `Deep surgical site infections reported within 6 months` = paste0(sum(infection_reported_6mo, na.rm = TRUE), " (", total_ids_dssi, ")"),
-      `Deep surgical site infection adjudicated at 6 months` = paste(sum(infection_adjudicated_6mo, na.rm = TRUE)),
-      `Participant with infections yet to be adjudicated within 6 months from time zero` = paste(sum(infection_adjudication_pending_6mo, na.rm = TRUE))) %>% 
+      `Deep surgical site infections reported within 6 months` = paste0(sum(dssi_reported_6mo, na.rm = TRUE), " (", total_ids_dssi, ")"),
+      `Deep surgical site infection adjudicated at 6 months` = paste(sum(dssi_adjudicated_6mo, na.rm = TRUE)),
+      `Participant with infections yet to be adjudicated within 6 months from time zero` = paste(sum(dssi_adjudication_pending_6mo, na.rm = TRUE))) %>% 
     pivot_longer(everything()) %>% 
     rename(" " = name,
            "Total" = value)
@@ -2027,8 +2027,8 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
   
   pull <- analytic %>%
     filter(enrolled) %>%
-    select(study_id, enrolled, followup_expected_6mo, infection_reported_6mo, infection_adjudicated_6mo, 
-           infection_adjudication_pending_6mo, treatment_arm)
+    select(study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
+           dssi_adjudication_pending_6mo, treatment_arm)
   
   pull_a <- pull %>% filter(treatment_arm == "Group A")
   pull_b <- pull %>% filter(treatment_arm == "Group B")
