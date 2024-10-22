@@ -693,3 +693,45 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
   file.remove(c(temp_svg_path, temp_png_path))
   return(img_tag)
 }
+
+
+
+#' Visualization Library: Issues per site
+#'
+#' @description Visualizes the number of open and untouched issues per site,
+#' determined by the status column in the query_database being set to "Deteected".
+#'
+#'
+#' @return table of data quality confirmation forms
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' vislib_query_issues_per_site()
+#' }
+vislib_query_issues_per_site <- function(analytic) {
+  analytic_data <- analytic %>%
+    select(study_id, analytic_query_database) %>%
+    separate_rows(analytic_query_database, sep=";") %>% 
+    separate(analytic_query_database, c("ID", "facilitycode", "construct", "Message", "ADDRESS", 
+                              "Field", "Value", "updated_value", "status", "detected_date", 
+                              "changed_date", "recent", "modified_date", "confirmed_date", 
+                              "confirmed_modified_date", "closed_date", "warning", "note"), sep=",")
+  
+  filtered <- analytic_data %>%
+    filter(status == 'Detected')
+  
+  facility_counts <- filtered %>%
+    count(facilitycode)
+  
+  arranged <- facility_counts %>%
+    arrange(desc(n))
+  
+  vis <- ggplot(arranged, aes(x = reorder(facilitycode, -n), y = n)) +
+    geom_bar(stat = "identity", fill = "darkblue") +
+    labs(x = "Facility Code", y = "Count") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 60, hjust = .5))
+  
+  return(vis)
+}
