@@ -1603,7 +1603,7 @@ other_reason_refusal_by_site <- function(analytic){
 #' reasons
 #'
 #' @param analytic This is the analytic data set that must include study_id, facilitycode, able_to_participate, 
-#' nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_othr, constraint_othr_txt, screened
+#' nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_other, constraint_othr_txt, screened
 #'
 #' @return nothing
 #' @export
@@ -1615,19 +1615,19 @@ other_reason_refusal_by_site <- function(analytic){
 not_enrolled_for_other_reasons <- function(analytic){
   
   df1 <- analytic %>%  select(study_id, facilitycode, able_to_participate, nonparticipation_text_given, 
-                              constraint_noconsent, constraint_admin, constraint_othr, constraint_othr_txt, screened) %>% 
+                              constraint_noconsent, constraint_admin, constraint_other, constraint_othr_txt, screened) %>% 
     filter(screened) %>% 
-    filter(constraint_admin == TRUE | constraint_noconsent == TRUE | constraint_othr == TRUE | !is.na(nonparticipation_text_given)) %>% 
+    filter(constraint_admin == TRUE | constraint_noconsent == TRUE | constraint_other == TRUE | !is.na(nonparticipation_text_given)) %>% 
     select(-screened) %>% 
     mutate(constraint_noconsent = ifelse(constraint_noconsent, "Yes", "No")) %>% 
     mutate(constraint_admin = ifelse(constraint_admin, "Yes", "No")) %>% 
-    mutate(constraint_othr = ifelse(constraint_othr, "Yes", "No")) %>% 
+    mutate(constraint_other = ifelse(constraint_other, "Yes", "No")) %>% 
     rename(`Clinical Site` = facilitycode,
            `Able to participate` = able_to_participate,
            `Reason for nonparticpation` = nonparticipation_text_given,
            `Constraint: No consent given` = constraint_noconsent,
            `Constraint: Administrative reason` = constraint_admin,
-           `Constraint: Other` = constraint_othr,
+           `Constraint: Other` = constraint_other,
            `Other constraint reason` = constraint_othr_txt,
            `Study_ID` = study_id)
   
@@ -2348,13 +2348,15 @@ wbs_main_paper_patient_characteristics <- function(analytic){
   df_final <- rbind(df_age_final, df_sex, df_race_ethnicity, df_education, df_self_efficacy_final, df_usual_major_activity,
                     df_physical_demand, df_work_hours_final, df_tobacco, df_bmi_final, df_preinjury_health, df_insurance) 
   
+  
   index_vec_a <- c("Age" = 2, "Sex" = 3, "Race Ethnicity" = 5,
                    "Education" = 5,  "Self Efficacy for return to Usual Activities"=4, 
-                   "Preinjury Usual Major Activity" = 6, "Physical Demand of Job"= 6,
+                   "Preinjury Usual Major Activity" = 4, "Physical Demand of Job"= 6,
                    "Hours worked per week" = 2, "Tobacco Use" = 4, "BMI" = 2, "Preinjury Health" = 6, 
                    "Insurance Type" = 3)
   
   title <- paste("Total = ", total)
+  
   
   df_for_table <- df_final %>% 
     select(heading, n) %>% 
@@ -2365,7 +2367,7 @@ wbs_main_paper_patient_characteristics <- function(analytic){
   table_raw<- kable(df_for_table, format="html", align='l') %>%
     pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position='left') %>% 
-    row_spec(c(0,2,5,10,15,19,25,31,33,37,39,45,48), extra_css = "border-bottom: 1px solid;")
+    row_spec(c(0,2,5,10,15,19,23,29,31,35,37,43,46), extra_css = "border-bottom: 1px solid;")
   
   
   return(table_raw)
