@@ -841,7 +841,7 @@ vislib_query_issues_per_site <- function(analytic) {
   
   html_content <- readLines(fn, warn = FALSE) 
   html_content <- paste(html_content, collapse = "\n") # Convert the complete HTML content to base64 
-  base64_html <- base64encode(charToRaw(html_content)) # Create the HTML page with embedded content in an object tag 
+  base64_html <- base64enc::base64encode(charToRaw(html_content)) # Create the HTML page with embedded content in an object tag 
   html_page <- paste0( '<object data="data:text/html;base64,', base64_html, '" type="text/html" style="height: 700px; width: 100%; border: none;"></object>' ) 
   
   file.remove(fn)
