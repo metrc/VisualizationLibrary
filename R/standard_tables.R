@@ -3388,4 +3388,61 @@ ineligibility_reasons_info <- function(analytic){
 }
 
 
+#' Follow-up Forms Time to Complete
+#'
+#' @description 
+#' Returns summary statistics on the number of days to complete various follow-up forms.
+#'
+#' @param analytic This is the analytic data set that must include study_id, followup_data, event_time_zero,
+#' and enrolled
+#' @param timepoints the point in time to be considered in the visualization
+#' @param form_selection the form to be considered in the visualization
+#'
+#' @return 
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' followup_completion_time_stats()
+#' }
+followup_completion_time_stats <- function(analytic, timepoints, form_selection = 'Overall'){
+  df <- analytic %>%
+    select(study_id, event_time_zero, followup_data,
+           matches(paste0('^orthopaedic_last_date_(', paste(timepoints, collapse = '|'), ')$')),
+           enrolled) %>% 
+    separate_rows(followup_data, sep=";") %>% 
+    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>%
+    separate(status, c('status', 'timing'), sep = ':') %>%
+    filter(form == form_selection) %>%
+    select(-form, -redcap_event_name)
+  
+  df <- df %>%
+    mutate(status = na_if(status, 'NA')) %>%
+    mutate(form_dates = na_if(form_dates, 'NA')) 
+  
+  discontinued <- df %>%
+    filter(!enrolled) %>%
+    select(-enrolled)
+  
+  df <- df %>%
+    select(-enrolled)
+  
+  parsed_timepoints <- list(
+    '2wk' = '2 Week',
+    '3mo' = '3 Month',
+    '6mo' = '6 Month',
+    '12mo' = '12 Month'
+  )
+  
+  converted_timepoints <- parsed_timepoints[timepoints] %>% 
+    unlist(use.names = FALSE)
+  
+  vis <- kable(form_df, format="html", align='l') %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
+
+
 
