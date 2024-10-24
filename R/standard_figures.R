@@ -712,8 +712,6 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
 #' }
 vislib_query_issues_per_site <- function(analytic) {
   fn <- tempfile(fileext = ".html")
-
-  requireNamespace('plotly')
   
   print("Getting queries...")
   queries_full <- analytic %>%
