@@ -7,8 +7,8 @@
 closed_dssi_reported_adjudicated(analytic, footnotes = NULL)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, infection_reported_6mo, infection_adjudicated_6mo, 
-infection_adjudication_pending_6mo}
+\item{analytic}{This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
+dssi_adjudication_pending_6mo}
 }
 \value{
 A kable table

@@ -1,36 +1,37 @@
 
 #' DSMB Consort Diagram
 #'
-#' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military
+#' @description This function visualizes the categorical percentages of Study Status for any study, similar to the NSAID consort diagram, but with customization endpoints.
 #'
-#' @param analytic This is the analytic data set that must include screened, eligible, 
-#' consented, randomized, enrolled, patient_status_active, censored, refused, late_ineligible, and the meta construct column
-#' @param not_enrolled_other is a meta construct that is NULL by default
-#' @param completed_str is the text for the completed box that defaults to 'Completed 12-month visit'
+#' @param analytic The analytic data set that must include the following columns: screened, eligible, consented, refused, discontinued_pre_randomization, randomized, late_ineligible, enrolled, patient_status_active, censored, and completed.
+#' @param not_enrolled_other A column in the dataset for cases that are eligible but not enrolled for reasons other than refusal (optional).
+#' @param completed_str A string specifying the label for the completion status box. Defaults to "Completed 12-month visit".
+#' @param late_inelgible defaults to late_ineligble but can be any construct like "adjudicated_discontinued"
+#' @param late_inelgible_str defaults to Late Ineligible but can be any construct like "Adjudicated Discontinued"
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' dsmb_consort_diagram()
 #' }
-dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_str="Completed 12-month visit"){
+dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_str="Completed 12-month visit", late_ineligible="late_ineligible", late_ineligible_str="Late Ineligible"){
   analytic <- analytic %>% 
-    filter(screened == TRUE) 
-  
+  filter(screened == TRUE) 
+  late_ineligible_var <- late_ineligible
   Screened <- sum(analytic$screened, na.rm=TRUE)
   Eligible <- sum(analytic$eligible, na.rm=TRUE)
   Consented <- sum(analytic %>% 
                      filter(eligible) %>% 
                      pull(consented), na.rm=TRUE)
   Refused <- sum(analytic %>% 
-                     filter(eligible) %>% 
-                     pull(refused), na.rm=TRUE)
+                   filter(eligible) %>% 
+                   pull(refused), na.rm=TRUE)
   Disconintued_Pre <- sum(analytic %>% 
-                           filter(eligible) %>% 
-                           filter(consented) %>% 
-                           pull(discontinued_pre_randomization), na.rm=TRUE)
+                            filter(eligible) %>% 
+                            filter(consented) %>% 
+                            pull(discontinued_pre_randomization), na.rm=TRUE)
   Randomized <- sum(analytic %>% 
                       filter(eligible) %>% 
                       filter(consented) %>% 
@@ -38,7 +39,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
   Late_Ineligible <- sum(analytic %>% 
                            filter(eligible) %>% 
                            filter(consented) %>% 
-                           pull(late_ineligible), na.rm=TRUE)
+                           pull(late_ineligible_var), na.rm=TRUE)
   Enrolled <- sum(analytic %>% 
                     filter(eligible) %>% 
                     filter(consented) %>% 
@@ -57,11 +58,11 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
                         filter(enrolled) %>% 
                         pull(censored), na.rm=TRUE)
   Completed <- sum(analytic %>% 
-                        filter(eligible) %>% 
-                        filter(consented) %>% 
-                        filter(randomized)  %>% 
-                        filter(enrolled) %>% 
-                        pull(completed), na.rm=TRUE)
+                     filter(eligible) %>% 
+                     filter(consented) %>% 
+                     filter(randomized)  %>% 
+                     filter(enrolled) %>% 
+                     pull(completed), na.rm=TRUE)
   Ineligible <- Screened - Eligible
   if(is.null(not_enrolled_other)){
     Not_Enrolled_Other <- Eligible - Consented - Refused
@@ -81,7 +82,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       pre_rand [style="rounded,filled", fillcolor="#ccccff", pos="10,8!", shape = box, width=2.4, height=1, label = "Discontinued\nPre-Randomization\n(n=',Disconintued_Pre,')"];
 
       rand [style="rounded,filled", fillcolor="#ccccff", pos="6,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
-      late_inelig [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "Late Ineligible (n=',Late_Ineligible,')"];
+      late_inelig [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "',late_ineligible_str,', (n=',Late_Ineligible,')"];
       
       enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Enrolled (n=',Enrolled,')"];
       discon [style="rounded,filled", fillcolor="#ccccff", pos="6,1!", shape = box, width=2.4, height=1, label = "Discontinued (n=',Discontinued,')"];
