@@ -8,8 +8,8 @@ dsmb_consort_diagram(
   analytic,
   not_enrolled_other = NULL,
   completed_str = "Completed 12-month visit",
-  late_inelgible = "late_inelgible",
-  late_inelgible_str = "Late Inelgible"
+  late_ineligible = "late_ineligible",
+  late_ineligible_str = "Late Ineligible"
 )
 }
 \arguments{
