@@ -711,7 +711,6 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
 #' vislib_query_issues_per_site()
 #' }
 vislib_query_issues_per_site <- function(analytic) {
-  fn <- tempfile(fileext = ".html")
   
   print("Getting queries...")
   queries_full <- analytic %>%
@@ -836,15 +835,7 @@ vislib_query_issues_per_site <- function(analytic) {
   print(Sys.time()-start)
   
   print("Plotly save...")
-  htmlwidgets::saveWidget(p, fn)
-  print(Sys.time()-start)
-  
-  html_content <- readLines(fn, warn = FALSE) 
-  html_content <- paste(html_content, collapse = "\n") # Convert the complete HTML content to base64 
-  base64_html <- base64enc::base64encode(charToRaw(html_content)) # Create the HTML page with embedded content in an object tag 
-  html_page <- paste0( '<object data="data:text/html;base64,', base64_html, '" type="text/html" style="height: 700px; width: 100%; border: none;"></object>' ) 
-  
-  file.remove(fn)
+  html_page <- export_plotly(p)
   
   if(nrow(processed_data_full)==0){
     processed_data_full<-NA
