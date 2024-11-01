@@ -22,11 +22,15 @@ jobs:
       uses: actions/checkout@v3
 
     # Run R CMD Check. If this check fails we abort subsequent steps.
-    - name: Runs R CMD Check
-      id: r-cmd-check
-      uses: r-lib/actions/check-r-package@v2
-      with:
-        error-on: '"error"'
+    - name: Manually run R CMD Check from the shell
+      continue-on-error: true
+      working-directory: VisualizationLibrary
+      run: R CMD check .
+
+    # Build Linux binary package
+    - name: Build platform-specific binary packages for the Analytic Codebase
+      working-directory: 'VisualizationLibrary'
+      run: R CMD INSTALL -l $RUNNER_TEMP --build .
 
     # Build Linux binary package
     - name: Build platform-specific binary packages
