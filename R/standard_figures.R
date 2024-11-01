@@ -386,15 +386,21 @@ enrollment_by_injury_and_site <- function(analytic){
 #' \dontrun{
 #' enrollment_by_site()
 #' }
-enrollment_by_site <- function(analytic){
+enrollment_by_site <- function(analytic, number_order = FALSE){
   
   df <- analytic %>%  select(study_id, enrolled, facilitycode, consent_date) %>% 
     filter(enrolled = TRUE) %>% 
     filter(!is.na(consent_date)) %>% 
     group_by(facilitycode) %>%
-    summarise(EnrolledPatients = n()) 
+    summarise(EnrolledPatients = n()) %>%
+    arrange(facilitycode)
   
-  g <- ggplot(df, aes(x = facilitycode, y = EnrolledPatients)) +
+  if (number_order) {
+    df <- df %>%
+      arrange(desc(EnrolledPatients))
+  }
+  
+  g <- ggplot(df, aes(x = factor(facilitycode,  levels = facilitycode), y = EnrolledPatients)) +
     geom_bar(stat = "identity", fill = 'blue3', color = 'black', size = 0.5, width = 0.8) +
     labs(title = "Number of patients enrolled by site", x = "Site", y = "Number enrolled") +
     theme_minimal() +
