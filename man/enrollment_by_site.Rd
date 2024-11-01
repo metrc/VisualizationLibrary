@@ -4,7 +4,7 @@
 \alias{enrollment_by_site}
 \title{Enrollment of subjects by each site}
 \usage{
-enrollment_by_site(analytic)
+enrollment_by_site(analytic, number_order = FALSE)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, enrolled, facilitycode}
