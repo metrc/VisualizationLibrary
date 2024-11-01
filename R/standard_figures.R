@@ -713,7 +713,6 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
 vislib_query_issues_per_site <- function(analytic) {
   fn <- tempfile(fileext = ".html")
   
-  print("Getting queries...")
   queries_full <- analytic %>%
     select(analytic_query_database) %>%
     separate_rows(analytic_query_database, sep = 'NEWROW:') %>%
@@ -724,7 +723,6 @@ vislib_query_issues_per_site <- function(analytic) {
              sep = 'NEWCOLUMN:') %>%
     filter(!is.na(status) & status != 'NA')
   
-  print("Setting up queries...")
   weeks <- 2
   
   if (nrow(queries_full)==0){
@@ -740,32 +738,24 @@ vislib_query_issues_per_site <- function(analytic) {
   t_cols <- c("Detected","Changed","Confirmed","Changed & Confirmed","Follow-up Requested","Dashboard Changed","Updated Form Value Unchanged","Closed","Indicated Data Change", "Update Form & Indicated Data Change")
   
   for (i in indexes){
-    print("Starting to look at this weeks queries...")
     start <- Sys.time()
     queries <- queries_full
     
-    print("Fixing NA dates...")
     queries['closed_fixed'] <- replace_na(as.Date(queries$closed_date, "%m/%d/%Y") <= fixed,FALSE)
     queries['changed_fixed'] <- replace_na(as.Date(queries$changed_date, "%m/%d/%Y") <= fixed,FALSE)
     queries['confirmed_fixed'] <- replace_na(as.Date(queries$confirmed_date, "%m/%d/%Y") <= fixed,FALSE)
     queries['detected_fixed'] <- replace_na(as.Date(queries$detected_date, "%m/%d/%Y") <= fixed,FALSE)
-    print(Sys.time()-start)
-    
-    print("Storing as dates...")
+
     queries['closed_dated'] <- as.Date(ifelse(queries$closed_fixed, queries$closed_date, NA), "%m/%d/%Y")
     queries['changed_dated'] <- as.Date(ifelse(queries$changed_fixed, queries$changed_date, NA), "%m/%d/%Y")
     queries['confirmed_dated'] <- as.Date(ifelse(queries$confirmed_fixed, queries$confirmed_date, NA), "%m/%d/%Y")
     queries['detected_dated'] <- as.Date(ifelse(queries$detected_fixed, queries$detected_date, NA), "%m/%d/%Y")
-    print(Sys.time()-start)
-    
-    print("Finding max dates...")
+
     queries <- queries %>% rowwise() %>%
       mutate(max_date= max(na.omit(c(detected_dated, changed_dated, confirmed_dated, changed_dated, closed_dated))))
-    print(Sys.time()-start)
-    
+
     changed_confirmed <- c("Changed", "Confirmed")
     
-    print("Starting to set status...")
     queries <- queries %>%
       mutate(status= NA) %>%
       mutate(status= ifelse(replace_na(detected_dated==max_date,FALSE), "Detected", status)) %>%
@@ -773,16 +763,12 @@ vislib_query_issues_per_site <- function(analytic) {
       mutate(status= ifelse(replace_na(confirmed_dated==max_date,FALSE), "Confirmed", status)) %>%
       mutate(status= ifelse(is.na(status)==FALSE & is.na(confirmed_dated)==FALSE & is.na(changed_dated)==FALSE & status %in% changed_confirmed,"Changed & Confirmed", status)) %>%
       mutate(status= ifelse(replace_na(closed_dated==max_date,FALSE), "Closed", status))
-    print(Sys.time()-start)
-    
-    print("Finer status details...")
+
     queries <- queries %>%
       mutate(recent= replace_na(recent,FALSE)) %>%
       mutate(warning= ifelse(is.na(changed_date),NA, ifelse(as.Date(changed_date, "%m/%d/%Y") > as.Date(detected_date, "%m/%d/%Y"), ifelse(recent==TRUE, "WARNING: None Modified after Changed", NA), "WARNING: Detected after Changed"))) %>%
       select(colnames(queries))
-    print(Sys.time()-start)
-    
-    print("Gathering this data by facility...")
+
     queries_count <- queries %>% group_by(facilitycode) %>% count(status)
     
     processed_data <- tibble('facilitycode'=unique(queries$facilitycode))
@@ -792,16 +778,13 @@ vislib_query_issues_per_site <- function(analytic) {
       processed_data <- processed_data %>% rowwise() %>% mutate(!!new_col := ifelse(length(counts[counts$facilitycode==facilitycode,]$n)==0,0,counts[counts$facilitycode==facilitycode,]$n))
     }
     processed_data <- processed_data %>% rename(Site=facilitycode) %>% mutate(Site = paste(Site,format(fixed,"%b-%d"),sep=", "))
-    print(Sys.time()-start)
-    
-    print("Binding...")
+
     if (i==1){
       processed_data_full <- processed_data
     } else{
       processed_data_full <- rbind(processed_data, processed_data_full)
     }
     fixed <- fixed - 7
-    print(Sys.time()-start)
   }
   
   
@@ -821,7 +804,6 @@ vislib_query_issues_per_site <- function(analytic) {
     processed_data_full <- processed_data_full[match(site_order, processed_data_full$Site),]
   }
   
-  print("Plotly prep...")
   p <- plotly::plot_ly(data = processed_data_full, x=~Site, y=~Detected, type = 'bar', name = unname(unlist(fixed_names['Detected']))) %>%
     add_trace(y = ~Changed, name = unname(unlist(fixed_names['Changed'])), marker = list(color = '#ff9933')) %>%
     add_trace(y = ~Confirmed, name = unname(unlist(fixed_names['Confirmed'])), marker = list(color = '#669933')) %>%
@@ -833,12 +815,9 @@ vislib_query_issues_per_site <- function(analytic) {
     add_trace(y = ~Closed, name = unname(unlist(fixed_names['Closed'])), marker = list(color = '#666666')) %>%
     add_trace(y = ~`Update Form & Indicated Data Change`, name = unname(unlist(fixed_names['Update Form & Indicated Data Change'])), marker = list(color = '#f0e690')) %>%
     plotly::layout(xaxis = list(title = "",categoryorder = "array", categoryarray = ~Site), yaxis = list(title = 'Count'), barmode = 'stack')
-  print(Sys.time()-start)
-  
-  print("Plotly save...")
+
   htmlwidgets::saveWidget(p, fn)
-  print(Sys.time()-start)
-  
+
   html_content <- readLines(fn, warn = FALSE) 
   html_content <- paste(html_content, collapse = "\n") # Convert the complete HTML content to base64 
   base64_html <- base64enc::base64encode(charToRaw(html_content)) # Create the HTML page with embedded content in an object tag 
