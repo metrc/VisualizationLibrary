@@ -3474,6 +3474,10 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
       `75th Percentile (Days)` = quantile(inner_data$days, 0.75, na.rm = TRUE, type = 1),
       `Maximum (Days)` = max(inner_data$days, na.rm = TRUE)
     )
+    if (inner_out$`N (Number of Complete)` == 0) {
+      inner_out <- inner_out %>%
+        mutate(across(-`N (Number of Complete)`, ~ "."))
+    }
     inner_out
   }
   
@@ -3510,7 +3514,7 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
   }
   
   output <- full_join(expected_counts, out %>% rename(`Follow-up Period` = period)) %>%
-    select("Follow-up Period", "value", "kind", "group", "N (Number of Complete)", 
+    select("Follow-up Period", "value", "N (Number of Complete)", 
            "Description", "Mean (Days)", "Standard Deviation", 
            "Minimum (Days)", "24th Percentile (Days)", "Median (Days)", 
            "75th Percentile (Days)", "Maximum (Days)") %>%
