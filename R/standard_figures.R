@@ -717,7 +717,6 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
 #' vislib_query_issues_per_site()
 #' }
 vislib_query_issues_per_site <- function(analytic) {
-  fn <- tempfile(fileext = ".html")
   
   queries_full <- analytic %>%
     select(analytic_query_database) %>%
@@ -822,15 +821,8 @@ vislib_query_issues_per_site <- function(analytic) {
     add_trace(y = ~`Update Form & Indicated Data Change`, name = unname(unlist(fixed_names['Update Form & Indicated Data Change'])), marker = list(color = '#f0e690')) %>%
     plotly::layout(xaxis = list(title = "",categoryorder = "array", categoryarray = ~Site), yaxis = list(title = 'Count'), barmode = 'stack')
 
-  htmlwidgets::saveWidget(p, fn)
+  html_page <- export_plotly(p)
 
-  html_content <- readLines(fn, warn = FALSE) 
-  html_content <- paste(html_content, collapse = "\n") # Convert the complete HTML content to base64 
-  base64_html <- base64enc::base64encode(charToRaw(html_content)) # Create the HTML page with embedded content in an object tag 
-  html_page <- paste0( '<object data="data:text/html;base64,', base64_html, '" type="text/html" style="height: 700px; width: 100%; border: none;"></object>' ) 
-  
-  file.remove(fn)
-  
   if(nrow(processed_data_full)==0){
     processed_data_full<-NA
   }
