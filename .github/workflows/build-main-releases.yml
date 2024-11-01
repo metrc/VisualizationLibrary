@@ -30,10 +30,6 @@ jobs:
     # Build Linux binary package
     - name: Build platform-specific binary packages for the Analytic Codebase
       working-directory: 'VisualizationLibrary'
-      run: R CMD INSTALL -l $RUNNER_TEMP --build .
-
-    # Build Linux binary package
-    - name: Build platform-specific binary packages
       run: R CMD INSTALL -l ${{ runner.temp }} --build .
 
     # Retrieve build artifact filenames
