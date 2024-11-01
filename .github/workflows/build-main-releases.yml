@@ -11,6 +11,8 @@ jobs:
   build-linux-release:
     name: Build Linux Release
     runs-on: ubuntu-latest
+    container:
+      image: eliaswf/jammy-chromedriver-python-r:latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       tag_name:  ${{ steps.create_tag_name.outputs.tag_name }}
