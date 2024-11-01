@@ -3509,7 +3509,7 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
     }
   }
   
-  output <- full_join(expected_counts, arranged %>% rename(`Follow-up Period` = period)) %>%
+  output <- full_join(expected_counts, out %>% rename(`Follow-up Period` = period)) %>%
     select("Follow-up Period", "value", "kind", "group", "N (Number of Complete)", 
            "Description", "Mean (Days)", "Standard Deviation", 
            "Minimum (Days)", "24th Percentile (Days)", "Median (Days)", 
