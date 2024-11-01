@@ -3407,40 +3407,117 @@ ineligibility_reasons_info <- function(analytic){
 #' \dontrun{
 #' followup_completion_time_stats()
 #' }
-followup_completion_time_stats <- function(analytic, timepoints, form_selection = 'Overall'){
+followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo'), ortho_timepoints = NULL, form_selection = 'Overall'){
+  if (is.null(ortho_timepoints)) {
+    ortho_timepoints <- timepoints
+  }
+  
   df <- analytic %>%
-    select(study_id, event_time_zero, followup_data,
-           matches(paste0('^orthopaedic_last_date_(', paste(timepoints, collapse = '|'), ')$')),
-           enrolled) %>% 
+    select(study_id, time_zero, followup_data,
+           matches(paste0('^orthopaedic_last_date_(', paste(ortho_timepoints, collapse = '|'), ')$')),
+           matches(paste0('^followup_expected_(', paste(timepoints, collapse = '|'), ')$')),
+           enrolled) %>%
+    mutate(time_zero = as.Date(sapply(str_split(time_zero, ";"), `[`, 1))) %>%
     separate_rows(followup_data, sep=";") %>% 
     separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>%
     separate(status, c('status', 'timing'), sep = ':') %>%
     filter(form == form_selection) %>%
-    select(-form, -redcap_event_name)
+    select(-form, -redcap_event_name, -timing)
   
   df <- df %>%
     mutate(status = na_if(status, 'NA')) %>%
     mutate(form_dates = na_if(form_dates, 'NA')) 
   
-  discontinued <- df %>%
-    filter(!enrolled) %>%
-    select(-enrolled)
+  beautify_timepoint <- function(string) {
+    newstr <- str_replace(string, 'wk', ' Week') %>%
+      str_replace('mo', ' Month')
+    return(newstr)
+  }
   
-  df <- df %>%
-    select(-enrolled)
+  expected_counts <- df %>%
+    select(study_id, starts_with('followup_expected')) %>%
+    unique() %>%
+    summarise(across(starts_with('followup_expected'), ~ sum(. == TRUE))) %>%
+    pivot_longer(starts_with('followup_expected'))  %>%
+    mutate(name = beautify_timepoint(str_remove(name, "followup_expected_"))) %>%
+    rename(`Follow-up Period` = name)
   
-  parsed_timepoints <- list(
-    '2wk' = '2 Week',
-    '3mo' = '3 Month',
-    '6mo' = '6 Month',
-    '12mo' = '12 Month'
-  )
+  converted_timepoints <- beautify_timepoint(timepoints)
+  converted_ortho_timepoints <- beautify_timepoint(ortho_timepoints)
   
-  converted_timepoints <- parsed_timepoints[timepoints] %>% 
-    unlist(use.names = FALSE)
+  filtered_and_pivoted <- df %>%
+    select(-starts_with('followup_expected')) %>%
+    filter(followup_period %in% converted_timepoints) %>%
+    mutate(form_dates = as.Date(form_dates)) %>%
+    pivot_wider(values_from = form_dates, names_from = followup_period,
+                names_prefix = 'Form; ')
   
-  vis <- kable(form_df, format="html", align='l') %>%
-    add_header_above(header) %>%
+  long_format <- filtered_and_pivoted %>%
+    pivot_longer(
+      cols = starts_with("orthopaedic_last_date") | starts_with("Form"),
+      names_to = "timepoint",
+      values_to = "date"
+    ) %>%
+    mutate(timepoint = beautify_timepoint(str_replace(timepoint, 'orthopaedic_last_date_', 'Ortho; ')))
+  
+  date_calc <- long_format %>%
+    mutate(days = as.numeric(date - time_zero))
+  
+  inner_function <- function(inner_data) {
+    inner_out <- tibble(
+      `N (Number of Complete)` = nrow(inner_data),
+      `Mean (Days)` = mean(inner_data$days, na.rm = TRUE) %>% round(2),
+      `Standard Deviation` = sd(inner_data$days, na.rm = TRUE) %>% round(2),
+      `Minimum (Days)` = min(inner_data$days, na.rm = TRUE),
+      `24th Percentile (Days)` = quantile(inner_data$days, 0.24, na.rm = TRUE, type = 1),
+      `Median (Days)` = quantile(inner_data$days, 0.5, na.rm = TRUE, type = 1),
+      `75th Percentile (Days)` = quantile(inner_data$days, 0.75, na.rm = TRUE, type = 1),
+      `Maximum (Days)` = max(inner_data$days, na.rm = TRUE)
+    )
+    inner_out
+  }
+  
+  separated <- date_calc %>%
+    separate(timepoint, into = c('kind', 'period'), sep = '; ')
+  
+  out <- NULL
+  for(time in converted_timepoints) {
+    temp <- separated %>%
+      filter(period == time)
+    
+    if (time %in% converted_ortho_timepoints) {
+      temp2 <- rbind(
+        inner_function(temp %>% filter(kind=='Form'&enrolled&!is.na(days))) %>%
+          mutate(kind = 'form completion', group = 'enrolled', 
+                 Description = 'Days to Form Completion'),
+        inner_function(temp %>% filter(kind=='Ortho'&enrolled&!is.na(days))) %>%
+          mutate(kind = 'ortho visit', group = 'enrolled', 
+                 Description = 'Days to Last Orthopaedic Visit')) %>%
+        mutate(period = time)
+    } else {
+      temp2 <- rbind(
+        inner_function(temp %>% filter(kind=='Form'&enrolled&!is.na(days))) %>%
+          mutate(kind = 'form completion', group = 'enrolled', 
+                 Description = 'Days to Form Completion')) %>%
+        mutate(period = time)
+    }
+    
+    if (is.null(out)) {
+      out <- temp2
+    } else {
+      out <- rbind(out, temp2)
+    }
+  }
+  
+  output <- full_join(expected_counts, arranged %>% rename(`Follow-up Period` = period)) %>%
+    select("Follow-up Period", "value", "kind", "group", "N (Number of Complete)", 
+           "Description", "Mean (Days)", "Standard Deviation", 
+           "Minimum (Days)", "24th Percentile (Days)", "Median (Days)", 
+           "75th Percentile (Days)", "Maximum (Days)") %>%
+    arrange(factor(`Follow-up Period`, levels = converted_timepoints)) %>%
+    rename(`N (Number of Expected)` = value)
+  
+  vis <- kable(output, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
   
   return(vis)
