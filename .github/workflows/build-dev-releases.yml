@@ -11,6 +11,8 @@ jobs:
   build-linux-prerelease:
     name: Build Linux Pre-release
     runs-on: ubuntu-latest
+    container:
+      image: eliaswf/jammy-chromedriver-python-r:latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       tag_name:  ${{ steps.create_tag_name.outputs.tag_name }}
@@ -18,8 +20,6 @@ jobs:
     # Checkout repository and install R and R package dependencies
     - name: Checkout git repository on to Github Actions runner
       uses: actions/checkout@v3
-    - name: Installs R using tidyverse r-lib Actions
-      uses: r-lib/actions/setup-r@v2
     - name: Install R package dependencies using tidyverse r-lib Actions
       uses: r-lib/actions/setup-r-dependencies@v2
       with:
