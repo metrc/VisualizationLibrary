@@ -24,12 +24,10 @@ jobs:
     # Run R CMD Check. If this check fails we abort subsequent steps.
     - name: Manually run R CMD Check from the shell
       continue-on-error: true
-      working-directory: VisualizationLibrary
       run: R CMD check .
 
     # Build Linux binary package
     - name: Build platform-specific binary packages for the Analytic Codebase
-      working-directory: 'VisualizationLibrary'
       run: R CMD INSTALL -l ${{ runner.temp }} --build .
 
     # Retrieve build artifact filenames
