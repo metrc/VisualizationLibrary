@@ -703,6 +703,84 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
 
 
 
+#' Visualization Library: Issues per site (Basic)
+#'
+#' @description Visualizes the number of open and untouched issues per site,
+#' determined by the status column in the query_database being set to "Deteected".
+#'
+#'
+#' @return table of data quality confirmation forms
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' vislib_query_issues_per_site_basic()
+#' }
+vislib_query_issues_per_site_basic <- function(analytic) {
+  
+  queries <- analytic %>%
+    select(analytic_query_database) %>%
+    separate_rows(analytic_query_database, sep = 'NEWROW:') %>%
+    separate(analytic_query_database, into = c("ID", "facilitycode", "construct", "Message", "ADDRESS", 
+                                               "Field", "Value", "updated_value", "status", "detected_date", 
+                                               "changed_date", "recent", "modified_date", "confirmed_date", 
+                                               "confirmed_modified_date", "closed_date", "warning", "note"),
+             sep = 'NEWCOLUMN:') %>%
+    filter(!is.na(status) & status != 'NA')
+  
+  if (nrow(queries)==0){
+    return("No Queries in Database.")
+  }
+  
+  queries<- queries %>% 
+    mutate(status = recode(status,
+                               "Closed" = "Resolved Issue",
+                               "Updated Form Value Unchanged" = "Open Issue",
+                               "Dashboard Changed" = "Open Issue",
+                               "Follow-up Requested" = "Open Issue",
+                               "Changed & Confirmed" = "Resolved Issue",
+                               "Confirmed" = "Resolved Issue",
+                               "Changed" = "Resolved Issue",
+                               "Detected" = "Open Issue",
+                               "Indicated Data Change" = "Open Issue",
+                               "Update Form & Indicated Data Change" = "Open Issue")) %>% 
+    group_by(facilitycode) %>% 
+    summarise(open = sum(status=="Open Issue"), closed=sum(status=="Resolved Issue")) %>%
+    ungroup() %>% 
+    arrange(desc(open))
+  
+  queries_long <- queries %>%
+    pivot_longer(cols = c(open, closed), names_to = "status", values_to = "count")
+  
+  # Update the ggplot to use the long format data
+  g <- ggplot(queries_long, aes(x = factor(facilitycode, levels=queries$facilitycode), y = count, fill = status)) +
+    geom_bar(stat = "identity", position = "stack", color = 'black', size = 0.5, width = 0.8) +
+    scale_fill_manual(values = c("open" = "red", "closed" = "blue3"),
+                      labels = c("open" = "Open Issue", "closed" = "Resolved Issue")) +
+    labs(title = "Number of Issues by Facility",
+         x = "Site",
+         y = "Issue Count") +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1),
+          legend.position = "top",  # Center the legend at the top
+          legend.title = element_blank())
+  
+  temp_png_path <- tempfile(fileext = ".png")
+  ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Enrollment by site" style="max-width: 100%%; width: 80%%;">', image_data)
+  file.remove(temp_png_path)
+  html_page <- export_plotly(p)
+
+  if(nrow(processed_data_full)==0){
+    processed_data_full<-NA
+  }
+  
+  return(html_page)
+  
+}
+
+
 #' Visualization Library: Issues per site
 #'
 #' @description Visualizes the number of open and untouched issues per site,
@@ -750,15 +828,15 @@ vislib_query_issues_per_site <- function(analytic) {
     queries['changed_fixed'] <- replace_na(as.Date(queries$changed_date, "%m/%d/%Y") <= fixed,FALSE)
     queries['confirmed_fixed'] <- replace_na(as.Date(queries$confirmed_date, "%m/%d/%Y") <= fixed,FALSE)
     queries['detected_fixed'] <- replace_na(as.Date(queries$detected_date, "%m/%d/%Y") <= fixed,FALSE)
-
+    
     queries['closed_dated'] <- as.Date(ifelse(queries$closed_fixed, queries$closed_date, NA), "%m/%d/%Y")
     queries['changed_dated'] <- as.Date(ifelse(queries$changed_fixed, queries$changed_date, NA), "%m/%d/%Y")
     queries['confirmed_dated'] <- as.Date(ifelse(queries$confirmed_fixed, queries$confirmed_date, NA), "%m/%d/%Y")
     queries['detected_dated'] <- as.Date(ifelse(queries$detected_fixed, queries$detected_date, NA), "%m/%d/%Y")
-
+    
     queries <- queries %>% rowwise() %>%
       mutate(max_date= max(na.omit(c(detected_dated, changed_dated, confirmed_dated, changed_dated, closed_dated))))
-
+    
     changed_confirmed <- c("Changed", "Confirmed")
     
     queries <- queries %>%
@@ -768,12 +846,12 @@ vislib_query_issues_per_site <- function(analytic) {
       mutate(status= ifelse(replace_na(confirmed_dated==max_date,FALSE), "Confirmed", status)) %>%
       mutate(status= ifelse(is.na(status)==FALSE & is.na(confirmed_dated)==FALSE & is.na(changed_dated)==FALSE & status %in% changed_confirmed,"Changed & Confirmed", status)) %>%
       mutate(status= ifelse(replace_na(closed_dated==max_date,FALSE), "Closed", status))
-
+    
     queries <- queries %>%
       mutate(recent= replace_na(recent,FALSE)) %>%
       mutate(warning= ifelse(is.na(changed_date),NA, ifelse(as.Date(changed_date, "%m/%d/%Y") > as.Date(detected_date, "%m/%d/%Y"), ifelse(recent==TRUE, "WARNING: None Modified after Changed", NA), "WARNING: Detected after Changed"))) %>%
       select(colnames(queries))
-
+    
     queries_count <- queries %>% group_by(facilitycode) %>% count(status)
     
     processed_data <- tibble('facilitycode'=unique(queries$facilitycode))
@@ -783,7 +861,7 @@ vislib_query_issues_per_site <- function(analytic) {
       processed_data <- processed_data %>% rowwise() %>% mutate(!!new_col := ifelse(length(counts[counts$facilitycode==facilitycode,]$n)==0,0,counts[counts$facilitycode==facilitycode,]$n))
     }
     processed_data <- processed_data %>% rename(Site=facilitycode) %>% mutate(Site = paste(Site,format(fixed,"%b-%d"),sep=", "))
-
+    
     if (i==1){
       processed_data_full <- processed_data
     } else{
@@ -820,9 +898,9 @@ vislib_query_issues_per_site <- function(analytic) {
     add_trace(y = ~Closed, name = unname(unlist(fixed_names['Closed'])), marker = list(color = '#666666')) %>%
     add_trace(y = ~`Update Form & Indicated Data Change`, name = unname(unlist(fixed_names['Update Form & Indicated Data Change'])), marker = list(color = '#f0e690')) %>%
     plotly::layout(xaxis = list(title = "",categoryorder = "array", categoryarray = ~Site), yaxis = list(title = 'Count'), barmode = 'stack')
-
+  
   html_page <- export_plotly(p)
-
+  
   if(nrow(processed_data_full)==0){
     processed_data_full<-NA
   }
@@ -830,3 +908,4 @@ vislib_query_issues_per_site <- function(analytic) {
   return(html_page)
   
 }
+
