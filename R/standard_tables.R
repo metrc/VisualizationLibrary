@@ -3417,6 +3417,7 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
            matches(paste0('^orthopaedic_last_date_(', paste(ortho_timepoints, collapse = '|'), ')$')),
            matches(paste0('^followup_expected_(', paste(timepoints, collapse = '|'), ')$')),
            enrolled) %>%
+    mutate(across(matches("_date$|_date_"), ~ as.Date(., format = "%Y-%m-%d"))) %>%
     mutate(time_zero = as.Date(sapply(str_split(time_zero, ";"), `[`, 1))) %>%
     separate_rows(followup_data, sep=";") %>% 
     separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>%
