@@ -576,7 +576,7 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #' @description This function visualizes the categorical percentages of study status as well as followup completions
 #'
 #' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible,
-#' refused, consented, randomized, enrolled, time_zero, censored, followup_data, 
+#' refused, consented, randomized, enrolled, time_zero, adjudicated_discontinued, completed, 
 #' safety_set
 #'  
 #' @param definitive_event Event either DF or DWC
@@ -592,7 +592,7 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
-           censored, followup_data, safety_set) %>% 
+           adjudicated_discontinued, completed, safety_set) %>% 
     mutate(time_zero = ifelse(!is.na(time_zero), TRUE, FALSE))
   
   screened <- sum(analytic$screened, na.rm = TRUE)
@@ -604,51 +604,46 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
   
   eligible <- sum(eligible_df$eligible, na.rm = TRUE)
   
-  ineligible <- screened - eligible
+  ineligible <- sum(eligible_df$ineligible, na.rm = TRUE)
   
-  refused_df <- eligible_df %>% 
+  eligble_df <- eligible_df %>% 
     filter(eligible)
   
-  refused <- sum(refused_df$refused, na.rm = TRUE)
+  refused <- sum(eligble_df$refused, na.rm = TRUE)
   
-  consented_df <- refused_df %>% 
+  not_refused_df <- eligble_df %>% 
     filter(refused == FALSE | is.na(refused))
   
-  consented <- sum(consented_df$consented, na.rm = TRUE)
+  consented <- sum(not_refused_df$consented, na.rm = TRUE)
+  
+  # First identity (no construct used for not consented)
   not_consented <- eligible - (consented + refused)
   
-  randomized_df <- consented_df %>% 
+  consented_df <- eligible_df %>% 
     filter(consented)
   
-  randomized <- sum(randomized_df$randomized, na.rm = TRUE)
+  randomized <- sum(consented_df$randomized, na.rm = TRUE)
   
-  ed_df <- randomized_df %>% 
+  not_randomized_df <- consented_df %>% 
+    filter(!randomized | is.na(randomized))
+  
+  ed_consented <- sum(not_randomized_df$adjudicated_discontinued, na.rm = TRUE)
+  
+  randomized_df <- consented_df %>% 
     filter(randomized)
   
-  early_discontinuation <- sum(ed_df$censored, na.rm = TRUE)
+  ed_randomized <- sum(randomized_df$adjudicated_discontinued, na.rm = TRUE)
   
-  enrolled_df <- ed_df %>% 
-    filter(censored == FALSE | is.na(censored))
+  enrolled_df <- randomized_df %>% 
+    filter(enrolled)
   
   enrolled <- sum(enrolled_df$enrolled, na.rm = TRUE)
-  df_complete <- sum(enrolled_df$time_zero, na.rm = TRUE)
-  
-  ed_consented <- consented - randomized
-  ed_randomized <- randomized - enrolled
+  df_complete <- sum(!is.na(enrolled_df$time_zero), na.rm = TRUE)
   
   fu_df <- enrolled_df %>% 
-    filter(time_zero)
+    filter(!is.na(time_zero))
   
-  
-  fu_complete_12mo_df <- fu_df %>% 
-    select(study_id, followup_data) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
-    mutate_all(na_if, 'NA') %>% 
-    filter(followup_period == '12 Month' & form == 'CFU') %>% 
-    mutate(followup_complete_12mo = ifelse(status %in% c('complete', 'complete: early', 'complete: late'), TRUE, FALSE)) 
-  
-  fu_complete_12mo <- sum(fu_complete_12mo_df$followup_complete_12mo, na.rm = TRUE)
+  fu_complete_12mo <- sum(fu_df$completed, na.rm = TRUE)
   
   consort_diagram <- grViz(paste0('
     digraph g {
