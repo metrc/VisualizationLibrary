@@ -8,7 +8,7 @@ consort_diagram(analytic, definitive_event = "Definitive Fixation Complete")
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, screened, ineligible, eligible,
-refused, consented, randomized, enrolled, time_zero, adjudicated_early_discontinued, followup_data, 
+refused, consented, randomized, enrolled, time_zero, censored, followup_data, 
 safety_set}
 
 \item{definitive_event}{Event either DF or DWC}

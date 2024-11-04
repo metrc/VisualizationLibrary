@@ -570,7 +570,7 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #' @description This function visualizes the categorical percentages of study status as well as followup completions
 #'
 #' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible,
-#' refused, consented, randomized, enrolled, time_zero, adjudicated_early_discontinued, followup_data, 
+#' refused, consented, randomized, enrolled, time_zero, censored, followup_data, 
 #' safety_set
 #'  
 #' @param definitive_event Event either DF or DWC
@@ -586,7 +586,7 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
-           adjudicated_early_discontinued, followup_data, safety_set) %>% 
+           censored, followup_data, safety_set) %>% 
     mutate(time_zero = ifelse(!is.na(time_zero), TRUE, FALSE))
   
   screened <- sum(analytic$screened, na.rm = TRUE)
@@ -619,10 +619,10 @@ consort_diagram <- function(analytic, definitive_event = "Definitive Fixation Co
   ed_df <- randomized_df %>% 
     filter(randomized)
   
-  early_discontinuation <- sum(ed_df$adjudicated_early_discontinued, na.rm = TRUE)
+  early_discontinuation <- sum(ed_df$censored, na.rm = TRUE)
   
   enrolled_df <- ed_df %>% 
-    filter(adjudicated_early_discontinued == FALSE | is.na(adjudicated_early_discontinued))
+    filter(censored == FALSE | is.na(censored))
   
   enrolled <- sum(enrolled_df$enrolled, na.rm = TRUE)
   df_complete <- sum(enrolled_df$time_zero, na.rm = TRUE)
