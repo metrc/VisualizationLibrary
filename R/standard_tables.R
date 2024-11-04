@@ -2592,6 +2592,8 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
 #' @description Returns the designated followup form status by site, for all timepoints
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
+#' @param form_selection The form to base the table on
+#' @param included_colmns Defaults to c("Expected", "Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete')
 #'
 #' @return nothing
 #' @export
@@ -2600,7 +2602,7 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
 #' \dontrun{
 #' followup_form_all_timepoints_by_site()
 #' }
-followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall'){
+followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', included_columns=c("Expected", "Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete')){
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -2698,21 +2700,27 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
   }
   
   form_df <- form_df %>%
-    filter(!is.na(Facility)&Facility!='NA')
-  colnames(form_df) <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missing', 
-                                           'Not Started', 'Incomplete'), times = length(timepoints)))
+    filter(!is.na(Facility)&Facility!='NA') %>% 
+    select(matches(paste0("^",paste(c("Facility",included_columns),collapse="|^"))))
+    
+  colnames(form_df) <- c('Facility', rep(included_columns, times = length(timepoints)))
   
-  header <- c(1,rep(7, length(timepoints)))
+  header <- c(1,rep(length(includes), length(timepoints)))
   names(header) <- c(' ', timepoints)
   
-  over_header <- c(1, 7*length(timepoints))
+  over_header <- c(1, length(includes)*length(timepoints))
   names(over_header) <- c(' ', paste(form_selection, 'Form Status'))
   
-  vis <- kable(form_df, format="html", align='l') %>%
-    add_header_above(header) %>%
-    add_header_above(over_header) %>%
-    kable_styling("striped", full_width = F, position='left')
-  
+  if(form_selection=="Overall"){
+    vis <- kable(form_df, format="html", align='l') %>%
+      add_header_above(header) %>%
+      kable_styling("striped", full_width = F, position='left')
+  } else{
+    vis <- kable(form_df, format="html", align='l') %>%
+      add_header_above(header) %>%
+      add_header_above(over_header) %>%
+      kable_styling("striped", full_width = F, position='left')
+  }
   return(vis)
 }
 

@@ -4,10 +4,19 @@
 \alias{followup_form_all_timepoints_by_site}
 \title{Followup Data Single Form All Timepoints By Site}
 \usage{
-followup_form_all_timepoints_by_site(analytic, form_selection = "Overall")
+followup_form_all_timepoints_by_site(
+  analytic,
+  form_selection = "Overall",
+  included_columns = c("Expected", "Complete", "Early", "Late", "Missing", "Not Started",
+    "Incomplete")
+)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, followup_data}
+
+\item{form_selection}{The form to base the table on}
+
+\item{included_colmns}{Defaults to c("Expected", "Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete')}
 }
 \value{
 nothing
