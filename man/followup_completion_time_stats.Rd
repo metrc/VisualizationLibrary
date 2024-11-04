@@ -6,7 +6,8 @@
 \usage{
 followup_completion_time_stats(
   analytic,
-  timepoints,
+  timepoints = c("6mo", "12mo"),
+  ortho_timepoints = NULL,
   form_selection = "Overall"
 )
 }
