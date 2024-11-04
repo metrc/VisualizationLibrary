@@ -764,15 +764,8 @@ vislib_query_issues_per_site_basic <- function(analytic) {
   ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
   image_data <- base64enc::base64encode(temp_png_path)
   img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Enrollment by site" style="max-width: 100%%; width: 80%%;">', image_data)
-  file.remove(temp_png_path)
-  html_page <- export_plotly(p)
-
-  if(nrow(processed_data_full)==0){
-    processed_data_full<-NA
-  }
   
-  return(html_page)
-  
+  return(img_tag)
 }
 
 
