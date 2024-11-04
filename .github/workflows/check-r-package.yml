@@ -1,24 +1,80 @@
 ---
 name: R-CMD-check
 run-name: Running R CMD check on VisualizationLibrary
-on: 
-  pull_request:
-    types:
-      - opened
+on:
+  push:
+    branches: main
+    paths-ignore: 
+      - '**.md'
+      - '.gitignore'
+      - '.gitattributes'
 jobs:
-  R-CMD-check:
+  build-linux-releases:
     runs-on: ubuntu-latest
     container:
       image: eliaswf/jammy-chromedriver-python-r:latest
+    outputs:
+      upload_url: ${{ steps.create_prerelease.outputs.upload_url }}
+      tag_name:   ${{ steps.create_tag_name.outputs.tag_name }}
     steps:
+    - name: Update Git to version 2.18 or higher 
+      run: |
+        apt-get update
+        apt-get install -y git
+
     - name: Checkout git repository on to Github Actions runner
       uses: actions/checkout@v3
-    - name: Install R package dependencies using tidyverse r-lib Actions
-      uses: r-lib/actions/setup-r-dependencies@v2
       with:
-        extra-packages: any::rcmdcheck
-        needs: check
-    - name: Runs R CMD Check
-      uses: r-lib/actions/check-r-package@v2
+        path: 'VisualizationLibrary'
+
+    - name: Checkout latest version of VisualizationTools repository (not release)
+      uses: actions/checkout@v3
       with:
-        error-on: '"error"'
+        ssh-key: ${{ secrets.VisualizationTools_DEPLOY_KEY }}
+        repository: 'metrc/VisualizationTools'
+        ref: main
+        path: 'VisualizationTools'
+        
+    - name: Generate cache key using the number of the month (01 to 12)
+      run: |
+        date +%m
+        echo "month_number=$(date +%m)" >> $GITHUB_ENV
+
+    - name: check runner temp
+      run: | 
+        echo $RUNNER_TEMP
+
+    - name: Temporarily change ownership for R site library path, so our cache can write to it during a restore
+      run: | 
+        chown -R $(whoami) /usr/local/lib/R/
+        chown -R $(whoami) /usr/lib/R/
+
+    - name: Cache the R site library to speed-up future workflow runs
+      uses: actions/cache@v3
+      id: cache-R-site-lib
+      with:
+        key: ${{ env.month_number }}
+        path: |
+          /usr/local/lib/R/site-library
+          /usr/lib/R/site-library
+
+    - name: Restore ownership for R site library path, after cache-write
+      run: | 
+        chown -R root /usr/local/lib/R/
+        chown -R root /usr/lib/R/
+
+    - name: Install R package dependencies for VisualizationTools using Rscript
+      run: Rscript -e "install.packages(c('tidyverse', 'janitor', 'kableExtra', 'DiagrammeR', 'DiagrammeRsvg', 'rsvg', 'base64enc', 'VisualizationTools', 'plotly', 'ggplot2', 'scales'), dependencies=TRUE, repos = 'http://cran.us.r-project.org', lib = '/usr/local/lib/R/site-library')"
+
+    - name: Install VisualizationTools Package using RScript from the latest release tag
+      working-directory: VisualizationTools
+      run: Rscript -e "install.packages('.', repos = NULL, type = 'source', lib = '/usr/local/lib/R/site-library')"
+
+    # Now that we have installed VisualizationTools, we'll install VisualizationLibrary
+    - name: Install the VisualizationLibrary package
+      working-directory: VisualizationLibrary
+      run: Rscript -e "install.packages('.', repos = NULL, type = 'source', lib = '/usr/local/lib/R/site-library')"
+
+    - name: Manually run R CMD Check from the shell
+      working-directory: VisualizationLibrary
+      run: R CMD check .
