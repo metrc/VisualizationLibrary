@@ -2705,10 +2705,10 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
     
   colnames(form_df) <- c('Facility', rep(included_columns, times = length(timepoints)))
   
-  header <- c(1,rep(length(includes), length(timepoints)))
+  header <- c(1,rep(length(included_columns), length(timepoints)))
   names(header) <- c(' ', timepoints)
   
-  over_header <- c(1, length(includes)*length(timepoints))
+  over_header <- c(1, length(included_columns)*length(timepoints))
   names(over_header) <- c(' ', paste(form_selection, 'Form Status'))
   
   if(form_selection=="Overall"){
