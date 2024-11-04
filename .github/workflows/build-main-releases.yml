@@ -1,48 +1,109 @@
 ---
-name: Build Release Packages for Linux and MacOS (main)
-run-name: Building Release Packages for Linux and MacOS (main)
+name: Build Release Packages for Linux (main)
+run-name: Building Release Packages for Linux (main)
 on:
   push:
     branches: main
     paths-ignore: 
       - '**.md'
       - '.gitignore'
+      - '.gitattributes'
 jobs:
-  build-linux-release:
-    name: Build Linux Release
+  build-linux-releases:
     runs-on: ubuntu-latest
     container:
       image: eliaswf/jammy-chromedriver-python-r:latest
     outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-      tag_name:  ${{ steps.create_tag_name.outputs.tag_name }}
+      upload_url: ${{ steps.create_prerelease.outputs.upload_url }}
+      tag_name:   ${{ steps.create_tag_name.outputs.tag_name }}
     steps:
-    # Checkout repository and install R and R package dependencies
+    - name: Update Git to version 2.18 or higher 
+      run: |
+        apt-get update
+        apt-get install -y git
+
     - name: Checkout git repository on to Github Actions runner
       uses: actions/checkout@v3
+      with:
+        path: 'VisualizationLibrary'
 
-    # Run R CMD Check. If this check fails we abort subsequent steps.
+    - name: Checkout latest version of VisualizationTools repository (not release)
+      uses: actions/checkout@v3
+      with:
+        ssh-key: ${{ secrets.VisualizationTools_DEPLOY_KEY }}
+        repository: 'metrc/VisualizationTools'
+        ref: main
+        path: 'VisualizationTools'
+        
+    - name: Generate cache key using the number of the month (01 to 12)
+      run: |
+        date +%m
+        echo "month_number=$(date +%m)" >> $GITHUB_ENV
+
+    - name: check runner temp
+      run: | 
+        echo $RUNNER_TEMP
+
+    - name: Temporarily change ownership for R site library path, so our cache can write to it during a restore
+      run: | 
+        chown -R $(whoami) /usr/local/lib/R/
+        chown -R $(whoami) /usr/lib/R/
+
+    - name: Cache the R site library to speed-up future workflow runs
+      uses: actions/cache@v3
+      id: cache-R-site-lib
+      with:
+        key: ${{ env.month_number }}
+        path: |
+          /usr/local/lib/R/site-library
+          /usr/lib/R/site-library
+
+    - name: Restore ownership for R site library path, after cache-write
+      run: | 
+        chown -R root /usr/local/lib/R/
+        chown -R root /usr/lib/R/
+
+    - name: Install R package dependencies for VisualizationTools using Rscript
+      run: Rscript -e "install.packages(c('tidyverse', 'janitor', 'kableExtra', 'DiagrammeR', 'DiagrammeRsvg', 'rsvg', 'base64enc', 'VisualizationTools', 'plotly', 'ggplot2', 'scales'), dependencies=TRUE, repos = 'http://cran.us.r-project.org', lib = '/usr/local/lib/R/site-library')"
+
+    - name: Install VisualizationTools Package using RScript from the latest release tag
+      working-directory: VisualizationTools
+      run: Rscript -e "install.packages('.', repos = NULL, type = 'source', lib = '/usr/local/lib/R/site-library')"
+
+    # Now that we have installed VisualizationTools, we'll install VisualizationLibrary
+    - name: Install the VisualizationLibrary package
+      working-directory: VisualizationLibrary
+      run: Rscript -e "install.packages('.', repos = NULL, type = 'source', lib = '/usr/local/lib/R/site-library')"
+
     - name: Manually run R CMD Check from the shell
       continue-on-error: true
+      working-directory: VisualizationLibrary
       run: R CMD check .
 
     # Build Linux binary package
     - name: Build platform-specific binary packages for the Analytic Codebase
-      run: R CMD INSTALL -l ${{ runner.temp }} --build .
+      working-directory: 'VisualizationLibrary'
+      run: R CMD INSTALL -l $RUNNER_TEMP --build .
 
-    # Retrieve build artifact filenames
+    # # Retrieve build artifact filenames
     - name: Retrieve package version from DESCRIPTION file and set as env variable
+      working-directory: 'VisualizationLibrary'
       run: |
         echo "package_version=$(grep -oP '(?<=Version: )\d+\.\d+\.\d+' DESCRIPTION)" >> $GITHUB_ENV
         echo $(grep -oP '(?<=Version: )\d+\.\d+\.\d+' DESCRIPTION)
+
     - name: Retrieve binary package filename and set as env variable
+      working-directory: 'VisualizationLibrary'
       run: | 
         echo "linux_binary_pkg_filename=$(ls VisualizationLibrary_${{ env.package_version }}_R_*.tar.gz)" >> $GITHUB_ENV
         echo $(ls VisualizationLibrary_${{ env.package_version }}_R_*.tar.gz)
-    - name: Retrieve binary package filename and set as env variable
-      run: | 
-        echo "linux_source_pkg_filename=$(ls VisualizationLibrary_${{ env.package_version }}.tar.gz)" >> $GITHUB_ENV
-        echo $(ls VisualizationLibrary_${{ env.package_version }}.tar.gz)
+        echo "linux_binary_pkg_filepath=$(realpath $(ls VisualizationLibrary_${{ env.package_version }}_R_*.tar.gz))" >> $GITHUB_ENV
+        echo $(realpath $(ls VisualizationLibrary_${{ env.package_version }}_R_*.tar.gz))
+    # - name: Retrieve source package filename and set as env variable
+    #   working-directory: 'VisualizationLibrary'
+    #   run: | 
+    #     echo "linux_source_pkg_filename=$(ls VisualizationLibrary_${{ env.package_version }}.tar.gz)" >> $GITHUB_ENV
+    #     echo $(ls VisualizationLibrary_${{ env.package_version }}.tar.gz)
 
     # Generate Release Metadata
     - name: Create autogenerated release tag name
@@ -50,19 +111,18 @@ jobs:
       run: | 
         # Tag names follow a variant of the SemVer 2.0.0 convention:
         # <major>.<minor>.<patch>-<pre-release>-build-<build>
-        
+
         if [[ ${{ github.ref_name }} != "main" ]]; then
           # If the branch name is not main, we set a pre-release field in the SemVer
-          echo "tag_name=${{ env.package_version }}-${{ github.ref_name }}-build-$(printf '%05d' ${{ github.run_number }})" >> "$GITHUB_ENV"
-          echo "tag_name=${{ env.package_version }}-${{ github.ref_name }}-build-$(printf '%05d' ${{ github.run_number }})" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${{ env.package_version }}-${{ github.ref_name }}-build-${{ github.run_number }}" >> "$GITHUB_ENV"
+          echo "tag_name=${{ env.package_version }}-${{ github.ref_name }}-build-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
         else
           # Otherwise for main releases on "main", we omit the pre-release field.
-          echo "tag_name=${{ env.package_version }}-build-$(printf '%05d' ${{ github.run_number }})" >> "$GITHUB_ENV"
-          echo "tag_name=${{ env.package_version }}-build-$(printf '%05d' ${{ github.run_number }})" >> "$GITHUB_OUTPUT"
+          echo "tag_name=${{ env.package_version }}-build-${{ github.run_number }}" >> "$GITHUB_ENV"
+          echo "tag_name=${{ env.package_version }}-build-${{ github.run_number }}" >> "$GITHUB_OUTPUT"
         fi
         echo ${{ env.tag_name }}
 
-    # Create Release
     - name: Create Release
       if: ${{ github.ref_name }} == "main"
       id: create_release
@@ -76,71 +136,14 @@ jobs:
           Automatic release build for ${{ github.ref_name }} branch on tag ${{ env.tag_name }}.
         draft: false
         prerelease: false
-    
-    # Upload release artifacts to the newly-created release
+
     - name: Upload Linux Binary Package
+      if: ${{ github.ref_name }} == "main"
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./${{ env.linux_binary_pkg_filename }}
+        asset_path: ${{ env.linux_binary_pkg_filepath }}
         asset_name: Linux-binary-${{ env.linux_binary_pkg_filename }}
         asset_content_type: application/gzip
-
-  # Note that the Mac OS runner depends upon the Linux runner. It will not execute
-  # if the Linux build does not work. This saves on unnecessary compute costs.
-  build-macos-release:
-    name: Build MacOS Release
-    runs-on: macos-latest
-    needs: build-linux-release
-    steps:
-      # Initial Preparations
-    - name: Checkout git repository on to Github Actions runner
-      uses: actions/checkout@v3
-    - name: Installs R using tidyverse r-lib Actions
-      uses: r-lib/actions/setup-r@v2
-    - name: Install R package dependencies using tidyverse r-lib Actions
-      uses: r-lib/actions/setup-r-dependencies@v2
-
-    # Build MacOS binary package
-    - name: Build platform-specific binary packages
-      run: R CMD INSTALL -l ${{ runner.temp }} --build .
-
-    # Retrieve build artifact filenames
-    - name: Retrieve package version from DESCRIPTION file and set as env variable
-      run: |
-        # Note that because Mac OS supplies BSD grep, we must use Perl instead
-        package_version=`perl -nle'print $& while m{(?<=Version: )\d+\.\d+\.\d+}g' DESCRIPTION`
-        echo "package_version=$package_version" >> $GITHUB_ENV
-    - name: Retrieve binary package filename and set as env variable
-      run: | 
-        echo $(ls .)
-        ls -alh
-        echo "macos_binary_pkg_filename=VisualizationLibrary_${{ env.package_version }}.tgz" >> $GITHUB_ENV
-
-    # Upload release artefacts.
-    - name: Upload MacOS Binary Package
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ needs.build-linux-release.outputs.upload_url }}
-        asset_path: ./${{ env.macos_binary_pkg_filename }}
-        asset_name: MacOS-binary-${{ env.macos_binary_pkg_filename }}
-        asset_content_type: application/gzip
-
-  # build-windows:
-  #   name: Windows Build
-  #   runs-on: windows-latest
-  #   steps:
-  #   - name: Checkout git repository on to Github Actions runner
-  #     uses: actions/checkout@v3
-  #   - name: Installs R using tidyverse r-lib Actions
-  #     uses: r-lib/actions/setup-r@v2
-  #   - name: Install R package dependencies using tidyverse r-lib Actions
-  #     uses: r-lib/actions/setup-r-dependencies@v2
-  #   - name: Build platform-specific source packages
-  #     run: R CMD build
-  #   - name: Build platform-specific binary packages
-  #     run: R CMD INSTALL -l ${{ runner.temp }} --build ${{ github.workspace }}
