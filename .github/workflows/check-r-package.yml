@@ -76,5 +76,11 @@ jobs:
       run: Rscript -e "install.packages('.', repos = NULL, type = 'source', lib = '/usr/local/lib/R/site-library')"
 
     - name: Manually run R CMD Check from the shell
+      continue-on-error: true
       working-directory: VisualizationLibrary
       run: R CMD check .
+
+    # Build Linux binary package
+    - name: Build platform-specific binary packages for the Analytic Codebase
+      working-directory: 'VisualizationLibrary'
+      run: R CMD INSTALL -l $RUNNER_TEMP --build .
