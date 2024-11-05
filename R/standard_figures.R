@@ -50,12 +50,18 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
                   filter(randomized) %>% 
                   filter(enrolled) %>% 
                   pull(patient_status_active), na.rm=TRUE)
-  Discontinued <- sum(analytic %>% 
+  Censored <- sum(analytic %>% 
                         filter(eligible) %>% 
                         filter(consented) %>% 
                         filter(randomized) %>%
                         filter(enrolled) %>% 
                         pull(censored), na.rm=TRUE)
+  not_active <- sum(analytic %>% 
+                   filter(eligible) %>% 
+                   filter(consented) %>% 
+                   filter(randomized) %>%
+                   filter(enrolled) %>% 
+                   pull(not_active), na.rm=TRUE)
   Completed <- sum(analytic %>% 
                         filter(eligible) %>% 
                         filter(consented) %>% 
@@ -84,15 +90,16 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       late_inelig [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "Late Ineligible (n=',Late_Ineligible,')"];
       
       enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Enrolled (n=',Enrolled,')"];
-      discon [style="rounded,filled", fillcolor="#ccccff", pos="6,1!", shape = box, width=2.4, height=1, label = "Discontinued (n=',Discontinued,')"];
+      censored [style="rounded,filled", fillcolor="#ccccff", pos="8,1!", shape = box, width=2.4, height=1, label = "Censored (n=',Censored,')"];
 
-      active [style="rounded,filled", fillcolor="#ccccff", pos="2,1!", shape = box, width=2.4, height=1, label = "Active (n=',Active,')"];
-      compl [style="rounded,filled", fillcolor="#ccccff", pos="10,1!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',Completed,')"];
+      active [style="rounded,filled", fillcolor="#ccccff", pos="0,1!", shape = box, width=2.4, height=1, label = "Active (n=',Active,')"];
+      compl [style="rounded,filled", fillcolor="#ccccff", pos="12,1!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',Completed,')"];
       
       ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,12!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
       refused [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Refused (n=',Refused,')"];
       
       not_enrolled [style="rounded,filled", fillcolor="#ccccff", pos="2,10!", shape = box, width=2.4, height=1, label = "Not Enrolled Other (n=',Not_Enrolled_Other,')"];
+      not_active [style="rounded,filled", fillcolor="#ccccff", pos="4,1!", shape = box, width=2.4, height=1, label = "Not Active (n=',not_active,')"];
       
       # Relationships
       start -> elig
@@ -105,8 +112,9 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       rand -> enrolled
       rand -> late_inelig
       enrolled -> active
-      enrolled -> discon
+      enrolled -> censored
       enrolled -> compl
+      enrolled -> not_active
       
     }
   '))
