@@ -281,11 +281,12 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #'
 #' @examples
 #' \dontrun{
-#' closed_discontinuation_sae_deviation_by_type()
+#' closed_not_complete_sae_deviation_by_type()
 #' }
-closed_discontinuation_sae_deviation_by_type <- function(analytic){
-  confirm_stability_of_related_visual('discontinuation_sae_deviation_by_type', 'd1533c6c962841734b6dd39995a01297')
+closed_not_complete_sae_deviation_by_type <- function(analytic){
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', 'd1533c6c962841734b6dd39995a01297')
   
+  n_act <- NA
   n_disc <- NA
   n_dsc <- NA
   n_dp <- NA
@@ -305,16 +306,25 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
 
   inner_closed_discontinuation_sae_deviation_by_type <- function(analytic){
     total <- sum(analytic$enrolled, na.rm=T)
-    discontinuation_df <- analytic %>% 
+    not_active_df <- analytic %>% 
+      select(enrolled, not_active_reason) %>% 
+      filter(enrolled == TRUE) %>% 
+      count(not_active_reason) %>%
+      rename(type=not_active_reason) %>% 
+      filter(!is.na(type)) %>% 
+      mutate(type = as.character(type))
+    
+    not_active_df_tot <- tibble(type="Not Active", n=sum(not_active_df$n))
+    
+    censored_df <- analytic %>% 
       select(enrolled, censored_reason) %>% 
       filter(enrolled == TRUE) %>% 
       count(censored_reason) %>%
       rename(type=censored_reason) %>% 
       filter(!is.na(type)) %>% 
-      mutate(type = as.character(type)) %>% 
-      mutate(group="A")
+      mutate(type = as.character(type))
     
-    discontinuation_df_tot <- tibble(type="Discontinuations", n=sum(discontinuation_df$n))
+    censored_df_tot <- tibble(type="Censored", n=sum(censored_df$n))
     
     sae_df <- analytic %>% 
       select(study_id, enrolled, sae_count) %>% 
@@ -323,8 +333,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       count(sae_count) %>%
       rename(type=sae_count) %>% 
       filter(!is.na(type)) %>% 
-      mutate(type = as.character(type)) %>% 
-      mutate(group="B")
+      mutate(type = as.character(type))
     
     
     deviation_sc_df <- analytic %>% 
@@ -334,8 +343,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       count(protocol_deviation_screen_consent) %>%
       rename(type=protocol_deviation_screen_consent) %>% 
       filter(!is.na(type)) %>% 
-      mutate(type = as.character(type)) %>% 
-      mutate(group="C")
+      mutate(type = as.character(type))
     
     
     deviation_p_df <- analytic %>% 
@@ -345,8 +353,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       count(protocol_deviation_procedural) %>%
       rename(type=protocol_deviation_procedural) %>% 
       filter(!is.na(type)) %>% 
-      mutate(type = as.character(type)) %>% 
-      mutate(group="D")
+      mutate(type = as.character(type))
     
     
     deviation_a_df <- analytic %>% 
@@ -358,8 +365,7 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
       rename(type=protocol_deviation_administrative) %>% 
       filter(!is.na(type)) %>% 
       mutate(type = str_replace(type,"Other: .+","Other")) %>% 
-      mutate(type = as.character(type)) %>% 
-      mutate(group="E")
+      mutate(type = as.character(type))
     
     deviation_sc_tot <- tibble(type="Screen and Consent",n=sum(deviation_sc_df$n))
     deviation_p_tot <- tibble(type="Procedural",n=sum(deviation_p_df$n))
@@ -367,10 +373,11 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
     deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
     
     
-    df_final <- bind_rows(discontinuation_df_tot, discontinuation_df, sae_df, deviation_df_tot, 
+    df_final <- bind_rows(not_active_df_tot, not_active_df, censored_df_tot, censored_df, sae_df, deviation_df_tot, 
                           deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
       mutate(n = format_count_percent(n, total, decimals=2))
     
+    n_act <<- nrow(not_active_df)
     n_disc <<- nrow(discontinuation_df)
     n_dsc <<- nrow(deviation_sc_df)
     n_dp <<- nrow(deviation_p_df)
@@ -393,25 +400,26 @@ closed_discontinuation_sae_deviation_by_type <- function(analytic){
   
   indents_vec <- vector()
   if(n_dsc > 0){
-    indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + seq(n_dsc))
+    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + seq(n_dsc))
   }
   if(n_dp > 0){
-    indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp))
+    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp))
   }
   if(n_da > 0){
-    indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
+    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
   }
 
   vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
                                                                    paste0("Group A n=(", nrow(df_a), ")"), 
                                                                    paste0("Group B n=(", nrow(df_b), ")"), 
                                                                    paste0("Total n=(", nrow(df_full), ")"))) %>%
-    add_indent(c(seq(n_disc) + 1, 1 + n_disc + 1 + 1 + seq(1+n_dsc+1+n_dp+1+n_da))) %>% 
+    add_indent(c(seq(n_act) + 1, seq(n_disc) + 1 + n_act + 1 , seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)) %>% 
     add_indent(indents_vec) %>% 
-    row_spec(0, extra_css = "border-bottom: 2px solid") %>% 
-    row_spec(1+ n_disc, extra_css = "border-bottom: 2px solid") %>% 
-    row_spec(1 + n_disc + 1, extra_css = "border-bottom: 2px solid") %>%
-    row_spec(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 2px solid") %>%
+    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act +1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
     kable_styling("striped", full_width = F, position="left") 
   
   return(vis)

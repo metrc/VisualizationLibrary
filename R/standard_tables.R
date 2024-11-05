@@ -50,7 +50,7 @@ enrollment_status_by_site <- function(analytic){
     select(-is_total) %>% 
     mutate(`Discontinued Pre-Randomization` = format_count_percent(`Discontinued Pre-Randomization`, Consented)) %>% 
     mutate(`Late Ineligible` = format_count_percent(`Late Ineligible`, Consented)) %>% 
-    rename("Discontinued Post-Randomization (late refusal/late ineligible)" = `Late Ineligible`) %>% 
+    rename("Discontinued Post-Randomization (late ineligible)" = `Late Ineligible`) %>% 
     mutate(Enrolled = format_count_percent(Enrolled, Consented)) %>% 
     rename("Enrolled & Eligible" = `Enrolled`) %>% 
     mutate(Consented = format_count_percent(Consented, Eligible)) %>% 
@@ -657,7 +657,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #' This was originally made for Union
 #'
-#' @param analytic This is the analytic data set that must include enrolled, censored_reason, 
+#' @param analytic This is the analytic data set that must include enrolled, censored_reason, not_active_reason,
 #' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
 #'
 #' @return nothing
@@ -668,8 +668,20 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
 #' discontinuation_sae_deviation_by_type()
 #' }
 discontinuation_sae_deviation_by_type <- function(analytic){
+  
+  
   total <- sum(analytic$enrolled, na.rm=T)
-  discontinuation_df <- analytic %>% 
+  not_active_df <- analytic %>% 
+    select(enrolled, not_active_reason) %>% 
+    filter(enrolled == TRUE) %>% 
+    count(not_active_reason) %>%
+    rename(type=not_active_reason) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = as.character(type))
+  
+  not_active_df_tot <- tibble(type="Not Active", n=sum(not_active_df$n))
+  
+  censored_df <- analytic %>% 
     select(enrolled, censored_reason) %>% 
     filter(enrolled == TRUE) %>% 
     count(censored_reason) %>%
@@ -677,7 +689,7 @@ discontinuation_sae_deviation_by_type <- function(analytic){
     filter(!is.na(type)) %>% 
     mutate(type = as.character(type))
   
-  discontinuation_df_tot <- tibble(type="Discontinuations", n=sum(discontinuation_df$n))
+  censored_df_tot <- tibble(type="Censored", n=sum(censored_df$n))
   
   sae_df <- analytic %>% 
     select(study_id, enrolled, sae_count) %>% 
@@ -726,34 +738,35 @@ discontinuation_sae_deviation_by_type <- function(analytic){
   deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
   
   
-  df_final <- bind_rows(discontinuation_df_tot, discontinuation_df, sae_df, deviation_df_tot, 
+  df_final <- bind_rows(not_active_df_tot, not_active_df, censored_df_tot, censored_df, sae_df, deviation_df_tot, 
                         deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
     mutate(n = format_count_percent(n, total, decimals=2))
   
-  
-  n_disc <- nrow(discontinuation_df)
+  n_act <- nrow(not_active_df)
+  n_disc <- nrow(censored_df)
   n_dsc <- nrow(deviation_sc_df)
   n_dp <- nrow(deviation_p_df)
   n_da <- nrow(deviation_a_df)
   
   indents_vec <- vector()
   if(n_dsc > 0){
-    indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + seq(n_dsc))
+    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + seq(n_dsc))
   }
   if(n_dp > 0){
-    indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp))
+    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp))
   }
   if(n_da > 0){
-    indents_vec <- c(indents_vec, 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
+    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
   }
   
   vis <- kable(df_final, format="html", align='l', col.names = c(" ", paste0("n=",total))) %>%
-    add_indent(c(seq(n_disc) + 1, 1 + n_disc + 1 + 1 + seq(1+n_dsc+1+n_dp+1+n_da))) %>% 
+    add_indent(c(seq(n_act) + 1, seq(n_disc) + 1 + n_act + 1 , seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)) %>% 
     add_indent(indents_vec) %>% 
     row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1+ n_disc, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act +1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
     kable_styling("striped", full_width = F, position="left") 
   
   
