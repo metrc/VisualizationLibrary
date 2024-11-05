@@ -3009,8 +3009,8 @@ expected_and_followup_visit_by_site <- function(analytic){
     group_by(facilitycode) %>%
     summarise("Complete" = sum(Complete, na.rm = TRUE),
               "Incomplete" = sum(Incomplete, na.rm = TRUE),
-              "Early" = sum(`Complete: Early`, na.rm = TRUE),
-              "Late" = sum(`Complete: Late`, na.rm = TRUE),
+              "Early" = sum(`Complete: early`, na.rm = TRUE),
+              "Late" = sum(`Complete: late`, na.rm = TRUE),
               "Missing" = sum(Missing, na.rm = TRUE),
               "Not Started" = sum(`Not Started`, na.rm = TRUE))
   
@@ -3061,8 +3061,8 @@ expected_and_followup_visit_by_site <- function(analytic){
     group_by(facilitycode) %>%
     summarise("Complete" = sum(Complete, na.rm = TRUE),
               "Incomplete" = sum(Incomplete, na.rm = TRUE),
-              "Early" = sum(`Complete: Early`, na.rm = TRUE),
-              "Late" = sum(`Complete: Late`, na.rm = TRUE),
+              "Early" = sum(`Complete: early`, na.rm = TRUE),
+              "Late" = sum(`Complete: late`, na.rm = TRUE),
               "Missing" = sum(Missing, na.rm = TRUE),
               "Not Started" = sum(`Not Started`, na.rm = TRUE))
   
@@ -3104,8 +3104,8 @@ expected_and_followup_visit_by_site <- function(analytic){
     group_by(facilitycode) %>%
     summarise("Complete" = sum(Complete, na.rm = TRUE),
               "Incomplete" = sum(Incomplete, na.rm = TRUE),
-              "Early" = sum(`Complete: Early`, na.rm = TRUE),
-              "Late" = sum(`Complete: Late`, na.rm = TRUE),
+              "Early" = sum(`Complete: early`, na.rm = TRUE),
+              "Late" = sum(`Complete: late`, na.rm = TRUE),
               "Missing" = sum(Missing, na.rm = TRUE),
               "Not Started" = sum(`Not Started`, na.rm = TRUE)) %>% 
     left_join(empty_df) %>% 
@@ -3113,8 +3113,8 @@ expected_and_followup_visit_by_site <- function(analytic){
     group_by(facilitycode) %>%
     summarise("Complete" = sum(Complete, na.rm = TRUE),
               "Incomplete" = sum(Incomplete, na.rm = TRUE),
-              "Early" = sum(`Complete: Early`, na.rm = TRUE),
-              "Late" = sum(`Complete: Late`, na.rm = TRUE),
+              "Early" = sum(`Complete: early`, na.rm = TRUE),
+              "Late" = sum(`Complete: late`, na.rm = TRUE),
               "Missing" = sum(Missing, na.rm = TRUE),
               "Not Started" = sum(`Not Started`, na.rm = TRUE))
   
