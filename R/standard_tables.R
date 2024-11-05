@@ -3007,12 +3007,12 @@ expected_and_followup_visit_by_site <- function(analytic){
     pivot_wider(names_from = status, values_from = status) %>% 
     mutate(across(-c(study_id, facilitycode), ~ !is.na(.))) %>% 
     group_by(facilitycode) %>%
-    summarise("Complete" = sum(complete, na.rm = TRUE),
-              "Incomplete" = sum(incomplete, na.rm = TRUE),
-              "Early" = sum(`complete: early`, na.rm = TRUE),
-              "Late" = sum(`complete: late`, na.rm = TRUE),
-              "Missing" = sum(missing, na.rm = TRUE),
-              "Not Started" = sum(not_started, na.rm = TRUE))
+    summarise("Complete" = sum(Complete, na.rm = TRUE),
+              "Incomplete" = sum(Incomplete, na.rm = TRUE),
+              "Early" = sum(`Complete: Early`, na.rm = TRUE),
+              "Late" = sum(`Complete: Late`, na.rm = TRUE),
+              "Missing" = sum(Missing, na.rm = TRUE),
+              "Not Started" = sum(`Not Started`, na.rm = TRUE))
   
   df_expected <- analytic %>% 
     select(facilitycode, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo) %>% 
@@ -3059,12 +3059,12 @@ expected_and_followup_visit_by_site <- function(analytic){
     pivot_wider(names_from = status, values_from = status) %>% 
     mutate(across(-c(study_id, facilitycode), ~if_else(is.na(.) | . == "", FALSE, TRUE))) %>% 
     group_by(facilitycode) %>%
-    summarise("Complete" = sum(complete, na.rm = TRUE),
-              "Incomplete" = sum(incomplete, na.rm = TRUE),
-              "Early" = sum(`complete: early`, na.rm = TRUE),
-              "Late" = sum(`complete: late`, na.rm = TRUE),
-              "Missing" = sum(missing, na.rm = TRUE),
-              "Not Started" = sum(not_started, na.rm = TRUE))
+    summarise("Complete" = sum(Complete, na.rm = TRUE),
+              "Incomplete" = sum(Incomplete, na.rm = TRUE),
+              "Early" = sum(`Complete: Early`, na.rm = TRUE),
+              "Late" = sum(`Complete: Late`, na.rm = TRUE),
+              "Missing" = sum(Missing, na.rm = TRUE),
+              "Not Started" = sum(`Not Started`, na.rm = TRUE))
   
   
   df_for_6mo <- df_expected %>% select(facilitycode, six_month_expected) %>% 
@@ -3102,18 +3102,19 @@ expected_and_followup_visit_by_site <- function(analytic){
     pivot_wider(names_from = status, values_from = status) %>% 
     mutate(across(-c(study_id, facilitycode), ~if_else(is.na(.) | . == "", FALSE, TRUE))) %>% 
     group_by(facilitycode) %>%
-    summarise("Complete" = sum(complete, na.rm = TRUE),
-              "Incomplete" = sum(incomplete, na.rm = TRUE),
-              "Early" = sum(`complete: early`, na.rm = TRUE),
-              "Missing" = sum(missing, na.rm = TRUE),
-              "Not Started" = sum(`not_started`, na.rm = TRUE))  %>% 
+    summarise("Complete" = sum(Complete, na.rm = TRUE),
+              "Incomplete" = sum(Incomplete, na.rm = TRUE),
+              "Early" = sum(`Complete: Early`, na.rm = TRUE),
+              "Late" = sum(`Complete: Late`, na.rm = TRUE),
+              "Missing" = sum(Missing, na.rm = TRUE),
+              "Not Started" = sum(`Not Started`, na.rm = TRUE)) %>% 
     left_join(empty_df) %>% 
     mutate(across(-c(study_id, facilitycode), ~if_else(is.na(.) | . == "", FALSE, TRUE))) %>% 
     group_by(facilitycode) %>%
     summarise("Complete" = sum(Complete, na.rm = TRUE),
               "Incomplete" = sum(Incomplete, na.rm = TRUE),
-              "Early" = sum(Early, na.rm = TRUE),
-              "Late" = sum(Late, na.rm = TRUE),
+              "Early" = sum(`Complete: Early`, na.rm = TRUE),
+              "Late" = sum(`Complete: Late`, na.rm = TRUE),
               "Missing" = sum(Missing, na.rm = TRUE),
               "Not Started" = sum(`Not Started`, na.rm = TRUE))
   
