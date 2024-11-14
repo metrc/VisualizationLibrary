@@ -621,7 +621,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
-           adjudicated_discontinued, completed, safety_set) %>% 
+           adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active) %>% 
     mutate(time_zero = ifelse(!is.na(time_zero), TRUE, FALSE))
   
   screened <- sum(analytic$screened, na.rm = TRUE)
