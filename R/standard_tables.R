@@ -1745,7 +1745,7 @@ fracture_characteristics <- function(analytic){
 #' @param days the number of last days to include in the last days summary section of the table
 #' @param discontinued this is a meta construct where you can specify your discontinued construct like 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
 #' @param discontinued_colname this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')
-#' @param include_safety_set this is a toggle that will include a safety_set construct if you want it included (defaults to FALSE)
+#' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct if you want it included (defaults to FALSE)
 #'
 #' @return html table
 #' @export
@@ -1754,14 +1754,14 @@ fracture_characteristics <- function(analytic){
 #' \dontrun{
 #' enrollment_by_site_last_days_var_disc()
 #' }
-enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinued="discontinued", discontinued_colname="Discontinued", include_safety_set=FALSE){
+enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinued="discontinued", discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE){
   
   if(days == 0){
   
   if(include_safety_set){
     df <- analytic %>% 
       select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
-             facilitycode, all_of(discontinued), screened_date, safety_set)
+             facilitycode, all_of(discontinued), screened_date, exclusive_safety_set)
   } else{
     df <- analytic %>% 
       select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
@@ -1777,7 +1777,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
     filter(!is.na(Facility)) %>% 
     mutate(weeks_site_certified = site_certified_days/7)
   
-  if(include_safety_set){
+  if(include_exclusive_safety_set){
   df_1st <- df %>% 
     group_by(Facility) %>% 
     summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible), 
@@ -1785,7 +1785,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
   
   df_2nd <- df %>% 
     group_by(Facility) %>% 
-    summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 'Safety Set' = sum(safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+    summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 'Safety Set' = sum(exclusive_safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
     select(Facility, Discontinued, Enrolled, `Safety Set`)
     
   } else{
@@ -1834,7 +1834,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
   total_row <- final %>% 
     slice_head(n=1)
   
-  if(include_safety_set){
+  if(include_exclusive_safety_set){
     last <- bind_rows(final, total_row) %>% 
       slice_tail(n=-1) %>% 
       select(-Eligible, -Enrolled, -Refused, -`Not Consented`, -cnr, -Discontinued) %>% 
@@ -1869,10 +1869,10 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
   
   return(table)
   }else{
-    if(include_safety_set){
+    if(include_exclusive_safety_set){
       df <- analytic %>% 
         select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
-               facilitycode, all_of(discontinued), screened_date, safety_set)
+               facilitycode, all_of(discontinued), screened_date, exclusive_safety_set)
     } else{
       df <- analytic %>% 
         select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
@@ -1890,7 +1890,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
       filter(!is.na(Facility)) %>% 
       mutate(weeks_site_certified = site_certified_days/7)
     
-    if(include_safety_set){
+    if(include_exclusive_safety_set){
       df_1st <- df %>% 
         group_by(Facility) %>% 
         summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible), 
@@ -1898,7 +1898,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
       
       df_2nd <- df %>% 
         group_by(Facility) %>% 
-        summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 'Safety Set' = sum(safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+        summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 'Safety Set' = sum(exclusive_safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
         select(Facility, Discontinued, Enrolled, `Safety Set`)
       
     } else{
@@ -1962,7 +1962,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
     total_row <- final %>% 
       slice_head(n=1)
     
-    if(include_safety_set){
+    if(include_exclusive_safety_set){
       last <- bind_rows(final, total_row) %>% 
         slice_tail(n=-1) %>% 
         select(-Eligible, -Enrolled, -Refused, -`Not Consented`, -cnr, -Discontinued) %>% 
@@ -2989,198 +2989,6 @@ followup_forms_all_timepoints <- function(analytic, forms, timepoints){
     kable_styling("striped", full_width = F, position='left')
   
   return(vis)
-}
-
-
-
-#' Expected visit status for 3 Months, 6 Months, and 12 Months followup by EACH SITE
-#'
-#' @description This function outputs the expected and followup visit status by each site and  uses status 
-#' constructs but treats early, late and complete as mutually exclusive.
-#' Therefore, complete is renamed to "On Time" and all three of them combined to Complete.
-#'
-#' @param analytic This is the analytic data set that must include facilitycode, followup_expected_3mo, 
-#' followup_expected_6mo, followup_expected_12mo, followup_data
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' expected_and_followup_visit_by_site()
-#' }
-expected_and_followup_visit_by_site <- function(analytic){
-  
-  df_3mo <- analytic %>% 
-    select(study_id, followup_data, facilitycode) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
-    mutate_all(na_if, 'NA')  %>% 
-    filter(followup_period == '3 Month') %>% 
-    pivot_wider(names_from = status, values_from = status) %>% 
-    mutate(across(-c(study_id, facilitycode), ~ !is.na(.))) %>% 
-    group_by(facilitycode) %>%
-    summarise("Complete" = sum(Complete, na.rm = TRUE),
-              "Incomplete" = sum(Incomplete, na.rm = TRUE),
-              "Early" = sum(`Complete: early`, na.rm = TRUE),
-              "Late" = sum(`Complete: late`, na.rm = TRUE),
-              "Missing" = sum(Missing, na.rm = TRUE),
-              "Not Started" = sum(`Not Started`, na.rm = TRUE))
-  
-  df_expected <- analytic %>% 
-    select(facilitycode, followup_expected_3mo, followup_expected_6mo, followup_expected_12mo) %>% 
-    group_by(facilitycode) %>% 
-    summarize("Status" = "Expected", "3 Month" = sum(followup_expected_3mo, na.rm = TRUE), "6 Month" = sum(followup_expected_6mo, na.rm = TRUE),
-              "12 Month" = sum(followup_expected_12mo, na.rm = TRUE)) %>% 
-    rename(three_month_expected = `3 Month`,
-           six_month_expected = `6 Month`,
-           twelve_month_expected = `12 Month`) %>% 
-    select(facilitycode, three_month_expected, six_month_expected, twelve_month_expected)
-  
-  df_for_3mo <- df_expected %>% select(facilitycode, three_month_expected) %>% 
-    left_join(df_3mo) %>% 
-    mutate(complete_new = Complete + Early + Late) %>% 
-    rename(`On Time` = `Complete`,
-           `Complete` = complete_new,
-           `Expected 3 Months` = three_month_expected) %>% 
-    filter(!is.na(facilitycode)) %>% 
-    mutate(`Early(% Complete)` = format_count_percent(`Early`, `Complete`),
-           `On Time(% Complete)` = format_count_percent(`On Time`, `Complete`),
-           `Late(% Complete)` = format_count_percent(`Late`, `Complete`),
-           `Complete(% Expected)` = format_count_percent(`Complete`, `Expected 3 Months`),
-           `Incomplete(% Expected)` = format_count_percent(`Incomplete`, `Expected 3 Months`),
-           `Missing(% Expected)` = format_count_percent(`Missing`, `Expected 3 Months`),
-           `Not Started(% Expected)` = format_count_percent(`Not Started`, `Expected 3 Months`)) %>% 
-    select(facilitycode, `Expected 3 Months`, `Complete(% Expected)`, `Early(% Complete)`, `On Time(% Complete)`, `Late(% Complete)`,
-           `Incomplete(% Expected)`, `Missing(% Expected)`, `Not Started(% Expected)`)
-  
-  ######
-  all_categories <- c("Complete", "Incomplete", "Missing", "Early", "Late", "Not Started")
-  
-  empty_df <- tibble(
-    study_id = character(),
-    !!!setNames(rep(list(integer()), length(all_categories)), all_categories)
-  )
-
-  
-  df_6mo <- analytic %>% 
-    select(study_id, followup_data, facilitycode) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
-    mutate_all(na_if, 'NA')  %>% 
-    filter(followup_period == '6 Month') %>% 
-    pivot_wider(names_from = status, values_from = status) %>% 
-    mutate(across(-c(study_id, facilitycode), ~if_else(is.na(.) | . == "", FALSE, TRUE))) %>% 
-    group_by(facilitycode) %>%
-    summarise("Complete" = sum(Complete, na.rm = TRUE),
-              "Incomplete" = sum(Incomplete, na.rm = TRUE),
-              "Early" = sum(`Complete: early`, na.rm = TRUE),
-              "Late" = sum(`Complete: late`, na.rm = TRUE),
-              "Missing" = sum(Missing, na.rm = TRUE),
-              "Not Started" = sum(`Not Started`, na.rm = TRUE))
-  
-  
-  df_for_6mo <- df_expected %>% select(facilitycode, six_month_expected) %>% 
-    left_join(df_6mo) %>% 
-    mutate(complete_new = Complete + Early + Late) %>% 
-    rename(`On Time` = `Complete`,
-           `Complete` = complete_new,
-           `Expected` = six_month_expected) %>% 
-    filter(!is.na(facilitycode)) %>% 
-    mutate(across(-facilitycode, ~ replace(., is.na(.), 0))) %>% 
-    select(facilitycode, `Expected`, `Complete`, `Early`, `On Time`, `Late`, `Incomplete`, `Missing`, `Not Started`) %>% 
-    mutate(`Early` = format_count_percent(`Early`, `Complete`),
-           `On Time` = format_count_percent(`On Time`, `Complete`),
-           `Late` = format_count_percent(`Late`, `Complete`),
-           `Complete` = format_count_percent(`Complete`, `Expected`),
-           `Incomplete` = format_count_percent(`Incomplete`, `Expected`),
-           `Missing` = format_count_percent(`Missing`, `Expected`),
-           `Not Started` = format_count_percent(`Not Started`, `Expected`)) %>% 
-    rename(expected_6mo = `Expected`,
-           complete_6mo = `Complete`,
-           early_6mo = `Early`,
-           on_time_6mo = `On Time`,
-           late_6mo = `Late`,
-           incomplete_6mo = `Incomplete`,
-           missing_6mo = `Missing`,
-           not_started_6mo = `Not Started`)
-  
-  
-  df_12mo <- analytic %>% 
-    select(study_id, followup_data, facilitycode) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
-    mutate_all(na_if, 'NA')  %>% 
-    filter(followup_period == '12 Month') %>% 
-    pivot_wider(names_from = status, values_from = status) %>% 
-    mutate(across(-c(study_id, facilitycode), ~if_else(is.na(.) | . == "", FALSE, TRUE))) %>% 
-    group_by(facilitycode) %>%
-    summarise("Complete" = sum(Complete, na.rm = TRUE),
-              "Incomplete" = sum(Incomplete, na.rm = TRUE),
-              "Early" = sum(`Complete: early`, na.rm = TRUE),
-              "Late" = sum(`Complete: late`, na.rm = TRUE),
-              "Missing" = sum(Missing, na.rm = TRUE),
-              "Not Started" = sum(`Not Started`, na.rm = TRUE)) %>% 
-    left_join(empty_df) %>% 
-    mutate(across(-c(study_id, facilitycode), ~if_else(is.na(.) | . == "", FALSE, TRUE))) %>% 
-    group_by(facilitycode) %>%
-    summarise("Complete" = sum(Complete, na.rm = TRUE),
-              "Incomplete" = sum(Incomplete, na.rm = TRUE),
-              "Early" = sum(`Complete: early`, na.rm = TRUE),
-              "Late" = sum(`Complete: late`, na.rm = TRUE),
-              "Missing" = sum(Missing, na.rm = TRUE),
-              "Not Started" = sum(`Not Started`, na.rm = TRUE))
-  
-  df_for_12mo <- df_expected %>% select(facilitycode, twelve_month_expected) %>% 
-    left_join(df_12mo) %>% 
-    mutate(complete_new = Complete + Early + Late) %>% 
-    rename(`On Time` = `Complete`,
-           `Complete` = complete_new,
-           `Expected` = twelve_month_expected) %>% 
-    filter(!is.na(facilitycode)) %>% 
-    mutate(across(-facilitycode, ~ replace(., is.na(.), 0))) %>% 
-    select(facilitycode, `Expected`, `Complete`, `Early`, `On Time`, `Late`, `Incomplete`, `Missing`, `Not Started`) %>% 
-    mutate(`Early` = format_count_percent(`Early`, `Complete`),
-           `On Time` = format_count_percent(`On Time`, `Complete`),
-           `Late` = format_count_percent(`Late`, `Complete`),
-           `Complete` = format_count_percent(`Complete`, `Expected`),
-           `Incomplete` = format_count_percent(`Incomplete`, `Expected`),
-           `Missing` = format_count_percent(`Missing`, `Expected`),
-           `Not Started` = format_count_percent(`Not Started`, `Expected`)) %>% 
-    rename(expected_12mo = `Expected`,
-           complete_12mo = `Complete`,
-           early_12mo = `Early`,
-           on_time_12mo = `On Time`,
-           late_12mo = `Late`,
-           incomplete_12mo = `Incomplete`,
-           missing_12mo = `Missing`,
-           not_started_12mo = `Not Started`)
-  
-  
-  final_df <- left_join(df_for_3mo, df_for_6mo) %>% left_join(df_for_12mo) %>% 
-    rename(`Site` = facilitycode)
-  
-  colnames(final_df) <- 
-    gsub("expected_6mo", "Expected 6 Months", gsub("complete_6mo", "Complete(% Expected)", 
-                                                   gsub("incomplete_6mo", "Incomplete(% Expected)", gsub("missing_6mo", "Missing(% Expected)", 
-                                                                                                         gsub("early_6mo", "Early(% Complete)", gsub("late_6mo", "Late(% Complete)", 
-                                                                                                                                                     gsub("not_started_6mo", "Not started(% Expected)", gsub("on_time_6mo", "On Time(% Complete)", 
-                                                                                                                                                                                                             gsub("expected_12mo", "Expected 12 Months", gsub("complete_12mo", "Complete(% Expected)", 
-                                                                                                                                                                                                                                                              gsub("incomplete_12mo", "Incomplete(% Expected)", gsub("missing_12mo", "Missing(% Expected)", 
-                                                                                                                                                                                                                                                                                                                     gsub("early_12mo", "Early(% Complete)", gsub("late_12mo", "Late(% Complete)", 
-                                                                                                                                                                                                                                                                                                                                                                  gsub("not_started_12mo", "Not started(% Expected)", gsub("on_time_12mo", "On Time(% Complete)", 
-                                                                                                                                                                                                                                                                                                                                                                                                                           colnames(final_df)))))))))))))))))
-  
-  footnotes_1 <- c("*Complete, Incomplete, Missing, and Not Started sums up to Expected")
-  footnotes_2 <- c("**Early, On Time, and Late sums up to total Complete")
-  
-  output <- kable(final_df, format="html", align='l') %>%
-    add_header_above(c("", "3 Months Followup Status" = 8, "6 Months Followup Status" = 8, "12 Months Followup Status" = 8), align = "c") %>% 
-    kable_styling("striped", full_width = F, position="left") %>% 
-    add_footnote(footnotes_1) %>%
-    add_footnote(footnotes_2)
-  
-  return(output)
 }
 
 

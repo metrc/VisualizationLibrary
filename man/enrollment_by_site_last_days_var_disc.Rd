@@ -9,7 +9,7 @@ enrollment_by_site_last_days_var_disc(
   days = 0,
   discontinued = "discontinued",
   discontinued_colname = "Discontinued",
-  include_safety_set = FALSE
+  include_exclusive_safety_set = FALSE
 )
 }
 \arguments{
@@ -22,7 +22,7 @@ facilitycode, screened_date}
 
 \item{discontinued_colname}{this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')}
 
-\item{include_safety_set}{this is a toggle that will include a safety_set construct if you want it included (defaults to FALSE)}
+\item{include_exclusive_safety_set}{this is a toggle that will include a exclusive_safety_set construct if you want it included (defaults to FALSE)}
 }
 \value{
 html table
