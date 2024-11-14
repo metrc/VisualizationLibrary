@@ -702,7 +702,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
       
       ed_randomized [style="rounded,filled", fillcolor="#a4d3ee", pos="10,6!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (Randomized) (n=',ed_randomized,')"];
       
-      safety [style="rounded,filled", fillcolor="#a4d3ee", pos="2,6!", shape = box, width=2.4, height=1, label = "Full Safety Set (n=',safety_set,')\nSafety Set & Not Enrolled (n=',exclusive_safety_set,')"];
+      safety [style="rounded,filled", fillcolor="#a4d3ee", pos="2,6!", shape = box, width=2.4, height=1, label = "Full Safety Set (n=',safety,')\nSafety Set & Not Enrolled (n=',ex_safety,')"];
       
       enrolled [style="rounded,filled", fillcolor="#a4d3ee", pos="6,4!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',enrolled,')"];
       df_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="6,2!", shape = box, width=2.4, height=1, label = "',definitive_event,' (n=',df_complete,')"];
