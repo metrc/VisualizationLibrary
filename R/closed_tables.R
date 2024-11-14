@@ -273,7 +273,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #'
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #'
-#' @param analytic This is the analytic data set that must include treatment_arm enrolled, censored, 
+#' @param analytic This is the analytic data set that must include treatment_arm enrolled, not_expected, 
 #' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
 #'
 #' @return nothing
@@ -304,7 +304,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
     filter(treatment_arm=="Group B")
   
 
-  inner_closed_discontinuation_sae_deviation_by_type <- function(analytic){
+  inner_closed_not_complete_sae_deviation_by_type <- function(analytic){
     total <- sum(analytic$enrolled, na.rm=T)
     not_active_df <- analytic %>% 
       select(enrolled, not_active_reason) %>% 
@@ -316,15 +316,15 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
     
     not_active_df_tot <- tibble(type="Not Active", n=sum(not_active_df$n))
     
-    censored_df <- analytic %>% 
-      select(enrolled, censored_reason) %>% 
+    not_expected_df <- analytic %>% 
+      select(enrolled, not_expected_reason) %>% 
       filter(enrolled == TRUE) %>% 
-      count(censored_reason) %>%
-      rename(type=censored_reason) %>% 
+      count(not_expected_reason) %>%
+      rename(type=not_expected_reason) %>% 
       filter(!is.na(type)) %>% 
       mutate(type = as.character(type))
     
-    censored_df_tot <- tibble(type="Censored", n=sum(censored_df$n))
+    not_expected_df_tot <- tibble(type="not_expected", n=sum(not_expected_df$n))
     
     sae_df <- analytic %>% 
       select(study_id, enrolled, sae_count) %>% 
@@ -373,7 +373,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
     deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
     
     
-    df_final <- bind_rows(not_active_df_tot, not_active_df, censored_df_tot, censored_df, sae_df, deviation_df_tot, 
+    df_final <- bind_rows(not_active_df_tot, not_active_df, not_expected_df_tot, not_expected_df, sae_df, deviation_df_tot, 
                           deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
       mutate(n = format_count_percent(n, total, decimals=2))
     
@@ -386,9 +386,9 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
     df_final
   }
   
-  table_a <- inner_closed_discontinuation_sae_deviation_by_type(df_a)
-  table_b <- inner_closed_discontinuation_sae_deviation_by_type(df_b)
-  table_full <- inner_closed_discontinuation_sae_deviation_by_type(df_full) 
+  table_a <- inner_closed_not_complete_sae_deviation_by_type(df_a)
+  table_b <- inner_closed_not_complete_sae_deviation_by_type(df_b)
+  table_full <- inner_closed_not_complete_sae_deviation_by_type(df_full) 
   table_full <- table_full %>% 
     mutate(o = seq(nrow(table_full)))
   

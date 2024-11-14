@@ -7,7 +7,7 @@
 closed_not_complete_sae_deviation_by_type(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include treatment_arm enrolled, censored, 
+\item{analytic}{This is the analytic data set that must include treatment_arm enrolled, not_expected, 
 protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count}
 }
 \value{
