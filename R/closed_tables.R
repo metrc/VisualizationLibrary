@@ -284,7 +284,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #' closed_not_complete_sae_deviation_by_type()
 #' }
 closed_not_complete_sae_deviation_by_type <- function(analytic){
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', 'd1533c6c962841734b6dd39995a01297')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', 'dce93fa7ad0faea63a571e493184eaf4')
   
   n_act <- NA
   n_disc <- NA
