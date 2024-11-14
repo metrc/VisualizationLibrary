@@ -2658,12 +2658,12 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
       mutate(status = tools::toTitleCase(status)) %>%
       mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
     
-    df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+    df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
     
     final_raw <- left_join(df_empty, combined, by = 'status') %>% 
       mutate(across(everything(), ~replace_na(., 0)))
     
-    summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+    summed_statuses <- c("Complete", "Incomplete", "Missed", "Not Started")
     
     expected_row <- final_raw %>%
       filter(status %in% summed_statuses) %>%
@@ -2887,12 +2887,12 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
         count(status) %>% 
         rename(!!form_selection := n)
       
-      df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+      df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
       
       final_raw <- left_join(df_empty, result, by = 'status') %>% 
         mutate(across(everything(), ~replace_na(., 0)))
       
-      summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+      summed_statuses <- c("Complete", "Incomplete", "Missed", "Not Started")
       
       expected_row <- final_raw %>%
         filter(status %in% summed_statuses) %>%
@@ -3027,12 +3027,12 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
         count(status) %>% 
         rename(!!form_selection := n)
       
-      df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+      df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
       
       final_raw <- left_join(df_empty, result, by = 'status') %>% 
         mutate(across(everything(), ~replace_na(., 0)))
       
-      summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+      summed_statuses <- c("Complete", "Incomplete", "Missed", "Not Started")
       
       expected_row <- final_raw %>%
         filter(status %in% summed_statuses) %>%
@@ -3094,7 +3094,7 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
     
     form_df <- form_df %>%
       filter(!is.na(Facility)&Facility!='NA')
-    colnames(form_df) <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missing', 
+    colnames(form_df) <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missed', 
                                              'Not Started', 'Incomplete'), times = length(timepoints)))
     form_df
   }
@@ -3183,12 +3183,12 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
           count(status) %>% 
           rename(!!form_selection := n)
         
-        df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+        df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
         
         final_raw <- left_join(df_empty, result, by = 'status') %>% 
           mutate(across(everything(), ~replace_na(., 0)))
         
-        summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+        summed_statuses <- c("Complete", "Incomplete", "Missed", "Not Started")
         
         expected_row <- final_raw %>%
           filter(status %in% summed_statuses) %>%
@@ -3253,7 +3253,7 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
   
   full_collected <- rbind(df_a_collected, df_b_collected, total_collected)
   
-  cols <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missing', 'Not Started', 
+  cols <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 
                               'Incomplete'), times = length(forms)))
   colnames(full_collected) <- cols
   
@@ -3339,12 +3339,12 @@ closed_followup_forms_all_timepoints <- function(analytic, forms, timepoints){
       mutate(status = tools::toTitleCase(status)) %>%
       mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
     
-    form_df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+    form_df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
     
     final_raw <- left_join(form_df_empty, combined, by = 'status') %>% 
       mutate(across(everything(), ~replace_na(., 0)))
     
-    summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+    summed_statuses <- c("Complete", "Incomplete", "Missed", "Not Started")
     
     expected_row <- final_raw %>%
       filter(status %in% summed_statuses) %>%
