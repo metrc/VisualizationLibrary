@@ -3,7 +3,8 @@
 #'
 #' @description This function visualizes the categorical percentages of Study Status for any study, similar to the NSAID consort diagram, but with customization endpoints.
 #'
-#' @param analytic The analytic data set that must include the following columns: screened, eligible, consented, refused, discontinued_pre_randomization, randomized, late_ineligible, enrolled, completed, not_completed, not_expected, active
+#' @param analytic The analytic data set that must include the following columns: screened, eligible, consented, refused, discontinued_pre_randomization,
+#'  randomized, late_ineligible, enrolled, completed, not_completed, not_expected, active, missed_final_followup
 #' @param not_enrolled_other A column in the dataset for cases that are eligible but not enrolled for reasons other than refusal (optional).
 #' @param completed_str A string specifying the label for the completion status box. Defaults to "Completed 12-month visit".
 #' @param late_inelgible defaults to late_ineligble but can be any construct like "adjudicated_discontinued"
@@ -61,7 +62,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
     filter(enrolled)
   
   complete <- sum(en_df$completed, na.rm = TRUE)
-  not_complete <- sum(en_df$not_complete, na.rm = TRUE)
+  not_complete <- sum(en_df$not_completed, na.rm = TRUE)
   missed <- sum(en_df$missed_final_followup, na.rm = TRUE)
   active <- sum(en_df$active, na.rm = TRUE)
   not_expected <- sum(en_df$not_expected, na.rm = TRUE)
@@ -193,7 +194,7 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
     filter(df_surg_completed)
   
   complete <- sum(fu_df$completed, na.rm = TRUE)
-  not_complete <- sum(fu_df$not_complete, na.rm = TRUE)
+  not_complete <- sum(fu_df$not_completed, na.rm = TRUE)
   missed <- sum(fu_df$missed_final_followup, na.rm = TRUE)
   active <- sum(fu_df$active, na.rm = TRUE)
   not_expected <- sum(fu_df$not_expected, na.rm = TRUE)
@@ -605,7 +606,7 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #'
 #' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible,
 #' refused, consented, randomized, enrolled, time_zero, adjudicated_discontinued, completed, 
-#' safety_set, exclusive_safety_set, not_completed, not_expected, active
+#' safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup
 #' @param final_period Defaults to 12 Month
 #' @param definitive_event Event either DF or DWC
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
@@ -621,7 +622,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
-           adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active) %>% 
+           adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup) %>% 
     mutate(time_zero = ifelse(!is.na(time_zero), TRUE, FALSE))
   
   screened <- sum(analytic$screened, na.rm = TRUE)
@@ -674,7 +675,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
     filter(!is.na(time_zero))
   
   complete <- sum(fu_df$completed, na.rm = TRUE)
-  not_complete <- sum(fu_df$not_complete, na.rm = TRUE)
+  not_complete <- sum(fu_df$not_completed, na.rm = TRUE)
   missed <- sum(fu_df$missed_final_followup, na.rm = TRUE)
   active <- sum(fu_df$active, na.rm = TRUE)
   not_expected <- sum(fu_df$not_expected, na.rm = TRUE)
