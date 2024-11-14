@@ -1758,7 +1758,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
   
   if(days == 0){
   
-  if(include_safety_set){
+  if(include_exclusive_safety_set){
     df <- analytic %>% 
       select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
              facilitycode, all_of(discontinued), screened_date, exclusive_safety_set)

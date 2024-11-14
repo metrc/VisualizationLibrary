@@ -1963,7 +1963,7 @@ closed_adherence_by_site <- function(analytic){
 #' closed_enrollment_by_site_last_days_var_disc()
 #' }
 closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="discontinued", discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, footnotes=NULL){
-  confirm_stability_of_related_visual('enrollment_by_site_last_days_var_disc', 'f3bb72ca1a3ca21695900292fc6d0e2b')
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-11-14)
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
