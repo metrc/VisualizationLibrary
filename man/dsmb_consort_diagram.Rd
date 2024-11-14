@@ -9,11 +9,12 @@ dsmb_consort_diagram(
   not_enrolled_other = NULL,
   completed_str = "Completed 12-month visit",
   late_ineligible = "late_ineligible",
-  late_ineligible_str = "Late Ineligible"
+  late_ineligible_str = "Late Ineligible",
+  not_expected_adjudicated = FALSE
 )
 }
 \arguments{
-\item{analytic}{The analytic data set that must include the following columns: screened, eligible, consented, refused, discontinued_pre_randomization, randomized, late_ineligible, enrolled, patient_status_active, censored, and completed.}
+\item{analytic}{The analytic data set that must include the following columns: screened, eligible, consented, refused, discontinued_pre_randomization, randomized, late_ineligible, enrolled, completed, not_completed, not_expected, active}
 
 \item{not_enrolled_other}{A column in the dataset for cases that are eligible but not enrolled for reasons other than refusal (optional).}
 
