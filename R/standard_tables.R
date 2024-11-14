@@ -2529,7 +2529,7 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
       count(status) %>% 
       rename(!!form_selection := n)
     
-    df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
+    df_empty <- data.frame('status' = c("Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
     
     final_raw <- left_join(df_empty, result, by = 'status') %>% 
       mutate(across(everything(), ~replace_na(., 0)))
@@ -2546,11 +2546,11 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
     
     divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
     names(divisor_expected) <- names(final_pre_pct)[-1]
-    divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+    divisor_complete <- final_pre_pct[3, -1] %>% as.numeric()
     names(divisor_complete) <- names(final_pre_pct)[-1]
     
     top <- final_pre_pct %>% 
-      slice_head(n=2) %>%
+      slice_head(n=3) %>%
       slice_tail(n=1) %>% 
       mutate(across(-status, 
                     ~ format_count_percent(., divisor_expected[cur_column()]),
@@ -2563,13 +2563,17 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
                     .names = "{.col}"))
     
     middle <- final_pre_pct %>% 
-      slice_head(n=4) %>% 
+      slice_head(n=5) %>% 
       slice_tail(n=2) %>% 
       mutate(across(-status, 
                     ~ format_count_percent(., divisor_complete[cur_column()]),
                     .names = "{.col}"))
     
-    out <- rbind(expected_row, top, middle, bottom) %>% 
+    not_expected_row <- final_pre_pct %>%
+      slice_head(n=2) %>%
+      slice_tail(n=1)
+      
+    out <- rbind(not_expected_row, expected_row, top, middle, bottom) %>% 
       rename(Status = status) %>%
       pivot_wider(values_from = -Status, names_from = Status) %>%
       mutate(Facility = facility) %>%
@@ -2619,7 +2623,7 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
 #' \dontrun{
 #' followup_form_all_timepoints_by_site()
 #' }
-followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', included_columns=c("Expected", "Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete')){
+followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete')){
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -2645,7 +2649,7 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
       count(status) %>% 
       rename(!!form_selection := n)
     
-    df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
+    df_empty <- data.frame('status' = c("Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
     
     final_raw <- left_join(df_empty, result, by = 'status') %>% 
       mutate(across(everything(), ~replace_na(., 0)))
@@ -2662,11 +2666,11 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
     
     divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
     names(divisor_expected) <- names(final_pre_pct)[-1]
-    divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+    divisor_complete <- final_pre_pct[3, -1] %>% as.numeric()
     names(divisor_complete) <- names(final_pre_pct)[-1]
     
     top <- final_pre_pct %>% 
-      slice_head(n=2) %>%
+      slice_head(n=3) %>%
       slice_tail(n=1) %>% 
       mutate(across(-status, 
                     ~ format_count_percent(., divisor_expected[cur_column()]),
@@ -2679,13 +2683,17 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
                     .names = "{.col}"))
     
     middle <- final_pre_pct %>% 
-      slice_head(n=4) %>% 
+      slice_head(n=5) %>% 
       slice_tail(n=2) %>% 
       mutate(across(-status, 
                     ~ format_count_percent(., divisor_complete[cur_column()]),
                     .names = "{.col}"))
     
-    out <- rbind(expected_row, top, middle, bottom) %>% 
+    not_expected_row <- final_pre_pct %>%
+      slice_head(n=2) %>%
+      slice_tail(n=1)
+    
+    out <- rbind(not_expected_row, expected_row, top, middle, bottom) %>% 
       rename(Status = status) %>%
       pivot_wider(values_from = -Status, names_from = Status) %>%
       mutate(Facility = facility) %>%
@@ -2713,6 +2721,7 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
     for (code in facilities) {
       period_df <- bind_rows(period_df, form_collected(form_selection, timepoint, code))
     }
+    print(period_df)
     form_df <- full_join(form_df, period_df, by = 'Facility')
   }
   
@@ -2789,7 +2798,7 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
         count(status) %>% 
         rename(!!form_selection := n)
       
-      df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
+      df_empty <- data.frame('status' = c("Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
       
       final_raw <- left_join(df_empty, result, by = 'status') %>% 
         mutate(across(everything(), ~replace_na(., 0)))
@@ -2806,11 +2815,11 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
       
       divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
       names(divisor_expected) <- names(final_pre_pct)[-1]
-      divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+      divisor_complete <- final_pre_pct[3, -1] %>% as.numeric()
       names(divisor_complete) <- names(final_pre_pct)[-1]
       
       top <- final_pre_pct %>% 
-        slice_head(n=2) %>%
+        slice_head(n=3) %>%
         slice_tail(n=1) %>% 
         mutate(across(-status, 
                       ~ format_count_percent(., divisor_expected[cur_column()]),
@@ -2823,13 +2832,17 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
                       .names = "{.col}"))
       
       middle <- final_pre_pct %>% 
-        slice_head(n=4) %>% 
+        slice_head(n=5) %>% 
         slice_tail(n=2) %>% 
         mutate(across(-status, 
                       ~ format_count_percent(., divisor_complete[cur_column()]),
                       .names = "{.col}"))
       
-      out <- rbind(expected_row, top, middle, bottom) %>% 
+      not_expected_row <- final_pre_pct %>%
+        slice_head(n=2) %>%
+        slice_tail(n=1)
+      
+      out <- rbind(not_expected_row, expected_row, top, middle, bottom) %>% 
         rename(Status = status) %>%
         pivot_wider(values_from = -Status, names_from = Status) %>%
         mutate(Facility = facility) %>%
@@ -2851,11 +2864,11 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
       filter(!is.na(Facility)&Facility!='NA')
   }
   
-  cols <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 
+  cols <- c('Facility', rep(c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 
                               'Incomplete'), times = length(forms)))
   colnames(output) <- cols
   
-  header <- c(1,rep(7, length(forms)))
+  header <- c(1,rep(8, length(forms)))
   if (is.null(names)) {
     header_names <- c(' ', paste0(forms, ' Status at ', timepoint, ' Period'))
   } else {
@@ -2921,6 +2934,10 @@ followup_forms_all_timepoints <- function(analytic, forms, timepoints){
         count(status) %>% 
         rename(!!i := n)
       
+      if (nrow(result) == 0) {
+        stop("Form and Timepoint not compatible!")
+      }
+      
       result_list[[i]] <- result
     }
     
@@ -2928,7 +2945,7 @@ followup_forms_all_timepoints <- function(analytic, forms, timepoints){
       mutate(status = tools::toTitleCase(status)) %>%
       mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
     
-    form_df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
+    form_df_empty <- data.frame('status' = c("Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
     
     final_raw <- left_join(form_df_empty, combined, by = 'status') %>% 
       mutate(across(everything(), ~replace_na(., 0)))
@@ -2945,11 +2962,11 @@ followup_forms_all_timepoints <- function(analytic, forms, timepoints){
     
     divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
     names(divisor_expected) <- names(final_pre_pct)[-1]
-    divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+    divisor_complete <- final_pre_pct[3, -1] %>% as.numeric()
     names(divisor_complete) <- names(final_pre_pct)[-1]
     
     top <- final_pre_pct %>% 
-      slice_head(n=2) %>%
+      slice_head(n=3) %>%
       slice_tail(n=1) %>% 
       mutate(across(-status, 
                     ~ format_count_percent(., divisor_expected[cur_column()]),
@@ -2962,13 +2979,16 @@ followup_forms_all_timepoints <- function(analytic, forms, timepoints){
                     .names = "{.col}"))
     
     middle <- final_pre_pct %>% 
-      slice_head(n=4) %>% 
+      slice_head(n=5) %>% 
       slice_tail(n=2) %>% 
       mutate(across(-status, 
                     ~ format_count_percent(., divisor_complete[cur_column()]),
                     .names = "{.col}"))
     
-    final_last <- rbind(expected_row, top, middle, bottom) %>% 
+    not_expected_row <- final_pre_pct %>%
+      slice(2)
+    
+    final_last <- rbind(not_expected_row, expected_row, top, middle, bottom) %>% 
       rename(Status = status)
     
     final_last
