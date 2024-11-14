@@ -2430,7 +2430,7 @@ expected_and_followup_visit_overall <- function(analytic){
     mutate(status = tools::toTitleCase(status)) %>%
     mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
   
-  df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
+  df_empty <- data.frame('status' = c("Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
   
   final_raw <- left_join(df_empty, combined, by = 'status') %>% 
     mutate(across(everything(), ~replace_na(., 0)))
@@ -2447,11 +2447,11 @@ expected_and_followup_visit_overall <- function(analytic){
   
   divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
   names(divisor_expected) <- names(final_pre_pct)[-1]
-  divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+  divisor_complete <- final_pre_pct[3, -1] %>% as.numeric()
   names(divisor_complete) <- names(final_pre_pct)[-1]
   
   top <- final_pre_pct %>% 
-    slice_head(n=2) %>%
+    slice_head(n=3) %>%
     slice_tail(n=1) %>% 
     mutate(across(-status, 
                   ~ format_count_percent(., divisor_expected[cur_column()]),
@@ -2464,13 +2464,17 @@ expected_and_followup_visit_overall <- function(analytic){
                   .names = "{.col}"))
   
   middle <- final_pre_pct %>% 
-    slice_head(n=4) %>% 
+    slice_head(n=5) %>% 
     slice_tail(n=2) %>% 
     mutate(across(-status, 
                   ~ format_count_percent(., divisor_complete[cur_column()]),
                   .names = "{.col}"))
   
-  final_last <- rbind(expected_row, top, middle, bottom) %>% 
+  not_expected <- final_pre_pct %>%
+    slice_head(n=2) %>%
+    slice_tail(n=1)
+  
+  final_last <- rbind(not_expected, expected_row, top, middle, bottom) %>% 
     rename(Status = status)
   
   vis <- kable(final_last, format="html", align='l') %>%
