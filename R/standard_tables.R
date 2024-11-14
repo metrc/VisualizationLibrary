@@ -1972,7 +1972,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
                `Enrolled1` = format_count_percent(`Enrolled1`, `Screened1`))
       
       colnames(last) <- c('Facility', 'Screened', 'Eligible (% screened)', 'Enrolled (% screened)', "Screened", 'Enrolled', 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
-                          'Consented & Randomized (% eligible)', paste(discontinued_colname, '(% randomized)'), 'Safety Set', 'Eligible & Enrolled (% randomized)' )
+                          'Consented & Randomized (% eligible)', paste(discontinued_colname, '(% randomized)'), 'Not Enrolled Safety Set (% randomized)', 'Eligible & Enrolled (% randomized)' )
       
       header_num <- c(1,3,2,8)
       header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
