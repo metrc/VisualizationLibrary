@@ -3008,7 +3008,7 @@ followup_forms_all_timepoints <- function(analytic, forms, timepoints){
   names(header) <- c(' ', paste(forms, 'Form Status'))
   
   vis <- kable(out, format="html", align='l') %>%
-    add_indent(c(3,4)) %>% 
+    add_indent(c(4,5)) %>% 
     add_header_above(header) %>%
     kable_styling("striped", full_width = F, position='left')
   
