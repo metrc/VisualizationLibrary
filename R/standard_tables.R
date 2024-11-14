@@ -202,11 +202,11 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_shell_ankle <- tibble(name=c("6 Weeks", "3 Months", "6 Months")) %>% 
     group_by(name) %>% 
-    reframe(value=c("Complete", "Incomplete", "Missing", "Expected")) %>% 
+    reframe(value=c("Complete", "Incomplete", "Missed", "Expected")) %>% 
     ungroup()
   
   df_one_ankle <- left_join(df1_shell_ankle, bind_rows(df1_expected_ankle, df1_ankle)) %>% 
-    mutate(value = factor(value, c("Expected", "Complete", "Incomplete", "Missing"))) %>% 
+    mutate(value = factor(value, c("Expected", "Complete", "Incomplete", "Missed"))) %>% 
     mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months"))) %>% 
     arrange(name, value) %>% 
     mutate(n = replace_na(n, 0)) %>% 
@@ -220,11 +220,11 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, 
            radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo) %>% 
     mutate(radiographs_taken_6wk = ifelse(followup_expected_6wk,
-                                          ifelse(is.na(radiographs_taken_6wk),"Missing",radiographs_taken_6wk),NA)) %>% 
+                                          ifelse(is.na(radiographs_taken_6wk),"Missed",radiographs_taken_6wk),NA)) %>% 
     mutate(radiographs_taken_3mo = ifelse(followup_expected_3mo,
-                                          ifelse(is.na(radiographs_taken_3mo),"Missing",radiographs_taken_3mo),NA)) %>% 
+                                          ifelse(is.na(radiographs_taken_3mo),"Missed",radiographs_taken_3mo),NA)) %>% 
     mutate(radiographs_taken_6mo = ifelse(followup_expected_6mo,
-                                          ifelse(is.na(radiographs_taken_6mo),"Missing",radiographs_taken_6mo),NA)) %>% 
+                                          ifelse(is.na(radiographs_taken_6mo),"Missed",radiographs_taken_6mo),NA)) %>% 
     select(-followup_expected_6wk, -followup_expected_3mo, -followup_expected_6mo) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(str_detect(value,"Yes|YES"),"Yes",value)) %>% 
@@ -250,7 +250,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     ungroup()
   
   df_two_ankle <- left_join(df2_shell_ankle, df2_ankle) %>% 
-    mutate(value = factor(value, c("Yes", "No", "Missing", " "))) %>% 
+    mutate(value = factor(value, c("Yes", "No", "Missed", " "))) %>% 
     mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months"))) %>% 
     arrange(name, value) %>% 
     mutate(n = ifelse(value!=" " & is.na(n)," 0 ( 0%)",n)) %>% 
@@ -338,11 +338,11 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df1_shell_plateau <- tibble(name=c("6 Weeks", "3 Months", "6 Months")) %>% 
     group_by(name) %>% 
-    reframe(value=c("Complete", "Incomplete", "Missing", "Expected")) %>% 
+    reframe(value=c("Complete", "Incomplete", "Missed", "Expected")) %>% 
     ungroup()
   
   df_one_plateau <- left_join(df1_shell_plateau, bind_rows(df1_expected_plateau, df1_plateau)) %>% 
-    mutate(value = factor(value, c("Expected", "Complete", "Incomplete", "Missing"))) %>% 
+    mutate(value = factor(value, c("Expected", "Complete", "Incomplete", "Missed"))) %>% 
     mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months"))) %>% 
     arrange(name, value) %>% 
     mutate(n = replace_na(n, 0)) %>% 
@@ -356,11 +356,11 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
     select(followup_expected_6wk, followup_expected_3mo, followup_expected_6mo, 
            radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo) %>% 
     mutate(radiographs_taken_6wk = ifelse(followup_expected_6wk,
-                                          ifelse(is.na(radiographs_taken_6wk),"Missing",radiographs_taken_6wk),NA)) %>% 
+                                          ifelse(is.na(radiographs_taken_6wk),"Missed",radiographs_taken_6wk),NA)) %>% 
     mutate(radiographs_taken_3mo = ifelse(followup_expected_3mo,
-                                          ifelse(is.na(radiographs_taken_3mo),"Missing",radiographs_taken_3mo),NA)) %>% 
+                                          ifelse(is.na(radiographs_taken_3mo),"Missed",radiographs_taken_3mo),NA)) %>% 
     mutate(radiographs_taken_6mo = ifelse(followup_expected_6mo,
-                                          ifelse(is.na(radiographs_taken_6mo),"Missing",radiographs_taken_6mo),NA)) %>% 
+                                          ifelse(is.na(radiographs_taken_6mo),"Missed",radiographs_taken_6mo),NA)) %>% 
     select(-followup_expected_6wk, -followup_expected_3mo, -followup_expected_6mo) %>% 
     pivot_longer(everything()) %>% 
     mutate(value = ifelse(str_detect(value,"Yes|YES"),"Yes",value)) %>% 
@@ -382,11 +382,11 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   
   df2_shell_plateau <- tibble(name=c("6 Weeks", "3 Months", "6 Months")) %>% 
     group_by(name) %>% 
-    reframe(value=c("Yes", "No", "Missing", " ")) %>% 
+    reframe(value=c("Yes", "No", "Missed", " ")) %>% 
     ungroup()
   
   df_two_plateau <- left_join(df2_shell_plateau, df2_plateau) %>% 
-    mutate(value = factor(value, c("Yes", "No", "Missing", " "))) %>% 
+    mutate(value = factor(value, c("Yes", "No", "Missed", " "))) %>% 
     mutate(name = factor(name, c("6 Weeks", "3 Months", "6 Months"))) %>% 
     arrange(name, value) %>% 
     mutate(n = ifelse(value!=" " & is.na(n)," 0 ( 0%)",n)) %>% 
@@ -476,8 +476,8 @@ injury_ankle_plateau_characteristics <- function(analytic){
     group_by(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker) %>%
     summarise(Total = n()) %>%
     ungroup() %>% 
-    mutate(injury_classification_ankle_ota = ifelse(injury_type == "ankle" & is.na(injury_classification_ankle_ota) & is.na(injury_classification_plat_schatzker), "Missing", injury_classification_ankle_ota)) %>% 
-    mutate(injury_classification_plat_schatzker = ifelse(injury_type == "plateau" & is.na(injury_classification_ankle_ota) & is.na(injury_classification_plat_schatzker), "Missing", injury_classification_plat_schatzker)) %>% 
+    mutate(injury_classification_ankle_ota = ifelse(injury_type == "ankle" & is.na(injury_classification_ankle_ota) & is.na(injury_classification_plat_schatzker), "Missed", injury_classification_ankle_ota)) %>% 
+    mutate(injury_classification_plat_schatzker = ifelse(injury_type == "plateau" & is.na(injury_classification_ankle_ota) & is.na(injury_classification_plat_schatzker), "Missed", injury_classification_plat_schatzker)) %>% 
     select(-injury_type) %>% 
     mutate(Name = ifelse(!is.na(injury_classification_ankle_ota), injury_classification_ankle_ota, injury_classification_plat_schatzker)) %>% 
     mutate(Category = ifelse(!is.na(injury_classification_ankle_ota), "O", "T")) %>% 
@@ -2430,12 +2430,12 @@ expected_and_followup_visit_overall <- function(analytic){
     mutate(status = tools::toTitleCase(status)) %>%
     mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
   
-  df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+  df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
   
   final_raw <- left_join(df_empty, combined, by = 'status') %>% 
     mutate(across(everything(), ~replace_na(., 0)))
   
-  summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+  summed_statuses <- c("Complete", "Incomplete", "Missed", "Not Started")
   
   expected_row <- final_raw %>%
     filter(status %in% summed_statuses) %>%
@@ -2525,12 +2525,12 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
       count(status) %>% 
       rename(!!form_selection := n)
     
-    df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+    df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
     
     final_raw <- left_join(df_empty, result, by = 'status') %>% 
       mutate(across(everything(), ~replace_na(., 0)))
     
-    summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+    summed_statuses <- c("Complete", "Incomplete", "Missed", "Not Started")
     
     expected_row <- final_raw %>%
       filter(status %in% summed_statuses) %>%
@@ -2641,12 +2641,12 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
       count(status) %>% 
       rename(!!form_selection := n)
     
-    df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+    df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
     
     final_raw <- left_join(df_empty, result, by = 'status') %>% 
       mutate(across(everything(), ~replace_na(., 0)))
     
-    summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+    summed_statuses <- c("Complete", "Incomplete", "Missed", "Not Started")
     
     expected_row <- final_raw %>%
       filter(status %in% summed_statuses) %>%
@@ -2785,12 +2785,12 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
         count(status) %>% 
         rename(!!form_selection := n)
       
-      df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+      df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
       
       final_raw <- left_join(df_empty, result, by = 'status') %>% 
         mutate(across(everything(), ~replace_na(., 0)))
       
-      summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+      summed_statuses <- c("Complete", "Incomplete", "Missed", "Not Started")
       
       expected_row <- final_raw %>%
         filter(status %in% summed_statuses) %>%
@@ -2847,7 +2847,7 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
       filter(!is.na(Facility)&Facility!='NA')
   }
   
-  cols <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missing', 'Not Started', 
+  cols <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 
                               'Incomplete'), times = length(forms)))
   colnames(output) <- cols
   
@@ -2924,12 +2924,12 @@ followup_forms_all_timepoints <- function(analytic, forms, timepoints){
       mutate(status = tools::toTitleCase(status)) %>%
       mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
     
-    form_df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete'))
+    form_df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
     
     final_raw <- left_join(form_df_empty, combined, by = 'status') %>% 
       mutate(across(everything(), ~replace_na(., 0)))
     
-    summed_statuses <- c("Complete", "Incomplete", "Missing", "Not Started")
+    summed_statuses <- c("Complete", "Incomplete", "Missed", "Not Started")
     
     expected_row <- final_raw %>%
       filter(status %in% summed_statuses) %>%
