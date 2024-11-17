@@ -1618,7 +1618,7 @@ other_reason_refusal_by_site <- function(analytic){
 #' reasons
 #'
 #' @param analytic This is the analytic data set that must include study_id, facilitycode, able_to_participate, 
-#' nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_other, constraint_othr_txt, screened
+#' nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_other, constraint_other_txt, screened
 #'
 #' @return nothing
 #' @export
@@ -1630,7 +1630,7 @@ other_reason_refusal_by_site <- function(analytic){
 not_enrolled_for_other_reasons <- function(analytic){
   
   df1 <- analytic %>%  select(study_id, facilitycode, able_to_participate, nonparticipation_text_given, 
-                              constraint_noconsent, constraint_admin, constraint_other, constraint_othr_txt, screened) %>% 
+                              constraint_noconsent, constraint_admin, constraint_other, constraint_other_txt, screened) %>% 
     filter(screened) %>% 
     filter(constraint_admin == TRUE | constraint_noconsent == TRUE | constraint_other == TRUE | !is.na(nonparticipation_text_given)) %>% 
     select(-screened) %>% 
