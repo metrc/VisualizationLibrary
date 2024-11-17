@@ -672,7 +672,9 @@ not_complete_sae_deviation_by_type <- function(analytic){
   
   total <- sum(analytic$enrolled, na.rm=T)
   not_completed_df <- analytic %>% 
-    select(enrolled, not_completed_reason) %>% 
+    select(enrolled, not_completed_reason, not_completed) %>% 
+    mutate(not_completed_reason = ifelse(not_completed, not_completed_reason, NA)) %>% 
+    select(-not_completed) %>% 
     filter(enrolled == TRUE) %>% 
     count(not_completed_reason) %>%
     rename(type=not_completed_reason) %>% 
