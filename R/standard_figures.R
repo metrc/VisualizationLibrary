@@ -92,7 +92,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       not_enrolled [style="rounded,filled", fillcolor="#ccccff", pos="2,10!", shape = box, width=2.4, height=1, label = "Not Enrolled Other (n=',Not_Enrolled_Other,')"];
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
-      not_complete [style="rounded,filled", fillcolor="#ccccff", pos="4,0!", shape = box, width=2.4, height=1, label = "Not Complete (n=',not_complete,')\nMissed (n=',missed,')"];
+      not_complete [style="rounded,filled", fillcolor="#ccccff", pos="4,0!", shape = box, width=2.4, height=1, label = "Not Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="8,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
       fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="12,0!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',complete,')"];
       
@@ -224,7 +224,7 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
       compl [style="rounded,filled", fillcolor="#ccccff", pos="6,2!", shape = box, width=2.4, height=1, label = "Definitive Fixation Complete (n=',Definitive_Fixation_Complete,')"];
       
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
-      not_complete [style="rounded,filled", fillcolor="#ccccff", pos="4,0!", shape = box, width=2.4, height=1, label = "Not Complete (n=',not_complete,')\nMissed (n=',missed,')"];
+      not_complete [style="rounded,filled", fillcolor="#ccccff", pos="4,0!", shape = box, width=2.4, height=1, label = "Not Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="8,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
       fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="12,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')"];
       
@@ -709,7 +709,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
       df_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="6,2!", shape = box, width=2.4, height=1, label = "',definitive_event,' (n=',df_complete,')"];
 
       active [style="rounded,filled", fillcolor="#a4d3ee", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
-      not_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="4,0!", shape = box, width=2.4, height=1, label = "Not Complete (n=',not_complete,')\nMissed (n=',missed,')"];
+      not_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="4,0!", shape = box, width=2.4, height=1, label = "Not Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       not_expected [style="rounded,filled", fillcolor="#a4d3ee", pos="8,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
       fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="12,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')"];
 
