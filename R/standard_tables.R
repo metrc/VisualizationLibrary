@@ -657,7 +657,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #' This was originally made for Union
 #'
-#' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_active_reason,
+#' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
 #' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
 #'
 #' @return nothing
@@ -671,15 +671,15 @@ not_complete_sae_deviation_by_type <- function(analytic){
   
   
   total <- sum(analytic$enrolled, na.rm=T)
-  not_active_df <- analytic %>% 
-    select(enrolled, not_active_reason) %>% 
+  not_completed_df <- analytic %>% 
+    select(enrolled, not_completed_reason) %>% 
     filter(enrolled == TRUE) %>% 
-    count(not_active_reason) %>%
-    rename(type=not_active_reason) %>% 
+    count(not_completed_reason) %>%
+    rename(type=not_completed_reason) %>% 
     filter(!is.na(type)) %>% 
     mutate(type = as.character(type))
   
-  not_active_df_tot <- tibble(type="Not Completed", n=sum(not_active_df$n))
+  not_completed_df_tot <- tibble(type="Not Completed", n=sum(not_completed_df$n))
   
   not_expected_df <- analytic %>% 
     select(enrolled, not_expected_reason) %>% 
@@ -738,11 +738,11 @@ not_complete_sae_deviation_by_type <- function(analytic){
   deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
   
   
-  df_final <- bind_rows(not_active_df_tot, not_active_df, not_expected_df_tot, not_expected_df, sae_df, deviation_df_tot, 
+  df_final <- bind_rows(not_completed_df_tot, not_completed_df, not_expected_df_tot, not_expected_df, sae_df, deviation_df_tot, 
                         deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
     mutate(n = format_count_percent(n, total, decimals=2))
   
-  n_act <- nrow(not_active_df)
+  n_act <- nrow(not_completed_df)
   n_disc <- nrow(not_expected_df)
   n_dsc <- nrow(deviation_sc_df)
   n_dp <- nrow(deviation_p_df)
