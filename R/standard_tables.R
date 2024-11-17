@@ -1643,7 +1643,7 @@ not_enrolled_for_other_reasons <- function(analytic){
            `Constraint: No consent given` = constraint_noconsent,
            `Constraint: Administrative reason` = constraint_admin,
            `Constraint: Other` = constraint_other,
-           `Other constraint reason` = constraint_othr_txt,
+           `Other constraint reason` = constraint_other_txt,
            `Study_ID` = study_id)
   
   
