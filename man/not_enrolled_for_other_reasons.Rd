@@ -8,7 +8,7 @@ not_enrolled_for_other_reasons(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, facilitycode, able_to_participate, 
-nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_other, constraint_othr_txt, screened}
+nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_other, constraint_other_txt, screened}
 }
 \value{
 nothing

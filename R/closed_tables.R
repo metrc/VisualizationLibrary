@@ -706,43 +706,55 @@ closed_appendix_B_deaths <- function(analytic){
   return(output_text)
 }
 
-#' Appendix C: Listing of any Discontinuations for closed report
+#' Appendix C: Listing of any Not Expected and Not completed cases for closed report
 #'
-#' @description This function visualizes any discontinuations occurred during the study time period.
+#' @description This function visualizes any not completedness and not expectedness occurred during the study time period.
 #'
-#' @param analytic This is the analytic data set that must include study_id, discontinuation_data
+#' @param analytic This is the analytic data set that must include study_id, not_expected_data, not_completed_data
 #'
 #' @return nothing
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' closed_appendix_C_discontinuations()
+#' closed_appendix_C_not_expected_not_completed()
 #' }
-closed_appendix_C_discontinuations <- function(analytic){
+closed_appendix_C_not_expected_not_completed <- function(analytic){
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   df <- analytic %>% 
-    select(study_id, discontinuation_data) %>% 
-    filter(!is.na(discontinuation_data))
-
+    select(study_id, not_expected_data, not_completed_data) 
   
-  unzipped_discontinuation <- df %>%
-    separate(discontinuation_data, into = c("facilitycode","treatment_arm", "consent_date", "discontinue_date", "age", 
-                                            "discontinuation_reason"), sep='\\|') 
+  unzipped_not_expected_data <- df %>%
+    select(study_id, not_expected_data) %>% 
+    filter(!is.na(not_expected_data)) %>% 
+    separate(not_expected_data, into = c("facilitycode","treatment_arm", "consent_date", "not_expected_date", "age", 
+                                         "not_expected_reason"), sep='\\|') %>% 
+    rename(not_expected_completed_date = not_expected_date,
+           not_expected_completed_reason = not_expected_reason)
   
-  output_df <- unzipped_discontinuation %>% 
+  unzipped_not_completed_data <- df %>%
+    select(study_id, not_completed_data) %>% 
+    filter(!is.na(not_completed_data)) %>% 
+    separate(not_completed_data, into = c("facilitycode","treatment_arm", "consent_date", "not_completed_date", "age", 
+                                          "not_completed_reason"), sep='\\|') %>% 
+    rename(not_expected_completed_date = not_completed_date,
+           not_expected_completed_reason = not_completed_reason)
+  
+  unzipped_not_expected_not_completed <- rbind(unzipped_not_expected_data, unzipped_not_completed_data)
+  
+  output_df <- unzipped_not_expected_not_completed %>% 
     mutate(text = paste0(
       "<b>Participant ID</b>: ", study_id, "-", facilitycode, "<br /> ",
       "<b>Date Enrolled</b>: ", consent_date, "<br /> ",
       "<b>Tx Group</b>: ", treatment_arm, "<br /> ",
-      "<b>Date discontinued</b>: ", discontinue_date, "<br /> ",
+      "<b>Date discontinued</b>: ", not_expected_completed_date, "<br /> ",
       "<b>Age</b>: ", age, "<br /> ",
-      "<b>Reason for discontinuation</b>: ", discontinuation_reason, "<br /> ",
+      "<b>Reason for discontinuation</b>: ", not_expected_completed_reason, "<br /> ",
       "<br />")) 
   
-  if (nrow(unzipped_discontinuation) == 0) {
+  if (nrow(unzipped_not_expected_not_completed) == 0) {
     return(paste0("<br />\nNone at this time.<br />\n"))
   }
   
