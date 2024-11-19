@@ -657,7 +657,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #' This was originally made for Union
 #'
-#' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_active_reason,
+#' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
 #' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
 #'
 #' @return nothing
@@ -671,15 +671,17 @@ not_complete_sae_deviation_by_type <- function(analytic){
   
   
   total <- sum(analytic$enrolled, na.rm=T)
-  not_active_df <- analytic %>% 
-    select(enrolled, not_active_reason) %>% 
+  not_completed_df <- analytic %>% 
+    select(enrolled, not_completed_reason, not_completed) %>% 
+    mutate(not_completed_reason = ifelse(not_completed, not_completed_reason, NA)) %>% 
+    select(-not_completed) %>% 
     filter(enrolled == TRUE) %>% 
-    count(not_active_reason) %>%
-    rename(type=not_active_reason) %>% 
+    count(not_completed_reason) %>%
+    rename(type=not_completed_reason) %>% 
     filter(!is.na(type)) %>% 
     mutate(type = as.character(type))
   
-  not_active_df_tot <- tibble(type="Not Completed", n=sum(not_active_df$n))
+  not_completed_df_tot <- tibble(type="Not Completed", n=sum(not_completed_df$n))
   
   not_expected_df <- analytic %>% 
     select(enrolled, not_expected_reason) %>% 
@@ -738,11 +740,11 @@ not_complete_sae_deviation_by_type <- function(analytic){
   deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
   
   
-  df_final <- bind_rows(not_active_df_tot, not_active_df, not_expected_df_tot, not_expected_df, sae_df, deviation_df_tot, 
+  df_final <- bind_rows(not_completed_df_tot, not_completed_df, not_expected_df_tot, not_expected_df, sae_df, deviation_df_tot, 
                         deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
     mutate(n = format_count_percent(n, total, decimals=2))
   
-  n_act <- nrow(not_active_df)
+  n_act <- nrow(not_completed_df)
   n_disc <- nrow(not_expected_df)
   n_dsc <- nrow(deviation_sc_df)
   n_dp <- nrow(deviation_p_df)
@@ -1616,7 +1618,7 @@ other_reason_refusal_by_site <- function(analytic){
 #' reasons
 #'
 #' @param analytic This is the analytic data set that must include study_id, facilitycode, able_to_participate, 
-#' nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_other, constraint_othr_txt, screened
+#' nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_other, constraint_other_txt, screened
 #'
 #' @return nothing
 #' @export
@@ -1628,7 +1630,7 @@ other_reason_refusal_by_site <- function(analytic){
 not_enrolled_for_other_reasons <- function(analytic){
   
   df1 <- analytic %>%  select(study_id, facilitycode, able_to_participate, nonparticipation_text_given, 
-                              constraint_noconsent, constraint_admin, constraint_other, constraint_othr_txt, screened) %>% 
+                              constraint_noconsent, constraint_admin, constraint_other, constraint_other_txt, screened) %>% 
     filter(screened) %>% 
     filter(constraint_admin == TRUE | constraint_noconsent == TRUE | constraint_other == TRUE | !is.na(nonparticipation_text_given)) %>% 
     select(-screened) %>% 
@@ -1641,7 +1643,7 @@ not_enrolled_for_other_reasons <- function(analytic){
            `Constraint: No consent given` = constraint_noconsent,
            `Constraint: Administrative reason` = constraint_admin,
            `Constraint: Other` = constraint_other,
-           `Other constraint reason` = constraint_othr_txt,
+           `Other constraint reason` = constraint_other_txt,
            `Study_ID` = study_id)
   
   
@@ -1972,7 +1974,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
                `Enrolled1` = format_count_percent(`Enrolled1`, `Screened1`))
       
       colnames(last) <- c('Facility', 'Screened', 'Eligible (% screened)', 'Enrolled (% screened)', "Screened", 'Enrolled', 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)', 
-                          'Consented & Randomized (% eligible)', paste(discontinued_colname, '(% randomized)'), 'Safety Set', 'Eligible & Enrolled (% randomized)' )
+                          'Consented & Randomized (% eligible)', paste(discontinued_colname, '(% randomized)'), 'Not Enrolled Safety Set (% randomized)', 'Eligible & Enrolled (% randomized)' )
       
       header_num <- c(1,3,2,8)
       header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
