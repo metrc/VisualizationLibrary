@@ -9,7 +9,8 @@ enrollment_by_site_last_days_var_disc(
   days = 0,
   discontinued = "discontinued",
   discontinued_colname = "Discontinued",
-  include_exclusive_safety_set = FALSE
+  include_exclusive_safety_set = FALSE,
+  average = FALSE
 )
 }
 \arguments{
