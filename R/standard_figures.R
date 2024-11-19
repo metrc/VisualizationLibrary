@@ -459,7 +459,7 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #' \dontrun{
 #' cumulative_enrolled()
 #' }
-cumulative_enrolled <- function(analytic){
+cumulative_enrolled <- function(analytic, add_discrete=TRUE){
   
   df <- analytic %>%  select(study_id, enrolled, consent_date) %>% 
     filter(!is.na(consent_date)) %>% 
@@ -476,10 +476,62 @@ cumulative_enrolled <- function(analytic){
     mutate(cumulative_value = cumsum(Total))
   
   
+  if(add_discrete){
+    g <- ggplot(yyyy_mm) +
+      geom_bar(aes(x = factor(year_month), y = Total, group = 1), stat = "identity", fill = "blue3", color = "black", size = 0.3) +
+      geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +  # Add the 'data' argument
+      labs(title = "Cumulative Enrollment with Discrete Enrollment by Month", x = "Month", y = "Enrolled") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+  } else{
+    g <- ggplot(yyyy_mm) +
+      geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +  # Add the 'data' argument
+      labs(title = "Cumulative Enrollment by Month", x = "Month", y = "Enrolled") +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+  }
+
+  temp_png_path <- tempfile(fileext = ".png")
+  ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Cumulative Enrollment with Discrete Enrollment by Month" style="max-width: 100%%; width: 80%%;">', image_data)
+  file.remove(temp_png_path)
+  
+  return(img_tag)
+}
+
+#' Monthly Discrete Enrollment
+#'
+#' @description This function visualizes the discrete number of patients enrolled by month
+#'
+#' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date 
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' discrete_enrolled()
+#' }
+discrete_enrolled <- function(analytic){
+  
+  df <- analytic %>%  select(study_id, enrolled, consent_date) %>% 
+    filter(!is.na(consent_date)) %>% 
+    filter(enrolled == TRUE) 
+  
+  df$consent_date <- ymd(df$consent_date)
+  
+  yyyy_mm <- df %>% 
+    mutate(year_month = str_remove(consent_date, '...$')) %>% 
+    group_by(year_month) %>%
+    summarise(Total = n()) %>%
+    ungroup() %>% 
+    arrange(year_month) %>%
+    mutate(cumulative_value = cumsum(Total))
+  
   g <- ggplot(yyyy_mm) +
     geom_bar(aes(x = factor(year_month), y = Total, group = 1), stat = "identity", fill = "blue3", color = "black", size = 0.3) +
-    geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +  # Add the 'data' argument
-    labs(title = "Cumulative Enrollment with Discrete Enrollment by Month", x = "Month", y = "Enrolled") +
+    labs(title = "Discrete Enrollment by Month", x = "Month", y = "Enrolled") +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
   
@@ -491,6 +543,7 @@ cumulative_enrolled <- function(analytic){
   
   return(img_tag)
 }
+
 
 
 #' Cumulative enrollment for Length of Stay for NSAID
