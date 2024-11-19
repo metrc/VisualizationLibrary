@@ -273,7 +273,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #'
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #'
-#' @param analytic This is the analytic data set that must include treatment_arm enrolled, not_expected, 
+#' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
 #' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
 #'
 #' @return nothing
@@ -284,7 +284,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #' closed_not_complete_sae_deviation_by_type()
 #' }
 closed_not_complete_sae_deviation_by_type <- function(analytic){
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', 'dce93fa7ad0faea63a571e493184eaf4')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '395f0b9c6f36be8205fa381a91ead1a1')
   
   n_act <- NA
   n_disc <- NA
@@ -306,15 +306,17 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
 
   inner_closed_not_complete_sae_deviation_by_type <- function(analytic){
     total <- sum(analytic$enrolled, na.rm=T)
-    not_active_df <- analytic %>% 
-      select(enrolled, not_active_reason) %>% 
+    not_completed_df <- analytic %>% 
+      select(enrolled, not_completed_reason, not_completed) %>% 
+      mutate(not_completed_reason = ifelse(not_completed, not_completed_reason, NA)) %>% 
+      select(-not_completed) %>% 
       filter(enrolled == TRUE) %>% 
-      count(not_active_reason) %>%
-      rename(type=not_active_reason) %>% 
+      count(not_completed_reason) %>%
+      rename(type=not_completed_reason) %>% 
       filter(!is.na(type)) %>% 
       mutate(type = as.character(type))
     
-    not_active_df_tot <- tibble(type="Not Active", n=sum(not_active_df$n))
+    not_completed_df_tot <- tibble(type="Not Active", n=sum(not_completed_df$n))
     
     not_expected_df <- analytic %>% 
       select(enrolled, not_expected_reason) %>% 
@@ -373,11 +375,11 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
     deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
     
     
-    df_final <- bind_rows(not_active_df_tot, not_active_df, not_expected_df_tot, not_expected_df, sae_df, deviation_df_tot, 
+    df_final <- bind_rows(not_completed_df_tot, not_completed_df, not_expected_df_tot, not_expected_df, sae_df, deviation_df_tot, 
                           deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
       mutate(n = format_count_percent(n, total, decimals=2))
     
-    n_act <<- nrow(not_active_df)
+    n_act <<- nrow(not_completed_df)
     n_disc <<- nrow(discontinuation_df)
     n_dsc <<- nrow(deviation_sc_df)
     n_dp <<- nrow(deviation_p_df)
@@ -704,43 +706,55 @@ closed_appendix_B_deaths <- function(analytic){
   return(output_text)
 }
 
-#' Appendix C: Listing of any Discontinuations for closed report
+#' Appendix C: Listing of any Not Expected and Not completed cases for closed report
 #'
-#' @description This function visualizes any discontinuations occurred during the study time period.
+#' @description This function visualizes any not completedness and not expectedness occurred during the study time period.
 #'
-#' @param analytic This is the analytic data set that must include study_id, discontinuation_data
+#' @param analytic This is the analytic data set that must include study_id, not_expected_data, not_completed_data
 #'
 #' @return nothing
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' closed_appendix_C_discontinuations()
+#' closed_appendix_C_not_expected_not_completed()
 #' }
-closed_appendix_C_discontinuations <- function(analytic){
+closed_appendix_C_not_expected_not_completed <- function(analytic){
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
   df <- analytic %>% 
-    select(study_id, discontinuation_data) %>% 
-    filter(!is.na(discontinuation_data))
-
+    select(study_id, not_expected_data, not_completed_data) 
   
-  unzipped_discontinuation <- df %>%
-    separate(discontinuation_data, into = c("facilitycode","treatment_arm", "consent_date", "discontinue_date", "age", 
-                                            "discontinuation_reason"), sep='\\|') 
+  unzipped_not_expected_data <- df %>%
+    select(study_id, not_expected_data) %>% 
+    filter(!is.na(not_expected_data)) %>% 
+    separate(not_expected_data, into = c("facilitycode","treatment_arm", "consent_date", "not_expected_date", "age", 
+                                         "not_expected_reason"), sep='\\|') %>% 
+    rename(not_expected_completed_date = not_expected_date,
+           not_expected_completed_reason = not_expected_reason)
   
-  output_df <- unzipped_discontinuation %>% 
+  unzipped_not_completed_data <- df %>%
+    select(study_id, not_completed_data) %>% 
+    filter(!is.na(not_completed_data)) %>% 
+    separate(not_completed_data, into = c("facilitycode","treatment_arm", "consent_date", "not_completed_date", "age", 
+                                          "not_completed_reason"), sep='\\|') %>% 
+    rename(not_expected_completed_date = not_completed_date,
+           not_expected_completed_reason = not_completed_reason)
+  
+  unzipped_not_expected_not_completed <- rbind(unzipped_not_expected_data, unzipped_not_completed_data)
+  
+  output_df <- unzipped_not_expected_not_completed %>% 
     mutate(text = paste0(
       "<b>Participant ID</b>: ", study_id, "-", facilitycode, "<br /> ",
       "<b>Date Enrolled</b>: ", consent_date, "<br /> ",
       "<b>Tx Group</b>: ", treatment_arm, "<br /> ",
-      "<b>Date discontinued</b>: ", discontinue_date, "<br /> ",
+      "<b>Date discontinued</b>: ", not_expected_completed_date, "<br /> ",
       "<b>Age</b>: ", age, "<br /> ",
-      "<b>Reason for discontinuation</b>: ", discontinuation_reason, "<br /> ",
+      "<b>Reason for discontinuation</b>: ", not_expected_completed_reason, "<br /> ",
       "<br />")) 
   
-  if (nrow(unzipped_discontinuation) == 0) {
+  if (nrow(unzipped_not_expected_not_completed) == 0) {
     return(paste0("<br />\nNone at this time.<br />\n"))
   }
   
