@@ -2902,7 +2902,7 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
 #' \dontrun{
 #' followup_forms_all_timepoints()
 #' }
-followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = NULL){
+followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = NULL, vertical = TRUE){
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -3024,35 +3024,42 @@ followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = N
   colnames(out) <- c('Status', found_timepoints)
   header <- c(' ', base::table(header))
   
-  out_long <- NULL
-  i <- 2
-  for (package in names(header[-1])) {
-    colcount <- as.numeric(header[package]) - 1
-    colindex <- i + colcount
-    temp_df <- out[i:colindex]
-    if (is.null(out_long)) {
-      out_long <- temp_df
-    } else {
-      out_long <- bind_rows(out_long, temp_df)
+  if (vertical) {
+    out_long <- NULL
+    i <- 2
+    for (package in names(header[-1])) {
+      colcount <- as.numeric(header[package]) - 1
+      colindex <- i + colcount
+      temp_df <- out[i:colindex]
+      if (is.null(out_long)) {
+        out_long <- temp_df
+      } else {
+        out_long <- bind_rows(out_long, temp_df)
+      }
+      i <- colindex + 1
     }
-    i <- colindex + 1
-  }
-  
-  out_long <- out_long %>%
-    mutate(across(everything(), ~replace(., is.na(.), "."))) %>%
-    mutate(Status = rep(c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'), 
-                        length(forms))) %>%
-    select(Status, everything())
-  
     
-  vis <- kable(out_long, format="html", align='l')  %>%
-    kable_styling("striped", full_width = F, position='left')
-  
-  i <- 1
-  for (package in names(header[-1])) {
-    vis <- vis %>%
-      pack_rows(package, i, i + 7)
-    i <- i + 8
+    out_long <- out_long %>%
+      mutate(across(everything(), ~replace(., is.na(.), "."))) %>%
+      mutate(Status = rep(c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'), 
+                          length(forms))) %>%
+      select(Status, everything())
+    
+      
+    vis <- kable(out_long, format="html", align='l')  %>%
+      kable_styling("striped", full_width = F, position='left')
+    
+    i <- 1
+    for (package in names(header[-1])) {
+      vis <- vis %>%
+        pack_rows(package, i, i + 7)
+      i <- i + 8
+    }
+  } else if (!vertical) {
+    vis <- kable(out, format="html", align='l') %>%
+      add_indent(c(3,4)) %>% 
+      add_header_above(header) %>%
+      kable_styling("striped", full_width = F, position='left')
   }
   
   return(vis)
