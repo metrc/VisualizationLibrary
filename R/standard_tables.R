@@ -2721,7 +2721,6 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
     for (code in facilities) {
       period_df <- bind_rows(period_df, form_collected(form_selection, timepoint, code))
     }
-    print(period_df)
     form_df <- full_join(form_df, period_df, by = 'Facility')
   }
   
@@ -2901,7 +2900,7 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
 #' \dontrun{
 #' followup_forms_all_timepoints()
 #' }
-followup_forms_all_timepoints <- function(analytic, forms, timepoints){
+followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = NULL){
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -2912,8 +2911,20 @@ followup_forms_all_timepoints <- function(analytic, forms, timepoints){
     mutate(status = gsub('_', ' ', status)) %>%
     mutate(status = tools::toTitleCase(status))
   
+  if (is.null(forms)) {
+    forms <- df %>%
+      pull(form) %>%
+      unique()
+    forms <- forms[!is.na(forms)]
+  }
+  if (is.null(timepoints)) {
+    timepoints <- df %>%
+      pull(followup_period) %>%
+      unique()
+    timepoints <- timepoints[!is.na(timepoints)]
+  }
+  
   per_form <- function(form_name) {
-    
     form_df <- df %>%
       filter(form==form_name)
     
@@ -2934,11 +2945,8 @@ followup_forms_all_timepoints <- function(analytic, forms, timepoints){
         count(status) %>% 
         rename(!!i := n)
       
-      if (nrow(result) == 0) {
-        stop("Form and Timepoint not compatible!")
-      }
-      
-      result_list[[i]] <- result
+      if (nrow(result) != 0) {
+        result_list[[i]] <- result      }
     }
     
     combined <- Reduce(function(x, y) full_join(x, y, by = "status"), result_list) %>%
@@ -2994,23 +3002,56 @@ followup_forms_all_timepoints <- function(analytic, forms, timepoints){
     final_last
   }
   
+  found_timepoints <- c()
+  header <- c()
   out <- NULL
   for (form_name in forms) {
+    res <- per_form(form_name)
     if (is.null(out)) {
-      out <- per_form(form_name)
+      out <- res
+      found_timepoints <- colnames(res)
+      header <- rep(form_name, times = length(colnames(res))-1)
     } else {
       out <- full_join(out, per_form(form_name), by = 'Status')
+      found_timepoints <- c(found_timepoints, colnames(res))
+      header <- c(header, rep(form_name, times = length(colnames(res))-1))
     }
   }
+  found_timepoints <- found_timepoints[found_timepoints!='Status']
   
-  colnames(out) <- c('Status', rep(timepoints, times = length(forms)))
-  header <- c(1, rep(length(timepoints), times = length(forms)))
-  names(header) <- c(' ', paste(forms, 'Form Status'))
+  colnames(out) <- c('Status', found_timepoints)
+  header <- c(' ', base::table(header))
   
-  vis <- kable(out, format="html", align='l') %>%
-    add_indent(c(4,5)) %>% 
-    add_header_above(header) %>%
+  out_long <- NULL
+  i <- 2
+  for (package in names(header[-1])) {
+    colcount <- as.numeric(header[package]) - 1
+    colindex <- i + colcount
+    temp_df <- out[i:colindex]
+    if (is.null(out_long)) {
+      out_long <- temp_df
+    } else {
+      out_long <- bind_rows(out_long, temp_df)
+    }
+    i <- colindex + 1
+  }
+  
+  out_long <- out_long %>%
+    mutate(across(everything(), ~replace(., is.na(.), "."))) %>%
+    mutate(Status = rep(c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'), 
+                        length(forms))) %>%
+    select(Status, everything())
+  
+    
+  vis <- kable(out_long, format="html", align='l')  %>%
     kable_styling("striped", full_width = F, position='left')
+  
+  i <- 1
+  for (package in names(header[-1])) {
+    vis <- vis %>%
+      pack_rows(package, i, i + 7)
+    i <- i + 8
+  }
   
   return(vis)
 }

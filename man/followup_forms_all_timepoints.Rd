@@ -4,7 +4,7 @@
 \alias{followup_forms_all_timepoints}
 \title{Followup Data Multiple Forms and All Timepoints}
 \usage{
-followup_forms_all_timepoints(analytic, forms, timepoints)
+followup_forms_all_timepoints(analytic, forms = NULL, timepoints = NULL)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, followup_data}

@@ -7,7 +7,8 @@
 closed_followup_form_all_timepoints_by_site(
   analytic,
   form_selection = "Overall",
-  footnotes = NULL
+  included_columns = c("Not Expected", "Expected", "Complete", "Early", "Late", "Missed",
+    "Not Started", "Incomplete")
 )
 }
 \arguments{
