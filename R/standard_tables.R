@@ -2087,7 +2087,7 @@ wbs_main_paper_injury_characteristics <- function(analytic){
 #' patients with "Ankle" injuries. This table is produced for Weight bearing main paper. 
 #'
 #' @param analytic enrolled, injury_type, sex, age, ethnicity_race, education_level, patient_reported_self_efficacy_6mo, 
-#' patient_reported_self_efficacy_12mo, preinjury_usual_major_activity, preinjury_work_demand, 
+#' patient_reported_self_efficacy_12mo, preinjury_productive_activity, preinjury_work_demand, 
 #' preinjury_work_hours, tobacco_use, bmi, preinjury_health, insurance_type
 #'
 #' @return nothing
@@ -2100,7 +2100,7 @@ wbs_main_paper_injury_characteristics <- function(analytic){
 wbs_main_paper_patient_characteristics <- function(analytic){
   df <- analytic %>% select(enrolled, injury_type, sex, age, ethnicity_race, education_level,
                             patient_reported_self_efficacy_6mo, patient_reported_self_efficacy_12mo,
-                            preinjury_usual_major_activity, preinjury_work_demand, preinjury_work_hours,
+                            preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
                             tobacco_use, bmi, preinjury_health, insurance_type) %>% 
     filter(enrolled, injury_type == 'ankle')
   
@@ -2187,11 +2187,11 @@ wbs_main_paper_patient_characteristics <- function(analytic){
   
   
   df_usual_major_activity <- df %>% 
-    select(preinjury_usual_major_activity) %>% 
-    group_by(preinjury_usual_major_activity) %>% 
+    select(preinjury_productive_activity) %>% 
+    group_by(preinjury_productive_activity) %>% 
     count() %>% 
     mutate(Category = 'Major Activity') %>% 
-    rename(heading = preinjury_usual_major_activity) %>% 
+    rename(heading = preinjury_productive_activity) %>% 
     mutate(heading = ifelse(is.na(heading), "Missing", heading)) %>% 
     mutate(n = format_count_percent(n, total))
   
