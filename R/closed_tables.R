@@ -2873,7 +2873,7 @@ closed_fracture_characteristics <- function(analytic){
 #' closed_followup_form_at_timepoint_by_site()
 #' }
 closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
-  confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', '9c5925aff1ea0d4735404debdf061957')
+  confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', '878c411fde80fea78add23f5defe4c14')
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
@@ -2980,7 +2980,7 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
   
   full_collected <- rbind(df_a_collected, df_b_collected, total_collected)
   
-  header <- c(1,7)
+  header <- c(1,8)
   names(header) <- c(' ', ifelse(is.null(name),
                                  paste0(form_selection, ' Status at ', timepoint, ' Period'),
                                  paste0(name, ' Status at ', timepoint, ' Period')))
@@ -3015,7 +3015,7 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 #' }
 closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', 
                                                         included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete')){
-  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', 'a1cc824358c28898f006f88dca983f08')
+  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', '76462363d142eebdbcf60b62e806b082')
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
@@ -3120,7 +3120,7 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
     
     form_df <- form_df %>%
       filter(!is.na(Facility)&Facility!='NA')
-    colnames(form_df) <- c('Facility', rep(c("Expected", "Complete", "Early", "Late", 'Missed', 
+    colnames(form_df) <- c('Facility', rep(c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 
                                              'Not Started', 'Incomplete'), times = length(timepoints)))
     form_df
   }
@@ -3131,10 +3131,10 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
   
   full_collected <- rbind(df_a_collected, df_b_collected, total_collected)
   
-  header <- c(1,rep(7, length(timepoints)))
+  header <- c(1,rep(8, length(timepoints)))
   names(header) <- c(' ', timepoints)
   
-  over_header <- c(1, 7*length(timepoints))
+  over_header <- c(1, 8*length(timepoints))
   names(over_header) <- c(' ', paste(form_selection, 'Form Status'))
   
   
@@ -3171,7 +3171,7 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' \dontrun{
 #' closex_followup_forms_at_timepoint_by_site()
 #' }
-closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
+closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, pretty_names = NULL){
   confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '5bfa962197af703ad041b77d484abf64')
   
   df <- analytic %>%
@@ -3288,10 +3288,10 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
   colnames(full_collected) <- cols
   
   header <- c(1,rep(8, length(forms)))
-  if (is.null(names)) {
+  if (is.null(pretty_names)) {
     header_names <- c(' ', paste0(forms, ' Status at ', timepoint, ' Period'))
   } else {
-    header_names <- c(' ', paste0(names, ' Status at ', timepoint, ' Period'))
+    header_names <- c(' ', paste0(pretty_names, ' Status at ', timepoint, ' Period'))
   }
   
   names(header) <- header_names
