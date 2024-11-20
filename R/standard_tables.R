@@ -2480,7 +2480,7 @@ expected_and_followup_visit_overall <- function(analytic){
     rename(Status = status)
   
   vis <- kable(final_last, format="html", align='l') %>%
-    add_indent(c(3,4)) %>% 
+    add_indent(c(4,5)) %>% 
     kable_styling("striped", full_width = F, position='left')
   
   return(vis)
