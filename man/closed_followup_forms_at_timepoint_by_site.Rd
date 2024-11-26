@@ -8,7 +8,7 @@ closed_followup_forms_at_timepoint_by_site(
   analytic,
   timepoint,
   forms,
-  names = NULL
+  pretty_names = NULL
 )
 }
 \arguments{
