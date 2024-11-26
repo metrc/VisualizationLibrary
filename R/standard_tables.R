@@ -1755,7 +1755,7 @@ fracture_characteristics <- function(analytic){
 #' \dontrun{
 #' enrollment_by_site_last_days_var_disc()
 #' }
-enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinued="discontinued", discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, average = FALSE){
+enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinued="discontinued", discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, average = FALSE, cumulative_data = TRUE){
   
   if(include_exclusive_safety_set){
     df <- analytic %>% 
@@ -1819,9 +1819,9 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
       group_by(Facility) %>% 
       summarize('last_days_Screened' = sum(screened_last, na.rm = T),
                 'last_days_Eligible' = sum(eligible_last, na.rm = T),
-                'last_days_Enrolled' = sum(enrolled_last, na.rm = T)) %>% 
-      mutate(last_days_Eligible = format_count_percent(last_days_Eligible, last_days_Screened),
-             last_days_Enrolled = format_count_percent(last_days_Enrolled, last_days_Screened))
+                'last_days_Enrolled' = sum(enrolled_last, na.rm = T)) #%>% 
+      #mutate(last_days_Eligible = format_count_percent(last_days_Eligible, last_days_Screened),
+       #      last_days_Enrolled = format_count_percent(last_days_Enrolled, last_days_Screened))
     
     last_day_df <- left_join(last_day_df, new_last_day_df, by = 'Facility')
   }
@@ -1846,6 +1846,11 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
     mutate(`Days Certified`=ifelse(is_total,sum_days_certified,`Days Certified`)) %>% 
     arrange(desc(is_total), Facility) %>% 
     select(-is_total) %>% 
+    mutate(across(starts_with(c("last_days_Eligible", "last_days_Enrolled")), 
+      ~ format_count_percent(.x, 
+                             get(str_replace(cur_column(), 
+                                             "^(last_days_Eligible|last_days_Enrolled)(.*)$", 
+                                             "last_days_Screened\\2"))))) %>% 
     mutate(`Discontinued (% randomized)` = format_count_percent(Discontinued, cnr)) %>% 
     mutate(`Eligible & Enrolled (% randomized)` = format_count_percent(Enrolled, cnr)) %>% 
     mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
@@ -1903,6 +1908,16 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
     if(average == FALSE){
       last <- last[, c(seq(from = 1, to = 3*length(days)+1), seq(3*length(days)+4, to=ncol(last)))]
       header_num <- header_num[c(seq(from=1, to=length(days)+1), length(header_num))]
+    }
+  }
+  
+  if(cumulative_data == FALSE){
+    if(average == TRUE){
+      last <- last[, c(seq(from = 1, to = (ncol(last) - 7)))]
+      header_num <- header_num[c(seq(from = 1, to = (length(days) + 2)))]
+    }else{
+      last <- last[, c(seq(from = 1, to = (ncol(last) - 7)))]
+      header_num <- header_num[c(seq(from = 1, to = (length(days) + 1)))]
     }
   }
   
