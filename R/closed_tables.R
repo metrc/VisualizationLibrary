@@ -3005,6 +3005,7 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data, treatment_arm
 #' @param form_selection the form to be considered in the visualization
+#' @param included_columns the statuses you want data for. Defaults to all statuses.
 #' @param footnotes optional argument for changing the names of the followup forms, for aesthetic use
 #'
 #' @export
@@ -3014,7 +3015,8 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 #' closed-followup_form_all_timepoints_by_site()
 #' }
 closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', 
-                                                        included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete')){
+                                                        included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'),
+                                                        footnotes = NULL){
   confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', '76462363d142eebdbcf60b62e806b082')
   
   df <- analytic %>%
@@ -3172,7 +3174,7 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' closex_followup_forms_at_timepoint_by_site()
 #' }
 closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, pretty_names = NULL){
-  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '5bfa962197af703ad041b77d484abf64')
+  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '98f0d266c706fb6be2a647cffe144564')
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
@@ -3323,7 +3325,7 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
 #' \dontrun{
 #' closed_followup_forms_all_timepoints()
 #' }
-closed_followup_forms_all_timepoints <- function(analytic, forms, timepoints){
+closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = NULL){
   confirm_stability_of_related_visual('followup_forms_all_timepoints', '7872a487edccf907a203d1042c3cf5bb')
   
   df <- analytic %>%
@@ -3335,6 +3337,19 @@ closed_followup_forms_all_timepoints <- function(analytic, forms, timepoints){
   df <- df %>%
     mutate(status = gsub('_', ' ', status)) %>%
     mutate(status = tools::toTitleCase(status))
+  
+  if (is.null(forms)) {
+    forms <- df %>%
+      pull(form) %>%
+      unique()
+    forms <- forms[!is.na(forms)]
+  }
+  if (is.null(timepoints)) {
+    timepoints <- df %>%
+      pull(followup_period) %>%
+      unique()
+    timepoints <- timepoints[!is.na(timepoints)]
+  }
   
   df_a <- df %>% filter(treatment_arm == 'Group A') %>% select(-treatment_arm)
   df_b <- df %>% filter(treatment_arm == 'Group B') %>% select(-treatment_arm)
@@ -3369,7 +3384,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms, timepoints){
       mutate(status = tools::toTitleCase(status)) %>%
       mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
     
-    form_df_empty <- data.frame('status' = c("Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
+    form_df_empty <- data.frame('status' = c("Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
     
     final_raw <- left_join(form_df_empty, combined, by = 'status') %>% 
       mutate(across(everything(), ~replace_na(., 0)))
