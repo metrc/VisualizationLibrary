@@ -1666,7 +1666,7 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #' closed_expected_and_followup_visit_overall()
 #' }
 closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL){
-  confirm_stability_of_related_visual('expected_and_followup_visit_overall', 'c775704ce8301618d56419205a167f87')
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '0a41a3d8ed836222ef331657ad181f99')
   
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
@@ -1768,7 +1768,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
   
   
   vis <- kable(combined_statuses, format = "html", align = 'l') %>%
-    add_indent(c(3, 4)) %>%
+    add_indent(c(4, 5)) %>%
     add_header_above(c(' ', 'Group A' = 3, 'Group B' = 3)) %>%
     kable_styling("striped", full_width = F, position = 'left')
   
