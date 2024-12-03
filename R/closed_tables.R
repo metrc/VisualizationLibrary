@@ -313,8 +313,9 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
       filter(enrolled == TRUE) %>% 
       count(not_completed_reason) %>%
       rename(type=not_completed_reason) %>% 
-      filter(!is.na(type)) %>% 
-      mutate(type = as.character(type))
+      filter(!is.na(type)) %>%
+      mutate(type = ifelse(type == 'Other', 'Other1', type)) %>% 
+      mutate(type = as.character(type)) 
     
     not_completed_df_tot <- tibble(type="Not Active", n=sum(not_completed_df$n))
     
@@ -323,10 +324,11 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
       filter(enrolled == TRUE) %>% 
       count(not_expected_reason) %>%
       rename(type=not_expected_reason) %>% 
-      filter(!is.na(type)) %>% 
-      mutate(type = as.character(type))
+      filter(!is.na(type)) %>%
+      mutate(type = ifelse(type == 'Other', 'Other2', type)) %>% 
+      mutate(type = as.character(type)) 
     
-    not_expected_df_tot <- tibble(type="not_expected", n=sum(not_expected_df$n))
+    not_expected_df_tot <- tibble(type="Not Expected", n=sum(not_expected_df$n))
     
     sae_df <- analytic %>% 
       select(study_id, enrolled, sae_count) %>% 
@@ -334,8 +336,9 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
       mutate(sae_count = "SAE") %>% 
       count(sae_count) %>%
       rename(type=sae_count) %>% 
-      filter(!is.na(type)) %>% 
-      mutate(type = as.character(type))
+      filter(!is.na(type)) %>%
+      mutate(type = ifelse(type == 'Other', 'Other3', type)) %>% 
+      mutate(type = as.character(type)) 
     
     
     deviation_sc_df <- analytic %>% 
@@ -344,8 +347,9 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
       filter(enrolled == TRUE) %>% 
       count(protocol_deviation_screen_consent) %>%
       rename(type=protocol_deviation_screen_consent) %>% 
-      filter(!is.na(type)) %>% 
-      mutate(type = as.character(type))
+      filter(!is.na(type)) %>%
+      mutate(type = ifelse(type == 'Other', 'Other4', type)) %>% 
+      mutate(type = as.character(type)) 
     
     
     deviation_p_df <- analytic %>% 
@@ -354,8 +358,9 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
       filter(enrolled == TRUE) %>% 
       count(protocol_deviation_procedural) %>%
       rename(type=protocol_deviation_procedural) %>% 
-      filter(!is.na(type)) %>% 
-      mutate(type = as.character(type))
+      filter(!is.na(type)) %>%
+      mutate(type = ifelse(type == 'Other', 'Other5', type)) %>% 
+      mutate(type = as.character(type)) 
     
     
     deviation_a_df <- analytic %>% 
@@ -366,7 +371,8 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
       count(protocol_deviation_administrative) %>%
       rename(type=protocol_deviation_administrative) %>% 
       filter(!is.na(type)) %>% 
-      mutate(type = str_replace(type,"Other: .+","Other")) %>% 
+      mutate(type = str_replace(type,"Other: .+","Other")) %>%
+      mutate(type = ifelse(type == 'Other', 'Other6', type)) %>% 
       mutate(type = as.character(type))
     
     deviation_sc_tot <- tibble(type="Screen and Consent",n=sum(deviation_sc_df$n))
@@ -380,7 +386,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
       mutate(n = format_count_percent(n, total, decimals=2))
     
     n_act <<- nrow(not_completed_df)
-    n_disc <<- nrow(discontinuation_df)
+    n_disc <<- nrow(not_expected_df)
     n_dsc <<- nrow(deviation_sc_df)
     n_dp <<- nrow(deviation_p_df)
     n_da <<- nrow(deviation_a_df)
@@ -390,15 +396,16 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
   
   table_a <- inner_closed_not_complete_sae_deviation_by_type(df_a)
   table_b <- inner_closed_not_complete_sae_deviation_by_type(df_b)
-  table_full <- inner_closed_not_complete_sae_deviation_by_type(df_full) 
+  table_full <- inner_closed_not_complete_sae_deviation_by_type(df_full)
   table_full <- table_full %>% 
     mutate(o = seq(nrow(table_full)))
   
-  df_table <- full_join(full_join(table_a, table_b, by=c("type","group")), 
-                        table_full, by=c("type","group")) %>% 
+  df_table <- full_join(full_join(table_a, table_b, by='type'), 
+                        table_full, by='type') %>% 
     arrange(o) %>% 
-    select(-o,-group) %>% 
-    mutate_all(replace_na, "0 (0%)")
+    select(-o) %>% 
+    mutate_all(replace_na, "0 (0%)") %>%
+    mutate(type = if_else(str_detect(type, "^Other"), "Other", type))
   
   indents_vec <- vector()
   if(n_dsc > 0){
@@ -1659,7 +1666,7 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #' closed_expected_and_followup_visit_overall()
 #' }
 closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL){
-  confirm_stability_of_related_visual('expected_and_followup_visit_overall', 'c775704ce8301618d56419205a167f87')
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '0a41a3d8ed836222ef331657ad181f99')
   
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
@@ -1761,7 +1768,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
   
   
   vis <- kable(combined_statuses, format = "html", align = 'l') %>%
-    add_indent(c(3, 4)) %>%
+    add_indent(c(4, 5)) %>%
     add_header_above(c(' ', 'Group A' = 3, 'Group B' = 3)) %>%
     kable_styling("striped", full_width = F, position = 'left')
   
