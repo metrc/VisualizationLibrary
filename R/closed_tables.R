@@ -326,7 +326,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
       filter(!is.na(type)) %>% 
       mutate(type = as.character(type))
     
-    not_expected_df_tot <- tibble(type="not_expected", n=sum(not_expected_df$n))
+    not_expected_df_tot <- tibble(type="Not Expected", n=sum(not_expected_df$n))
     
     sae_df <- analytic %>% 
       select(study_id, enrolled, sae_count) %>% 
@@ -380,7 +380,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
       mutate(n = format_count_percent(n, total, decimals=2))
     
     n_act <<- nrow(not_completed_df)
-    n_disc <<- nrow(discontinuation_df)
+    n_disc <<- nrow(not_expected_df)
     n_dsc <<- nrow(deviation_sc_df)
     n_dp <<- nrow(deviation_p_df)
     n_da <<- nrow(deviation_a_df)
