@@ -8,7 +8,7 @@ wbs_main_paper_patient_characteristics(analytic)
 }
 \arguments{
 \item{analytic}{enrolled, injury_type, sex, age, ethnicity_race, education_level, patient_reported_self_efficacy_6mo, 
-patient_reported_self_efficacy_12mo, preinjury_usual_major_activity, preinjury_work_demand, 
+patient_reported_self_efficacy_12mo, preinjury_productive_activity, preinjury_work_demand, 
 preinjury_work_hours, tobacco_use, bmi, preinjury_health, insurance_type}
 }
 \value{
