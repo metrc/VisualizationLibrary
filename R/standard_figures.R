@@ -722,10 +722,10 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
     filter(enrolled)
   
   enrolled <- sum(enrolled_df$enrolled, na.rm = TRUE)
-  df_complete <- sum(!is.na(enrolled_df$time_zero), na.rm = TRUE)
+  df_complete <- sum(enrolled_df$time_zero, na.rm = TRUE)
   
   fu_df <- enrolled_df %>% 
-    filter(!is.na(time_zero))
+    filter(time_zero)
   
   complete <- sum(fu_df$completed, na.rm = TRUE)
   not_complete <- sum(fu_df$not_completed, na.rm = TRUE)
