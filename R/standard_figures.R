@@ -76,15 +76,15 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
     digraph g {
       graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
       
-      start [style="rounded,filled", fillcolor="#ccccff", pos="6,12!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
-      elig [style="rounded,filled", fillcolor="#ccccff", pos="6,10!", shape = box, width=2.4, height=1, label = "Eligible (n=',Eligible,')"];
-      cons [style="rounded,filled", fillcolor="#ccccff", pos="6,8!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
+      start [style="rounded,filled", fillcolor="#ccccff", pos="5,12!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
+      elig [style="rounded,filled", fillcolor="#ccccff", pos="5,10!", shape = box, width=2.4, height=1, label = "Eligible (n=',Eligible,')"];
+      cons [style="rounded,filled", fillcolor="#ccccff", pos="5,8!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
       pre_rand [style="rounded,filled", fillcolor="#ccccff", pos="10,8!", shape = box, width=2.4, height=1, label = "Discontinued (n=',Disconintued_Pre,')"];
 
-      rand [style="rounded,filled", fillcolor="#ccccff", pos="6,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
+      rand [style="rounded,filled", fillcolor="#ccccff", pos="5,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
       late_inelig [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "',late_ineligible_str,', (n=',Late_Ineligible,')"];
       
-      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Enrolled (n=',Enrolled,')"];
+      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="5,4!", shape = box, width=2.4, height=1, label = "Enrolled (n=',Enrolled,')"];
       
       ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,12!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
       refused [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Refused (n=',Refused,')"];
@@ -92,8 +92,8 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       not_enrolled [style="rounded,filled", fillcolor="#ccccff", pos="2,10!", shape = box, width=2.4, height=1, label = "Not Enrolled Other (n=',Not_Enrolled_Other,')"];
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
-      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="6,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="12,0!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       start -> elig
@@ -206,24 +206,24 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
     digraph g {
       graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
       
-      screened [style="rounded,filled", fillcolor="#ccccff", pos="6,12!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
+      screened [style="rounded,filled", fillcolor="#ccccff", pos="5,12!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
       ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,12!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
-      eligible [style="rounded,filled", fillcolor="#ccccff", pos="6,10!", shape = box, width=2.4, height=1, label = "Eligible (n=',Eligible,')"];
+      eligible [style="rounded,filled", fillcolor="#ccccff", pos="5,10!", shape = box, width=2.4, height=1, label = "Eligible (n=',Eligible,')"];
       
       refused [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Not Consented (n=',Not_Consented,')\nRefused (n=',Refused,')"];
 
-      cons [style="rounded,filled", fillcolor="#ccccff", pos="6,8!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
+      cons [style="rounded,filled", fillcolor="#ccccff", pos="5,8!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
 
-      rand [style="rounded,filled", fillcolor="#ccccff", pos="6,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
+      rand [style="rounded,filled", fillcolor="#ccccff", pos="5,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
       
-      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="6,4!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',Enrolled,')"];
+      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="5,4!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',Enrolled,')"];
       discon [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (n=',Adjudicated_Discontinuation,')"];
 
-      compl [style="rounded,filled", fillcolor="#ccccff", pos="6,2!", shape = box, width=2.4, height=1, label = "Definitive Fixation Complete (n=',Definitive_Fixation_Complete,')"];
+      compl [style="rounded,filled", fillcolor="#ccccff", pos="5,2!", shape = box, width=2.4, height=1, label = "Definitive Fixation Complete (n=',Definitive_Fixation_Complete,')"];
       
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
-      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="6,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="12,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       screened -> eligible
