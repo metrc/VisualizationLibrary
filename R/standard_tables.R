@@ -1819,9 +1819,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
       group_by(Facility) %>% 
       summarize('last_days_Screened' = sum(screened_last, na.rm = T),
                 'last_days_Eligible' = sum(eligible_last, na.rm = T),
-                'last_days_Enrolled' = sum(enrolled_last, na.rm = T)) #%>% 
-      #mutate(last_days_Eligible = format_count_percent(last_days_Eligible, last_days_Screened),
-       #      last_days_Enrolled = format_count_percent(last_days_Enrolled, last_days_Screened))
+                'last_days_Enrolled' = sum(enrolled_last, na.rm = T))
     
     last_day_df <- left_join(last_day_df, new_last_day_df, by = 'Facility')
   }
@@ -1853,6 +1851,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
                                              "last_days_Screened\\2"))))) %>% 
     mutate(`Discontinued (% randomized)` = format_count_percent(Discontinued, cnr)) %>% 
     mutate(`Eligible & Enrolled (% randomized)` = format_count_percent(Enrolled, cnr)) %>% 
+    mutate(`Safety Set` = format_count_percent(`Safety Set`, cnr)) %>% 
     mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
     mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
     mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
