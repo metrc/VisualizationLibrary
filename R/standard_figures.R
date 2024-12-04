@@ -92,9 +92,8 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       not_enrolled [style="rounded,filled", fillcolor="#ccccff", pos="2,10!", shape = box, width=2.4, height=1, label = "Not Enrolled Other (n=',Not_Enrolled_Other,')"];
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
-      not_complete [style="rounded,filled", fillcolor="#ccccff", pos="4,0!", shape = box, width=2.4, height=1, label = "Not Completed (n=',not_complete,')\nMissed (n=',missed,')"];
-      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="8,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="12,0!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',complete,')"];
+      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="6,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="12,0!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       start -> elig
@@ -107,7 +106,6 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       rand -> enrolled
       rand -> late_inelig
       enrolled -> active
-      enrolled -> not_complete
       enrolled -> not_expected
       enrolled -> fu_complete
       
@@ -224,9 +222,8 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
       compl [style="rounded,filled", fillcolor="#ccccff", pos="6,2!", shape = box, width=2.4, height=1, label = "Definitive Fixation Complete (n=',Definitive_Fixation_Complete,')"];
       
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
-      not_complete [style="rounded,filled", fillcolor="#ccccff", pos="4,0!", shape = box, width=2.4, height=1, label = "Not Completed (n=',not_complete,')\nMissed (n=',missed,')"];
-      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="8,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="12,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')"];
+      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="6,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="12,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       screened -> eligible
