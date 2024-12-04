@@ -235,7 +235,6 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
       rand -> enrolled
       enrolled -> compl
       compl -> active
-      compl -> not_complete
       compl -> not_expected
       compl -> fu_complete
       
