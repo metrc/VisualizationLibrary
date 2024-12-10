@@ -452,6 +452,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-23)
   
+  
   inner_closed_complications_by_severity_relatedness <- function(analytic){
     comp <- analytic %>%  select(study_id, complication_data) %>% 
       filter(!is.na(complication_data))
@@ -506,7 +507,8 @@ closed_complications_by_severity_relatedness <- function(analytic){
     summary_comp_sums <- data.frame(t(comp_sums)) 
     
     total_ids <- unzipped_comp %>% 
-      mutate_all(replace_na, 0) %>% 
+      mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%
+      mutate(across(where(is.character), ~ replace_na(., ""))) %>% 
       group_by(severity, complications) %>% 
       summarise(Definitely_id = length(unique(study_id[Definitely > 0])) , Possibly_id = length(unique(study_id[Possibly > 0])) , 
                 Probably_id = length(unique(study_id[Probably > 0])) , Unlikely_id = length(unique(study_id[Unlikely > 0])) , 
@@ -521,7 +523,8 @@ closed_complications_by_severity_relatedness <- function(analytic){
     
     
     output_complication <- full_join(total_complications, total_ids) %>% 
-      mutate_all(replace_na, 0) %>% 
+      mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%
+      mutate(across(where(is.character), ~ replace_na(., ""))) %>% 
       mutate(Definitely = paste0(Definitely_c, "[", Definitely_id, "]"),
              Probably = paste0(Probably_c, "[", Probably_id, "]"),
              Possibly = paste0(Possibly_c, "[", Possibly_id, "]"),
@@ -590,7 +593,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
   output <- cbind(table_a %>% select(-severity), 
                   table_b %>% select(-severity, -complications), 
                   table_full %>% select(-severity, -complications))
-    
+  
   
   colnames(output)[1] <- " "
   
