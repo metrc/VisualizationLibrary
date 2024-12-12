@@ -1872,7 +1872,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
   
   if (include_exclusive_safety_set) {
     final <- final %>%
-      mutate(`Safety Set` = format_count_percent(`Safety Set`, cnr)) %>% 
+      mutate(`Safety Set` = format_count_percent(`Safety Set`, cnr))
   }
   
   total_row <- final %>% 
