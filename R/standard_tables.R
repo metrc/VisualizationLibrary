@@ -1852,43 +1852,27 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
   
   sum_days_certified <- sum(table_raw$`Days Certified`, na.rm=T)
   
-  if(include_exclusive_safety_set){
-    final <- left_join(almost, table_raw, by = 'Facility') %>% 
-      adorn_totals("row") %>% 
-      mutate(is_total=Facility=="Total") %>% 
-      mutate(`Days Certified`=ifelse(is_total,sum_days_certified,`Days Certified`)) %>% 
-      arrange(desc(is_total), Facility) %>% 
-      select(-is_total) %>% 
-      mutate(across(starts_with(c("last_days_Eligible", "last_days_Enrolled")), 
-        ~ format_count_percent(.x, 
-                               get(str_replace(cur_column(), 
-                                               "^(last_days_Eligible|last_days_Enrolled)(.*)$", 
-                                               "last_days_Screened\\2"))))) %>% 
-      mutate(`Discontinued (% randomized)` = format_count_percent(Discontinued, cnr)) %>% 
-      mutate(`Eligible & Enrolled (% randomized)` = format_count_percent(Enrolled, cnr)) %>% 
+  final <- left_join(almost, table_raw, by = 'Facility') %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    mutate(`Days Certified`=ifelse(is_total,sum_days_certified,`Days Certified`)) %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total) %>% 
+    mutate(across(starts_with(c("last_days_Eligible", "last_days_Enrolled")), 
+      ~ format_count_percent(.x, 
+                             get(str_replace(cur_column(), 
+                                             "^(last_days_Eligible|last_days_Enrolled)(.*)$", 
+                                             "last_days_Screened\\2"))))) %>% 
+    mutate(`Discontinued (% randomized)` = format_count_percent(Discontinued, cnr)) %>% 
+    mutate(`Eligible & Enrolled (% randomized)` = format_count_percent(Enrolled, cnr)) %>% 
+    mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
+    mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
+    mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
+    mutate(`Eligible (% screened)` = format_count_percent(Eligible, Screened)) 
+  
+  if (include_exclusive_safety_set) {
+    final <- final %>%
       mutate(`Safety Set` = format_count_percent(`Safety Set`, cnr)) %>% 
-      mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
-      mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
-      mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
-      mutate(`Eligible (% screened)` = format_count_percent(Eligible, Screened)) 
-  } else {
-    final <- left_join(almost, table_raw, by = 'Facility') %>% 
-      adorn_totals("row") %>% 
-      mutate(is_total=Facility=="Total") %>% 
-      mutate(`Days Certified`=ifelse(is_total,sum_days_certified,`Days Certified`)) %>% 
-      arrange(desc(is_total), Facility) %>% 
-      select(-is_total) %>% 
-      mutate(across(starts_with(c("last_days_Eligible", "last_days_Enrolled")), 
-                    ~ format_count_percent(.x, 
-                                           get(str_replace(cur_column(), 
-                                                           "^(last_days_Eligible|last_days_Enrolled)(.*)$", 
-                                                           "last_days_Screened\\2"))))) %>% 
-      mutate(`Discontinued (% randomized)` = format_count_percent(Discontinued, cnr)) %>% 
-      mutate(`Eligible & Enrolled (% randomized)` = format_count_percent(Enrolled, cnr)) %>% 
-      mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
-      mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
-      mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
-      mutate(`Eligible (% screened)` = format_count_percent(Eligible, Screened)) 
   }
   
   total_row <- final %>% 
