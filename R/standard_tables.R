@@ -1755,7 +1755,12 @@ fracture_characteristics <- function(analytic){
 #' \dontrun{
 #' enrollment_by_site_last_days_var_disc()
 #' }
-enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinued="discontinued", discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, average = FALSE, cumulative_data = TRUE){
+enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, 
+                                                  discontinued="discontinued", 
+                                                  discontinued_colname="Discontinued", 
+                                                  include_exclusive_safety_set=FALSE, 
+                                                  average = FALSE, 
+                                                  cumulative_data = TRUE){
   
   if(include_exclusive_safety_set){
     df <- analytic %>% 
@@ -1781,23 +1786,32 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
   if(include_exclusive_safety_set){
     df_1st <- df %>% 
       group_by(Facility) %>% 
-      summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible), 
-                Refused = sum(refused[eligible == TRUE]), 'Not Consented' = sum(not_consented[eligible == TRUE]), cnr = sum(consented_and_randomized[eligible == TRUE])) 
+      summarize('Days Certified' = site_certified_days[1], 
+                Screened = sum(screened), Eligible = sum(eligible), 
+                Refused = sum(refused[eligible == TRUE]), 
+                'Not Consented' = sum(not_consented[eligible == TRUE]), 
+                cnr = sum(consented_and_randomized[eligible == TRUE])) 
     
     df_2nd <- df %>% 
       group_by(Facility) %>% 
-      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 'Safety Set' = sum(exclusive_safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), 
+                "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 
+                'Safety Set' = sum(exclusive_safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
       select(Facility, Discontinued, Enrolled, `Safety Set`)
     
   } else{
     df_1st <- df %>% 
       group_by(Facility) %>% 
-      summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible), 
-                Refused = sum(refused[eligible == TRUE]), 'Not Consented' = sum(not_consented[eligible == TRUE]), cnr = sum(consented_and_randomized[eligible == TRUE])) 
+      summarize('Days Certified' = site_certified_days[1], 
+                Screened = sum(screened), Eligible = sum(eligible), 
+                Refused = sum(refused[eligible == TRUE]), 
+                'Not Consented' = sum(not_consented[eligible == TRUE]), 
+                cnr = sum(consented_and_randomized[eligible == TRUE])) 
     
     df_2nd <- df %>% 
       group_by(Facility) %>% 
-      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), 
+                "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
       select(Facility, Discontinued, Enrolled)
   }
   
@@ -1851,7 +1865,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
                                              "last_days_Screened\\2"))))) %>% 
     mutate(`Discontinued (% randomized)` = format_count_percent(Discontinued, cnr)) %>% 
     mutate(`Eligible & Enrolled (% randomized)` = format_count_percent(Enrolled, cnr)) %>% 
-    mutate(`Safety Set` = format_count_percent(`Safety Set`, cnr)) %>% 
+    when(include_exclusive_safety_set ~ mutate(., `Safety Set` = format_count_percent(`Safety Set`, cnr)), ~ .) %>% 
     mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
     mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
     mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
