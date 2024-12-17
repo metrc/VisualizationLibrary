@@ -83,7 +83,8 @@ enrollment_status_by_site <- function(analytic){
 #' enrollment_status_by_site_var_discontinued()
 #' }
 enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued"){
-  df <- analytic %>% 
+ 
+   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, site_certified_days, 
            facilitycode, all_of(discontinued))
   
@@ -1043,7 +1044,11 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #'
 #' @description This function visualizes the number of patients Ineligible by Top 5 reasons of Exclusion criteria
 #'
-#' @param analytic This is the analytic data set that must include facilitycode,  screened, ineligible, ineligibility_reasons
+#' @param analytic This is the analytic data set that must include facilitycode,  screened, ineligible, ineligibility_reasons, 
+#' @param pre_screened When pre_screened is TRUE then we will be using pre_ineligibility_reasons and pre_screened itself
+#' to list ineligibility reasons. 
+#' @param n_top_reasons is by default set to 5 but in case there are less than 5 reasons then as many columns would be 
+#' reflected in the ineligibility table as reasons exist.
 #'
 #' @return nothing
 #' @export
@@ -1052,61 +1057,92 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #' \dontrun{
 #' ineligibility_by_reasons()
 #' }
-ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
-  df <- analytic %>% 
-    select(study_id, facilitycode,  screened, ineligible, ineligibility_reasons) %>% 
+ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reasons = 5){
+  
+  if (pre_screened) { 
+    analytic <- analytic %>% 
+      mutate(ineligibility_reasons = pre_ineligibility_reasons) %>% 
+      mutate(screened = pre_screened)
+  }
+
+  data <- analytic %>%
+    select(study_id, facilitycode, screened, ineligible, ineligibility_reasons) %>%
     filter(screened == TRUE) 
   
-  reasons <- df %>%  select(study_id, facilitycode, ineligibility_reasons) %>% 
-    column_unzipper('ineligibility_reasons', sep = '; ') %>% 
-    boolean_column_counter() %>% 
-    pivot_longer(everything()) %>% 
-    arrange(desc(value)) %>% 
-    filter(name!='Other') %>%
-    slice(1:n_top_reasons) %>% 
-    pull(name) 
+  df <- data %>%
+    select(study_id, facilitycode, ineligibility_reasons) %>%
+    column_unzipper('ineligibility_reasons', sep = '; ')
+    
+  if (nrow(df) == 0) {
+    output <- tibble(
+      study_id = unique(analytic$study_id),  
+      `No participant ineligible` = NA_character_
+    )
+    
+    vis <- kable(output, format = "html", align = 'l') %>%
+      kable_styling("striped", full_width = FALSE, position = "left")
+  }
   
-  screened_total <- df %>% select(study_id, screened, ineligible) %>% boolean_column_counter() %>% 
-    mutate(Site = 'Total') 
-  
-  total <- df %>% 
-    column_unzipper('ineligibility_reasons', sep = '; ') %>% 
-    boolean_column_counter() %>% 
-    mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible)))) %>% 
-    select(-screened, -ineligible) %>% 
-    mutate(Site = 'Total') %>% 
-    left_join(screened_total) %>% 
-    select(Site, screened, ineligible, all_of(reasons), otherreasons)
-  
-  screened_total_sites <- df %>% select(facilitycode, screened, ineligible) %>% 
-    boolean_column_counter(groups = 'facilitycode') %>%
-    rename(Site = facilitycode) 
-  
-  sites <- df %>% 
-    column_unzipper('ineligibility_reasons', sep = '; ') %>% 
-    boolean_column_counter(groups = 'facilitycode') %>% 
-    mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible, facilitycode)))) %>% 
-    rename(Site = facilitycode) %>% 
-    select(-screened, -ineligible) %>% 
-    left_join(screened_total_sites) %>% 
-    select(Site, screened, ineligible, all_of(reasons), otherreasons)
-  
-  output <- bind_rows(total, sites) %>% 
-    rename(Screened = screened,
-           Ineligible = ineligible,
-           `Other Reasons` = otherreasons) %>% 
-    arrange(desc(Screened)) %>% 
-    mutate(Ineligible = format_count_percent(Ineligible, Screened))
-  
-  top_n_header_text <- paste0("Top ", n_top_reasons, " Ineligibility Reasons")
-  
-  header_names <- c(" " = 3, top_n_header_text = n_top_reasons, " " = 1) 
-  
-  names(header_names)[2] <- top_n_header_text
-  
-  vis <- kable(output, format="html", align = 'l') %>%
-    add_header_above(header_names) %>%  
-    kable_styling("striped", full_width = FALSE, position = "left")
+  if (nrow(df) > 0 ) {
+    
+    reason_data <- df %>%  
+      boolean_column_counter() %>% 
+      pivot_longer(everything()) %>% 
+      arrange(desc(value)) %>% 
+      filter(name != 'Other')
+    
+    n_reasons <- nrow(reason_data)
+    n_top_reasons <- if (n_reasons >= n_top_reasons) n_top_reasons else max(1, n_reasons)
+    
+    reasons <- reason_data %>%
+      slice(1:n_top_reasons) %>%
+      pull(name)
+    
+    screened_total <- data %>% 
+      select(study_id, screened, ineligible) %>% 
+      boolean_column_counter() %>%
+      mutate(Site = 'Total')
+    
+    total <- data %>%
+      column_unzipper('ineligibility_reasons', sep = '; ') %>%
+      boolean_column_counter() %>%
+      mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible)))) %>% 
+      select(-screened, -ineligible) %>%
+      mutate(Site = 'Total') %>%
+      left_join(screened_total) %>%
+      select(Site, screened, ineligible, all_of(reasons), otherreasons)
+    
+    screened_total_sites <- data %>%
+      select(facilitycode, screened, ineligible) %>%
+      boolean_column_counter(groups = 'facilitycode') %>%
+      rename(Site = facilitycode)
+    
+    sites <- data %>%
+      column_unzipper('ineligibility_reasons', sep = '; ') %>%
+      boolean_column_counter(groups = 'facilitycode') %>%
+      mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible, facilitycode)))) %>%
+      rename(Site = facilitycode) %>%
+      select(-screened, -ineligible) %>%
+      left_join(screened_total_sites) %>%
+      select(Site, screened, ineligible, all_of(reasons), otherreasons)
+    
+    output <- bind_rows(total, sites) %>% 
+      rename(Screened = screened,
+             Ineligible = ineligible,
+             `Other Reasons` = otherreasons) %>% 
+      arrange(desc(Screened)) %>% 
+      mutate(Ineligible = format_count_percent(Ineligible, Screened))
+    
+    top_n_header_text <- paste0("Top ", n_top_reasons, " Ineligibility Reasons")
+    
+    header_names <- c(" " = 3, top_n_header_text = n_top_reasons, " " = 1)
+    
+    names(header_names)[2] <- top_n_header_text
+    
+    vis <- kable(output, format = "html", align = 'l') %>%
+      add_header_above(header_names) %>%
+      kable_styling("striped", full_width = FALSE, position = "left")
+    }
   
   return(vis)
 }
