@@ -904,10 +904,9 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
       enrolled [style="rounded,filled", fillcolor="#a4d3ee", pos="6,4!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',enrolled,')"];
       df_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="6,2!", shape = box, width=2.4, height=1, label = "',definitive_event,' (n=',df_complete,')"];
 
-      active [style="rounded,filled", fillcolor="#a4d3ee", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
-      not_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="4,0!", shape = box, width=2.4, height=1, label = "Not Completed (n=',not_complete,')\nMissed (n=',missed,')"];
-      not_expected [style="rounded,filled", fillcolor="#a4d3ee", pos="8,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="12,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')"];
+      active [style="rounded,filled", fillcolor="#a4d3ee", pos="2,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
+      not_expected [style="rounded,filled", fillcolor="#a4d3ee", pos="6,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
+      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
 
       # Relationships
       screened -> eligible
@@ -920,7 +919,6 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
       randomized -> ed_randomized
       enrolled -> df_complete
       df_complete -> active
-      df_complete -> not_complete
       df_complete -> not_expected
       df_complete -> fu_complete
     }
@@ -1137,3 +1135,134 @@ vislib_query_issues_per_site <- function(analytic) {
   
 }
 
+
+
+#' Consort Diagram No Definitive Event
+#'
+#' @description This function visualizes the categorical percentages of study status as well as followup completions for studies that do not include a definitive event
+#'
+#' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible,
+#' refused, consented, randomized, enrolled, adjudicated_discontinued, completed, 
+#' safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup
+#' @param final_period Defaults to 12 Month
+#' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' consort_diagram_no_definitive_event()
+#' }
+consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month", not_expected_adjudicated=TRUE){
+  
+  df <- analytic %>% 
+    select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, 
+           adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup)
+  
+  screened <- sum(analytic$screened, na.rm = TRUE)
+  
+  eligible_df <- df %>% 
+    filter(screened)
+  
+  safety <- sum(df$safety_set, na.rm = TRUE)
+  ex_safety <- sum(df$exclusive_safety_set, na.rm = TRUE)
+  
+  eligible <- sum(eligible_df$eligible, na.rm = TRUE)
+  
+  ineligible <- sum(eligible_df$ineligible, na.rm = TRUE)
+  
+  eligble_df <- eligible_df %>% 
+    filter(eligible)
+  
+  refused <- sum(eligble_df$refused, na.rm = TRUE)
+  
+  not_refused_df <- eligble_df %>% 
+    filter(refused == FALSE | is.na(refused))
+  
+  consented <- sum(not_refused_df$consented, na.rm = TRUE)
+  
+  # First identity (no construct used for not consented)
+  not_consented <- eligible - (consented + refused)
+  
+  consented_df <- eligible_df %>% 
+    filter(consented)
+  
+  randomized <- sum(consented_df$randomized, na.rm = TRUE)
+  
+  not_randomized_df <- consented_df %>% 
+    filter(!randomized | is.na(randomized))
+  
+  ed_consented <- sum(not_randomized_df$adjudicated_discontinued, na.rm = TRUE)
+  
+  randomized_df <- consented_df %>% 
+    filter(randomized)
+  
+  ed_randomized <- sum(randomized_df$adjudicated_discontinued, na.rm = TRUE)
+  
+  enrolled_df <- randomized_df %>% 
+    filter(enrolled)
+  
+  enrolled <- sum(enrolled_df$enrolled, na.rm = TRUE)
+  
+  complete <- sum(enrolled_df$completed, na.rm = TRUE)
+  not_complete <- sum(enrolled_df$not_completed, na.rm = TRUE)
+  missed <- sum(enrolled_df$missed_final_followup, na.rm = TRUE)
+  active <- sum(enrolled_df$active, na.rm = TRUE)
+  not_expected <- sum(enrolled_df$not_expected, na.rm = TRUE)
+  if(not_expected_adjudicated){
+    not_expected_str= "Adjudicated Not Expected"
+  } else{
+    not_expected_str= "Not Expected"
+  }
+  
+  consort_diagram <- grViz(paste0('
+    digraph g {
+      graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
+      
+      screened [style="rounded,filled", fillcolor="#a4d3ee", pos="6,12!", shape = box, width=2.4, height=1, label = "Screened (n=',screened,')"];
+      ineligible [style="rounded,filled", fillcolor="#a4d3ee", pos="10,12!", shape = box, width=2.4, height=1, label = "Ineligible (n=',ineligible,')"];
+      eligible [style="rounded,filled", fillcolor="#a4d3ee", pos="6,10!", shape = box, width=2.4, height=1, label = "Eligible (n=',eligible,')"];
+      
+      refused [style="rounded,filled", fillcolor="#a4d3ee", pos="10,10!", shape = box, width=2.4, height=1, label = "Not Consented (n=',not_consented,')\nRefused (n=',refused,')"];
+
+      consented [style="rounded,filled", fillcolor="#a4d3ee", pos="6,8!", shape = box, width=2.4, height=1, label = "Consented (n=',consented,')"];
+      
+      randomized [style="rounded,filled", fillcolor="#a4d3ee", pos="6,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',randomized,')"];
+
+      ed_consented [style="rounded,filled", fillcolor="#a4d3ee", pos="10,8!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (Consented) (n=',ed_consented,')"];
+      
+      ed_randomized [style="rounded,filled", fillcolor="#a4d3ee", pos="10,6!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (Randomized) (n=',ed_randomized,')"];
+      
+      safety [style="rounded,filled", fillcolor="#a4d3ee", pos="2,6!", shape = box, width=2.4, height=1, label = "Full Safety Set (n=',safety,')\nSafety Set & Not Enrolled (n=',ex_safety,')"];
+      
+      enrolled [style="rounded,filled", fillcolor="#a4d3ee", pos="6,4!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',enrolled,')"];
+
+      active [style="rounded,filled", fillcolor="#a4d3ee", pos="2,2!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
+      not_expected [style="rounded,filled", fillcolor="#a4d3ee", pos="6,2!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
+      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="10,2!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+
+      # Relationships
+      screened -> eligible
+      screened -> ineligible
+      eligible -> refused
+      eligible -> consented
+      consented -> randomized
+      consented -> ed_consented
+      randomized -> enrolled
+      randomized -> ed_randomized
+      enrolled -> active
+      enrolled -> not_expected
+      enrolled -> fu_complete
+    }
+  '))
+  svg_content <- DiagrammeRsvg::export_svg(consort_diagram)
+  temp_svg_path <- tempfile(fileext = ".svg")
+  writeLines(svg_content, temp_svg_path)
+  temp_png_path <- tempfile(fileext = ".png")
+  rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 1200, height = 1200)
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 1200px;">', image_data)
+  file.remove(c(temp_svg_path, temp_png_path))
+  return(img_tag)
+}
