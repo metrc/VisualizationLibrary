@@ -1548,6 +1548,83 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 }
 
 
+#' Generic Characteristics
+#'
+#' @description 
+#' Runs basic count statistics for a number of constructs. Missing values are 
+#' given the value "Missing."
+#'
+#' @param analytic This is the analytic data set 
+#' @param constructs The constructs to run statistics from
+#' @param names_vec The names of the constructs in the final visualization
+#' @param filter_cols The columns to filter the the data by (for totals and missing counts)
+#' @param titlecase Changes construct values to Title Case
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+
+#' generic_characteristics()
+#' }
+generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
+                                    filter_cols = c("enrolled"), titlecase = FALSE){
+
+  out <- NULL
+  index_vec <- c()
+  
+  for (construct in constructs) {
+    name_str <- names_vec[which(constructs == construct)]
+    
+    if (!is.null(filter_cols)){
+      if(length(filter_cols) == 1) {
+        inner_analytic <- analytic %>%
+          filter(!!sym(filter_cols))
+      } else {
+        inner_analytic <- analytic %>%
+          filter(!!sym(filter_cols[which(constructs == construct)]))
+      }
+    }
+    total <- length(inner_analytic)
+    
+    inner <- inner_analytic %>% 
+      mutate(temp = replace_na(!!sym(construct), "Missing")) %>% 
+      group_by(temp) %>% 
+      count(temp) %>% 
+      mutate(percentage = format_count_percent(n, total)) %>% 
+      select(-n) %>%
+      mutate(header = name_str) %>%
+      arrange(temp == "Missing")
+    
+    if (titlecase) {
+      inner <- inner %>%
+        mutate(temp = str_to_title(temp))
+    }
+    
+    new <- nrow(inner)
+    names(new) <- paste0(name_str, ' (n=', total, ')')
+    index_vec <- c(index_vec, new)
+    
+    if (is.null(out)) {
+      out <- inner
+    } else {
+      out <- rbind(out, inner)
+    }
+  }
+  out <- out %>%
+    select(-header)
+  
+  vis <- kable(out, format="html", align='l', col.names = NULL) %>%
+    add_indent(c(seq(nrow(out)))) %>% 
+    row_spec(c(1, index_vec[1: length(index_vec)-1]+1 ), extra_css = "border-top: 1px solid") %>%  
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+    kable_styling("striped", full_width = F, position="left")
+
+  return(vis)
+}
+
+
 
 #' Amputations and Gustilo Injury Characteristics
 #'
