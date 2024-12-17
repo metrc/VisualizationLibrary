@@ -1766,13 +1766,16 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
                  rename_with(~paste0("", .x), -Status),
                by = "Status")
   
-  colnames(combined_statuses) <- c('Status', '3 Month', '6 Month', '12 Month',
-                                   '3 Month', '6 Month', '12 Month')
+  a_cols <- colnames(a_statuses)
+  b_cols <- colnames(b_statuses)
+  
+  colnames(combined_statuses) <- c('Status', a_cols[2:length(a_cols)],
+                                   b_cols[2:length(b_cols)])
   
   
   vis <- kable(combined_statuses, format = "html", align = 'l') %>%
     add_indent(c(4, 5)) %>%
-    add_header_above(c(' ', 'Group A' = 3, 'Group B' = 3)) %>%
+    add_header_above(c(' ', 'Group A' = length(a_cols)-1, 'Group B' = length(b_cols)-1)) %>%
     kable_styling("striped", full_width = F, position = 'left')
   
   if (!is.null(footnote)) {
