@@ -652,6 +652,123 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
   return(vis) 
 } 
 
+#' Baseline Characteristics Percent (No Military Status)
+#'
+#' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, and education
+#'
+#' @param analytic This is the analytic data set that must include enrolled, age, age_group
+#' @param sex is a meta construct that is required that defaults to "sex"
+#' @param race is a meta construct that is required that defaults to "ethnicity_race"
+#' @param education is a meta construct that is required that defaults to "education_level"
+#' @param sex_levels sets default values and orders for sex meta construct
+#' @param race_levels sets default values and orders for race meta construct
+#' @param education_levels sets default values and orders for education meta construct
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' baseline_characteristics_percent_nm()
+#' }
+baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethnicity_race", education="education_level",
+                                             sex_levels=c("Female","Male", "Missing"), 
+                                             race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
+                                             education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing")
+                                             ){
+  
+  constructs <- c(sex, race, education)
+  
+  sex_default <- tibble(type=sex_levels)
+  race_default <- tibble(type=race_levels)
+  education_default <- tibble(type=education_levels)
+  
+  
+  df <- analytic %>% 
+    select(enrolled, age_group, age, all_of(constructs)) %>% 
+    filter(enrolled) %>% 
+    rename(sex = !!sym(sex)) %>% 
+    rename(race = !!sym(race)) %>% 
+    rename(education = !!sym(education)) %>% 
+    mutate(age = as.numeric(age))
+  
+  total <- sum(df$enrolled)
+  
+  sex_df <- df %>% 
+    mutate(sex = replace_na(sex, "Missing")) %>% 
+    group_by(sex) %>% 
+    count(sex) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = sex) %>% 
+    full_join(sex_default) %>% 
+    mutate(order = factor(type, sex_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
+  
+  age_df <- df %>% 
+    summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))
+  
+  
+  age_group_df <- df %>% 
+    mutate(age_group = replace_na(age_group, "Missing")) %>% 
+    group_by(age_group) %>% 
+    count(age_group) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = age_group)
+  
+  education_df <- df %>% 
+    mutate(education = replace_na(education, "Missing")) %>% 
+    group_by(education) %>% 
+    count(education) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = education) %>% 
+    full_join(education_default) %>% 
+    mutate(order = factor(type, education_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
+  
+  race_df <- df %>% 
+    mutate(race = replace_na(race, "Missing")) %>% 
+    group_by(race) %>% 
+    count(race) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = race) %>% 
+    full_join(race_default) %>% 
+    mutate(order = factor(type, race_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
+  
+  
+  df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df) %>% 
+    mutate_all(replace_na, "0 (0%)") 
+  
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+  
+  
+  vis <- kable(df_final, format="html", align='l',  col.names = NULL) %>%
+    add_header_above(header) %>%  
+    pack_rows(index = c('Sex' = nrow(sex_df), 
+                        'Age' = (nrow(age_df) + nrow(age_group_df)), 
+                        'Race' = nrow(race_df), 
+                        'Education' = nrow(education_df)), 
+              label_row_css = "text-align:left") %>% 
+    kable_styling("striped", full_width = F, position="left")  
+  
+  return(vis) 
+} 
+
+
+
 #' Number of Non-Completing Participants, SAEs, and Protocol Deviations by type
 #'
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
@@ -1755,7 +1872,12 @@ fracture_characteristics <- function(analytic){
 #' \dontrun{
 #' enrollment_by_site_last_days_var_disc()
 #' }
-enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinued="discontinued", discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, average = FALSE, cumulative_data = TRUE){
+enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, 
+                                                  discontinued="discontinued", 
+                                                  discontinued_colname="Discontinued", 
+                                                  include_exclusive_safety_set=FALSE, 
+                                                  average = FALSE, 
+                                                  cumulative_data = TRUE){
   
   if(include_exclusive_safety_set){
     df <- analytic %>% 
@@ -1781,23 +1903,32 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
   if(include_exclusive_safety_set){
     df_1st <- df %>% 
       group_by(Facility) %>% 
-      summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible), 
-                Refused = sum(refused[eligible == TRUE]), 'Not Consented' = sum(not_consented[eligible == TRUE]), cnr = sum(consented_and_randomized[eligible == TRUE])) 
+      summarize('Days Certified' = site_certified_days[1], 
+                Screened = sum(screened), Eligible = sum(eligible), 
+                Refused = sum(refused[eligible == TRUE]), 
+                'Not Consented' = sum(not_consented[eligible == TRUE]), 
+                cnr = sum(consented_and_randomized[eligible == TRUE])) 
     
     df_2nd <- df %>% 
       group_by(Facility) %>% 
-      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 'Safety Set' = sum(exclusive_safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), 
+                "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 
+                'Safety Set' = sum(exclusive_safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
       select(Facility, Discontinued, Enrolled, `Safety Set`)
     
   } else{
     df_1st <- df %>% 
       group_by(Facility) %>% 
-      summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible), 
-                Refused = sum(refused[eligible == TRUE]), 'Not Consented' = sum(not_consented[eligible == TRUE]), cnr = sum(consented_and_randomized[eligible == TRUE])) 
+      summarize('Days Certified' = site_certified_days[1], 
+                Screened = sum(screened), Eligible = sum(eligible), 
+                Refused = sum(refused[eligible == TRUE]), 
+                'Not Consented' = sum(not_consented[eligible == TRUE]), 
+                cnr = sum(consented_and_randomized[eligible == TRUE])) 
     
     df_2nd <- df %>% 
       group_by(Facility) %>% 
-      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), 
+                "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
       select(Facility, Discontinued, Enrolled)
   }
   
@@ -1819,9 +1950,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
       group_by(Facility) %>% 
       summarize('last_days_Screened' = sum(screened_last, na.rm = T),
                 'last_days_Eligible' = sum(eligible_last, na.rm = T),
-                'last_days_Enrolled' = sum(enrolled_last, na.rm = T)) #%>% 
-      #mutate(last_days_Eligible = format_count_percent(last_days_Eligible, last_days_Screened),
-       #      last_days_Enrolled = format_count_percent(last_days_Enrolled, last_days_Screened))
+                'last_days_Enrolled' = sum(enrolled_last, na.rm = T))
     
     last_day_df <- left_join(last_day_df, new_last_day_df, by = 'Facility')
   }
@@ -1857,6 +1986,11 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
     mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
     mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
     mutate(`Eligible (% screened)` = format_count_percent(Eligible, Screened)) 
+  
+  if (include_exclusive_safety_set) {
+    final <- final %>%
+      mutate(`Safety Set` = format_count_percent(`Safety Set`, cnr))
+  }
   
   total_row <- final %>% 
     slice_head(n=1)
