@@ -786,8 +786,7 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
 #' not_complete_sae_deviation_by_type()
 #' }
 not_complete_sae_deviation_by_type <- function(analytic){
-  
-  
+
   total <- sum(analytic$enrolled, na.rm=T)
   not_completed_df <- analytic %>% 
     select(enrolled, not_completed_reason, not_completed) %>% 
@@ -820,6 +819,10 @@ not_complete_sae_deviation_by_type <- function(analytic){
     filter(!is.na(type)) %>% 
     mutate(type = as.character(type))
   
+  if (nrow(sae_df) == 0) {
+    sae_df <- tibble(type = "SAE", n = 0)
+  }
+  
   
   deviation_sc_df <- analytic %>% 
     select(study_id, enrolled, protocol_deviation_screen_consent) %>% 
@@ -834,7 +837,7 @@ not_complete_sae_deviation_by_type <- function(analytic){
   deviation_p_df <- analytic %>% 
     select(study_id, enrolled, protocol_deviation_procedural) %>% 
     separate_rows(protocol_deviation_procedural, sep=";") %>% 
-  filter(enrolled == TRUE) %>% 
+    filter(enrolled == TRUE) %>% 
     count(protocol_deviation_procedural) %>%
     rename(type=protocol_deviation_procedural) %>% 
     filter(!is.na(type)) %>% 
@@ -862,33 +865,40 @@ not_complete_sae_deviation_by_type <- function(analytic){
                         deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
     mutate(n = format_count_percent(n, total, decimals=2))
   
-  n_act <- nrow(not_completed_df)
-  n_disc <- nrow(not_expected_df)
-  n_dsc <- nrow(deviation_sc_df)
-  n_dp <- nrow(deviation_p_df)
-  n_da <- nrow(deviation_a_df)
+  
+  n_act <- if (exists("not_completed_df")) nrow(not_completed_df) else 0
+  n_disc <- if (exists("not_expected_df")) nrow(not_expected_df) else 0
+  n_dsc <- if (exists("deviation_sc_df")) nrow(deviation_sc_df) else 0
+  n_dp <- if (exists("deviation_p_df")) nrow(deviation_p_df) else 0
+  n_da <- if (exists("deviation_a_df")) nrow(deviation_a_df) else 0
+  
   
   indents_vec <- vector()
-  if(n_dsc > 0){
+  
+  
+  if (n_dsc > 0) {
     indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + seq(n_dsc))
   }
-  if(n_dp > 0){
+  if (n_dp > 0) {
     indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp))
   }
-  if(n_da > 0){
+  if (n_da > 0) {
     indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
   }
   
-  vis <- kable(df_final, format="html", align='l', col.names = c(" ", paste0("n=",total))) %>%
-    add_indent(c(seq(n_act) + 1, seq(n_disc) + 1 + n_act + 1 , seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)) %>% 
-    add_indent(indents_vec) %>% 
-    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(1 + n_act +1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
-    kable_styling("striped", full_width = F, position="left") 
   
+  indents_vec <- indents_vec[indents_vec <= nrow(df_final)]
+  
+  
+  vis <- kable(df_final, format = "html", align = 'l', col.names = c(" ", paste0("n=", total))) %>%
+    add_indent(c(seq(n_act) + 1, seq(n_disc) + 1 + n_act + 1 , seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)) %>% 
+    add_indent(indents_vec) %>%
+    row_spec(0, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
+    kable_styling("striped", full_width = F, position = "left")
   
   return(vis)
 }
@@ -1064,15 +1074,16 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
       mutate(ineligibility_reasons = pre_ineligibility_reasons) %>% 
       mutate(screened = pre_screened)
   }
-
+  
   data <- analytic %>%
     select(study_id, facilitycode, screened, ineligible, ineligibility_reasons) %>%
     filter(screened == TRUE) 
   
   df <- data %>%
     select(study_id, facilitycode, ineligibility_reasons) %>%
+    mutate(ineligibility_reasons = as.character(ineligibility_reasons)) %>%  
     column_unzipper('ineligibility_reasons', sep = '; ')
-    
+  
   if (nrow(df) == 0) {
     output <- tibble(
       study_id = unique(analytic$study_id),  
@@ -1142,7 +1153,7 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
     vis <- kable(output, format = "html", align = 'l') %>%
       add_header_above(header_names) %>%
       kable_styling("striped", full_width = FALSE, position = "left")
-    }
+  }
   
   return(vis)
 }
