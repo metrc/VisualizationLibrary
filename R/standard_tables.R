@@ -1091,7 +1091,7 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
   
   if (nrow(df) == 0) {
     output <- tibble(
-      study_id = unique(analytic$study_id),  
+      `Sites` = unique(analytic$facilitycode),  
       `No participant ineligible` = NA_character_
     )
     
