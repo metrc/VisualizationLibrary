@@ -889,9 +889,14 @@ not_complete_sae_deviation_by_type <- function(analytic){
   
   indents_vec <- indents_vec[indents_vec <= nrow(df_final)]
   
+  first_indents_vec <- c(ifelse(n_act==0, vector(mode="integer"), seq(n_act) + 1),
+    ifelse(n_disc==0, vector(mode="integer"),seq(n_disc) + 1 + n_act + 1), seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)
+  
+  first_indents_vec <- first_indents_vec[!is.na(first_indents_vec)]
+  
   
   vis <- kable(df_final, format = "html", align = 'l', col.names = c(" ", paste0("n=", total))) %>%
-    add_indent(c(seq(n_act) + 1, seq(n_disc) + 1 + n_act + 1 , seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)) %>% 
+    add_indent(first_indents_vec) %>% 
     add_indent(indents_vec) %>%
     row_spec(0, extra_css = "border-bottom: 1px solid") %>%
     row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>%
@@ -1633,7 +1638,7 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
           filter(!!sym(filter_cols[which(constructs == construct)]))
       }
     }
-    total <- length(inner_analytic)
+    total <- nrow(inner_analytic)
     
     inner <- inner_analytic %>% 
       mutate(temp = replace_na(!!sym(construct), "Missing")) %>% 

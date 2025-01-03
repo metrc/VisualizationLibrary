@@ -284,7 +284,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #' closed_not_complete_sae_deviation_by_type()
 #' }
 closed_not_complete_sae_deviation_by_type <- function(analytic){
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '395f0b9c6f36be8205fa381a91ead1a1')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', 'ab9f3c8b4a0c7fd166c294dd1738a967')
   
   n_act <- NA
   n_disc <- NA
@@ -340,6 +340,9 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
       mutate(type = ifelse(type == 'Other', 'Other3', type)) %>% 
       mutate(type = as.character(type)) 
     
+    if (nrow(sae_df) == 0) {
+      sae_df <- tibble(type = "SAE", n = 0)
+    }
     
     deviation_sc_df <- analytic %>% 
       select(study_id, enrolled, protocol_deviation_screen_consent) %>% 
@@ -408,28 +411,35 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
     mutate(type = if_else(str_detect(type, "^Other"), "Other", type))
   
   indents_vec <- vector()
-  if(n_dsc > 0){
+  if (n_dsc > 0) {
     indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + seq(n_dsc))
   }
-  if(n_dp > 0){
+  if (n_dp > 0) {
     indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp))
   }
-  if(n_da > 0){
+  if (n_da > 0) {
     indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
   }
+  
+  indents_vec <- indents_vec[indents_vec <= nrow(df_table)]
+  
+  first_indents_vec <- c(ifelse(n_act==0, vector(mode="integer"), seq(n_act) + 1),
+                         ifelse(n_disc==0, vector(mode="integer"),seq(n_disc) + 1 + n_act + 1), seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)
+  
+  first_indents_vec <- first_indents_vec[!is.na(first_indents_vec)]
 
   vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
                                                                    paste0("Group A n=(", nrow(df_a), ")"), 
                                                                    paste0("Group B n=(", nrow(df_b), ")"), 
                                                                    paste0("Total n=(", nrow(df_full), ")"))) %>%
-    add_indent(c(seq(n_act) + 1, seq(n_disc) + 1 + n_act + 1 , seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)) %>% 
+    add_indent(first_indents_vec) %>% 
     add_indent(indents_vec) %>% 
-    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>% 
+    row_spec(0, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>%
     row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(1 + n_act +1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
-    kable_styling("striped", full_width = F, position="left") 
+    row_spec(1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
+    kable_styling("striped", full_width = F, position = "left")
   
   return(vis)
 }
@@ -2499,6 +2509,92 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
                         'Group B' = nrow(df_b_collected),
                         'Total' = nrow(total_collected))) %>%
     kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
+
+
+#' Closed Generic Characteristics
+#'
+#' @description 
+#' Runs basic count statistics for a number of constructs. Missing values are 
+#' given the value "Missing."
+#'
+#' @param analytic This is the analytic data set 
+#' @param constructs The constructs to run statistics from
+#' @param names_vec The names of the constructs in the final visualization
+#' @param filter_cols The columns to filter the the data by (for totals and missing counts)
+#' @param titlecase Changes construct values to Title Case
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+
+#' closed_generic_characteristics()
+#' }
+closed_generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
+                                    filter_cols = c("enrolled"), titlecase = FALSE){
+  
+  confirm_stability_of_related_visual('generic_characteristics', 'ce51abbb68cc92280a6c28bbc8f6728b')
+  
+  out <- NULL
+  index_vec <- c()
+  
+  for (construct in constructs) {
+    name_str <- names_vec[which(constructs == construct)]
+    
+    if (!is.null(filter_cols)){
+      if(length(filter_cols) == 1) {
+        inner_analytic <- analytic %>%
+          filter(!!sym(filter_cols))
+      } else {
+        inner_analytic <- analytic %>%
+          filter(!!sym(filter_cols[which(constructs == construct)]))
+      }
+    }
+    total <- nrow(inner_analytic)
+    
+    inner <- inner_analytic %>% 
+      mutate(temp = replace_na(!!sym(construct), "Missing")) %>% 
+      group_by(temp, treatment_arm) %>% 
+      count(temp) %>% 
+      mutate(percentage = format_count_percent(n, total)) %>% 
+      select(-n) %>%
+      mutate(header = name_str) %>%
+      arrange(temp == "Missing") %>%
+      pivot_wider(
+        names_from = treatment_arm,
+        values_from = percentage,
+        values_fill = "0 (0%)"
+      )%>%
+      select(temp, header, `Group A`, `Group B`)
+      
+    
+    if (titlecase) {
+      inner <- inner %>%
+        mutate(temp = str_to_title(temp))
+    }
+    
+    new <- nrow(inner)
+    names(new) <- paste0(name_str, ' (n=', total, ')')
+    index_vec <- c(index_vec, new)
+    
+    if (is.null(out)) {
+      out <- inner
+    } else {
+      out <- rbind(out, inner)
+    }
+  }
+  out <- out %>%
+    select(-header)
+  
+  vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B")) %>%
+    add_indent(c(seq(nrow(out)))) %>% 
+    row_spec(c(1, index_vec[1: length(index_vec)-1]+1 ), extra_css = "border-top: 1px solid") %>%  
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+    kable_styling("striped", full_width = F, position="left")
   
   return(vis)
 }
