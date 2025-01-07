@@ -445,6 +445,205 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
 }
 
 
+#' Closed Number of Non-Completing Participants, SAEs, and Protocol Deviations by type
+#'
+#' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
+#' Now with AUTO Protocol Deviation Categorization!
+#'
+#' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, 
+#' not_completed_reason, protocol_deviation_full_data, sae_count
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_not_complete_sae_deviation_by_type_auto_categories()
+#' }
+closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")){
+  
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', 'ea15628d5792c0f980c4d816ec6a97e8')
+  
+  n_act <- NA
+  n_disc <- NA
+  indents_vec <- NA
+  second_vec <- NA
+  
+  df_full <- analytic %>%
+    filter(enrolled)
+  
+  df_a <- analytic  %>%
+    filter(enrolled) %>%  
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(enrolled) %>%  
+    filter(treatment_arm=="Group B")
+  
+  
+  inner_closed_not_complete_sae_deviation_by_type <- function(analytic){
+    
+    total <- sum(analytic$enrolled, na.rm=T)
+    not_completed_df <- analytic %>% 
+      select(enrolled, not_completed_reason, not_completed) %>% 
+      mutate(not_completed_reason = ifelse(not_completed, not_completed_reason, NA)) %>% 
+      select(-not_completed) %>% 
+      filter(enrolled == TRUE) %>% 
+      count(not_completed_reason) %>%
+      rename(type=not_completed_reason) %>% 
+      filter(!is.na(type)) %>% 
+      mutate(type = as.character(type))
+    
+    not_completed_df_tot <- tibble(type="Not Completed", n=sum(not_completed_df$n))
+    
+    not_expected_df <- analytic %>% 
+      select(enrolled, not_expected_reason) %>% 
+      filter(enrolled == TRUE) %>% 
+      count(not_expected_reason) %>%
+      rename(type=not_expected_reason) %>% 
+      filter(!is.na(type)) %>% 
+      mutate(type = as.character(type))
+    
+    not_expected_df_tot <- tibble(type="Not Expected", n=sum(not_expected_df$n))
+    
+    sae_df <- analytic %>% 
+      select(study_id, enrolled, sae_count) %>% 
+      filter(enrolled & sae_count>0) %>% 
+      mutate(sae_count = "SAE") %>% 
+      count(sae_count) %>%
+      rename(type=sae_count) %>% 
+      filter(!is.na(type)) %>% 
+      mutate(type = as.character(type))
+    
+    if (nrow(sae_df) == 0) {
+      sae_df <- tibble(type = "SAE", n = 0)
+    }
+    
+    analytic <- analytic %>% 
+      mutate(protocol_deviation_data_full = protocol_deviation_data)
+    
+    
+    deviations_df <- analytic %>% 
+      select(study_id, enrolled, protocol_deviation_data) %>% 
+      separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
+      separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
+                                                 "deviation_description"), sep='\\|') %>% 
+      filter(enrolled == TRUE & !is.na(protocol_deviation)) %>% 
+      mutate(protocol_deviation = ifelse(str_detect(protocol_deviation,"^Other:"), "Other", protocol_deviation)) %>% 
+      count(category, protocol_deviation) %>%
+      rename(type=protocol_deviation) %>% 
+      filter(!is.na(type)) %>% 
+      mutate(type = str_replace(type,"Other: .+","Other")) %>% 
+      mutate(type = as.character(type))
+    
+    if(is.null(category_defaults)){
+      category_defaults <- sort(unique(deviations_df$type))
+    }
+    if(is_empty(category_defaults)){
+      category_defaults <- sort(unique(deviations_df$type))
+    }
+    
+    deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviations_df$n))
+    
+    df_final <- bind_rows(not_completed_df_tot, not_completed_df, not_expected_df_tot, not_expected_df, sae_df, deviation_df_tot) 
+    
+    n_act <- if (exists("not_completed_df")) nrow(not_completed_df) else 0
+    n_disc <- if (exists("not_expected_df")) nrow(not_expected_df) else 0
+    
+    indents_vec <- vector(mode="integer")
+    
+    indents_offset <- 1
+    
+    if(n_act>0){
+      indents_vec <- c(indents_offset+seq(n_act))
+      indents_offset <- indents_offset+n_act
+    }
+    
+    indents_offset <-indents_offset+1
+    
+    if(n_disc>0){
+      indents_vec <- c(indents_offset+seq(n_act))
+      indents_offset <- indents_offset+n_disc
+    }
+    
+    indents_offset <-indents_offset+1+1
+    second_vec <- vector(mode="integer")
+    second_offset <- indents_offset
+    
+    for(category_i in category_defaults) {
+      category_df <- deviations_df %>% 
+        filter(category==category_i) %>% 
+        select(-category)
+      
+      tot_df <- tibble(type=category_i,n=sum(category_df$n))
+      
+      df_final <- bind_rows(df_final, tot_df, category_df)
+      indents_vec <- c(indents_vec,indents_offset+1)
+      indents_offset <-indents_offset+1
+      second_offset <-second_offset+1
+      
+      if(nrow(category_df)>0){
+        indents_vec <- c(indents_vec,indents_offset+seq(nrow(category_df)))
+        indents_offset <-indents_offset+1
+        second_vec <- c(second_vec,second_offset+seq(nrow(category_df)))
+        second_offset <-second_offset+1
+      }
+    }
+    
+    df_final <- df_final %>% 
+      mutate(n = format_count_percent(n, total, decimals=2))
+    
+    n_act <<- nrow(not_completed_df)
+    n_disc <<- nrow(not_expected_df)
+    indents_vec <<- indents_vec
+    second_vec <<- second_vec
+    
+    df_final
+  }
+  
+  table_a <- inner_closed_not_complete_sae_deviation_by_type(df_a)
+  table_b <- inner_closed_not_complete_sae_deviation_by_type(df_b)
+  table_full <- inner_closed_not_complete_sae_deviation_by_type(df_full)
+  table_full <- table_full %>% 
+    mutate(o = seq(nrow(table_full)))
+  
+  df_table <- full_join(full_join(table_a, table_b, by='type'), 
+                        table_full, by='type') %>% 
+    arrange(o) %>% 
+    select(-o) %>% 
+    mutate_all(replace_na, "0 (0%)") %>%
+    mutate(type = if_else(str_detect(type, "^Other"), "Other", type))
+  
+  if(is_empty(second_vec)){
+    vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
+                                                                    paste0("Group A n=(", nrow(df_a), ")"), 
+                                                                    paste0("Group B n=(", nrow(df_b), ")"), 
+                                                                    paste0("Total n=(", nrow(df_full), ")"))) %>%
+      add_indent(indents_vec) %>% 
+      row_spec(0, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(nrow(df_final), extra_css = "border-bottom: 1px solid") %>%
+      kable_styling("striped", full_width = F, position = "left")
+  } else{
+    vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
+                                                                    paste0("Group A n=(", nrow(df_a), ")"), 
+                                                                    paste0("Group B n=(", nrow(df_b), ")"), 
+                                                                    paste0("Total n=(", nrow(df_full), ")"))) %>%
+      add_indent(indents_vec) %>% 
+      add_indent(second_vec) %>%
+      row_spec(0, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(nrow(df_final), extra_css = "border-bottom: 1px solid") %>%
+      kable_styling("striped", full_width = F, position = "left")
+  }
+  return(vis)
+}
+
+
 #' Closed Complications by severity and relatedness
 #'
 #' @description This function visualizes the complications by severity and relatedness for dsmb report
@@ -810,6 +1009,65 @@ closed_appendix_D_protocol_deviation <- function(analytic){
     separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "deviation_date", "protocol_deviation", 
                                                "deviation_description"), sep='\\|') 
   
+  output_df <- unzipped_protocol_deviation %>% 
+    mutate(text = paste0(
+      "<b>Participant ID</b>: ", study_id, "-", facilitycode, "<br /> ",
+      "<b>Date Enrolled</b>: ", consent_date, "<br /> ",
+      "<b>Date of deviation</b>: ", deviation_date, "<br /> ",
+      "<b>Deviation type</b>: ", protocol_deviation, "<br /> ",
+      "<b>Description</b>: ", deviation_description, "<br /> ",
+      "<br />")) 
+  
+  if (nrow(unzipped_protocol_deviation) == 0) {
+    return(paste0("<br />\nNone at this time.<br />\n"))
+  }
+  
+  output_text <- output_df %>% pull(text) %>% 
+    paste(collapse = "<br />\n")
+  
+  return(output_text)
+}
+
+
+#' Appendix D: Listing of any protocol deviations for closed report
+#'
+#' @description This function visualizes any protocol deviations occurred during the study time period.
+#'
+#' @param analytic This is the analytic data set that must include study_id, protocol_deviation_data
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_appendix_D_protocol_deviation()
+#' }
+closed_appendix_D_protocol_deviation <- function(analytic){
+  
+  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
+  
+  if(!"protocol_deviation_data" %in% colnames(analytic) & !"protocol_deviation_full_data" %in% colnames(analytic)){
+    df <- analytic %>% 
+      select(study_id, protocol_deviation_data) %>% 
+      filter(!is.na(protocol_deviation_data))
+    
+    unzipped_protocol_deviation <- df %>% 
+      separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
+      separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "deviation_date", "protocol_deviation", 
+                                                 "deviation_description"), sep='\\|')
+  } else{
+    df <- analytic %>% 
+      select(study_id, protocol_deviation_full_data) %>% 
+      rename(protocol_deviation_data=protocol_deviation_full_data)
+      filter(!is.na(protocol_deviation_data))
+    
+    unzipped_protocol_deviation <- df %>% 
+      separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
+      separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
+                                                 "deviation_description"), sep='\\|') %>% 
+      select(-category)
+  }
+
   output_df <- unzipped_protocol_deviation %>% 
     mutate(text = paste0(
       "<b>Participant ID</b>: ", study_id, "-", facilitycode, "<br /> ",
@@ -1679,12 +1937,13 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #' closed_expected_and_followup_visit_overall()
 #' }
 closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL){
-  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '0a41a3d8ed836222ef331657ad181f99')
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '77de8c47cc6a64cdcec6ddd54a5becbe')
   
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
     separate_rows(followup_data, sep=";") %>% 
     separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    mutate(status = as.character(status)) %>% 
     mutate_all(na_if, 'NA')
   
   df_a <- pull %>%
@@ -1714,8 +1973,12 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
     }
     
     combined <- Reduce(function(x, y) full_join(x, y, by = "status"), result_list) %>%
-      mutate(status = tools::toTitleCase(status)) %>%
-      mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
+      mutate(status = tools::toTitleCase(as.character(status))) %>%
+      mutate(status = ifelse(status == 'Not_started', 'Not Started', status)) %>% 
+      mutate(status = as.character(status))
+    
+    df_empty <- data.frame('status' = c("Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete')) %>% 
+      mutate_all(as.character)
     
     df_empty <- data.frame('status' = c("Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
     
@@ -2525,6 +2788,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' @param names_vec The names of the constructs in the final visualization
 #' @param filter_cols The columns to filter the the data by (for totals and missing counts)
 #' @param titlecase Changes construct values to Title Case
+#' @param splits Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them
 #'
 #' @return nothing
 #' @export
@@ -2535,15 +2799,24 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' closed_generic_characteristics()
 #' }
 closed_generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
-                                    filter_cols = c("enrolled"), titlecase = FALSE){
+                                    filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL){
   
-  confirm_stability_of_related_visual('generic_characteristics', 'ce51abbb68cc92280a6c28bbc8f6728b')
+  confirm_stability_of_related_visual('generic_characteristics', '2c57fd88a6eaf2b08c87f9aa96208e6b')
   
   out <- NULL
   index_vec <- c()
   
-  for (construct in constructs) {
-    name_str <- names_vec[which(constructs == construct)]
+  if(is.null(splits)){
+    splits <- rep(NA, length(constructs))
+  } else{
+    if(length(splits) == 1) {
+      splits <- rep(splits, length(constructs))
+    }
+  }
+  
+  for (i in seq(length(constructs))) {
+    name_str <- names_vec[i]
+    construct <- constructs[i]
     
     if (!is.null(filter_cols)){
       if(length(filter_cols) == 1) {
@@ -2551,13 +2824,22 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           filter(!!sym(filter_cols))
       } else {
         inner_analytic <- analytic %>%
-          filter(!!sym(filter_cols[which(constructs == construct)]))
+          filter(!!sym(filter_cols[i]))
       }
     }
     total <- nrow(inner_analytic)
     
     inner <- inner_analytic %>% 
-      mutate(temp = replace_na(!!sym(construct), "Missing")) %>% 
+      mutate(temp = as.character(replace_na(!!sym(construct), "Missing"))) 
+    
+    inner_split <- splits[i]
+    
+    if(!is.na(inner_split)){
+      inner <- inner %>% 
+        separate_rows(temp,sep = inner_split)
+    }
+    
+    inner <- inner %>% 
       group_by(temp, treatment_arm) %>% 
       count(temp) %>% 
       mutate(percentage = format_count_percent(n, total)) %>% 
@@ -2592,7 +2874,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
   
   vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B")) %>%
     add_indent(c(seq(nrow(out)))) %>% 
-    row_spec(c(1, index_vec[1: length(index_vec)-1]+1 ), extra_css = "border-top: 1px solid") %>%  
+    row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left")
   

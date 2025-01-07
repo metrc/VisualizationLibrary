@@ -5,17 +5,26 @@
 \title{Appendix D: Listing of any protocol deviations for closed report}
 \usage{
 closed_appendix_D_protocol_deviation(analytic)
+
+closed_appendix_D_protocol_deviation(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, protocol_deviation_data}
 }
 \value{
 nothing
+
+nothing
 }
 \description{
 This function visualizes any protocol deviations occurred during the study time period.
+
+This function visualizes any protocol deviations occurred during the study time period.
 }
 \examples{
+\dontrun{
+closed_appendix_D_protocol_deviation()
+}
 \dontrun{
 closed_appendix_D_protocol_deviation()
 }
