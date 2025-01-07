@@ -255,6 +255,152 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
 #' DSMB Consort Diagram With Pre Screened and No Definitive Event
 #'
 #' @description This function visualizes the categorical percentages of Study Status
+#' for the NSAID study
+#'
+#' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
+#' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active
+#' @param final_period Defaults to 12 Month
+#' @param adjudicated whether to use adjudicated discontinued and not expected
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' dsmb_consort_diagram_pre_no_def()
+#' }
+dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", adjudicated=FALSE){
+  
+  pre_analytic <- analytic
+  
+  pre_Screened <- sum(pre_analytic$pre_screened, na.rm=TRUE)
+  pre_Eligible <- sum(pre_analytic$pre_eligible, na.rm=TRUE)
+  pre_Ineligible <- pre_Screened - pre_Eligible
+  
+  analytic <- analytic %>% 
+    filter(screened == TRUE) 
+  
+  Screened <- sum(analytic$screened, na.rm=TRUE)
+  Eligible <- sum(analytic$eligible, na.rm=TRUE)
+  Ineligible <- Screened - Eligible
+  
+  Consented <- sum(analytic %>% 
+                     filter(eligible) %>% 
+                     pull(consented), na.rm=TRUE)
+  Refused <- sum(analytic %>% 
+                   filter(eligible) %>% 
+                   pull(refused), na.rm=TRUE)
+  Not_Consented <- sum(analytic %>% 
+                         filter(eligible) %>% 
+                         pull(not_consented), na.rm=TRUE)
+  Consented <- sum(analytic %>% 
+                     filter(eligible) %>% 
+                     pull(consented), na.rm=TRUE)
+  
+  Randomized <- sum(analytic %>% 
+                      filter(eligible) %>% 
+                      filter(consented) %>% 
+                      pull(randomized), na.rm=TRUE)
+  
+  Enrolled <- sum(analytic %>% 
+                    filter(eligible) %>% 
+                    filter(consented) %>% 
+                    filter(randomized) %>% 
+                    pull(enrolled), na.rm=TRUE)
+  if(adjudicated){
+    Discontinuation <- sum(analytic %>% 
+                             filter(eligible) %>% 
+                             filter(consented) %>% 
+                             filter(randomized) %>%
+                             pull(adjudicated_discontinued), na.rm=TRUE)
+  } else{
+    Discontinuation <- sum(analytic %>% 
+                             filter(eligible) %>% 
+                             filter(consented) %>% 
+                             filter(randomized) %>%
+                             pull(discontinued), na.rm=TRUE)
+  }
+  
+  
+  fu_df <- analytic %>% 
+    filter(eligible) %>% 
+    filter(consented) %>% 
+    filter(randomized) %>%
+    filter(enrolled)
+  
+  complete <- sum(fu_df$completed, na.rm = TRUE)
+  not_complete <- sum(fu_df$not_completed, na.rm = TRUE)
+  missed <- sum(fu_df$missed_final_followup, na.rm = TRUE)
+  active <- sum(fu_df$active, na.rm = TRUE)
+  not_expected <- sum(fu_df$not_expected, na.rm = TRUE)
+  if(adjudicated){
+    not_expected_str= "Adjudicated Not Expected"
+  } else{
+    not_expected_str= "Not Expected"
+  }
+  if(adjudicated){
+    disc_str= "Adjudicated Discontinued"
+  } else{
+    disc_str= "Discontinued"
+  }
+  
+  consort_diagram <- grViz(paste0('
+    digraph g {
+      graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
+      
+      pre_screened [style="rounded,filled", fillcolor="#ccccff", pos="5,14!", shape = box, width=2.4, height=1, label = "Pre-Screened (n=',pre_Screened,')"];
+      pre_ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,14!", shape = box, width=2.4, height=1, label = "Pre-Ineligible (n=',pre_Ineligible,')"];
+      pre_eligible [style="rounded,filled", fillcolor="#ccccff", pos="5,12!", shape = box, width=2.4, height=1, label = "Pre-Eligible (n=',pre_Eligible,')"];
+      
+      screened [style="rounded,filled", fillcolor="#ccccff", pos="5,10!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
+      ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
+      eligible [style="rounded,filled", fillcolor="#ccccff", pos="5,8!", shape = box, width=2.4, height=1, label = "Eligible (n=',Eligible,')"];
+      
+      refused [style="rounded,filled", fillcolor="#ccccff", pos="10,8!", shape = box, width=2.4, height=1, label = "Not Consented (n=',Not_Consented,')\nRefused (n=',Refused,')"];
+
+      cons [style="rounded,filled", fillcolor="#ccccff", pos="5,6!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
+
+      rand [style="rounded,filled", fillcolor="#ccccff", pos="5,4!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
+      
+      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="5,2!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',Enrolled,')"];
+      discon [style="rounded,filled", fillcolor="#ccccff", pos="10,4!", shape = box, width=2.4, height=1, label = "',disc_str,' (n=',Discontinuation,')"];
+
+      active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
+      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      
+      # Relationships
+      pre_screened -> pre_eligible
+      pre_screened -> pre_ineligible
+      pre_eligible -> screened
+      screened -> eligible
+      screened -> ineligible
+      eligible -> cons
+      cons -> rand
+      rand -> discon
+      eligible -> refused
+      rand -> enrolled
+      enrolled -> active
+      enrolled -> not_expected
+      enrolled -> fu_complete
+      
+    }
+  '))
+  svg_content <- DiagrammeRsvg::export_svg(consort_diagram)
+  temp_svg_path <- tempfile(fileext = ".svg")
+  writeLines(svg_content, temp_svg_path)
+  temp_png_path <- tempfile(fileext = ".png")
+  rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 1200, height = 1200)
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 1200px;">', image_data)
+  file.remove(c(temp_svg_path, temp_png_path))
+  return(img_tag)
+}
+
+
+#' DSMB Consort Diagram With Pre Screened and No Definitive Event
+#'
+#' @description This function visualizes the categorical percentages of Study Status
 #'
 #' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
 #' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active
