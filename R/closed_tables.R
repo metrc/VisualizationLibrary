@@ -983,51 +983,6 @@ closed_appendix_C_not_expected_not_completed <- function(analytic){
   return(output_text)
 }
 
-#' Appendix D: Listing of any protocol deviations for closed report
-#'
-#' @description This function visualizes any protocol deviations occurred during the study time period.
-#'
-#' @param analytic This is the analytic data set that must include study_id, protocol_deviation_data
-#'
-#' @return nothing
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' closed_appendix_D_protocol_deviation()
-#' }
-closed_appendix_D_protocol_deviation <- function(analytic){
-  
-  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
-  
-  df <- analytic %>% 
-    select(study_id, protocol_deviation_data) %>% 
-    filter(!is.na(protocol_deviation_data))
-  
-  unzipped_protocol_deviation <- df %>% 
-    separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
-    separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "deviation_date", "protocol_deviation", 
-                                               "deviation_description"), sep='\\|') 
-  
-  output_df <- unzipped_protocol_deviation %>% 
-    mutate(text = paste0(
-      "<b>Participant ID</b>: ", study_id, "-", facilitycode, "<br /> ",
-      "<b>Date Enrolled</b>: ", consent_date, "<br /> ",
-      "<b>Date of deviation</b>: ", deviation_date, "<br /> ",
-      "<b>Deviation type</b>: ", protocol_deviation, "<br /> ",
-      "<b>Description</b>: ", deviation_description, "<br /> ",
-      "<br />")) 
-  
-  if (nrow(unzipped_protocol_deviation) == 0) {
-    return(paste0("<br />\nNone at this time.<br />\n"))
-  }
-  
-  output_text <- output_df %>% pull(text) %>% 
-    paste(collapse = "<br />\n")
-  
-  return(output_text)
-}
-
 
 #' Appendix D: Listing of any protocol deviations for closed report
 #'
@@ -1057,8 +1012,7 @@ closed_appendix_D_protocol_deviation <- function(analytic){
                                                  "deviation_description"), sep='\\|')
   } else{
     df <- analytic %>% 
-      select(study_id, protocol_deviation_full_data) %>% 
-      rename(protocol_deviation_data=protocol_deviation_full_data)
+      select(study_id, protocol_deviation_data) %>% 
       filter(!is.na(protocol_deviation_data))
     
     unzipped_protocol_deviation <- df %>% 
