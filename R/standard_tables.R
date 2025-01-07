@@ -963,7 +963,7 @@ not_complete_sae_deviation_by_type_auto_categories <- function(analytic, categor
   }
   
   analytic <- analytic %>% 
-    mutate(protocol_deviation_data_full = protocol_deviation_data)
+    mutate(protocol_deviation_data = protocol_deviation_data_full)
   
   
   deviations_df <- analytic %>% 
