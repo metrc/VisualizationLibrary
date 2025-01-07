@@ -462,7 +462,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
 #' }
 closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")){
   
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', 'ea15628d5792c0f980c4d816ec6a97e8')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', '2145fe35beb9ea9e3084b541fdb49ca0')
   
   n_act <- NA
   n_disc <- NA
@@ -520,7 +520,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
     }
     
     analytic <- analytic %>% 
-      mutate(protocol_deviation_data_full = protocol_deviation_data)
+      mutate(protocol_deviation_data = protocol_deviation_data_full)
     
     
     deviations_df <- analytic %>% 
