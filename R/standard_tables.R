@@ -1229,7 +1229,8 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
   if (pre_screened) { 
     analytic <- analytic %>% 
       mutate(ineligibility_reasons = pre_ineligibility_reasons) %>% 
-      mutate(screened = pre_screened)
+      mutate(screened = pre_screened) %>% 
+      mutate(ineligible = pre_ineligible)
   }
   
   data <- analytic %>%
@@ -1300,6 +1301,12 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
              `Other Reasons` = otherreasons) %>% 
       arrange(desc(Screened)) %>% 
       mutate(Ineligible = format_count_percent(Ineligible, Screened))
+    
+    if(pre_screened){
+      output <- output %>% 
+        rename(`Pre-Screened` = screened,
+               `Pre-Ineligible` = ineligible)
+    }
     
     top_n_header_text <- paste0("Top ", n_top_reasons, " Ineligibility Reasons")
     
