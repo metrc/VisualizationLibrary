@@ -83,7 +83,8 @@ enrollment_status_by_site <- function(analytic){
 #' enrollment_status_by_site_var_discontinued()
 #' }
 enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued"){
-  df <- analytic %>% 
+ 
+   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, site_certified_days, 
            facilitycode, all_of(discontinued))
   
@@ -117,7 +118,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
     mutate_all(~ifelse(is.na(.), 0, .)) %>% 
     adorn_totals("row") %>% 
     mutate(is_total=Facility=="Total") %>% 
-    mutate(`Days Certified`=ifelse(is_total,NA,`Days Certified`)) %>% 
+    mutate(`Days Certified`=ifelse(is_total,"-",`Days Certified`)) %>% 
     arrange(desc(is_total), Facility) %>% 
     select(-is_total) %>% 
     mutate(!!discontinued_colname := format_count_percent(!!sym(discontinued_colname), Consented)) %>% 
@@ -652,6 +653,123 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
   return(vis) 
 } 
 
+#' Baseline Characteristics Percent (No Military Status)
+#'
+#' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, and education
+#'
+#' @param analytic This is the analytic data set that must include enrolled, age, age_group
+#' @param sex is a meta construct that is required that defaults to "sex"
+#' @param race is a meta construct that is required that defaults to "ethnicity_race"
+#' @param education is a meta construct that is required that defaults to "education_level"
+#' @param sex_levels sets default values and orders for sex meta construct
+#' @param race_levels sets default values and orders for race meta construct
+#' @param education_levels sets default values and orders for education meta construct
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' baseline_characteristics_percent_nm()
+#' }
+baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethnicity_race", education="education_level",
+                                             sex_levels=c("Female","Male", "Missing"), 
+                                             race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
+                                             education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing")
+                                             ){
+  
+  constructs <- c(sex, race, education)
+  
+  sex_default <- tibble(type=sex_levels)
+  race_default <- tibble(type=race_levels)
+  education_default <- tibble(type=education_levels)
+  
+  
+  df <- analytic %>% 
+    select(enrolled, age_group, age, all_of(constructs)) %>% 
+    filter(enrolled) %>% 
+    rename(sex = !!sym(sex)) %>% 
+    rename(race = !!sym(race)) %>% 
+    rename(education = !!sym(education)) %>% 
+    mutate(age = as.numeric(age))
+  
+  total <- sum(df$enrolled)
+  
+  sex_df <- df %>% 
+    mutate(sex = replace_na(sex, "Missing")) %>% 
+    group_by(sex) %>% 
+    count(sex) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = sex) %>% 
+    full_join(sex_default) %>% 
+    mutate(order = factor(type, sex_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
+  
+  age_df <- df %>% 
+    summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))
+  
+  
+  age_group_df <- df %>% 
+    mutate(age_group = replace_na(age_group, "Missing")) %>% 
+    group_by(age_group) %>% 
+    count(age_group) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = age_group)
+  
+  education_df <- df %>% 
+    mutate(education = replace_na(education, "Missing")) %>% 
+    group_by(education) %>% 
+    count(education) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = education) %>% 
+    full_join(education_default) %>% 
+    mutate(order = factor(type, education_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
+  
+  race_df <- df %>% 
+    mutate(race = replace_na(race, "Missing")) %>% 
+    group_by(race) %>% 
+    count(race) %>% 
+    rename(number = n) %>% 
+    mutate(percentage = format_count_percent(number, total)) %>% 
+    select(-number) %>% 
+    rename(type = race) %>% 
+    full_join(race_default) %>% 
+    mutate(order = factor(type, race_levels)) %>% 
+    arrange(order) %>% 
+    select(-order)
+  
+  
+  df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df) %>% 
+    mutate_all(replace_na, "0 (0%)") 
+  
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+  
+  
+  vis <- kable(df_final, format="html", align='l',  col.names = NULL) %>%
+    add_header_above(header) %>%  
+    pack_rows(index = c('Sex' = nrow(sex_df), 
+                        'Age' = (nrow(age_df) + nrow(age_group_df)), 
+                        'Race' = nrow(race_df), 
+                        'Education' = nrow(education_df)), 
+              label_row_css = "text-align:left") %>% 
+    kable_styling("striped", full_width = F, position="left")  
+  
+  return(vis) 
+} 
+
+
+
 #' Number of Non-Completing Participants, SAEs, and Protocol Deviations by type
 #'
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
@@ -668,7 +786,145 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
 #' not_complete_sae_deviation_by_type()
 #' }
 not_complete_sae_deviation_by_type <- function(analytic){
+
+  total <- sum(analytic$enrolled, na.rm=T)
+  not_completed_df <- analytic %>% 
+    select(enrolled, not_completed_reason, not_completed) %>% 
+    mutate(not_completed_reason = ifelse(not_completed, not_completed_reason, NA)) %>% 
+    select(-not_completed) %>% 
+    filter(enrolled == TRUE) %>% 
+    count(not_completed_reason) %>%
+    rename(type=not_completed_reason) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = as.character(type))
   
+  not_completed_df_tot <- tibble(type="Not Completed", n=sum(not_completed_df$n))
+  
+  not_expected_df <- analytic %>% 
+    select(enrolled, not_expected_reason) %>% 
+    filter(enrolled == TRUE) %>% 
+    count(not_expected_reason) %>%
+    rename(type=not_expected_reason) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = as.character(type))
+  
+  not_expected_df_tot <- tibble(type="Not Expected", n=sum(not_expected_df$n))
+  
+  sae_df <- analytic %>% 
+    select(study_id, enrolled, sae_count) %>% 
+    filter(enrolled & sae_count>0) %>% 
+    mutate(sae_count = "SAE") %>% 
+    count(sae_count) %>%
+    rename(type=sae_count) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = as.character(type))
+  
+  if (nrow(sae_df) == 0) {
+    sae_df <- tibble(type = "SAE", n = 0)
+  }
+  
+  
+  deviation_sc_df <- analytic %>% 
+    select(study_id, enrolled, protocol_deviation_screen_consent) %>% 
+    separate_rows(protocol_deviation_screen_consent, sep=";") %>% 
+    filter(enrolled == TRUE) %>% 
+    count(protocol_deviation_screen_consent) %>%
+    rename(type=protocol_deviation_screen_consent) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = as.character(type))
+  
+  
+  deviation_p_df <- analytic %>% 
+    select(study_id, enrolled, protocol_deviation_procedural) %>% 
+    separate_rows(protocol_deviation_procedural, sep=";") %>% 
+    filter(enrolled == TRUE) %>% 
+    count(protocol_deviation_procedural) %>%
+    rename(type=protocol_deviation_procedural) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = as.character(type))
+  
+  
+  deviation_a_df <- analytic %>% 
+    select(study_id, enrolled, protocol_deviation_administrative) %>% 
+    separate_rows(protocol_deviation_administrative, sep=";") %>%
+    filter(enrolled == TRUE) %>% 
+    mutate(protocol_deviation_administrative = ifelse(grepl("^Other:", protocol_deviation_administrative), "Other", protocol_deviation_administrative)) %>% 
+    count(protocol_deviation_administrative) %>%
+    rename(type=protocol_deviation_administrative) %>% 
+    filter(!is.na(type)) %>% 
+    mutate(type = str_replace(type,"Other: .+","Other")) %>% 
+    mutate(type = as.character(type))
+  
+  deviation_sc_tot <- tibble(type="Screen and Consent",n=sum(deviation_sc_df$n))
+  deviation_p_tot <- tibble(type="Procedural",n=sum(deviation_p_df$n))
+  deviation_a_tot <- tibble(type="Administrative/Other",n=sum(deviation_a_df$n))
+  deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
+  
+  
+  df_final <- bind_rows(not_completed_df_tot, not_completed_df, not_expected_df_tot, not_expected_df, sae_df, deviation_df_tot, 
+                        deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
+    mutate(n = format_count_percent(n, total, decimals=2))
+  
+  
+  n_act <- if (exists("not_completed_df")) nrow(not_completed_df) else 0
+  n_disc <- if (exists("not_expected_df")) nrow(not_expected_df) else 0
+  n_dsc <- if (exists("deviation_sc_df")) nrow(deviation_sc_df) else 0
+  n_dp <- if (exists("deviation_p_df")) nrow(deviation_p_df) else 0
+  n_da <- if (exists("deviation_a_df")) nrow(deviation_a_df) else 0
+  
+  
+  indents_vec <- vector()
+  
+  
+  if (n_dsc > 0) {
+    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + seq(n_dsc))
+  }
+  if (n_dp > 0) {
+    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp))
+  }
+  if (n_da > 0) {
+    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
+  }
+  
+  
+  indents_vec <- indents_vec[indents_vec <= nrow(df_final)]
+  
+  first_indents_vec <- c(ifelse(n_act==0, vector(mode="integer"), seq(n_act) + 1),
+    ifelse(n_disc==0, vector(mode="integer"),seq(n_disc) + 1 + n_act + 1), seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)
+  
+  first_indents_vec <- first_indents_vec[!is.na(first_indents_vec)]
+  
+  
+  vis <- kable(df_final, format = "html", align = 'l', col.names = c(" ", paste0("n=", total))) %>%
+    add_indent(first_indents_vec) %>% 
+    add_indent(indents_vec) %>%
+    row_spec(0, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
+    row_spec(1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
+    kable_styling("striped", full_width = F, position = "left")
+  
+  return(vis)
+}
+
+
+#' Number of Non-Completing Participants, SAEs, and Protocol Deviations by type
+#'
+#' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
+#' Now with AUTO Protocol Deviation Categorization!
+#'
+#' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, 
+#' not_completed_reason, protocol_deviation_full_data, sae_count
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' not_complete_sae_deviation_by_type_auto_categories()
+#' }
+not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")){
   
   total <- sum(analytic$enrolled, na.rm=T)
   not_completed_df <- analytic %>% 
@@ -702,76 +958,105 @@ not_complete_sae_deviation_by_type <- function(analytic){
     filter(!is.na(type)) %>% 
     mutate(type = as.character(type))
   
+  if (nrow(sae_df) == 0) {
+    sae_df <- tibble(type = "SAE", n = 0)
+  }
   
-  deviation_sc_df <- analytic %>% 
-    select(study_id, enrolled, protocol_deviation_screen_consent) %>% 
-    separate_rows(protocol_deviation_screen_consent, sep=";") %>% 
-    filter(enrolled == TRUE) %>% 
-    count(protocol_deviation_screen_consent) %>%
-    rename(type=protocol_deviation_screen_consent) %>% 
-    filter(!is.na(type)) %>% 
-    mutate(type = as.character(type))
+  analytic <- analytic %>% 
+    mutate(protocol_deviation_data = protocol_deviation_full_data)
   
   
-  deviation_p_df <- analytic %>% 
-    select(study_id, enrolled, protocol_deviation_procedural) %>% 
-    separate_rows(protocol_deviation_procedural, sep=";") %>% 
-  filter(enrolled == TRUE) %>% 
-    count(protocol_deviation_procedural) %>%
-    rename(type=protocol_deviation_procedural) %>% 
-    filter(!is.na(type)) %>% 
-    mutate(type = as.character(type))
-  
-  
-  deviation_a_df <- analytic %>% 
-    select(study_id, enrolled, protocol_deviation_administrative) %>% 
-    separate_rows(protocol_deviation_administrative, sep=";") %>%
-    filter(enrolled == TRUE) %>% 
-    mutate(protocol_deviation_administrative = ifelse(grepl("^Other:", protocol_deviation_administrative), "Other", protocol_deviation_administrative)) %>% 
-    count(protocol_deviation_administrative) %>%
-    rename(type=protocol_deviation_administrative) %>% 
+  deviations_df <- analytic %>% 
+    select(study_id, enrolled, protocol_deviation_data) %>% 
+    separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
+    separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
+                                               "deviation_description"), sep='\\|') %>% 
+    filter(enrolled == TRUE & !is.na(protocol_deviation)) %>% 
+    mutate(protocol_deviation = ifelse(str_detect(protocol_deviation,"^Other:"), "Other", protocol_deviation)) %>% 
+    count(category, protocol_deviation) %>%
+    rename(type=protocol_deviation) %>% 
     filter(!is.na(type)) %>% 
     mutate(type = str_replace(type,"Other: .+","Other")) %>% 
     mutate(type = as.character(type))
   
-  deviation_sc_tot <- tibble(type="Screen and Consent",n=sum(deviation_sc_df$n))
-  deviation_p_tot <- tibble(type="Procedural",n=sum(deviation_p_df$n))
-  deviation_a_tot <- tibble(type="Administrative/Other",n=sum(deviation_a_df$n))
-  deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
+  if(is.null(category_defaults)){
+    category_defaults <- sort(unique(deviations_df$type))
+  }
+  if(is_empty(category_defaults)){
+    category_defaults <- sort(unique(deviations_df$type))
+  }
   
+  deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviations_df$n))
   
-  df_final <- bind_rows(not_completed_df_tot, not_completed_df, not_expected_df_tot, not_expected_df, sae_df, deviation_df_tot, 
-                        deviation_sc_tot, deviation_sc_df, deviation_p_tot, deviation_p_df, deviation_a_tot, deviation_a_df) %>% 
+  df_final <- bind_rows(not_completed_df_tot, not_completed_df, not_expected_df_tot, not_expected_df, sae_df, deviation_df_tot) 
+  
+  n_act <- if (exists("not_completed_df")) nrow(not_completed_df) else 0
+  n_disc <- if (exists("not_expected_df")) nrow(not_expected_df) else 0
+  
+  indents_vec <- vector(mode="integer")
+  
+  indents_offset <- 1
+  
+  if(n_act>0){
+    indents_vec <- c(indents_offset+seq(n_act))
+    indents_offset <- indents_offset+n_act
+  }
+  
+  indents_offset <-indents_offset+1
+  
+  if(n_disc>0){
+    indents_vec <- c(indents_offset+seq(n_act))
+    indents_offset <- indents_offset+n_disc
+  }
+  
+  indents_offset <-indents_offset+1+1
+  second_vec <- vector(mode="integer")
+  second_offset <- indents_offset
+  
+  for(category_i in category_defaults) {
+    category_df <- deviations_df %>% 
+      filter(category==category_i) %>% 
+      select(-category)
+    
+    tot_df <- tibble(type=category_i,n=sum(category_df$n))
+    
+    df_final <- bind_rows(df_final, tot_df, category_df)
+    indents_vec <- c(indents_vec,indents_offset+1)
+    indents_offset <-indents_offset+1
+    second_offset <-second_offset+1
+    
+    if(nrow(category_df)>0){
+      indents_vec <- c(indents_vec,indents_offset+seq(nrow(category_df)))
+      indents_offset <-indents_offset+1
+      second_vec <- c(second_vec,second_offset+seq(nrow(category_df)))
+      second_offset <-second_offset+1
+    }
+  }
+  
+  df_final <- df_final %>% 
     mutate(n = format_count_percent(n, total, decimals=2))
   
-  n_act <- nrow(not_completed_df)
-  n_disc <- nrow(not_expected_df)
-  n_dsc <- nrow(deviation_sc_df)
-  n_dp <- nrow(deviation_p_df)
-  n_da <- nrow(deviation_a_df)
-  
-  indents_vec <- vector()
-  if(n_dsc > 0){
-    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + seq(n_dsc))
+  if(is_empty(second_vec)){
+    vis <- kable(df_final, format = "html", align = 'l', col.names = c(" ", paste0("n=", total))) %>%
+      add_indent(indents_vec) %>% 
+      row_spec(0, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(nrow(df_final), extra_css = "border-bottom: 1px solid") %>% 
+      kable_styling("striped", full_width = F, position = "left")
+  } else{
+    vis <- kable(df_final, format = "html", align = 'l', col.names = c(" ", paste0("n=", total))) %>%
+      add_indent(indents_vec) %>% 
+      add_indent(second_vec) %>%
+      row_spec(0, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
+      row_spec(nrow(df_final), extra_css = "border-bottom: 1px solid") %>% 
+      kable_styling("striped", full_width = F, position = "left")
   }
-  if(n_dp > 0){
-    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + seq(n_dp))
-  }
-  if(n_da > 0){
-    indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da))
-  }
-  
-  vis <- kable(df_final, format="html", align='l', col.names = c(" ", paste0("n=",total))) %>%
-    add_indent(c(seq(n_act) + 1, seq(n_disc) + 1 + n_act + 1 , seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)) %>% 
-    add_indent(indents_vec) %>% 
-    row_spec(0, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>% 
-    row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
-    row_spec(1 + n_act +1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + n_da, extra_css = "border-bottom: 1px solid") %>%
-    kable_styling("striped", full_width = F, position="left") 
-  
-  
+
   return(vis)
 }
 
@@ -926,7 +1211,11 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #'
 #' @description This function visualizes the number of patients Ineligible by Top 5 reasons of Exclusion criteria
 #'
-#' @param analytic This is the analytic data set that must include facilitycode,  screened, ineligible, ineligibility_reasons
+#' @param analytic This is the analytic data set that must include facilitycode,  screened, ineligible, ineligibility_reasons, 
+#' @param pre_screened When pre_screened is TRUE then we will be using pre_ineligibility_reasons and pre_screened itself
+#' to list ineligibility reasons. 
+#' @param n_top_reasons is by default set to 5 but in case there are less than 5 reasons then as many columns would be 
+#' reflected in the ineligibility table as reasons exist.
 #'
 #' @return nothing
 #' @export
@@ -935,61 +1224,100 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #' \dontrun{
 #' ineligibility_by_reasons()
 #' }
-ineligibility_by_reasons <- function(analytic, n_top_reasons = 5){
-  df <- analytic %>% 
-    select(study_id, facilitycode,  screened, ineligible, ineligibility_reasons) %>% 
+ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reasons = 5){
+  
+  if (pre_screened) { 
+    analytic <- analytic %>% 
+      mutate(ineligibility_reasons = pre_ineligibility_reasons) %>% 
+      mutate(screened = pre_screened) %>% 
+      mutate(ineligible = pre_ineligible)
+  }
+  
+  data <- analytic %>%
+    select(study_id, facilitycode, screened, ineligible, ineligibility_reasons) %>%
     filter(screened == TRUE) 
   
-  reasons <- df %>%  select(study_id, facilitycode, ineligibility_reasons) %>% 
-    column_unzipper('ineligibility_reasons', sep = '; ') %>% 
-    boolean_column_counter() %>% 
-    pivot_longer(everything()) %>% 
-    arrange(desc(value)) %>% 
-    filter(name!='Other') %>%
-    slice(1:n_top_reasons) %>% 
-    pull(name) 
+  df <- data %>%
+    select(study_id, facilitycode, ineligibility_reasons) %>%
+    mutate(ineligibility_reasons = as.character(ineligibility_reasons)) %>%  
+    column_unzipper('ineligibility_reasons', sep = '; ')
   
-  screened_total <- df %>% select(study_id, screened, ineligible) %>% boolean_column_counter() %>% 
-    mutate(Site = 'Total') 
+  if (nrow(df) == 0) {
+    output <- tibble(
+      `Sites` = unique(analytic$facilitycode),  
+      `No participant ineligible` = NA_character_
+    )
+    
+    vis <- kable(output, format = "html", align = 'l') %>%
+      kable_styling("striped", full_width = FALSE, position = "left")
+  }
   
-  total <- df %>% 
-    column_unzipper('ineligibility_reasons', sep = '; ') %>% 
-    boolean_column_counter() %>% 
-    mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible)))) %>% 
-    select(-screened, -ineligible) %>% 
-    mutate(Site = 'Total') %>% 
-    left_join(screened_total) %>% 
-    select(Site, screened, ineligible, all_of(reasons), otherreasons)
-  
-  screened_total_sites <- df %>% select(facilitycode, screened, ineligible) %>% 
-    boolean_column_counter(groups = 'facilitycode') %>%
-    rename(Site = facilitycode) 
-  
-  sites <- df %>% 
-    column_unzipper('ineligibility_reasons', sep = '; ') %>% 
-    boolean_column_counter(groups = 'facilitycode') %>% 
-    mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible, facilitycode)))) %>% 
-    rename(Site = facilitycode) %>% 
-    select(-screened, -ineligible) %>% 
-    left_join(screened_total_sites) %>% 
-    select(Site, screened, ineligible, all_of(reasons), otherreasons)
-  
-  output <- bind_rows(total, sites) %>% 
-    rename(Screened = screened,
-           Ineligible = ineligible,
-           `Other Reasons` = otherreasons) %>% 
-    arrange(desc(Screened)) %>% 
-    mutate(Ineligible = format_count_percent(Ineligible, Screened))
-  
-  top_n_header_text <- paste0("Top ", n_top_reasons, " Ineligibility Reasons")
-  
-  header_names <- c(" " = 3, top_n_header_text = n_top_reasons, " " = 1) 
-  
-  names(header_names)[2] <- top_n_header_text
-  
-  vis <- kable(output, format="html", align = 'l') %>%
-    add_header_above(header_names) %>%  
-    kable_styling("striped", full_width = FALSE, position = "left")
+  if (nrow(df) > 0 ) {
+    
+    reason_data <- df %>%  
+      boolean_column_counter() %>% 
+      pivot_longer(everything()) %>% 
+      arrange(desc(value)) %>% 
+      filter(name != 'Other')
+    
+    n_reasons <- nrow(reason_data)
+    n_top_reasons <- if (n_reasons >= n_top_reasons) n_top_reasons else max(1, n_reasons)
+    
+    reasons <- reason_data %>%
+      slice(1:n_top_reasons) %>%
+      pull(name)
+    
+    screened_total <- data %>% 
+      select(study_id, screened, ineligible) %>% 
+      boolean_column_counter() %>%
+      mutate(Site = 'Total')
+    
+    total <- data %>%
+      column_unzipper('ineligibility_reasons', sep = '; ') %>%
+      boolean_column_counter() %>%
+      mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible)))) %>% 
+      select(-screened, -ineligible) %>%
+      mutate(Site = 'Total') %>%
+      left_join(screened_total) %>%
+      select(Site, screened, ineligible, all_of(reasons), otherreasons)
+    
+    screened_total_sites <- data %>%
+      select(facilitycode, screened, ineligible) %>%
+      boolean_column_counter(groups = 'facilitycode') %>%
+      rename(Site = facilitycode)
+    
+    sites <- data %>%
+      column_unzipper('ineligibility_reasons', sep = '; ') %>%
+      boolean_column_counter(groups = 'facilitycode') %>%
+      mutate(otherreasons = rowSums(across(-c(all_of(reasons), screened, ineligible, facilitycode)))) %>%
+      rename(Site = facilitycode) %>%
+      select(-screened, -ineligible) %>%
+      left_join(screened_total_sites) %>%
+      select(Site, screened, ineligible, all_of(reasons), otherreasons)
+    
+    output <- bind_rows(total, sites) %>% 
+      rename(Screened = screened,
+             Ineligible = ineligible,
+             `Other Reasons` = otherreasons) %>% 
+      arrange(desc(Screened)) %>% 
+      mutate(Ineligible = format_count_percent(Ineligible, Screened))
+    
+    if(pre_screened){
+      output <- output %>% 
+        rename(`Pre-Screened` = screened,
+               `Pre-Ineligible` = ineligible)
+    }
+    
+    top_n_header_text <- paste0("Top ", n_top_reasons, " Ineligibility Reasons")
+    
+    header_names <- c(" " = 3, top_n_header_text = n_top_reasons, " " = 1)
+    
+    names(header_names)[2] <- top_n_header_text
+    
+    vis <- kable(output, format = "html", align = 'l') %>%
+      add_header_above(header_names) %>%
+      kable_styling("striped", full_width = FALSE, position = "left")
+  }
   
   return(vis)
 }
@@ -1431,6 +1759,102 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 }
 
 
+#' Generic Characteristics
+#'
+#' @description 
+#' Runs basic count statistics for a number of constructs. Missing values are 
+#' given the value "Missing."
+#'
+#' @param analytic This is the analytic data set 
+#' @param constructs The constructs to run statistics from
+#' @param names_vec The names of the constructs in the final visualization
+#' @param filter_cols The columns to filter the the data by (for totals and missing counts)
+#' @param titlecase Changes construct values to Title Case
+#' @param splits Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+
+#' generic_characteristics()
+#' }
+generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
+                                    filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL){
+
+  out <- NULL
+  index_vec <- c()
+  
+  if(is.null(splits)){
+    splits <- rep(NA, length(constructs))
+  } else{
+    if(length(splits) == 1) {
+      splits <- rep(splits, length(constructs))
+    }
+  }
+  
+  for (i in seq(length(constructs))) {
+    name_str <- names_vec[i]
+    construct <- constructs[i]
+    
+    if (!is.null(filter_cols)){
+      if(length(filter_cols) == 1) {
+        inner_analytic <- analytic %>%
+          filter(!!sym(filter_cols))
+      } else {
+        inner_analytic <- analytic %>%
+          filter(!!sym(filter_cols[i]))
+      }
+    }
+    total <- nrow(inner_analytic)
+    
+    inner <- inner_analytic %>% 
+      mutate(temp = as.character(replace_na(!!sym(construct), "Missing"))) 
+    
+    inner_split <- splits[i]
+
+        if(!is.na(inner_split)){
+      inner <- inner %>% 
+        separate_rows(temp,sep = inner_split)
+    }
+    
+    inner <- inner %>% 
+      group_by(temp) %>% 
+      count(temp) %>% 
+      mutate(percentage = format_count_percent(n, total)) %>% 
+      select(-n) %>%
+      mutate(header = name_str) %>%
+      arrange(temp == "Missing")
+    
+    if (titlecase) {
+      inner <- inner %>%
+        mutate(temp = str_to_title(temp))
+    }
+    
+    new <- nrow(inner)
+    names(new) <- paste0(name_str, ' (n=', total, ')')
+    index_vec <- c(index_vec, new)
+    
+    if (is.null(out)) {
+      out <- inner
+    } else {
+      out <- rbind(out, inner)
+    }
+  }
+  out <- out %>%
+    select(-header)
+  
+  vis <- kable(out, format="html", align='l', col.names = NULL) %>%
+    add_indent(c(seq(nrow(out)))) %>% 
+    row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+    kable_styling("striped", full_width = F, position="left")
+
+  return(vis)
+}
+
+
 
 #' Amputations and Gustilo Injury Characteristics
 #'
@@ -1755,7 +2179,12 @@ fracture_characteristics <- function(analytic){
 #' \dontrun{
 #' enrollment_by_site_last_days_var_disc()
 #' }
-enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinued="discontinued", discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, average = FALSE, cumulative_data = TRUE){
+enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, 
+                                                  discontinued="discontinued", 
+                                                  discontinued_colname="Discontinued", 
+                                                  include_exclusive_safety_set=FALSE, 
+                                                  average = FALSE, 
+                                                  cumulative_data = TRUE){
   
   if(include_exclusive_safety_set){
     df <- analytic %>% 
@@ -1781,23 +2210,32 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
   if(include_exclusive_safety_set){
     df_1st <- df %>% 
       group_by(Facility) %>% 
-      summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible), 
-                Refused = sum(refused[eligible == TRUE]), 'Not Consented' = sum(not_consented[eligible == TRUE]), cnr = sum(consented_and_randomized[eligible == TRUE])) 
+      summarize('Days Certified' = site_certified_days[1], 
+                Screened = sum(screened), Eligible = sum(eligible), 
+                Refused = sum(refused[eligible == TRUE]), 
+                'Not Consented' = sum(not_consented[eligible == TRUE]), 
+                cnr = sum(consented_and_randomized[eligible == TRUE])) 
     
     df_2nd <- df %>% 
       group_by(Facility) %>% 
-      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 'Safety Set' = sum(exclusive_safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), 
+                "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 
+                'Safety Set' = sum(exclusive_safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
       select(Facility, Discontinued, Enrolled, `Safety Set`)
     
   } else{
     df_1st <- df %>% 
       group_by(Facility) %>% 
-      summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible), 
-                Refused = sum(refused[eligible == TRUE]), 'Not Consented' = sum(not_consented[eligible == TRUE]), cnr = sum(consented_and_randomized[eligible == TRUE])) 
+      summarize('Days Certified' = site_certified_days[1], 
+                Screened = sum(screened), Eligible = sum(eligible), 
+                Refused = sum(refused[eligible == TRUE]), 
+                'Not Consented' = sum(not_consented[eligible == TRUE]), 
+                cnr = sum(consented_and_randomized[eligible == TRUE])) 
     
     df_2nd <- df %>% 
       group_by(Facility) %>% 
-      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), 
+                "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
       select(Facility, Discontinued, Enrolled)
   }
   
@@ -1851,11 +2289,15 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, discontinu
                                              "last_days_Screened\\2"))))) %>% 
     mutate(`Discontinued (% randomized)` = format_count_percent(Discontinued, cnr)) %>% 
     mutate(`Eligible & Enrolled (% randomized)` = format_count_percent(Enrolled, cnr)) %>% 
-    mutate(`Safety Set` = format_count_percent(`Safety Set`, cnr)) %>% 
     mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
     mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
     mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
     mutate(`Eligible (% screened)` = format_count_percent(Eligible, Screened)) 
+  
+  if (include_exclusive_safety_set) {
+    final <- final %>%
+      mutate(`Safety Set` = format_count_percent(`Safety Set`, cnr))
+  }
   
   total_row <- final %>% 
     slice_head(n=1)
@@ -2330,6 +2772,7 @@ expected_and_followup_visit_overall <- function(analytic){
     select(study_id, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
     separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    mutate(status = as.character(status)) %>% 
     mutate_all(na_if, 'NA')
   
   fu_levels <- df$followup_period %>% unique()
@@ -2351,10 +2794,12 @@ expected_and_followup_visit_overall <- function(analytic){
   }
   
   combined <- Reduce(function(x, y) full_join(x, y, by = "status"), result_list) %>%
-    mutate(status = tools::toTitleCase(status)) %>%
-    mutate(status = ifelse(status == 'Not_started', 'Not Started', status))
+    mutate(status = tools::toTitleCase(as.character(status))) %>%
+    mutate(status = ifelse(status == 'Not_started', 'Not Started', status)) %>% 
+    mutate(status = as.character(status))
   
-  df_empty <- data.frame('status' = c("Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'))
+  df_empty <- data.frame('status' = c("Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete')) %>% 
+    mutate_all(as.character)
   
   final_raw <- left_join(df_empty, combined, by = 'status') %>% 
     mutate(across(everything(), ~replace_na(., 0)))
