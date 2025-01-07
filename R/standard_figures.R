@@ -1152,7 +1152,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
   not_randomized_df <- consented_df %>% 
     filter(!randomized | is.na(randomized))
   
-  ed_consented <- sum(not_randomized_df$adjudicated_discontinued, na.rm = TRUE)
+  ed_consented <- consented - randomized
   
   randomized_df <- consented_df %>% 
     filter(randomized)
