@@ -9,7 +9,8 @@ closed_generic_characteristics(
   constructs = c(),
   names_vec = c(),
   filter_cols = c("enrolled"),
-  titlecase = FALSE
+  titlecase = FALSE,
+  splits = NULL
 )
 }
 \arguments{
@@ -22,6 +23,8 @@ closed_generic_characteristics(
 \item{filter_cols}{The columns to filter the the data by (for totals and missing counts)}
 
 \item{titlecase}{Changes construct values to Title Case}
+
+\item{splits}{Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them}
 }
 \value{
 nothing
