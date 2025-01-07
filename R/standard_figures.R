@@ -159,8 +159,8 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
                          filter(eligible) %>% 
                          pull(not_consented), na.rm=TRUE)
   Consented <- sum(analytic %>% 
-                      filter(eligible) %>% 
-                      pull(consented), na.rm=TRUE)
+                     filter(eligible) %>% 
+                     pull(consented), na.rm=TRUE)
   
   Randomized <- sum(analytic %>% 
                       filter(eligible) %>% 
@@ -173,16 +173,16 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
                     filter(randomized) %>% 
                     pull(enrolled), na.rm=TRUE)
   Adjudicated_Discontinuation <- sum(analytic %>% 
-                        filter(eligible) %>% 
-                        filter(consented) %>% 
-                        filter(randomized) %>%
-                        pull(adjudicated_discontinued), na.rm=TRUE)
+                                       filter(eligible) %>% 
+                                       filter(consented) %>% 
+                                       filter(randomized) %>%
+                                       pull(adjudicated_discontinued), na.rm=TRUE)
   Definitive_Fixation_Complete <- sum(analytic %>% 
-                        filter(eligible) %>% 
-                        filter(consented) %>% 
-                        filter(randomized) %>%
-                        filter(enrolled) %>% 
-                        pull(df_surg_completed), na.rm=TRUE)
+                                        filter(eligible) %>% 
+                                        filter(consented) %>% 
+                                        filter(randomized) %>%
+                                        filter(enrolled) %>% 
+                                        pull(df_surg_completed), na.rm=TRUE)
   
   fu_df <- analytic %>% 
     filter(eligible) %>% 
@@ -226,14 +226,12 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
       fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
-      pre_screened -> pre_eligible
-      pre_screened -> pre_ineligible
-      pre_eligible -> cons
-      pre_eligible -> refused
-      cons -> screened
       screened -> eligible
       screened -> ineligible
-      eligible -> rand
+      eligible -> cons
+      cons -> rand
+      rand -> discon
+      eligible -> refused
       rand -> enrolled
       enrolled -> compl
       compl -> active
@@ -252,7 +250,6 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
   file.remove(c(temp_svg_path, temp_png_path))
   return(img_tag)
 }
-
 
 
 #' DSMB Consort Diagram With Pre Screened and No Definitive Event
@@ -381,6 +378,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
       screened -> ineligible
       eligible -> rand
       rand -> enrolled
+      rand -> discon
       enrolled -> active
       enrolled -> not_expected
       enrolled -> fu_complete
@@ -505,7 +503,7 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
       
       cons [style="rounded,filled", fillcolor="#ccccff", pos="5,12!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
       
-      refused [style="rounded,filled", fillcolor="#ccccff", pos="10,12!", shape = box, width=2.4, height=1, label = "Not Consented (n=',Not_Consented,')\nRefused (n=',Refused,')"];
+      refused [style="rounded,filled", fillcolor="#ccccff", pos="10,14!", shape = box, width=2.4, height=1, label = "Not Consented (n=',Not_Consented,')\nRefused (n=',Refused,')"];
       
       screened [style="rounded,filled", fillcolor="#ccccff", pos="5,10!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
       ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
@@ -526,13 +524,13 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
       pre_screened -> pre_eligible
       pre_screened -> pre_ineligible
       pre_eligible -> cons
-      cons -> refused
+      pre_eligible -> refused
       cons -> screened
       screened -> eligible
       screened -> ineligible
       eligible -> rand
-      rand -> discon
       rand -> enrolled
+      rand -> discon
       enrolled -> df_complete
       df_complete -> active
       df_complete -> not_expected
