@@ -862,7 +862,7 @@ cumulative_enrolled_los <- function(analytic){
   count_data <- df %>% 
     group_by(ih_los_days) %>% 
     summarise(count = n()) %>% 
-    arrange(desc(count))
+    arrange(desc(count), as.numeric(as.character(ih_los_days)))
   
   df$ih_los_days <- factor(df$ih_los_days, levels = count_data$ih_los_days)
   
