@@ -1304,8 +1304,8 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
     
     if(pre_screened){
       output <- output %>% 
-        rename(`Pre-Screened` = screened,
-               `Pre-Ineligible` = ineligible)
+        rename("Pre-Screened" = Screened,
+               "Pre-Ineligible" = Ineligible)
     }
     
     top_n_header_text <- paste0("Top ", n_top_reasons, " Ineligibility Reasons")
