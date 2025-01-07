@@ -713,7 +713,7 @@ enrollment_by_injury_and_site <- function(analytic){
 enrollment_by_site <- function(analytic, number_order = FALSE){
   
   df <- analytic %>%  select(study_id, enrolled, facilitycode, consent_date) %>% 
-    filter(enrolled = TRUE) %>% 
+    filter(enrolled == TRUE) %>% 
     filter(!is.na(consent_date)) %>% 
     group_by(facilitycode) %>%
     summarise(EnrolledPatients = n()) %>%
