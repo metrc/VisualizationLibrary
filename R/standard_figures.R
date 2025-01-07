@@ -1065,7 +1065,8 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
     summarise(Total = n()) %>%
     ungroup() %>% 
     arrange(year_month) %>%
-    mutate(cumulative_value = cumsum(Total))
+    mutate(cumulative_value = cumsum(Total)) %>% 
+    slice(-1)
   
   df$consent_date <- ymd(df$consent_date)
   
