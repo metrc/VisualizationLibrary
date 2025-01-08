@@ -6,7 +6,7 @@
 \usage{
 closed_enrollment_by_site_last_days_var_disc(
   analytic,
-  days,
+  days = 0,
   discontinued = "discontinued",
   discontinued_colname = "Discontinued",
   include_exclusive_safety_set = FALSE,
