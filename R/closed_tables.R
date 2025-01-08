@@ -2029,7 +2029,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
 #' closed_fracture_characteristics(analytic)
 #' }
 closed_fracture_characteristics <- function(analytic){
-  confirm_stability_of_related_visual('fracture_characteristics', '743fce724857bf294deabd31662c659b')
+  confirm_stability_of_related_visual('fracture_characteristics', '57f21346c4b2acf70ff51b42f7bb2ee5')
   
   inner_fracture_characteristics <- function(df) {
     total <- sum(df$enrolled)
