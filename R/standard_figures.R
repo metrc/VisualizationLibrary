@@ -79,21 +79,21 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
       start [style="rounded,filled", fillcolor="#ccccff", pos="5,12!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
       elig [style="rounded,filled", fillcolor="#ccccff", pos="5,10!", shape = box, width=2.4, height=1, label = "Eligible (n=',Eligible,')"];
       cons [style="rounded,filled", fillcolor="#ccccff", pos="5,8!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
-      pre_rand [style="rounded,filled", fillcolor="#ccccff", pos="10,8!", shape = box, width=2.4, height=1, label = "Discontinued (n=',Disconintued_Pre,')"];
+      pre_rand [style="rounded,filled", fillcolor="#ccccff", pos="9,8!", shape = box, width=2.4, height=1, label = "Discontinued (n=',Disconintued_Pre,')"];
 
       rand [style="rounded,filled", fillcolor="#ccccff", pos="5,6!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
-      late_inelig [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "',late_ineligible_str,', (n=',Late_Ineligible,')"];
+      late_inelig [style="rounded,filled", fillcolor="#ccccff", pos="9,6!", shape = box, width=2.4, height=1, label = "',late_ineligible_str,', (n=',Late_Ineligible,')"];
       
       enrolled [style="rounded,filled", fillcolor="#ccccff", pos="5,4!", shape = box, width=2.4, height=1, label = "Enrolled (n=',Enrolled,')"];
       
-      ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,12!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
-      refused [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Refused (n=',Refused,')"];
+      ineligible [style="rounded,filled", fillcolor="#ccccff", pos="9,12!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
+      refused [style="rounded,filled", fillcolor="#ccccff", pos="9,10!", shape = box, width=2.4, height=1, label = "Refused (n=',Refused,')"];
       
-      not_enrolled [style="rounded,filled", fillcolor="#ccccff", pos="2,10!", shape = box, width=2.4, height=1, label = "Not Enrolled Other (n=',Not_Enrolled_Other,')"];
+      not_enrolled [style="rounded,filled", fillcolor="#ccccff", pos="1,10!", shape = box, width=2.4, height=1, label = "Not Enrolled Other (n=',Not_Enrolled_Other,')"];
 
-      active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
-      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      active [style="rounded,filled", fillcolor="#ccccff", pos="1,2!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
+      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,2!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="9,2!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       start -> elig
