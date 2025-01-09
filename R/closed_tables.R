@@ -2908,7 +2908,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 closed_generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL){
   
-  confirm_stability_of_related_visual('generic_characteristics', '2c57fd88a6eaf2b08c87f9aa96208e6b')
+  confirm_stability_of_related_visual('generic_characteristics', '506d2023b87dc381c801c901b7422be8')
   
   out <- NULL
   index_vec <- c()
