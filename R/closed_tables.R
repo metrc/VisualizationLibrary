@@ -268,6 +268,158 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 } 
 
 
+#' Closed Baseline Characteristics Percent (No Military Status)
+#'
+#' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, and education
+#'
+#' @param analytic This is the analytic data set that must include treatment_arm enrolled, age, age_group
+#' @param sex is a meta construct that is required that defaults to "sex"
+#' @param race is a meta construct that is required that defaults to "race_ethnicity"
+#' @param education is a meta construct that is required that defaults to "education_level"
+#' @param sex_levels sets default values and orders for sex meta construct
+#' @param race_levels sets default values and orders for race meta construct
+#' @param education_levels sets default values and orders for education meta construct
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_baseline_characteristics_percent_nm()
+#' }
+closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethnicity_race", education="education_level",
+                                                       sex_levels=c("Female","Male", "Missing"), 
+                                                       race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
+                                                       education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing")){
+  
+  confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "c4fd1326d7565a6da1bb0467b4e1a155")
+  
+  sex_df <- tibble()
+  age_df <- tibble()
+  age_group_df <- tibble()
+  race_df <- tibble()
+  education_df <- tibble()
+  
+  inner_baseline_characteristics_percent_nm <- function(inner_analytic){
+    constructs <- c(sex, race, education)
+    
+    sex_default <- tibble(type=sex_levels)
+    race_default <- tibble(type=race_levels)
+    education_default <- tibble(type=education_levels)
+    
+    
+    df <- inner_analytic %>% 
+      select(enrolled, age_group, age, all_of(constructs)) %>% 
+      filter(enrolled) %>% 
+      rename(sex = !!sym(sex)) %>% 
+      rename(race = !!sym(race)) %>% 
+      rename(education = !!sym(education)) %>% 
+      mutate(age = as.numeric(age))
+    
+    total <- sum(df$enrolled)
+    
+    sex_df <- df %>% 
+      mutate(sex = replace_na(sex, "Missing")) %>% 
+      group_by(sex) %>% 
+      count(sex) %>% 
+      rename(number = n) %>% 
+      mutate(percentage = format_count_percent(number, total)) %>% 
+      select(-number) %>% 
+      rename(type = sex) %>% 
+      full_join(sex_default) %>% 
+      mutate(order = factor(type, sex_levels)) %>% 
+      arrange(order) %>% 
+      select(-order) %>% 
+      mutate(Category = 'sex')
+    
+    age_df <<- df %>% 
+      summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))%>% 
+      mutate(Category = 'age')
+    
+    
+    age_group_df <<- df %>% 
+      mutate(age_group = replace_na(age_group, "Missing")) %>% 
+      group_by(age_group) %>% 
+      count(age_group) %>% 
+      rename(number = n) %>% 
+      mutate(percentage = format_count_percent(number, total)) %>% 
+      select(-number) %>% 
+      rename(type = age_group)%>% 
+      mutate(Category = 'age')
+    
+    education_df <<- df %>% 
+      mutate(education = replace_na(education, "Missing")) %>% 
+      group_by(education) %>% 
+      count(education) %>% 
+      rename(number = n) %>% 
+      mutate(percentage = format_count_percent(number, total)) %>% 
+      select(-number) %>% 
+      rename(type = education) %>% 
+      full_join(education_default) %>% 
+      mutate(order = factor(type, education_levels)) %>% 
+      arrange(order) %>% 
+      select(-order)%>% 
+      mutate(Category = 'education')
+    
+    race_df <<- df %>% 
+      mutate(race = replace_na(race, "Missing")) %>% 
+      group_by(race) %>% 
+      count(race) %>% 
+      rename(number = n) %>% 
+      mutate(percentage = format_count_percent(number, total)) %>% 
+      select(-number) %>% 
+      rename(type = race) %>% 
+      full_join(race_default) %>% 
+      mutate(order = factor(type, race_levels)) %>% 
+      arrange(order) %>% 
+      select(-order)%>% 
+      mutate(Category = 'race')
+    
+    
+    df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df) %>% 
+      mutate_all(replace_na, "0 (0%)") %>% 
+      ungroup()
+    df_final
+  }
+  
+  
+  df_a <- analytic %>% filter(treatment_arm=="Group A")
+  df_b <- analytic %>% filter(treatment_arm=="Group B")
+  
+  output_a <- inner_baseline_characteristics_percent_nm(df_a) %>% mutate(percentage = replace_na(percentage, "NA")) 
+  output_b <- inner_baseline_characteristics_percent_nm(df_b) %>% mutate(percentage = replace_na(percentage, "NA"))
+  output_total <- inner_baseline_characteristics_percent_nm(analytic) %>% mutate(percentage = replace_na(percentage, "NA"))
+  
+  
+  full_output <- full_join(output_a, output_b, by = c('Category', 'type'))
+  
+  
+  full_output <- full_join(full_output, output_total, by = c('Category', 'type')) %>% 
+    reorder_rows(list(Category = c('sex', 'age', 'race', 'education'))) %>% 
+    mutate_all(replace_na, "0 (0%)") %>% 
+    select(-Category)
+  
+  colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a),")"), paste0("Group B (n=",nrow(df_b),")"), paste0("Total (n=",nrow(df_a)+nrow(df_b),")"))
+  
+  category_counts <- output_total %>%
+    count(`Category`) %>%
+    pull(n, name = `Category`)
+  
+  vis <- kable(full_output, format = "html", align = 'l') %>%
+    pack_rows(
+      index = c(
+        'Sex' = as.numeric(category_counts['sex']), 
+        'Age' = as.numeric(category_counts['age']), 
+        'Race' = as.numeric(category_counts['race']), 
+        'Education' = as.numeric(category_counts['education'])
+      ),
+      label_row_css = "text-align:left"
+    ) %>%
+    kable_styling("striped", full_width = F, position = "left")
+  
+  return(vis) 
+} 
+
 
 #' Closed Number of Discontinued Participants, SAEs, and Protocol Deviations by type
 #'
