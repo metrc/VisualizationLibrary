@@ -1375,7 +1375,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
 #' \dontrun{
 #' closed_enrollment_by_site_last_days_var_disc()
 #' }
-closed_enrollment_by_site_last_days_var_disc <- function(analytic, days, discontinued="discontinued", discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, footnotes=NULL){
+closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, discontinued="discontinued", discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, footnotes=NULL){
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-11-14)
   
   df_a <- analytic %>% 
@@ -2029,7 +2029,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
 #' closed_fracture_characteristics(analytic)
 #' }
 closed_fracture_characteristics <- function(analytic){
-  confirm_stability_of_related_visual('fracture_characteristics', '18791cc2b2fb3c9f95e46cb421ddc67e')
+  confirm_stability_of_related_visual('fracture_characteristics', '57f21346c4b2acf70ff51b42f7bb2ee5')
   
   inner_fracture_characteristics <- function(df) {
     total <- sum(df$enrolled)
@@ -2038,14 +2038,15 @@ closed_fracture_characteristics <- function(analytic){
     closed <- data.frame(type = 'Closed Fracture', percentage = format_count_percent(closed_total, total))
     open <- data.frame(type = 'Open Fracture', percentage = format_count_percent(open_total, total))
     
-    fracture_type <- df %>% 
-      mutate(fracture_type = replace_na(fracture_type, "Unknown")) %>% 
-      group_by(fracture_type) %>% 
-      count(fracture_type) %>% 
-      mutate(percentage = format_count_percent(n, total)) %>% 
-      rename(type = fracture_type) %>% 
-      select(-n) %>% 
-      arrange(factor(type, levels = c('Tibial Plateau', 'Tibial Pilon', 'Unknown')))
+    fracture_type <- df %>%
+      mutate(fracture_type = replace_na(fracture_type, "Unknown")) %>%
+      separate_rows(fracture_type, sep = ";") %>% 
+      group_by(fracture_type) %>%
+      summarize(n = n()) %>%
+      mutate(percentage = format_count_percent(n, sum(n))) %>%
+      rename(type = fracture_type) %>%
+      select(-n) %>%
+      arrange(factor(type, levels = c('Tibial Plateau', 'Tibial Pilon', 'Tibial Shaft', 'Fibula', 'Unknown')))
     
     tscherne <- df %>% 
       filter(closed) %>% 
@@ -2835,5 +2836,35 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
   return(vis)
 }
 
-
+#' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled
+#'
+#' @description This function visualizes the enrollment totals for each site
+#'
+#' @param analytic This is the analytic data set that must include screened, 
+#' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
+#' facilitycode, late_ineligible
+#'
+#' @return nothing
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_enrollment_status_by_site()
+#' }
+closed_enrollment_status_by_site <- function(analytic){
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
+  
+  df_a <- analytic %>% 
+    filter(treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(treatment_arm=="Group B")
+  
+    out <- paste0("<h4>Group A</h4><br />",
+                  enrollment_status_by_site(df_a),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site(df_b))
+  
+  return(out)
+}
 
