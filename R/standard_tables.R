@@ -1229,7 +1229,8 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
   if (pre_screened) { 
     analytic <- analytic %>% 
       mutate(ineligibility_reasons = pre_ineligibility_reasons) %>% 
-      mutate(screened = pre_screened)
+      mutate(screened = pre_screened) %>% 
+      mutate(ineligible = pre_ineligible)
   }
   
   data <- analytic %>%
@@ -1300,6 +1301,12 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
              `Other Reasons` = otherreasons) %>% 
       arrange(desc(Screened)) %>% 
       mutate(Ineligible = format_count_percent(Ineligible, Screened))
+    
+    if(pre_screened){
+      output <- output %>% 
+        rename("Pre-Screened" = Screened,
+               "Pre-Ineligible" = Ineligible)
+    }
     
     top_n_header_text <- paste0("Top ", n_top_reasons, " Ineligibility Reasons")
     
@@ -2005,14 +2012,15 @@ fracture_characteristics <- function(analytic){
   closed <- data.frame(type = 'Closed Fracture', percentage = format_count_percent(closed_total, total))
   open <- data.frame(type = 'Open Fracture', percentage = format_count_percent(open_total, total))
   
-  fracture_type <- df %>% 
-    mutate(fracture_type = replace_na(fracture_type, "Unknown")) %>% 
-    group_by(fracture_type) %>% 
-    count(fracture_type) %>% 
-    mutate(percentage = format_count_percent(n, total)) %>% 
-    rename(type = fracture_type) %>% 
-    select(-n) %>% 
-    arrange(factor(type, levels = c('Tibial Plateau', 'Tibial Pilon', 'Unknown')))
+  fracture_type <- df %>%
+    mutate(fracture_type = replace_na(fracture_type, "Unknown")) %>%
+    separate_rows(fracture_type, sep = ";") %>% 
+    group_by(fracture_type) %>%
+    summarize(n = n()) %>%
+    mutate(percentage = format_count_percent(n, sum(n))) %>%
+    rename(type = fracture_type) %>%
+    select(-n) %>%
+    arrange(factor(type, levels = c('Tibial Plateau', 'Tibial Pilon', 'Tibial Shaft', 'Fibula', 'Unknown')))
   
   tscherne <- df %>% 
     filter(closed) %>% 
