@@ -1153,7 +1153,7 @@ closed_appendix_D_protocol_deviation <- function(analytic){
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
-  if(!"protocol_deviation_data" %in% colnames(analytic) & !"protocol_deviation_full_data" %in% colnames(analytic)){
+  if("protocol_deviation_data" %in% colnames(analytic) & !"protocol_deviation_full_data" %in% colnames(analytic)){
     df <- analytic %>% 
       select(study_id, protocol_deviation_data) %>% 
       filter(!is.na(protocol_deviation_data))
@@ -1164,6 +1164,7 @@ closed_appendix_D_protocol_deviation <- function(analytic){
                                                  "deviation_description"), sep='\\|')
   } else{
     df <- analytic %>% 
+      mutate(protocol_deviation_data = protocol_deviation_full_data) %>%
       select(study_id, protocol_deviation_data) %>% 
       filter(!is.na(protocol_deviation_data))
     
