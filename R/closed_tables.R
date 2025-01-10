@@ -1965,10 +1965,10 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
    #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
-    filter(treatment_arm=="Group A")
+    filter(is.na(treatment_arm)|treatment_arm=="Group A")
   
   df_b <- analytic %>% 
-    filter(treatment_arm=="Group B")
+    filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
   if(is.null(footnotes)){
     out <- paste0("<h4>Group A</h4><br />",
@@ -3008,10 +3008,10 @@ closed_enrollment_status_by_site <- function(analytic){
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
-    filter(treatment_arm=="Group A")
+    filter(is.na(treatment_arm)|treatment_arm=="Group A")
   
   df_b <- analytic %>% 
-    filter(treatment_arm=="Group B")
+    filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
     out <- paste0("<h4>Group A</h4><br />",
                   enrollment_status_by_site(df_a),
