@@ -581,9 +581,9 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
   first_indents_vec <- first_indents_vec[!is.na(first_indents_vec)]
 
   vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
-                                                                   paste0("Group A n=(", nrow(df_a), ")"), 
-                                                                   paste0("Group B n=(", nrow(df_b), ")"), 
-                                                                   paste0("Total n=(", nrow(df_full), ")"))) %>%
+                                                                   paste0("Group A n=(", nrow(df_a %>% filter(enrolled)), ")"), 
+                                                                   paste0("Group B n=(", nrow(df_b %>% filter(enrolled)), ")"), 
+                                                                   paste0("Total n=(", nrow(df_full %>% filter(enrolled)), ")"))) %>%
     add_indent(first_indents_vec) %>% 
     add_indent(indents_vec) %>% 
     row_spec(0, extra_css = "border-bottom: 1px solid") %>%
@@ -768,9 +768,9 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
   
   if(is_empty(second_vec)){
     vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
-                                                                    paste0("Group A n=(", nrow(df_a), ")"), 
-                                                                    paste0("Group B n=(", nrow(df_b), ")"), 
-                                                                    paste0("Total n=(", nrow(df_full), ")"))) %>%
+                                                                    paste0("Group A n=(", nrow(df_a %>% filter(enrolled)), ")"), 
+                                                                    paste0("Group B n=(", nrow(df_b %>% filter(enrolled)), ")"), 
+                                                                    paste0("Total n=(", nrow(df_full %>% filter(enrolled)), ")"))) %>%
       add_indent(indents_vec) %>% 
       row_spec(0, extra_css = "border-bottom: 1px solid") %>%
       row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>%
@@ -780,9 +780,9 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
       kable_styling("striped", full_width = F, position = "left")
   } else{
     vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
-                                                                    paste0("Group A n=(", nrow(df_a), ")"), 
-                                                                    paste0("Group B n=(", nrow(df_b), ")"), 
-                                                                    paste0("Total n=(", nrow(df_full), ")"))) %>%
+                                                                    paste0("Group A n=(", nrow(df_a %>% filter(enrolled)), ")"), 
+                                                                    paste0("Group B n=(", nrow(df_b %>% filter(enrolled)), ")"), 
+                                                                    paste0("Total n=(", nrow(df_full %>% filter(enrolled)), ")"))) %>%
       add_indent(indents_vec) %>% 
       add_indent(second_vec) %>%
       row_spec(0, extra_css = "border-bottom: 1px solid") %>%
