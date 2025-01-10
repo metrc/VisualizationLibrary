@@ -257,7 +257,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
     mutate_all(replace_na, "0 (0%)") %>% 
     select(-Category)
   
-  colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a %>% filter(enrolled),")"), paste0("Group B (n=",nrow(df_b %>% filter(enrolled)),")"), paste0("Total (n=",nrow(df_a %>% filter(enrolled))+nrow(df_b %>% filter(enrolled)),")"))
+  colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a %>% filter(enrolled)),")"), paste0("Group B (n=",nrow(df_b %>% filter(enrolled)),")"), paste0("Total (n=",nrow(df_a %>% filter(enrolled))+nrow(df_b %>% filter(enrolled)),")"))
   
   vis <- kable(full_output, format="html", align='l') %>%
     pack_rows(index = c('Sex' = nrow(sex_df), 'Age' = (nrow(age_df) + nrow(age_group_df)), 'Race' = nrow(race_df), 
