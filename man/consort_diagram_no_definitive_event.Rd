@@ -13,7 +13,7 @@ consort_diagram_no_definitive_event(
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, screened, ineligible, eligible,
 refused, consented, randomized, enrolled, adjudicated_discontinued, completed, 
-safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup}
+safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
 
 \item{final_period}{Defaults to 12 Month}
 
