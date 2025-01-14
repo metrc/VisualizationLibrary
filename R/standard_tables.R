@@ -1751,7 +1751,7 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
   out <- out %>%
     select(-header)
   
-  vis <- kable(out, format="html", align='l', col.names = NULL) %>%
+  vis <- kable(out, format="html", align='l', col.names = c('', '')) %>%
     add_indent(c(seq(nrow(out)))) %>% 
     row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 

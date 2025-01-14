@@ -257,7 +257,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
     mutate_all(replace_na, "0 (0%)") %>% 
     select(-Category)
   
-  colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a),")"), paste0("Group B (n=",nrow(df_b),")"), paste0("Total (n=",nrow(df_a)+nrow(df_b),")"))
+  colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a %>% filter(enrolled)),")"), paste0("Group B (n=",nrow(df_b %>% filter(enrolled)),")"), paste0("Total (n=",nrow(df_a %>% filter(enrolled))+nrow(df_b %>% filter(enrolled)),")"))
   
   vis <- kable(full_output, format="html", align='l') %>%
     pack_rows(index = c('Sex' = nrow(sex_df), 'Age' = (nrow(age_df) + nrow(age_group_df)), 'Race' = nrow(race_df), 
@@ -399,7 +399,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
     mutate_all(replace_na, "0 (0%)") %>% 
     select(-Category)
   
-  colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a),")"), paste0("Group B (n=",nrow(df_b),")"), paste0("Total (n=",nrow(df_a)+nrow(df_b),")"))
+  colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a %>% filter(enrolled)),")"), paste0("Group B (n=",nrow(df_b %>% filter(enrolled)),")"), paste0("Total (n=",nrow(df_a %>% filter(enrolled))+nrow(df_b %>% filter(enrolled)),")"))
   
   category_counts <- output_total %>%
     count(`Category`) %>%
@@ -581,9 +581,9 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
   first_indents_vec <- first_indents_vec[!is.na(first_indents_vec)]
 
   vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
-                                                                   paste0("Group A n=(", nrow(df_a), ")"), 
-                                                                   paste0("Group B n=(", nrow(df_b), ")"), 
-                                                                   paste0("Total n=(", nrow(df_full), ")"))) %>%
+                                                                   paste0("Group A n=(", nrow(df_a %>% filter(enrolled)), ")"), 
+                                                                   paste0("Group B n=(", nrow(df_b %>% filter(enrolled)), ")"), 
+                                                                   paste0("Total n=(", nrow(df_full %>% filter(enrolled)), ")"))) %>%
     add_indent(first_indents_vec) %>% 
     add_indent(indents_vec) %>% 
     row_spec(0, extra_css = "border-bottom: 1px solid") %>%
@@ -768,9 +768,9 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
   
   if(is_empty(second_vec)){
     vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
-                                                                    paste0("Group A n=(", nrow(df_a), ")"), 
-                                                                    paste0("Group B n=(", nrow(df_b), ")"), 
-                                                                    paste0("Total n=(", nrow(df_full), ")"))) %>%
+                                                                    paste0("Group A n=(", nrow(df_a %>% filter(enrolled)), ")"), 
+                                                                    paste0("Group B n=(", nrow(df_b %>% filter(enrolled)), ")"), 
+                                                                    paste0("Total n=(", nrow(df_full %>% filter(enrolled)), ")"))) %>%
       add_indent(indents_vec) %>% 
       row_spec(0, extra_css = "border-bottom: 1px solid") %>%
       row_spec(1 + n_act, extra_css = "border-bottom: 1px solid") %>%
@@ -780,9 +780,9 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
       kable_styling("striped", full_width = F, position = "left")
   } else{
     vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
-                                                                    paste0("Group A n=(", nrow(df_a), ")"), 
-                                                                    paste0("Group B n=(", nrow(df_b), ")"), 
-                                                                    paste0("Total n=(", nrow(df_full), ")"))) %>%
+                                                                    paste0("Group A n=(", nrow(df_a %>% filter(enrolled)), ")"), 
+                                                                    paste0("Group B n=(", nrow(df_b %>% filter(enrolled)), ")"), 
+                                                                    paste0("Total n=(", nrow(df_full %>% filter(enrolled)), ")"))) %>%
       add_indent(indents_vec) %>% 
       add_indent(second_vec) %>%
       row_spec(0, extra_css = "border-bottom: 1px solid") %>%
@@ -1965,10 +1965,10 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
    #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
-    filter(treatment_arm=="Group A")
+    filter(is.na(treatment_arm)|treatment_arm=="Group A")
   
   df_b <- analytic %>% 
-    filter(treatment_arm=="Group B")
+    filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
   if(is.null(footnotes)){
     out <- paste0("<h4>Group A</h4><br />",
@@ -2909,7 +2909,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 closed_generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL){
   
-  confirm_stability_of_related_visual('generic_characteristics', '506d2023b87dc381c801c901b7422be8')
+  confirm_stability_of_related_visual('generic_characteristics', 'ae09ca020fb9528891b5f8922c2be584')
   
   out <- NULL
   index_vec <- c()
@@ -3008,10 +3008,10 @@ closed_enrollment_status_by_site <- function(analytic){
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
-    filter(treatment_arm=="Group A")
+    filter(is.na(treatment_arm)|treatment_arm=="Group A")
   
   df_b <- analytic %>% 
-    filter(treatment_arm=="Group B")
+    filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
     out <- paste0("<h4>Group A</h4><br />",
                   enrollment_status_by_site(df_a),
