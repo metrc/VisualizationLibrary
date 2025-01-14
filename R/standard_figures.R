@@ -17,7 +17,7 @@
 #' \dontrun{
 #' dsmb_consort_diagram()
 #' }
-dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_str="Completed 12-month visit", late_ineligible="late_ineligible", late_ineligible_str="Late Ineligible", not_expected_adjudicated=FALSE){
+dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period = '12 Month', late_ineligible="late_ineligible", late_ineligible_str="Late Ineligible", not_expected_adjudicated=FALSE){
   analytic <- analytic %>% 
   filter(screened == TRUE) 
   late_ineligible_var <- late_ineligible
@@ -94,7 +94,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="1,2!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,2!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="9,2!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',complete,')\nIncomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="9,2!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       start -> elig
@@ -225,7 +225,7 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
       
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nIncomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       screened -> eligible
@@ -370,7 +370,7 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nIncomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       pre_screened -> pre_eligible
@@ -516,7 +516,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nIncomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       pre_screened -> pre_eligible
@@ -669,7 +669,7 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nIncomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       pre_screened -> pre_eligible
@@ -1210,7 +1210,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
 
       active [style="rounded,filled", fillcolor="#a4d3ee", pos="2,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#a4d3ee", pos="6,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nIncomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
 
       # Relationships
       screened -> eligible
@@ -1545,7 +1545,7 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
 
       active [style="rounded,filled", fillcolor="#a4d3ee", pos="2,2!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#a4d3ee", pos="6,2!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="10,2!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nIncomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="10,2!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
 
       # Relationships
       screened -> eligible
