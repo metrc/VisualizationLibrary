@@ -12,7 +12,7 @@ dsmb_consort_diagram_pre_no_def(
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
-consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active}
+consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
 
 \item{final_period}{Defaults to 12 Month}
 

@@ -4,7 +4,7 @@
 #' @description This function visualizes the categorical percentages of Study Status for any study, similar to the NSAID consort diagram, but with customization endpoints.
 #'
 #' @param analytic The analytic data set that must include the following columns: screened, eligible, consented, refused, discontinued_pre_randomization,
-#'  randomized, late_ineligible, enrolled, completed, not_completed, not_expected, active, missed_final_followup
+#'  randomized, late_ineligible, enrolled, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
 #' @param not_enrolled_other A column in the dataset for cases that are eligible but not enrolled for reasons other than refusal (optional).
 #' @param completed_str A string specifying the label for the completion status box. Defaults to "Completed 12-month visit".
 #' @param late_inelgible defaults to late_ineligble but can be any construct like "adjudicated_discontinued"
@@ -17,7 +17,7 @@
 #' \dontrun{
 #' dsmb_consort_diagram()
 #' }
-dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_str="Completed 12-month visit", late_ineligible="late_ineligible", late_ineligible_str="Late Ineligible", not_expected_adjudicated=FALSE){
+dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period = '12 Month', late_ineligible="late_ineligible", late_ineligible_str="Late Ineligible", not_expected_adjudicated=FALSE){
   analytic <- analytic %>% 
   filter(screened == TRUE) 
   late_ineligible_var <- late_ineligible
@@ -64,6 +64,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
   complete <- sum(en_df$completed, na.rm = TRUE)
   not_complete <- sum(en_df$not_completed, na.rm = TRUE)
   missed <- sum(en_df$missed_final_followup, na.rm = TRUE)
+  incomplete <- sum(en_df$incomplete_final_followup, na.rm = TRUE)
   active <- sum(en_df$active, na.rm = TRUE)
   not_expected <- sum(en_df$not_expected, na.rm = TRUE)
   if(not_expected_adjudicated){
@@ -93,7 +94,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="1,2!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,2!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="9,2!", shape = box, width=2.4, height=1, label = "',completed_str,' (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="9,2!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       start -> elig
@@ -129,7 +130,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, completed_st
 #' for the NSAID study
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, 
-#' consented, not_consented, randomized, enrolled, refused, df_surg_completed, completed, not_completed, not_expected, active
+#' consented, not_consented, randomized, enrolled, refused, df_surg_completed, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
 #' @param final_period Defaults to 12 Month
 #' @param definitive_event Event either DF or DWC
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
@@ -194,6 +195,7 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
   complete <- sum(fu_df$completed, na.rm = TRUE)
   not_complete <- sum(fu_df$not_completed, na.rm = TRUE)
   missed <- sum(fu_df$missed_final_followup, na.rm = TRUE)
+  incomplete <- sum(fu_df$incomplete_final_followup, na.rm = TRUE)
   active <- sum(fu_df$active, na.rm = TRUE)
   not_expected <- sum(fu_df$not_expected, na.rm = TRUE)
   if(not_expected_adjudicated){
@@ -223,7 +225,7 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
       
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       screened -> eligible
@@ -258,7 +260,7 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
 #' for the NSAID study
 #'
 #' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
-#' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active
+#' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
 #' @param final_period Defaults to 12 Month
 #' @param adjudicated whether to use adjudicated discontinued and not expected
 #'
@@ -331,6 +333,7 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
   complete <- sum(fu_df$completed, na.rm = TRUE)
   not_complete <- sum(fu_df$not_completed, na.rm = TRUE)
   missed <- sum(fu_df$missed_final_followup, na.rm = TRUE)
+  incomplete <- sum(fu_df$incomplete_final_followup, na.rm = TRUE)
   active <- sum(fu_df$active, na.rm = TRUE)
   not_expected <- sum(fu_df$not_expected, na.rm = TRUE)
   if(adjudicated){
@@ -367,7 +370,7 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       pre_screened -> pre_eligible
@@ -403,7 +406,7 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
 #' @description This function visualizes the categorical percentages of Study Status
 #'
 #' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
-#' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active
+#' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
 #' @param final_period Defaults to 12 Month
 #' @param adjudicated whether to use adjudicated discontinued and not expected
 #'
@@ -476,6 +479,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
   complete <- sum(fu_df$completed, na.rm = TRUE)
   not_complete <- sum(fu_df$not_completed, na.rm = TRUE)
   missed <- sum(fu_df$missed_final_followup, na.rm = TRUE)
+  incomplete <- sum(fu_df$incomplete_final_followup, na.rm = TRUE)
   active <- sum(fu_df$active, na.rm = TRUE)
   not_expected <- sum(fu_df$not_expected, na.rm = TRUE)
   if(adjudicated){
@@ -512,7 +516,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       pre_screened -> pre_eligible
@@ -548,7 +552,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
 #' @description This function visualizes the categorical percentages of Study Status
 #'
 #' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
-#' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active
+#' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
 #' @param final_period Defaults to 12 Month
 #' @param adjudicated whether to use adjudicated discontinued and not expected
 #' @param definitive_event the definitive event
@@ -626,6 +630,7 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
   complete <- sum(fu_df$completed, na.rm = TRUE)
   not_complete <- sum(fu_df$not_completed, na.rm = TRUE)
   missed <- sum(fu_df$missed_final_followup, na.rm = TRUE)
+  incomplete <- sum(fu_df$incomplete, na.rm = TRUE)
   active <- sum(fu_df$active, na.rm = TRUE)
   not_expected <- sum(fu_df$not_expected, na.rm = TRUE)
   if(adjudicated){
@@ -664,7 +669,7 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
 
       active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
       
       # Relationships
       pre_screened -> pre_eligible
@@ -1100,7 +1105,7 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #'
 #' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible,
 #' refused, consented, randomized, enrolled, time_zero, adjudicated_discontinued, completed, 
-#' safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup
+#' safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
 #' @param final_period Defaults to 12 Month
 #' @param definitive_event Event either DF or DWC
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
@@ -1116,7 +1121,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
-           adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup) %>% 
+           adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup) %>% 
     mutate(time_zero = ifelse(!is.na(time_zero), TRUE, FALSE))
   
   screened <- sum(analytic$screened, na.rm = TRUE)
@@ -1171,6 +1176,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
   complete <- sum(fu_df$completed, na.rm = TRUE)
   not_complete <- sum(fu_df$not_completed, na.rm = TRUE)
   missed <- sum(fu_df$missed_final_followup, na.rm = TRUE)
+  incomplete <- sum(fu_df$incomplete_final_followup, na.rm = TRUE)
   active <- sum(fu_df$active, na.rm = TRUE)
   not_expected <- sum(fu_df$not_expected, na.rm = TRUE)
   if(not_expected_adjudicated){
@@ -1204,7 +1210,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
 
       active [style="rounded,filled", fillcolor="#a4d3ee", pos="2,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#a4d3ee", pos="6,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
 
       # Relationships
       screened -> eligible
@@ -1441,7 +1447,7 @@ vislib_query_issues_per_site <- function(analytic) {
 #'
 #' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible,
 #' refused, consented, randomized, enrolled, adjudicated_discontinued, completed, 
-#' safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup
+#' safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
 #' @param final_period Defaults to 12 Month
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
 #'
@@ -1456,7 +1462,7 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, 
-           adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup)
+           adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup)
   
   screened <- sum(analytic$screened, na.rm = TRUE)
   
@@ -1506,6 +1512,7 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
   complete <- sum(enrolled_df$completed, na.rm = TRUE)
   not_complete <- sum(enrolled_df$not_completed, na.rm = TRUE)
   missed <- sum(enrolled_df$missed_final_followup, na.rm = TRUE)
+  incomplete <- sum(enrolled_df$incomplete_final_followup, na.rm = TRUE)
   active <- sum(enrolled_df$active, na.rm = TRUE)
   not_expected <- sum(enrolled_df$not_expected, na.rm = TRUE)
   if(not_expected_adjudicated){
@@ -1538,7 +1545,7 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
 
       active [style="rounded,filled", fillcolor="#a4d3ee", pos="2,2!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
       not_expected [style="rounded,filled", fillcolor="#a4d3ee", pos="6,2!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
-      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="10,2!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      fu_complete [style="rounded,filled", fillcolor="#a4d3ee", pos="10,2!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
 
       # Relationships
       screened -> eligible
