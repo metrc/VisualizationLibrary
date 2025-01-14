@@ -7,7 +7,7 @@
 dsmb_consort_diagram(
   analytic,
   not_enrolled_other = NULL,
-  completed_str = "Completed 12-month visit",
+  final_period = "12 Month",
   late_ineligible = "late_ineligible",
   late_ineligible_str = "Late Ineligible",
   not_expected_adjudicated = FALSE
