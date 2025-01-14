@@ -1532,10 +1532,10 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-11-14)
   
   df_a <- analytic %>% 
-    filter(treatment_arm=="Group A")
+    filter(is.na(treatment_arm)|treatment_arm=="Group A")
   
   df_b <- analytic %>% 
-    filter(treatment_arm=="Group B")
+    filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
   if(is.null(footnotes)){
     out <- paste0("<h4>Group A</h4><br />",
