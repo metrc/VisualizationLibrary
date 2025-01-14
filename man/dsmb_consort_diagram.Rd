@@ -15,7 +15,7 @@ dsmb_consort_diagram(
 }
 \arguments{
 \item{analytic}{The analytic data set that must include the following columns: screened, eligible, consented, refused, discontinued_pre_randomization,
-randomized, late_ineligible, enrolled, completed, not_completed, not_expected, active, missed_final_followup}
+randomized, late_ineligible, enrolled, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
 
 \item{not_enrolled_other}{A column in the dataset for cases that are eligible but not enrolled for reasons other than refusal (optional).}
 
