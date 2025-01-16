@@ -84,7 +84,7 @@ enrollment_status_by_site <- function(analytic){
 #' }
 enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued"){
  
-   df <- analytic %>% 
+  df <- analytic %>% 
     select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, site_certified_days, 
            facilitycode, all_of(discontinued))
   
@@ -95,7 +95,6 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
     mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certified_days))) %>% 
     rename(Facility = facilitycode) %>% 
     filter(!is.na(Facility))
-  
   
   df_1st <- df %>% 
     group_by(Facility) %>% 
@@ -1300,7 +1299,8 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
              Ineligible = ineligible,
              `Other Reasons` = otherreasons) %>% 
       arrange(desc(Screened)) %>% 
-      mutate(Ineligible = format_count_percent(Ineligible, Screened))
+      mutate(Ineligible = format_count_percent(Ineligible, Screened)) %>%
+      mutate(across(4:(n_top_reasons+3), ~ format_count_percent(.x, Screened)))
     
     if(pre_screened){
       output <- output %>% 
