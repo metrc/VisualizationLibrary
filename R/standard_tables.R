@@ -769,6 +769,8 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
 
 
 
+
+
 #' Number of Non-Completing Participants, SAEs, and Protocol Deviations by type
 #'
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
@@ -785,7 +787,7 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
 #' not_complete_sae_deviation_by_type()
 #' }
 not_complete_sae_deviation_by_type <- function(analytic){
-
+  
   total <- sum(analytic$enrolled, na.rm=T)
   not_completed_df <- analytic %>% 
     select(enrolled, not_completed_reason, not_completed) %>% 
@@ -824,9 +826,9 @@ not_complete_sae_deviation_by_type <- function(analytic){
   
   
   deviation_sc_df <- analytic %>% 
-    select(study_id, enrolled, protocol_deviation_screen_consent) %>% 
+    select(study_id, consented, protocol_deviation_screen_consent) %>% 
     separate_rows(protocol_deviation_screen_consent, sep=";") %>% 
-    filter(enrolled == TRUE) %>% 
+    filter(consented == TRUE) %>% 
     count(protocol_deviation_screen_consent) %>%
     rename(type=protocol_deviation_screen_consent) %>% 
     filter(!is.na(type)) %>% 
@@ -834,9 +836,9 @@ not_complete_sae_deviation_by_type <- function(analytic){
   
   
   deviation_p_df <- analytic %>% 
-    select(study_id, enrolled, protocol_deviation_procedural) %>% 
+    select(study_id, consented, protocol_deviation_procedural) %>% 
     separate_rows(protocol_deviation_procedural, sep=";") %>% 
-    filter(enrolled == TRUE) %>% 
+    filter(consented == TRUE) %>% 
     count(protocol_deviation_procedural) %>%
     rename(type=protocol_deviation_procedural) %>% 
     filter(!is.na(type)) %>% 
@@ -844,9 +846,9 @@ not_complete_sae_deviation_by_type <- function(analytic){
   
   
   deviation_a_df <- analytic %>% 
-    select(study_id, enrolled, protocol_deviation_administrative) %>% 
+    select(study_id, consented, protocol_deviation_administrative) %>% 
     separate_rows(protocol_deviation_administrative, sep=";") %>%
-    filter(enrolled == TRUE) %>% 
+    filter(consented == TRUE) %>% 
     mutate(protocol_deviation_administrative = ifelse(grepl("^Other:", protocol_deviation_administrative), "Other", protocol_deviation_administrative)) %>% 
     count(protocol_deviation_administrative) %>%
     rename(type=protocol_deviation_administrative) %>% 
@@ -889,7 +891,7 @@ not_complete_sae_deviation_by_type <- function(analytic){
   indents_vec <- indents_vec[indents_vec <= nrow(df_final)]
   
   first_indents_vec <- c(ifelse(n_act==0, vector(mode="integer"), seq(n_act) + 1),
-    ifelse(n_disc==0, vector(mode="integer"),seq(n_disc) + 1 + n_act + 1), seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)
+                         ifelse(n_disc==0, vector(mode="integer"),seq(n_disc) + 1 + n_act + 1), seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1)
   
   first_indents_vec <- first_indents_vec[!is.na(first_indents_vec)]
   
