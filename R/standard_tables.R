@@ -1756,7 +1756,7 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
           select(-sub_temp) %>% 
           group_by(temp) %>% 
           count(temp) %>% 
-          mutate(percentage = format_count_percent(n, n()))
+          mutate(percentage = format_count_percent(n,sum(n)))
         
         
         category_tot <- sum(category_df$n)
