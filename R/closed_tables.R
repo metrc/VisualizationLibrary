@@ -533,7 +533,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
     deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviation_sc_df$n)+sum(deviation_p_df$n)+sum(deviation_a_df$n))
     
     consented <- sum(analytic$consented, na.rm = TRUE)
-    consented_df <- tibble(type = " ", n = paste0("n=", consented, ' ', group, ' <sub>(Consented)</sub>'))
+    consented_df <- tibble(type = " ", n = paste0(group, " n=", consented, ' <sub>(Consented)</sub>'))
     
     df_final_top <- rbind(not_completed_df_tot, not_completed_df, not_expected_df_tot, not_expected_df, sae_df, consented_df) %>% 
       mutate(n = ifelse(type == " ", n,
@@ -699,7 +699,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
     deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviations_df$n))
     
     consented <- sum(analytic$consented, na.rm = TRUE)
-    consented_df <- tibble(type = " ", n = paste0("n=", consented, ' ', group, ' <sub>(Consented)</sub>'))
+    consented_df <- tibble(type = " ", n = paste0(group, " n=", consented, ' <sub>(Consented)</sub>'))
     
     df_final_top <- rbind(not_completed_df_tot, not_completed_df, not_expected_df_tot, not_expected_df, sae_df, consented_df) 
     df_final_bottom <- rbind(deviation_df_tot) 
