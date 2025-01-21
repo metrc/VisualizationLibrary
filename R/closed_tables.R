@@ -621,7 +621,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
 #' }
 closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")){
   
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', '784a7f67645a70a8e689c4db041561ea')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', 'a23028eb9fd76744bbefab342f6dd6cd')
   
   n_act <- NA
   n_disc <- NA
