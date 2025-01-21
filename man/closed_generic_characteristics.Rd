@@ -10,7 +10,8 @@ closed_generic_characteristics(
   names_vec = c(),
   filter_cols = c("enrolled"),
   titlecase = FALSE,
-  splits = NULL
+  splits = NULL,
+  subcategory_constructs = c()
 )
 }
 \arguments{

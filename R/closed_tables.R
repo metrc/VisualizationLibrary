@@ -2897,6 +2897,9 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' @param filter_cols The columns to filter the the data by (for totals and missing counts)
 #' @param titlecase Changes construct values to Title Case
 #' @param splits Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them
+#' @param subcategory_constructs This allows a characteristic to have a construct as a sub category, 
+#' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
+#'
 #'
 #' @return nothing
 #' @export
@@ -2907,12 +2910,15 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' closed_generic_characteristics()
 #' }
 closed_generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
-                                    filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL){
+                                    filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
+                                    subcategory_constructs = c()){
   
-  confirm_stability_of_related_visual('generic_characteristics', 'ae09ca020fb9528891b5f8922c2be584')
+  confirm_stability_of_related_visual('generic_characteristics', 'dba48ea30e0405085b533b3e4e1aff10')
   
   out <- NULL
   index_vec <- c()
+  sub_index_vec <- c()
+  sub_bold_index_vec <- c()
   
   if(is.null(splits)){
     splits <- rep(NA, length(constructs))
@@ -2922,9 +2928,18 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
     }
   }
   
+  if(is_empty(subcategory_constructs)){
+    subcategory_constructs <- rep(NA, length(constructs))
+  } else{
+    if(length(subcategory_constructs) == 1) {
+      subcategory_constructs <- rep(subcategory_constructs, length(constructs))
+    }
+  }
+  
   for (i in seq(length(constructs))) {
     name_str <- names_vec[i]
     construct <- constructs[i]
+    sub_construct <- subcategory_constructs[i]
     
     if (!is.null(filter_cols)){
       if(length(filter_cols) == 1) {
@@ -2936,9 +2951,16 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       }
     }
     total <- nrow(inner_analytic)
+    a_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group A"))
+    b_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group B"))
     
     inner <- inner_analytic %>% 
       mutate(temp = as.character(replace_na(!!sym(construct), "Missing"))) 
+    
+     if(!is.na(sub_construct)){
+      inner <- inner %>% 
+        mutate(sub_temp = as.character(replace_na(!!sym(sub_construct), "Missing")))
+    }
     
     inner_split <- splits[i]
     
@@ -2947,41 +2969,129 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         separate_rows(temp,sep = inner_split)
     }
     
-    inner <- inner %>% 
-      group_by(temp, treatment_arm) %>% 
-      count(temp) %>% 
-      mutate(percentage = format_count_percent(n, total)) %>% 
-      select(-n) %>%
-      mutate(header = name_str) %>%
-      arrange(temp == "Missing") %>%
-      pivot_wider(
-        names_from = treatment_arm,
-        values_from = percentage,
-        values_fill = "0 (0%)"
-      )%>%
-      select(temp, header, `Group A`, `Group B`)
+    if(!is.na(sub_construct)){
+      sub_cats <- sort(unique(inner$sub_temp))
+      row_count <- ifelse(is.null(out),0,nrow(out))
+      new_row_count <- 0
+      for(sub_cat in sub_cats){
+        category_df <- inner %>% 
+          filter(sub_temp==sub_cat) %>% 
+          select(-sub_temp) %>% 
+          group_by(temp, treatment_arm) %>% 
+          count(temp) %>% 
+          mutate(percentage = format_count_percent(n, total)) 
+        
+        category_df_all <- inner %>% 
+          filter(sub_temp==sub_cat) %>% 
+          select(-sub_temp) %>% 
+          group_by(temp) %>% 
+          count(temp) %>% 
+          mutate(Total = format_count_percent(n, total)) %>% 
+          select(-n) %>%
+          mutate(header = name_str) %>%
+          arrange(temp == "Missing")
+        
+        category_tot <- sum(category_df_all$n)
+        category_tot_a <- sum(category_df %>% filter(treatment_arm=="Group A") %>% pull(n))
+        category_tot_b <- sum(category_df %>% filter(treatment_arm=="Group B") %>% pull(n))
+        tot_df <- tibble(temp=sub_cat, header=name_str,
+                         "Group A"=format_count_percent(category_tot_a, total),
+                         "Group B"=format_count_percent(category_tot_b, total),
+                         Total=format_count_percent(category_tot, total))
+        
+        category_df <- category_df  %>% 
+          select(-n) %>%
+          mutate(header = name_str) %>%
+          arrange(temp == "Missing") %>%
+          pivot_wider(
+            names_from = treatment_arm,
+            values_from = percentage,
+            values_fill = "0 (0%)"
+          )
+        
+        category_df <- full_join(category_df_all, category_df)
+        
+        if(!"Group A" %in% colnames(category_df)){
+          category_df <- category_df %>% 
+            mutate("Group A" = "0 (0%)")
+        }
+        if(!"Group B" %in% colnames(category_df)){
+          category_df <- category_df %>% 
+            mutate("Group B" = "0 (0%)")
+        }
+        
+        category_df <- category_df %>%
+          select(temp, header, `Group A`, `Group B`, Total)
+        
+        if (titlecase) {
+          category_df <- category_df %>%
+            mutate(temp = str_to_title(temp))
+        }
+        
+        if (is.null(out)) {
+          out <- bind_rows(tot_df, category_df)
+        } else {
+          out <- rbind(out, tot_df, category_df)
+        }
+        sub_bold_index_vec <- c(sub_bold_index_vec, row_count+1)
+        sub_index_vec <- c(sub_index_vec, seq(nrow(category_df))+ row_count+1)
+        row_count <- row_count + nrow(category_df) + 1
+        new_row_count <- new_row_count + nrow(category_df) + 1
+      }
+      new <- new_row_count
+      names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')')
+      index_vec <- c(index_vec, new)
+    } else{
+      inner_some <- inner %>% 
+        group_by(temp, treatment_arm) %>% 
+        count(temp) %>% 
+        mutate(percentage = format_count_percent(n, total)) %>% 
+        select(-n) %>%
+        mutate(header = name_str) %>%
+        arrange(temp == "Missing") %>%
+        pivot_wider(
+          names_from = treatment_arm,
+          values_from = percentage,
+          values_fill = "0 (0%)"
+        )%>%
+        select(temp, header, `Group A`, `Group B`)
       
-    
-    if (titlecase) {
-      inner <- inner %>%
-        mutate(temp = str_to_title(temp))
-    }
-    
-    new <- nrow(inner)
-    names(new) <- paste0(name_str, ' (n=', total, ')')
-    index_vec <- c(index_vec, new)
-    
-    if (is.null(out)) {
-      out <- inner
-    } else {
-      out <- rbind(out, inner)
+      
+      inner_all <- inner %>% 
+        group_by(temp) %>% 
+        count(temp) %>% 
+        mutate(Total = format_count_percent(n, total)) %>% 
+        select(-n) %>%
+        mutate(header = name_str) %>%
+        arrange(temp == "Missing")
+      
+      inner <- full_join(inner_all, inner_some)%>%
+        select(temp, header, `Group A`, `Group B`, Total)
+      
+      
+      if (titlecase) {
+        inner <- inner %>%
+          mutate(temp = str_to_title(temp))
+      }
+      
+      new <- nrow(inner)
+      names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')')
+      index_vec <- c(index_vec, new)
+      
+      if (is.null(out)) {
+        out <- inner
+      } else {
+        out <- rbind(out, inner)
+      }
     }
   }
   out <- out %>%
     select(-header)
   
-  vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B")) %>%
+  vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
     add_indent(c(seq(nrow(out)))) %>% 
+    add_indent(sub_index_vec) %>% 
+    row_spec(sub_bold_index_vec, bold = TRUE) %>% 
     row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
     pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position="left")
