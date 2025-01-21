@@ -2913,7 +2913,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                     subcategory_constructs = c()){
   
-  confirm_stability_of_related_visual('generic_characteristics', '77e4eaa6ca86a9a79d2dcb3b8918f214')
+  confirm_stability_of_related_visual('generic_characteristics', 'a996806f6a47b58a9dba9f3f40b97034')
   
   out <- NULL
   index_vec <- c()
@@ -3088,13 +3088,22 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
   out <- out %>%
     select(-header)
   
-  vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
-    add_indent(c(seq(nrow(out)))) %>% 
-    add_indent(sub_index_vec) %>% 
-    row_spec(sub_bold_index_vec, bold = TRUE) %>% 
-    row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
-    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
-    kable_styling("striped", full_width = F, position="left")
+  if(is_empty(sub_bold_index_vec)){
+    vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
+      add_indent(c(seq(nrow(out)))) %>% 
+      add_indent(sub_index_vec) %>% 
+      row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
+      pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+      kable_styling("striped", full_width = F, position="left")
+  }else{
+    vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
+      add_indent(c(seq(nrow(out)))) %>% 
+      add_indent(sub_index_vec) %>% 
+      row_spec(sub_bold_index_vec, bold = TRUE) %>% 
+      row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
+      pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+      kable_styling("striped", full_width = F, position="left")
+  }
   
   return(vis)
 }
