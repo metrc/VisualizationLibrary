@@ -975,11 +975,11 @@ not_complete_sae_deviation_by_type_auto_categories <- function(analytic, categor
   
   
   deviations_df <- analytic %>% 
-    select(study_id, enrolled, protocol_deviation_data) %>% 
+    select(study_id, consented, protocol_deviation_data) %>% 
     separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
     separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
                                                "deviation_description"), sep='\\|') %>% 
-    filter(enrolled == TRUE & !is.na(protocol_deviation)) %>% 
+    filter(consented & !is.na(protocol_deviation)) %>% 
     mutate(protocol_deviation = ifelse(str_detect(protocol_deviation,"^Other:"), "Other", protocol_deviation)) %>% 
     count(category, protocol_deviation) %>%
     rename(type=protocol_deviation) %>% 
