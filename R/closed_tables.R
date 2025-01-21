@@ -2913,7 +2913,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                     subcategory_constructs = c()){
   
-  confirm_stability_of_related_visual('generic_characteristics', '78c84b8794fa5c7a174650d70ddc5cd6')
+  confirm_stability_of_related_visual('generic_characteristics', '77e4eaa6ca86a9a79d2dcb3b8918f214')
   
   out <- NULL
   index_vec <- c()
@@ -2979,7 +2979,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           select(-sub_temp) %>% 
           group_by(temp, treatment_arm) %>% 
           count(temp) %>% 
-          mutate(percentage = format_count_percent(n,  n())) 
+          mutate(percentage = format_count_percent(n,  sum(n))) 
         
         category_df_all <- inner %>% 
           filter(sub_temp==sub_cat) %>% 
