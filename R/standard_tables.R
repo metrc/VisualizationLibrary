@@ -1752,7 +1752,11 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
     total <- nrow(inner_analytic)
     
     inner <- inner_analytic %>% 
-      mutate(temp = as.character(replace_na(!!sym(construct), "Missing"))) 
+      mutate(temp = as.character(
+        replace_na(
+          ifelse(is.character(!!sym(construct)),!!sym(construct), as.character(!!sym(construct))), 
+          "Missing")
+        )) 
     
     if(!is.na(sub_construct)){
       inner <- inner %>% 
