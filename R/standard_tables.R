@@ -1744,11 +1744,11 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
       if(length(filter_cols) == 1) {
         inner_analytic <- analytic %>%
           filter(!!sym(filter_cols)) %>%
-          select(study_id, all_of(c(constructs,subcategory_constructs)))
+          select(study_id, all_of(c(constructs,subcategory_constructs)[!is.na(c(constructs,subcategory_constructs))]))
       } else {
         inner_analytic <- analytic %>%
           filter(!!sym(filter_cols[i])) %>%
-          select(study_id, all_of(c(constructs,subcategory_constructs)))
+          select(study_id, all_of(c(constructs,subcategory_constructs)[!is.na(c(constructs,subcategory_constructs))]))
       }
     }
     total <- nrow(inner_analytic)
