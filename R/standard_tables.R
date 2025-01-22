@@ -1743,20 +1743,18 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
     if (!is.null(filter_cols)){
       if(length(filter_cols) == 1) {
         inner_analytic <- analytic %>%
-          filter(!!sym(filter_cols))
+          filter(!!sym(filter_cols)) %>%
+          select(study_id, all_of(constructs), all_of(subcategory_constructs))
       } else {
         inner_analytic <- analytic %>%
-          filter(!!sym(filter_cols[i]))
+          filter(!!sym(filter_cols[i])) %>%
+          select(study_id, all_of(constructs), all_of(subcategory_constructs))
       }
     }
     total <- nrow(inner_analytic)
     
-    inner <- inner_analytic %>% 
-      mutate(temp = as.character(
-        replace_na(
-          ifelse(is.character(!!sym(construct)),!!sym(construct), as.character(!!sym(construct))), 
-          "Missing")
-        )) 
+    inner <- inner_analytic %>%
+      mutate(temp = as.character(replace_na(!!sym(construct), "Missing")))
     
     if(!is.na(sub_construct)){
       inner <- inner %>% 
@@ -1779,11 +1777,11 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
           filter(sub_temp==sub_cat) %>% 
           select(-sub_temp) %>% 
           group_by(temp) %>% 
-          count(temp) %>% 
-          mutate(percentage = format_count_percent(n,sum(n)))
-        
+          count(temp)
         
         category_tot <- sum(category_df$n)
+        category_df <- category_df %>% 
+          mutate(percentage = format_count_percent(n,category_tot))
         tot_df <- tibble(temp=sub_cat,percentage=format_count_percent(category_tot, total),header=name_str)
         
         category_df <- category_df  %>% 
