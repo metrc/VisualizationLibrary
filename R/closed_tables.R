@@ -2994,7 +2994,9 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           filter(sub_temp==sub_cat) %>% 
           select(-sub_temp) %>% 
           group_by(temp, treatment_arm) %>% 
-          count(temp) %>% 
+          count(temp)
+        
+        category_df <- category_df %>% 
           mutate(percentage = 
                    ifelse(treatment_arm == 'Group A', 
                           format_count_percent(n,  sum(category_df$n[category_df$treatment_arm == 'Group A'])),
@@ -3006,18 +3008,26 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           filter(sub_temp==sub_cat) %>% 
           select(-sub_temp) %>% 
           group_by(temp) %>% 
-          count(temp) %>% 
-          mutate(Total = format_count_percent(n, sum(category_df$n))) %>% 
+          count(temp)
+        total_n <- sum(category_df_all$n)
+        
+        category_df_all <- category_df_all %>%
+          mutate(
+            Total = format_count_percent(n, total_n),
+            header = name_str
+          ) %>%
+          arrange(temp == "Missing")%>% 
+          mutate(Total = format_count_percent(n, sum(category_df_all$n))) %>% 
           select(-n) %>%
           mutate(header = name_str) %>%
           arrange(temp == "Missing")
         
-        category_tot <- sum(category_df_all$n)
+        category_tot <- total_n
         category_tot_a <- sum(category_df %>% filter(treatment_arm=="Group A") %>% pull(n))
         category_tot_b <- sum(category_df %>% filter(treatment_arm=="Group B") %>% pull(n))
         tot_df <- tibble(temp=sub_cat, header=name_str,
-                         "Group A"=format_count_percent(category_tot_a, total),
-                         "Group B"=format_count_percent(category_tot_b, total),
+                         "Group A"=format_count_percent(category_tot_a, a_total),
+                         "Group B"=format_count_percent(category_tot_b, b_total),
                          Total=format_count_percent(category_tot, total))
         
         category_df <- category_df  %>% 
