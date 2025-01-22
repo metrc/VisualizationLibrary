@@ -2927,7 +2927,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                     subcategory_constructs = c()){
   
-  confirm_stability_of_related_visual('generic_characteristics', '68ebf1d2d6efb28b542d885c95aeb931')
+  confirm_stability_of_related_visual('generic_characteristics', 'de744fe634dbadb5c2621e8606208225')
   
   out <- NULL
   index_vec <- c()
@@ -2981,7 +2981,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       inner <- inner %>% 
         mutate(sub_temp = as.character(
           replace_na(
-            ifelse(is.character(!!sym(construct)),!!sym(construct), as.character(!!sym(construct))), 
+            ifelse(is.character(!!sym(sub_construct)),!!sym(sub_construct), as.character(!!sym(sub_construct))), 
             "Missing")
         )) 
     }
