@@ -1754,19 +1754,14 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
     total <- nrow(inner_analytic)
     
     inner <- inner_analytic %>%
-      mutate(temp = as.character(
-        replace_na(
-          ifelse(is.character(!!sym(construct)),!!sym(construct), as.character(!!sym(construct))), 
-          "Missing")
-      )) 
+      mutate(temp = !!sym(construct)) %>% 
+      mutate(temp =  replace_na(as.character(temp), "Missing"))
     
     if(!is.na(sub_construct)){
       inner <- inner %>% 
-        mutate(sub_temp = as.character(
-          replace_na(
-            ifelse(is.character(!!sym(sub_construct)),!!sym(sub_construct), as.character(!!sym(sub_construct))), 
-            "Missing")
-        )) 
+        inner %>% 
+        mutate(sub_temp = !!sym(sub_construct)) %>% 
+        mutate(sub_temp =  replace_na(as.character(sub_temp), "Missing"))
     }
     
     inner_split <- splits[i]

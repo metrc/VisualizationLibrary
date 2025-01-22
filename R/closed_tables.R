@@ -2927,7 +2927,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                     subcategory_constructs = c()){
   
-  confirm_stability_of_related_visual('generic_characteristics', 'de744fe634dbadb5c2621e8606208225')
+  confirm_stability_of_related_visual('generic_characteristics', 'f8fc1a59ad67eae467faedc0b33e3a2e')
   
   out <- NULL
   index_vec <- c()
@@ -2971,19 +2971,14 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
     b_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group B"))
     
     inner <- inner_analytic %>%
-      mutate(temp = as.character(
-        replace_na(
-          ifelse(is.character(!!sym(construct)),!!sym(construct), as.character(!!sym(construct))), 
-          "Missing")
-      )) 
+      mutate(temp = !!sym(construct)) %>% 
+      mutate(temp =  replace_na(as.character(temp), "Missing"))
     
     if(!is.na(sub_construct)){
       inner <- inner %>% 
-        mutate(sub_temp = as.character(
-          replace_na(
-            ifelse(is.character(!!sym(sub_construct)),!!sym(sub_construct), as.character(!!sym(sub_construct))), 
-            "Missing")
-        )) 
+        inner %>% 
+        mutate(sub_temp = !!sym(sub_construct)) %>% 
+        mutate(sub_temp =  replace_na(as.character(sub_temp), "Missing"))
     }
     
     inner_split <- splits[i]
