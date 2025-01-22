@@ -1836,7 +1836,6 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
   if(is_empty(sub_bold_index_vec)){
     vis <- kable(out, format="html", align='l', col.names = c('', '')) %>%
       add_indent(c(seq(nrow(out)))) %>% 
-      add_indent(sub_index_vec) %>% 
       row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
       pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
       kable_styling("striped", full_width = F, position="left")
