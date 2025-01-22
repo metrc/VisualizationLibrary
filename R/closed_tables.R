@@ -2927,7 +2927,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                     subcategory_constructs = c()){
   
-  confirm_stability_of_related_visual('generic_characteristics', '5ff129043e6983a4a5296af4b2e3fc78')
+  confirm_stability_of_related_visual('generic_characteristics', 'eaf3c24dd6f7b5b48c12c2348f56c9d2')
   
   out <- NULL
   index_vec <- c()
