@@ -2927,7 +2927,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                     subcategory_constructs = c()){
   
-  confirm_stability_of_related_visual('generic_characteristics', 'f8fc1a59ad67eae467faedc0b33e3a2e')
+  confirm_stability_of_related_visual('generic_characteristics', '5ff129043e6983a4a5296af4b2e3fc78')
   
   out <- NULL
   index_vec <- c()
@@ -2976,7 +2976,6 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
     
     if(!is.na(sub_construct)){
       inner <- inner %>% 
-        inner %>% 
         mutate(sub_temp = !!sym(sub_construct)) %>% 
         mutate(sub_temp =  replace_na(as.character(sub_temp), "Missing"))
     }
@@ -2990,6 +2989,9 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
     
     if(!is.na(sub_construct)){
       sub_cats <- sort(unique(inner$sub_temp))
+      if("Missing" %in% sub_cats){
+        sub_cats <- c(sub_cats[sub_cats != "Missing"],"Missing")
+      }
       row_count <- ifelse(is.null(out),0,nrow(out))
       new_row_count <- 0
       for(sub_cat in sub_cats){
@@ -2997,13 +2999,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           filter(sub_temp==sub_cat) %>% 
           select(-sub_temp) %>% 
           group_by(temp, treatment_arm) %>% 
-          count(temp) %>% 
-          mutate(percentage = 
-                   ifelse(treatment_arm == 'Group A', 
-                          format_count_percent(n,  sum(category_df$n[category_df$treatment_arm == 'Group A'])),
-                          format_count_percent(n,  sum(category_df$n[category_df$treatment_arm == 'Group B']))
-                          )
-          )
+          count(temp)
         
         category_df_all <- inner %>% 
           filter(sub_temp==sub_cat) %>% 
@@ -3011,7 +3007,6 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           group_by(temp) %>% 
           count(temp) %>% 
           mutate(Total = format_count_percent(n, sum(category_df$n))) %>% 
-          select(-n) %>%
           mutate(header = name_str) %>%
           arrange(temp == "Missing")
         
@@ -3023,7 +3018,13 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                          "Group B"=format_count_percent(category_tot_b, total),
                          Total=format_count_percent(category_tot, total))
         
-        category_df <- category_df  %>% 
+        category_df <- category_df   %>% 
+          mutate(percentage = 
+                   ifelse(treatment_arm == 'Group A', 
+                          format_count_percent(n,  category_tot_a),
+                          ifelse(treatment_arm == 'Group B', format_count_percent(n,  category_tot_b), NA)
+                          )
+                   ) %>% 
           select(-n) %>%
           mutate(header = name_str) %>%
           arrange(temp == "Missing") %>%
@@ -3033,7 +3034,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
             values_fill = "0 (0%)"
           )
         
-        category_df <- full_join(category_df_all, category_df)
+        category_df <- full_join(category_df_all %>% select(-n), category_df)
         
         if(!"Group A" %in% colnames(category_df)){
           category_df <- category_df %>% 
