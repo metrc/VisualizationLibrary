@@ -2958,22 +2958,20 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
     if (!is.null(filter_cols)){
       if(length(filter_cols) == 1) {
         inner_analytic <- analytic %>%
-          filter(!!sym(filter_cols))
+          filter(!!sym(filter_cols)) %>%
+          select(study_id, all_of(constructs), all_of(subcategory_constructs), treatment_arm)
       } else {
         inner_analytic <- analytic %>%
-          filter(!!sym(filter_cols[i]))
+          filter(!!sym(filter_cols[i])) %>%
+          select(study_id, all_of(constructs), all_of(subcategory_constructs), treatment_arm)
       }
     }
     total <- nrow(inner_analytic)
     a_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group A"))
     b_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group B"))
     
-    inner <- inner_analytic %>% 
-      mutate(temp = as.character(
-        replace_na(
-          ifelse(is.character(!!sym(construct)),!!sym(construct), as.character(!!sym(construct))), 
-          "Missing")
-      )) 
+    inner <- inner_analytic %>%
+      mutate(temp = as.character(replace_na(!!sym(construct), "Missing")))
     
      if(!is.na(sub_construct)){
       inner <- inner %>% 
@@ -2997,14 +2995,19 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           select(-sub_temp) %>% 
           group_by(temp, treatment_arm) %>% 
           count(temp) %>% 
-          mutate(percentage = format_count_percent(n,  sum(n))) 
+          mutate(percentage = 
+                   ifelse(treatment_arm == 'Group A', 
+                          format_count_percent(n,  sum(category_df$n[category_df$treatment_arm == 'Group A'])),
+                          format_count_percent(n,  sum(category_df$n[category_df$treatment_arm == 'Group B']))
+                          )
+          )
         
         category_df_all <- inner %>% 
           filter(sub_temp==sub_cat) %>% 
           select(-sub_temp) %>% 
           group_by(temp) %>% 
           count(temp) %>% 
-          mutate(Total = format_count_percent(n, total)) %>% 
+          mutate(Total = format_count_percent(n, sum(category_df$n))) %>% 
           select(-n) %>%
           mutate(header = name_str) %>%
           arrange(temp == "Missing")
