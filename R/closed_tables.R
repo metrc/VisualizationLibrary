@@ -2927,7 +2927,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                     subcategory_constructs = c()){
   
-  confirm_stability_of_related_visual('generic_characteristics', '668eca87090889cb468b306fc4200879')
+  confirm_stability_of_related_visual('generic_characteristics', 'be3b129db9e383b446c771c4cf7fd30f')
   
   out <- NULL
   index_vec <- c()
@@ -2959,11 +2959,11 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       if(length(filter_cols) == 1) {
         inner_analytic <- analytic %>%
           filter(!!sym(filter_cols)) %>%
-          select(study_id, all_of(constructs), all_of(subcategory_constructs), treatment_arm)
+          select(study_id, all_of(c(constructs, subcategory_constructs)), treatment_arm)
       } else {
         inner_analytic <- analytic %>%
           filter(!!sym(filter_cols[i])) %>%
-          select(study_id, all_of(constructs), all_of(subcategory_constructs), treatment_arm)
+          select(study_id, all_of(c(constructs, subcategory_constructs)), treatment_arm)
       }
     }
     total <- nrow(inner_analytic)
