@@ -922,7 +922,7 @@ cumulative_enrolled <- function(analytic, bar_mode=FALSE){
     mutate(cumulative_value = cumsum(Total))
   
   
-  if(!only_discrete){
+  if(!bar_mode){
     g <- ggplot(yyyy_mm) +
       geom_bar(aes(x = factor(year_month), y = Total, group = 1), stat = "identity", fill = "blue3", color = "black", size = 0.3) +
       geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +  # Add the 'data' argument
