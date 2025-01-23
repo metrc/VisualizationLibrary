@@ -4,10 +4,12 @@
 \alias{cumulative_enrolled}
 \title{Cumulative enrollment}
 \usage{
-cumulative_enrolled(analytic, add_discrete = TRUE)
+cumulative_enrolled(analytic, only_discrete = FALSE)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, enrolled, consent_date}
+
+\item{only_discrete}{set to TRUE to remove the line}
 }
 \value{
 nothing

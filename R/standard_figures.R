@@ -895,7 +895,8 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #'
 #' @description This function visualizes the Cumulative number of patients enrolled
 #'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date 
+#' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date
+#' @param only_discrete set to TRUE to remove the line
 #'
 #' @return nothing
 #' @export
@@ -904,7 +905,7 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #' \dontrun{
 #' cumulative_enrolled()
 #' }
-cumulative_enrolled <- function(analytic, add_discrete=TRUE){
+cumulative_enrolled <- function(analytic, only_discrete=FALSE){
   
   df <- analytic %>%  select(study_id, enrolled, consent_date) %>% 
     filter(!is.na(consent_date)) %>% 
@@ -921,7 +922,7 @@ cumulative_enrolled <- function(analytic, add_discrete=TRUE){
     mutate(cumulative_value = cumsum(Total))
   
   
-  if(add_discrete){
+  if(!only_discrete){
     g <- ggplot(yyyy_mm) +
       geom_bar(aes(x = factor(year_month), y = Total, group = 1), stat = "identity", fill = "blue3", color = "black", size = 0.3) +
       geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +  # Add the 'data' argument
@@ -930,7 +931,7 @@ cumulative_enrolled <- function(analytic, add_discrete=TRUE){
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
   } else{
     g <- ggplot(yyyy_mm) +
-      geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +  # Add the 'data' argument
+      geom_col(aes(x = factor(year_month), y = cumulative_value), fill = "blue3") + # Set the bar color to blue
       labs(title = "Cumulative Enrollment by Month", x = "Month", y = "Enrolled") +
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5))

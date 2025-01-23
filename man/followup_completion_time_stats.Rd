@@ -19,6 +19,9 @@ and enrolled}
 
 \item{form_selection}{the form to be considered in the visualization}
 }
+\value{
+table
+}
 \description{
 Returns summary statistics on the number of days to complete various follow-up forms.
 }
