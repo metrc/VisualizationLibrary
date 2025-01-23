@@ -39,7 +39,7 @@ To install the VisualizationLibrary package:
 
 ## Usage
 
-Load the package in your R script or R your Markdown file:
+Load the package in your R script or R Markdown file:
 
 ```R
 library(VisualizationLibrary)
