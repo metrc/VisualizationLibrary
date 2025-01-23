@@ -896,7 +896,7 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #' @description This function visualizes the Cumulative number of patients enrolled
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date
-#' @param only_discrete set to TRUE to remove the line
+#' @param bar_mode set to TRUE to remove the line
 #'
 #' @return nothing
 #' @export
@@ -905,7 +905,7 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #' \dontrun{
 #' cumulative_enrolled()
 #' }
-cumulative_enrolled <- function(analytic, only_discrete=FALSE){
+cumulative_enrolled <- function(analytic, bar_mode=FALSE){
   
   df <- analytic %>%  select(study_id, enrolled, consent_date) %>% 
     filter(!is.na(consent_date)) %>% 
