@@ -3676,7 +3676,7 @@ ineligibility_reasons_info <- function(analytic){
 #' @param timepoints the point in time to be considered in the visualization
 #' @param form_selection the form to be considered in the visualization
 #'
-#' @return 
+#' @return table
 #' @export
 #'
 #' @examples
