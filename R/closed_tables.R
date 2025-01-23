@@ -2927,7 +2927,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                     subcategory_constructs = c()){
   
-  confirm_stability_of_related_visual('generic_characteristics', 'eaf3c24dd6f7b5b48c12c2348f56c9d2')
+  confirm_stability_of_related_visual('generic_characteristics', 'c98fbd6ba7aca987b1de49e196ba1164')
   
   out <- NULL
   index_vec <- c()
@@ -3103,6 +3103,10 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')')
       index_vec <- c(index_vec, new)
       
+      out <- out %>%
+        mutate(temp = ifelse(temp %in% c('FALSE', 'TRUE'),
+                             str_to_title(temp),
+                             temp))
       if (is.null(out)) {
         out <- inner
       } else {
