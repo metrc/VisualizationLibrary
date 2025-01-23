@@ -930,7 +930,7 @@ cumulative_enrolled <- function(analytic, add_discrete=TRUE){
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
   } else{
     g <- ggplot(yyyy_mm) +
-      geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +  # Add the 'data' argument
+      geom_col(aes(x = factor(year_month), y = cumulative_value), fill = "blue3") +  # Set the bar color to blue
       labs(title = "Cumulative Enrollment by Month", x = "Month", y = "Enrolled") +
       theme_minimal() +
       theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
