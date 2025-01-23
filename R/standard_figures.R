@@ -259,7 +259,7 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
 #' @description This function visualizes the categorical percentages of Study Status
 #' for the NSAID study
 #'
-#' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
+#' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, pre_ineligible, screened, eligible, ineligible,
 #' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
 #' @param final_period Defaults to 12 Month
 #' @param adjudicated whether to use adjudicated discontinued and not expected
@@ -277,14 +277,14 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
   
   pre_Screened <- sum(pre_analytic$pre_screened, na.rm=TRUE)
   pre_Eligible <- sum(pre_analytic$pre_eligible, na.rm=TRUE)
-  pre_Ineligible <- pre_Screened - pre_Eligible
+  pre_Ineligible <- sum(pre_analytic$pre_ineligible, na.rm=TRUE)
   
   analytic <- analytic %>% 
     filter(screened == TRUE) 
   
   Screened <- sum(analytic$screened, na.rm=TRUE)
   Eligible <- sum(analytic$eligible, na.rm=TRUE)
-  Ineligible <- Screened - Eligible
+  Ineligible <- sum(analytic$ineligible, na.rm=TRUE)
   
   Consented <- sum(analytic %>% 
                      filter(eligible) %>% 
