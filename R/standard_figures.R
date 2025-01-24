@@ -897,6 +897,8 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date
 #' @param bar_mode set to TRUE to remove the line
+#' @param goal sets the y axis
+#' @param goal_percent if goal is supplied then sets the bar height to percent
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
@@ -906,7 +908,7 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #' cumulative_enrolled("Replace with Analytic Tibble")
 #' cumulative_enrolled("Replace with Analytic Tibble", bar_mode=TRUE)
 #' }
-cumulative_enrolled <- function(analytic, bar_mode=FALSE){
+cumulative_enrolled <- function(analytic, bar_mode=FALSE, goal=NULL, goal_percent=FALSE){
   
   df <- analytic %>%  select(study_id, enrolled, consent_date) %>% 
     filter(!is.na(consent_date)) %>% 
@@ -922,22 +924,44 @@ cumulative_enrolled <- function(analytic, bar_mode=FALSE){
     arrange(year_month) %>%
     mutate(cumulative_value = cumsum(Total))
   
+  if(!is.null(goal) && goal_percent) {
+    yyyy_mm <- yyyy_mm %>%
+      mutate(
+        Total = (Total/goal) * 100,
+        cumulative_value = (cumulative_value/goal) * 100
+      )
+    y_lab <- "Cumulative Percent"
+    y_max <- max(100, max(yyyy_mm$cumulative_value))
+    y_scale <- scale_y_continuous(labels = function(x) paste0(x, "%"))
+  } else if(!is.null(goal)) {
+    y_lab <- "Enrolled"
+    y_max <- goal
+    y_scale <- scale_y_continuous()
+  } else {
+    y_lab <- "Enrolled"
+    y_max <- max(yyyy_mm$cumulative_value)
+    y_scale <- scale_y_continuous()
+  }
   
   if(!bar_mode){
     g <- ggplot(yyyy_mm) +
       geom_bar(aes(x = factor(year_month), y = Total, group = 1), stat = "identity", fill = "blue3", color = "black", size = 0.3) +
-      geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +  # Add the 'data' argument
-      labs(title = "Cumulative Enrollment with Discrete Enrollment by Month", x = "Month", y = "Enrolled") +
+      geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +
+      labs(title = "Cumulative Enrollment with Discrete Enrollment by Month", x = "Month", y = y_lab) +
       theme_minimal() +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
-  } else{
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+      coord_cartesian(ylim = c(0, y_max)) +
+      y_scale
+  } else {
     g <- ggplot(yyyy_mm) +
-      geom_col(aes(x = factor(year_month), y = cumulative_value), fill = "blue3") + # Set the bar color to blue
-      labs(title = "Cumulative Enrollment by Month", x = "Month", y = "Enrolled") +
+      geom_col(aes(x = factor(year_month), y = cumulative_value), fill = "blue3") +
+      labs(title = "Cumulative Enrollment by Month", x = "Month", y = y_lab) +
       theme_minimal() +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+      coord_cartesian(ylim = c(0, y_max)) +
+      y_scale
   }
-
+  
   temp_png_path <- tempfile(fileext = ".png")
   ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
   image_data <- base64enc::base64encode(temp_png_path)
@@ -946,7 +970,6 @@ cumulative_enrolled <- function(analytic, bar_mode=FALSE){
   
   return(img_tag)
 }
-
 #' Monthly Discrete Enrollment
 #'
 #' @description This function visualizes the discrete number of patients enrolled by month
