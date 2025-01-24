@@ -15,7 +15,7 @@ not_complete_sae_deviation_by_type_auto_categories(
 not_completed_reason, protocol_deviation_full_data, sae_count}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type

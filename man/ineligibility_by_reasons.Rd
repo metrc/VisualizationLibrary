@@ -16,7 +16,7 @@ to list ineligibility reasons.}
 reflected in the ineligibility table as reasons exist.}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the number of patients Ineligible by Top 5 reasons of Exclusion criteria

@@ -11,7 +11,7 @@ closed_ih_and_dc_crossover_monitoring_by_site(analytic, footnotes = NULL)
 ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, and treatment_arm}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the crossovers by site in hospital and at discharge

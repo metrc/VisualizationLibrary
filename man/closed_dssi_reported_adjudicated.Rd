@@ -11,7 +11,7 @@ closed_dssi_reported_adjudicated(analytic, footnotes = NULL)
 dssi_adjudication_pending_6mo}
 }
 \value{
-A kable table
+An HTML table.
 }
 \description{
 This function visualizes the treatment crossover or any nonadherence occured during the Tobra

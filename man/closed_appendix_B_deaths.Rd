@@ -10,7 +10,7 @@ closed_appendix_B_deaths(analytic)
 \item{analytic}{This is the analytic data set that must include study_id, sae_data, death_date}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes any death occurred during the study time period.

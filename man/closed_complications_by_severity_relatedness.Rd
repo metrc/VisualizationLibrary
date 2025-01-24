@@ -10,7 +10,7 @@ closed_complications_by_severity_relatedness(analytic)
 \item{analytic}{This is the analytic data set that must include study_id, complication_data}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the complications by severity and relatedness for dsmb report

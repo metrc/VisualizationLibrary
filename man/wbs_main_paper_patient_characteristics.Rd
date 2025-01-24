@@ -12,7 +12,7 @@ patient_reported_self_efficacy_12mo, preinjury_productive_activity, preinjury_wo
 preinjury_work_hours, tobacco_use, bmi, preinjury_health, insurance_type}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function outputs a table with various patient characteristics/demographics for enrolled 

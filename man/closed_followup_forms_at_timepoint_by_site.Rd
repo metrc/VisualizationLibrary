@@ -21,7 +21,7 @@ closed_followup_forms_at_timepoint_by_site(
 \item{names}{This is the analytic data set that must include study_id, followup_data}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 Returns the designated followup form status by site
