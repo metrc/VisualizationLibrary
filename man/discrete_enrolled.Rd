@@ -10,7 +10,7 @@ discrete_enrolled(analytic)
 \item{analytic}{This is the analytic data set that must include study_id, enrolled, consent_date}
 }
 \value{
-nothing
+An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
 This function visualizes the discrete number of patients enrolled by month

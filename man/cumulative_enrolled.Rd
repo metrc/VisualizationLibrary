@@ -12,7 +12,7 @@ cumulative_enrolled(analytic, bar_mode = FALSE)
 \item{bar_mode}{set to TRUE to remove the line}
 }
 \value{
-nothing
+An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
 This function visualizes the Cumulative number of patients enrolled

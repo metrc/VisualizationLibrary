@@ -10,7 +10,7 @@ enrollment_by_site(analytic, number_order = FALSE)
 \item{analytic}{This is the analytic data set that must include study_id, enrolled, facilitycode}
 }
 \value{
-nothing
+An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
 This function visualizes the enrollment by each site for each patient

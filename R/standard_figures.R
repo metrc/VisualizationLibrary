@@ -135,7 +135,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period
 #' @param definitive_event Event either DF or DWC
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -264,7 +264,7 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
 #' @param final_period Defaults to 12 Month
 #' @param adjudicated whether to use adjudicated discontinued and not expected
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -410,7 +410,7 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
 #' @param final_period Defaults to 12 Month
 #' @param adjudicated whether to use adjudicated discontinued and not expected
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -557,7 +557,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
 #' @param adjudicated whether to use adjudicated discontinued and not expected
 #' @param definitive_event the definitive event
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -708,7 +708,7 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
 #'
 #' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -760,7 +760,7 @@ cumulative_percentage_ankle_injuries <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -812,7 +812,7 @@ cumulative_percentage_plateau_injuries <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled, facilitycode
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -853,7 +853,7 @@ enrollment_by_injury_and_site <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, facilitycode
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -898,7 +898,7 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date
 #' @param bar_mode set to TRUE to remove the line
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -952,7 +952,7 @@ cumulative_enrolled <- function(analytic, bar_mode=FALSE){
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date 
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -999,7 +999,7 @@ discrete_enrolled <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, ih_los_days
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -1050,7 +1050,7 @@ cumulative_enrolled_los <- function(analytic){
 #' @param end_date The end date for the analysis.
 #' @param participant_goal The goal number of participants for the study.
 #'
-#' @return Nothing (intended for plotting)
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format. (intended for plotting)
 #' @export
 #'
 #' @examples
@@ -1111,7 +1111,7 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #' @param definitive_event Event either DF or DWC
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -1452,7 +1452,7 @@ vislib_query_issues_per_site <- function(analytic) {
 #' @param final_period Defaults to 12 Month
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples

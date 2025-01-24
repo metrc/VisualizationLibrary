@@ -11,7 +11,7 @@ amputations_and_gustilo_injury_characteristics(analytic)
 injury_gustilo_type, injury_amputation_status}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the injury characteristics for amputations and Gustilo Injury types for 

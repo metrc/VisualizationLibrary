@@ -20,7 +20,7 @@ eligible, refused, consented, enrolled, not_consented, site_certified_days, faci
 \item{discontinued_colname}{column name for discontinued to appear in visualization like "Adjudicated Discontinued"}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the enrollment totals for each site

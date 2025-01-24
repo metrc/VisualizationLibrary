@@ -11,7 +11,7 @@ closed_characteristics_treatment(analytic)
 pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the treatment characteristics per protocol and assignment for tobra.

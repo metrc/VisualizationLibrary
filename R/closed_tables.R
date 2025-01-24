@@ -7,7 +7,7 @@
 #'
 #' @param analytic This is the analytic data set that must include treatment_arm injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -121,7 +121,7 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
 #' @param education_levels sets default values and orders for education meta construct
 #' @param military_levels sets default values and orders for military meta construct
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -280,7 +280,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #' @param race_levels sets default values and orders for race meta construct
 #' @param education_levels sets default values and orders for education meta construct
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -428,7 +428,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
 #' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -612,7 +612,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, 
 #' not_completed_reason, protocol_deviation_full_data, sae_count
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -816,7 +816,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
 #'
 #' @param analytic This is the analytic data set that must include study_id, complication_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -994,7 +994,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, sae_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1047,7 +1047,7 @@ closed_appendix_A_SAEs <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, sae_data, death_date
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1097,7 +1097,7 @@ closed_appendix_B_deaths <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, not_expected_data, not_completed_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1156,7 +1156,7 @@ closed_appendix_C_not_expected_not_completed <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, protocol_deviation_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1217,7 +1217,7 @@ closed_appendix_D_protocol_deviation <- function(analytic){
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
 #' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, and treatment_arm
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1258,7 +1258,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
 #'
 #' @param analytic This is the analytic data set that must include site_certified_date
 #'
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1300,7 +1300,7 @@ closed_certification_date_data <- function(analytic){
 #' @param analytic This is the analytic data set that must include enrolled, treatment_arm, injury_classification_ankle_ao, injury_at_work, injury_in_battle,
 #' injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type
 
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1439,7 +1439,7 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
 #' @param analytic This is the analytic data set that must include enrolled, treatment_arm,
 #' injury_gustilo_type, injury_amputation_status
 #'
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1535,7 +1535,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
 #' @param discontinued_colname this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')
 #' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct if you want it included (defaults to FALSE)
 #'
-#' @return html table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1576,7 +1576,7 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
 #' @param analytic This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
 #' dssi_adjudication_pending_6mo
 #'
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1646,7 +1646,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
 #' @param analytic This is the analytic data set that must include study_id, complication_data, treatment_arm
 #' @param days it is a keyword argument to pass in the number of days to get cut off date for complications
 #' 
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1811,7 +1811,7 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
 #' @param analytic This is the analytic data set that must include adherence_to_intervention_dwc,
 #' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, treatment_arm
 #'
-#' @return nothing
+#' @return An HTML table.
 #' 
 #' Closed followup followup_2wk_status_by_site_tobra
 #'
@@ -1820,7 +1820,7 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
 #'
 #' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk
 #' 
-#' @return html table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1861,7 +1861,7 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
 #' @param analytic This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
 #' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1968,7 +1968,7 @@ closed_characteristics_treatment <- function(analytic){
 #' @param discontinued meta construct for discontinued
 #' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2008,7 +2008,7 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
 #' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, treatment_arm
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2050,7 +2050,7 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2188,7 +2188,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
 #' @param analytic This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
 #' treatment_arm
 #'
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2298,7 +2298,7 @@ closed_fracture_characteristics <- function(analytic){
 #' @param form_selection the form to be considered in the visualization
 #' @param name optional argument for changing the name of the followup form, for aesthetic use
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2599,7 +2599,7 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' @param forms the form to be considered in the visualization
 #' @param names This is the analytic data set that must include study_id, followup_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2751,7 +2751,7 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
 #' @param forms followup forms to output, as found in the followup_data construct
 #' @param timepoints timepoints to output, as found in the followup_data construct
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2915,7 +2915,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
 #'
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -3140,7 +3140,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
 #' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
 #' facilitycode, late_ineligible
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples

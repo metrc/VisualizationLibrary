@@ -10,11 +10,11 @@ closed_adherence_sextant(analytic, footnotes = NULL)
 \item{analytic}{study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk}
 }
 \value{
-nothing
+An HTML table.
 
 Closed followup followup_2wk_status_by_site_tobra
 
-html table
+An HTML table.
 }
 \description{
 This function visualizes the treatment characteristics per protocol and assignmnet for Sextant for

@@ -12,7 +12,7 @@ certification_date_data(analytic, exclude_local_irb = FALSE)
 \item{exclude_local_irb}{defaults to False}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function returns a list of sites and their dates of 

@@ -19,7 +19,7 @@ consented, not_consented, randomized, enrolled, refused, completed, not_complete
 \item{adjudicated}{whether to use adjudicated discontinued and not expected}
 }
 \value{
-nothing
+An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
 This function visualizes the categorical percentages of Study Status
