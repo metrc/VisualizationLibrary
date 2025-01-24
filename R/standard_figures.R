@@ -439,7 +439,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
                    pull(refused), na.rm=TRUE)
   
   analytic <- analytic %>% 
-    filter(screened == TRUE) 
+    filter(screened == TRUE & consented==TRUE) 
   
   Screened <- sum(analytic$screened, na.rm=TRUE)
   Eligible <- sum(analytic$eligible, na.rm=TRUE)
