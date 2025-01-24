@@ -1812,15 +1812,6 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
 #' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, treatment_arm
 #'
 #' @return An HTML table.
-#' 
-#' Closed followup followup_2wk_status_by_site_tobra
-#'
-#' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
-#' medical record review(crf08) for tobra weekly report 
-#'
-#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk
-#' 
-#' @return An HTML table.
 #' @export
 #'
 #' @examples
