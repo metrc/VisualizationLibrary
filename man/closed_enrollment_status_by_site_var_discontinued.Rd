@@ -8,6 +8,7 @@ closed_enrollment_status_by_site_var_discontinued(
   analytic,
   discontinued = "discontinued",
   discontinued_colname = "Discontinued",
+  only_total = FALSE,
   footnotes = NULL
 )
 }
@@ -18,6 +19,8 @@ eligible, refused, consented, enrolled, not_consented, site_certified_days, faci
 \item{discontinued}{meta construct for discontinued}
 
 \item{discontinued_colname}{column name for discontinued to appear in visualization like "Adjudicated Discontinued"}
+
+\item{only_total}{hide all the site specific rows}
 }
 \value{
 An HTML table.

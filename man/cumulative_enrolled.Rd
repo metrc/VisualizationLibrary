@@ -19,6 +19,7 @@ This function visualizes the Cumulative number of patients enrolled
 }
 \examples{
 \dontrun{
-cumulative_enrolled()
+cumulative_enrolled("Replace with Analytic Tibble")
+cumulative_enrolled("Replace with Analytic Tibble", bar_mode=TRUE)
 }
 }
