@@ -4,12 +4,21 @@
 \alias{cumulative_enrolled}
 \title{Cumulative enrollment}
 \usage{
-cumulative_enrolled(analytic, bar_mode = FALSE)
+cumulative_enrolled(
+  analytic,
+  bar_mode = FALSE,
+  goal = NULL,
+  goal_percent = FALSE
+)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, enrolled, consent_date}
 
 \item{bar_mode}{set to TRUE to remove the line}
+
+\item{goal}{sets the y axis}
+
+\item{goal_percent}{if goal is supplied then sets the bar height to percent}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
