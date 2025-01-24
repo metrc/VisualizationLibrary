@@ -1958,6 +1958,7 @@ closed_characteristics_treatment <- function(analytic){
 #' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode, treatment_arm
 #' @param discontinued meta construct for discontinued
 #' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
+#' @param only_total hide all the site specific rows
 #'
 #' @return An HTML table.
 #' @export
@@ -1966,7 +1967,7 @@ closed_characteristics_treatment <- function(analytic){
 #' \dontrun{
 #' closed_enrollment_status_by_site_var_discontinued()
 #' }
-closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued", footnotes = NULL){
+closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued",only_total=FALSE, footnotes = NULL){
    #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
@@ -1977,9 +1978,9 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
   
   if(is.null(footnotes)){
     out <- paste0("<h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname),
+                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, only_total=only_total),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname))
+                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, only_total=only_total))
   } else{
     out <- paste0("<h4>Group A</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE),

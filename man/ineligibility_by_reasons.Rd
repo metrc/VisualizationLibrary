@@ -4,7 +4,12 @@
 \alias{ineligibility_by_reasons}
 \title{Number of patients Ineligible by Top 5 reasons of Exclusion}
 \usage{
-ineligibility_by_reasons(analytic, pre_screened = FALSE, n_top_reasons = 5)
+ineligibility_by_reasons(
+  analytic,
+  pre_screened = FALSE,
+  n_top_reasons = 5,
+  only_total = FALSE
+)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include facilitycode,  screened, ineligible, ineligibility_reasons,}
@@ -14,6 +19,8 @@ to list ineligibility reasons.}
 
 \item{n_top_reasons}{is by default set to 5 but in case there are less than 5 reasons then as many columns would be 
 reflected in the ineligibility table as reasons exist.}
+
+\item{only_total}{hides non-total rows}
 }
 \value{
 An HTML table.

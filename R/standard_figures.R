@@ -903,7 +903,8 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #'
 #' @examples
 #' \dontrun{
-#' cumulative_enrolled()
+#' cumulative_enrolled("Replace with Analytic Tibble")
+#' cumulative_enrolled("Replace with Analytic Tibble", bar_mode=TRUE)
 #' }
 cumulative_enrolled <- function(analytic, bar_mode=FALSE){
   

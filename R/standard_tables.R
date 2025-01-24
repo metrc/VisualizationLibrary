@@ -74,6 +74,7 @@ enrollment_status_by_site <- function(analytic){
 #' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode
 #' @param discontinued meta construct for discontinued
 #' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
+#' @param only_total hide all the site specific rows
 #'
 #' @return An HTML table.
 #' @export
@@ -82,7 +83,7 @@ enrollment_status_by_site <- function(analytic){
 #' \dontrun{
 #' enrollment_status_by_site_var_discontinued()
 #' }
-enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued"){
+enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued", only_total=FALSE){
  
   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, site_certified_days, 
@@ -127,6 +128,10 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
     mutate(Refused = format_count_percent(Refused, Eligible)) %>% 
     mutate(`Not Consented` = format_count_percent(`Not Consented`, Eligible)) %>% 
     mutate(Eligible = format_count_percent(Eligible, Screened))
+  
+  if(only_total){
+    table_raw <- table_raw %>% filter(Facility=="Total")
+  }
   
   table<- kable(table_raw, format="html", align='l') %>%
     add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3)) %>%
@@ -1237,6 +1242,7 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #' to list ineligibility reasons. 
 #' @param n_top_reasons is by default set to 5 but in case there are less than 5 reasons then as many columns would be 
 #' reflected in the ineligibility table as reasons exist.
+#' @param only_total hides non-total rows
 #'
 #' @return An HTML table.
 #' @export
@@ -1245,7 +1251,7 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #' \dontrun{
 #' ineligibility_by_reasons()
 #' }
-ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reasons = 5){
+ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reasons = 5, only_total=FALSE){
   
   if (pre_screened) { 
     analytic <- analytic %>% 
@@ -1335,6 +1341,10 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
     header_names <- c(" " = 3, top_n_header_text = n_top_reasons, " " = 1)
     
     names(header_names)[2] <- top_n_header_text
+    
+    if(only_total){
+      output <- output %>% filter(Site=="Total")
+    }
     
     vis <- kable(output, format = "html", align = 'l') %>%
       add_header_above(header_names) %>%
@@ -1707,8 +1717,8 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #'
 #' @examples
 #' \dontrun{
-
-#' generic_characteristics()
+#' 
+#' generic_characteristics("Replace with Analytic Tibble", constructs="stages", names_vec="Stages")
 #' }
 generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
