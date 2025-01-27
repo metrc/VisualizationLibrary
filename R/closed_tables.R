@@ -1557,12 +1557,12 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
     filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
   if(is.null(footnotes)){
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set),
                   "<h4>Group B</h4><br />",
                   enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set))
   } else{
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
                   enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE))
@@ -1983,12 +1983,12 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
     filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
   if(is.null(footnotes)){
-    out <- paste0("<br /><h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, only_total=only_total),
                   "<h4>Group B</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, only_total=only_total))
   } else{
-    out <- paste0("<br /><h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE))
@@ -2023,12 +2023,12 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
     filter(treatment_arm=="Group B")
   
   if(is.null(footnotes)){
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_a),
                   "<h4>Group B</h4><br />",
                   ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_b))
   } else{
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
                   ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
@@ -3154,7 +3154,7 @@ closed_enrollment_status_by_site <- function(analytic){
   df_b <- analytic %>% 
     filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   enrollment_status_by_site(df_a),
                   "<h4>Group B</h4><br />",
                   enrollment_status_by_site(df_b))
