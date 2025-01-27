@@ -1982,12 +1982,12 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
     filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
   if(is.null(footnotes)){
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<br /><h4>Group A</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, only_total=only_total),
                   "<h4>Group B</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, only_total=only_total))
   } else{
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<br /><h4>Group A</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE))
