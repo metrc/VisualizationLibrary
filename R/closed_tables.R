@@ -1717,6 +1717,7 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
     ungroup()
   
   new_df <- df_1 %>% select(-study_id) %>% 
+    mutate(severity = ifelse(is.na(severity), "Unknown", severity)) %>% 
     group_by(complication, severity) %>% 
     summarize(Total = sum(Total, na.rm = TRUE))
   
