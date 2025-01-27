@@ -436,7 +436,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' closed_not_complete_sae_deviation_by_type()
 #' }
 closed_not_complete_sae_deviation_by_type <- function(analytic){
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '5afd5dc48775007bc78935fca9ec73bc')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '197e475aa642695d15049e9fcfb1c7c0')
   
   n_act <- NA
   n_disc <- NA
@@ -581,11 +581,16 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
   
   indents_vec <- indents_vec[indents_vec <= nrow(df_table)]
   
-  first_indents_vec <- c(ifelse(n_act==0, vector(mode="integer"), seq(n_act) + 1),
-                         ifelse(n_disc==0, vector(mode="integer"),seq(n_disc) + 1 + n_act + 1), seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1 + 1)
+  first_indents_vec <- seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1 + 1
   
-  first_indents_vec <- first_indents_vec[!is.na(first_indents_vec)]
-
+  if(n_disc>0){
+    first_indents_vec <- c(seq(n_disc) + 1 + n_act + 1, first_indents_vec)
+  }
+  
+  if(n_act>0){
+    first_indents_vec <- c(seq(n_act) + 1, first_indents_vec)
+  }
+  
   vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
                                                                    paste0("Group A n=", nrow(df_a %>% filter(enrolled)), ' <sub>(Enrolled)</sub>'), 
                                                                    paste0("Group B n=", nrow(df_b %>% filter(enrolled)), ' <sub>(Enrolled)</sub>'), 

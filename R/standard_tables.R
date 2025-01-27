@@ -901,8 +901,15 @@ not_complete_sae_deviation_by_type <- function(analytic){
   
   indents_vec <- indents_vec[indents_vec <= nrow(df_final)]
   
-  first_indents_vec <- c(ifelse(n_act==0, vector(mode="integer"), seq(n_act) + 1),
-                         ifelse(n_disc==0, vector(mode="integer"),seq(n_disc) + 1 + n_act + 1), seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1 + 1)
+  first_indents_vec <- seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1 + 1
+  
+  if(n_disc>0){
+    first_indents_vec <- c(seq(n_disc) + 1 + n_act + 1, first_indents_vec)
+  }
+
+  if(n_act>0){
+    first_indents_vec <- c(seq(n_act) + 1, first_indents_vec)
+  }
   
   first_indents_vec <- first_indents_vec[!is.na(first_indents_vec)]
   
