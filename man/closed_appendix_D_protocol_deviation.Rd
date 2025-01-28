@@ -16,7 +16,6 @@ An HTML table.
 This function visualizes any protocol deviations occurred during the study time period.
 }
 \examples{
-\dontrun{
-closed_appendix_D_protocol_deviation()
-}
+closed_appendix_D_protocol_deviation("Replace with Analytic Tibble")
+
 }
