@@ -28,7 +28,13 @@ Returns the designated followup form status across all sites,
 for a single timepoint and separated by the treatment_arm variable
 }
 \examples{
-\dontrun{
-followup_form_at_timepoint_by_site()
-}
+analytic <- if_needed_generate_example_data(test_analytic = "Replace with Analytic Tibble", 
+example_constructs = c("facilitycode", "followup_data"), 
+example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date"))
+timepoint <- "2 Unit Period"
+form_selection <- "Form 3"
+
+followup_form_at_timepoint_by_site(analytic, timepoint, form_selection)
+
+
 }

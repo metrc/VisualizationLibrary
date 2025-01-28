@@ -16,7 +16,10 @@ nothing
 This function visualizes any protocol deviations occurred during the study time period.
 }
 \examples{
-\dontrun{
-closed_appendix_D_protocol_deviation()
-}
+analytic <- if_needed_generate_example_data(test_analytic = "Replace with Analytic Tibble", 
+example_constructs = c("protocol_deviation_data"), 
+example_types = c("(';new_row: ', '|')FacilityCode|Date|Date|Category|Character"))
+
+closed_appendix_D_protocol_deviation(analytic)
+
 }
