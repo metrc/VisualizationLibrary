@@ -2,7 +2,7 @@
 % Please edit documentation in R/standard_tables.R
 \name{not_complete_sae_deviation_by_type_auto_categories}
 \alias{not_complete_sae_deviation_by_type_auto_categories}
-\title{Number of Non-Completing Participants, SAEs, and Protocol Deviations by type}
+\title{Number of Non-Completing Participants, SAEs, and Protocol Deviations by type with AUTO Protocol Deviation Categorization}
 \usage{
 not_complete_sae_deviation_by_type_auto_categories(
   analytic,
@@ -18,7 +18,8 @@ not_completed_reason, protocol_deviation_full_data, sae_count}
 An HTML table.
 }
 \description{
-This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
+This function visualizes the number of non-completions, not expected, and SAEs for only 
+"enrolled" participants and Protocol Deviations by type for all the "consented" participants. 
 Now with AUTO Protocol Deviation Categorization!
 }
 \examples{
