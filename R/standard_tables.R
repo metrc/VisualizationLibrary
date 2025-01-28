@@ -778,8 +778,8 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
 
 #' Number of Non-Completing Participants, SAEs, and Protocol Deviations by type
 #'
-#' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
-#' This was originally made for Union
+#' @description This function visualizes the number of non-completions, not expected, and SAEs for only 
+#' "enrolled" participants and Protocol Deviations by type for all the "consented" participants. 
 #'
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
 #' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
@@ -929,9 +929,10 @@ not_complete_sae_deviation_by_type <- function(analytic){
 }
 
 
-#' Number of Non-Completing Participants, SAEs, and Protocol Deviations by type
+#' Number of Non-Completing Participants, SAEs, and Protocol Deviations by type with AUTO Protocol Deviation Categorization
 #'
-#' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
+#' @description This function visualizes the number of non-completions, not expected, and SAEs for only 
+#' "enrolled" participants and Protocol Deviations by type for all the "consented" participants. 
 #' Now with AUTO Protocol Deviation Categorization!
 #'
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, 
@@ -1242,7 +1243,8 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 
 #' Number of patients Ineligible by Top 5 reasons of Exclusion
 #'
-#' @description This function visualizes the number of patients Ineligible by Top 5 reasons of Exclusion criteria
+#' @description This function visualizes the number of patients deemed ineligible by the top N reasons 
+#' for exclusion criteria. 
 #'
 #' @param analytic This is the analytic data set that must include facilitycode,  screened, ineligible, ineligibility_reasons, 
 #' @param pre_screened When pre_screened is TRUE then we will be using pre_ineligibility_reasons and pre_screened itself
