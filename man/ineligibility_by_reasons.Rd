@@ -26,7 +26,8 @@ reflected in the ineligibility table as reasons exist.}
 An HTML table.
 }
 \description{
-This function visualizes the number of patients Ineligible by Top 5 reasons of Exclusion criteria
+This function visualizes the number of patients deemed ineligible by the top N reasons 
+for exclusion criteria.
 }
 \examples{
 \dontrun{
