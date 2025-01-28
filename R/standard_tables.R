@@ -2893,16 +2893,15 @@ expected_and_followup_visit_overall <- function(analytic){
 #' @export
 #'
 #' @examples
-#' analytic <- if_needed_generate_example_data(test_analytic = "Replace with Analytic Tibble", 
-#' example_constructs = c("facilitycode", "followup_data"), 
-#' example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date"))
-#' timepoint <- "2 Unit Period"
-#' form_selection <- "Form 3"
 #' 
-#' followup_form_at_timepoint_by_site(analytic, timepoint, form_selection)
+#' followup_form_at_timepoint_by_site("Replace with Analytic Tibble", "2 Unit Period", "Form 3")
 #' 
 #' 
 followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
+  analytic <- if_needed_generate_example_data(analytic, 
+                                              example_constructs = c("facilitycode", "followup_data"), 
+                                              example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date"))
+  
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
