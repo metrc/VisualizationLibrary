@@ -4,19 +4,31 @@
 \alias{cumulative_enrolled}
 \title{Cumulative enrollment}
 \usage{
-cumulative_enrolled(analytic, add_discrete = TRUE)
+cumulative_enrolled(
+  analytic,
+  bar_mode = FALSE,
+  goal = NULL,
+  goal_percent = FALSE
+)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, enrolled, consent_date}
+
+\item{bar_mode}{set to TRUE to remove the line}
+
+\item{goal}{sets the y axis}
+
+\item{goal_percent}{if goal is supplied then sets the bar height to percent}
 }
 \value{
-nothing
+An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
 This function visualizes the Cumulative number of patients enrolled
 }
 \examples{
 \dontrun{
-cumulative_enrolled()
+cumulative_enrolled("Replace with Analytic Tibble")
+cumulative_enrolled("Replace with Analytic Tibble", bar_mode=TRUE)
 }
 }

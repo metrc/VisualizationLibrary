@@ -11,7 +11,7 @@ other_reason_refusal_by_site(analytic)
 refused_reason_other}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes list of each "Other" reason of refusal, total screened by each site.

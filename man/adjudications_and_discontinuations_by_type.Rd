@@ -12,7 +12,7 @@ late_ineligible; late_refusal; withdrawn_patient; withdrawn_physician; adjudicat
 dead; sae_count; protocol_deviation_screen_consent; protocol_deviation_procedural; protocol_deviation_administrative}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type

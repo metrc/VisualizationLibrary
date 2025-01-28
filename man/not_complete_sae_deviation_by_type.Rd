@@ -11,7 +11,7 @@ not_complete_sae_deviation_by_type(analytic)
 protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type

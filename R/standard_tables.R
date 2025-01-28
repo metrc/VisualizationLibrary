@@ -6,7 +6,7 @@
 #' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
 #' facilitycode, late_ineligible
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -74,15 +74,16 @@ enrollment_status_by_site <- function(analytic){
 #' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode
 #' @param discontinued meta construct for discontinued
 #' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
+#' @param only_total hide all the site specific rows
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' enrollment_status_by_site_var_discontinued()
 #' }
-enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued"){
+enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued", only_total=FALSE){
  
   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, site_certified_days, 
@@ -128,6 +129,10 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
     mutate(`Not Consented` = format_count_percent(`Not Consented`, Eligible)) %>% 
     mutate(Eligible = format_count_percent(Eligible, Screened))
   
+  if(only_total){
+    table_raw <- table_raw %>% filter(Facility=="Total")
+  }
+  
   table<- kable(table_raw, format="html", align='l') %>%
     add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3)) %>%
     kable_styling("striped", full_width = F, position="left")
@@ -161,7 +166,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #' ankle_talar_tilt_degrees_12mo, ankle_sagital_disp_12mo, ankle_coronal_plane_disp_12mo
 #' 
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -459,7 +464,7 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -539,7 +544,7 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #' @param education_levels sets default values and orders for education meta construct
 #' @param military_levels sets default values and orders for military meta construct
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -664,7 +669,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
 #' @param race_levels sets default values and orders for race meta construct
 #' @param education_levels sets default values and orders for education meta construct
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -779,7 +784,7 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
 #' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -896,8 +901,15 @@ not_complete_sae_deviation_by_type <- function(analytic){
   
   indents_vec <- indents_vec[indents_vec <= nrow(df_final)]
   
-  first_indents_vec <- c(ifelse(n_act==0, vector(mode="integer"), seq(n_act) + 1),
-                         ifelse(n_disc==0, vector(mode="integer"),seq(n_disc) + 1 + n_act + 1), seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1 + 1)
+  first_indents_vec <- seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1 + 1
+  
+  if(n_disc>0){
+    first_indents_vec <- c(seq(n_disc) + 1 + n_act + 1, first_indents_vec)
+  }
+
+  if(n_act>0){
+    first_indents_vec <- c(seq(n_act) + 1, first_indents_vec)
+  }
   
   first_indents_vec <- first_indents_vec[!is.na(first_indents_vec)]
   
@@ -925,7 +937,7 @@ not_complete_sae_deviation_by_type <- function(analytic){
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, 
 #' not_completed_reason, protocol_deviation_full_data, sae_count
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1091,7 +1103,7 @@ not_complete_sae_deviation_by_type_auto_categories <- function(analytic, categor
 #' late_ineligible; late_refusal; withdrawn_patient; withdrawn_physician; adjudication_pending; 
 #' dead; sae_count; protocol_deviation_screen_consent; protocol_deviation_procedural; protocol_deviation_administrative
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1237,15 +1249,16 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #' to list ineligibility reasons. 
 #' @param n_top_reasons is by default set to 5 but in case there are less than 5 reasons then as many columns would be 
 #' reflected in the ineligibility table as reasons exist.
+#' @param only_total hides non-total rows
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' ineligibility_by_reasons()
 #' }
-ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reasons = 5){
+ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reasons = 5, only_total=FALSE){
   
   if (pre_screened) { 
     analytic <- analytic %>% 
@@ -1336,6 +1349,10 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
     
     names(header_names)[2] <- top_n_header_text
     
+    if(only_total){
+      output <- output %>% filter(Site=="Total")
+    }
+    
     vis <- kable(output, format = "html", align = 'l') %>%
       add_header_above(header_names) %>%
       kable_styling("striped", full_width = FALSE, position = "left")
@@ -1353,7 +1370,7 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
 #' @param analytic This is the analytic data set that must include site_certified_date
 #' @param exclude_local_irb defaults to False
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1399,7 +1416,7 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
 #'
 #' @param analytic This is the analytic data set that must include study_id, complication_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1545,7 +1562,7 @@ complications_by_severity_relatedness <- function(analytic){
 #' @param analytic This is the analytic data set that must include enrolled, 
 #' followup_expected_3mo, followup_expected_12mo, nonunion_90days,  nonunion_1yr
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1579,7 +1596,7 @@ nonunion_surgery_outcome <- function(analytic){
 #' injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type
 #
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1702,13 +1719,13 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #' @param subcategory_constructs This allows a characteristic to have a construct as a sub category, 
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-
-#' generic_characteristics()
+#' 
+#' generic_characteristics("Replace with Analytic Tibble", constructs="stages", names_vec="Stages")
 #' }
 generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
@@ -1872,7 +1889,7 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
 #' @param analytic This is the analytic data set that must include enrolled, 
 #' injury_gustilo_type, injury_amputation_status
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1944,7 +1961,7 @@ amputations_and_gustilo_injury_characteristics <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include facilitycode, screened, refused, refused_reason
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2022,7 +2039,7 @@ refusal_reasons_by_site <- function(analytic){
 #' @param analytic This is the analytic data set that must include study_id, facilitycode, screened_date, 
 #' refused_reason_other
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2052,7 +2069,7 @@ other_reason_refusal_by_site <- function(analytic){
 #' @param analytic This is the analytic data set that must include study_id, facilitycode, able_to_participate, 
 #' nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_other, constraint_other_txt, screened
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2093,7 +2110,7 @@ not_enrolled_for_other_reasons <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2181,7 +2198,7 @@ fracture_characteristics <- function(analytic){
 #' @param discontinued_colname this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')
 #' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct if you want it included (defaults to FALSE)
 #'
-#' @return html table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2388,7 +2405,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
 #' injury_type, injury_classification_ankle_ota, definitive_fixation_construct, 
 #' definitive_fixation_type, soft_tissue_closure, enrolled
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2555,7 +2572,7 @@ wbs_main_paper_injury_characteristics <- function(analytic){
 #' patient_reported_self_efficacy_12mo, preinjury_productive_activity, preinjury_work_demand, 
 #' preinjury_work_hours, tobacco_use, bmi, preinjury_health, insurance_type
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2769,7 +2786,7 @@ wbs_main_paper_patient_characteristics <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2874,7 +2891,7 @@ expected_and_followup_visit_overall <- function(analytic){
 #' @param form_selection the form to be considered in the visualization
 #' @param name optional argument for changing the name of the followup form, for aesthetic use
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -3000,7 +3017,7 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
 #' @param form_selection The form to base the table on
 #' @param included_colmns Defaults to c("Expected", "Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete')
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -3143,7 +3160,7 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -3277,7 +3294,7 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
 #' @param forms followup forms to output, as found in the followup_data construct
 #' @param timepoints timepoints to output, as found in the followup_data construct
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -3457,7 +3474,7 @@ followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = N
 #' @param form_name The exact name (specified in followup_data) that you want
 #' to find the data for
 #'
-#' @return visualization
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -3573,7 +3590,7 @@ enrollment_and_followup_activities_overview <- function(analytic, form_name = 'O
 #' @param analytic This is the analytic data set that must include study_id,
 #' facilitycode, screened, ineligible, and ineligibility_reasons
 #'
-#' @return visualization
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -3686,7 +3703,7 @@ ineligibility_reasons_info <- function(analytic){
 #' @param timepoints the point in time to be considered in the visualization
 #' @param form_selection the form to be considered in the visualization
 #'
-#' @return 
+#' @return An HTML table.
 #' @export
 #'
 #' @examples

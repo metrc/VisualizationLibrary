@@ -38,7 +38,7 @@ closed_baseline_characteristics_percent(
 \item{military_levels}{sets default values and orders for military meta construct}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military

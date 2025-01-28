@@ -28,7 +28,7 @@ ankle_talar_tilt_degrees_6mo, ankle_sagital_disp_6mo, ankle_coronal_plane_disp_6
 ankle_talar_tilt_degrees_12mo, ankle_sagital_disp_12mo, ankle_coronal_plane_disp_12mo}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes Ankle and Plateau X-Ray and Measurement Status

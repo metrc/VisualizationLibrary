@@ -21,7 +21,7 @@ followup_form_at_timepoint_by_site(
 \item{name}{optional argument for changing the name of the followup form, for aesthetic use}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 Returns the designated followup form status across all sites, 
