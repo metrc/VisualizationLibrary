@@ -14,8 +14,8 @@ protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_devia
 An HTML table.
 }
 \description{
-This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
-This was originally made for Union
+This function visualizes the number of non-completions, not expected, and SAEs for only 
+"enrolled" participants and Protocol Deviations by type for all the "consented" participants.
 }
 \examples{
 \dontrun{
