@@ -15,8 +15,3 @@ nothing
 \description{
 This function visualizes appendix for all the serious adverse events noted for the patients
 }
-\examples{
-\dontrun{
-closed_appendix_A_SAEs()
-}
-}
