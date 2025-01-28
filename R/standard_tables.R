@@ -2973,7 +2973,7 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
   form_df <- form_df %>%
     filter(!is.na(Facility)&Facility!='NA')
   
-  header <- c(1,7)
+  header <- c(1,8)
   names(header) <- c(' ', ifelse(is.null(name),
                                  paste0(form_selection, ' Status at ', timepoint, ' Period'),
                                  paste0(name, ' Status at ', timepoint, ' Period')))
