@@ -10,7 +10,7 @@ cumulative_enrolled_los(analytic)
 \item{analytic}{This is the analytic data set that must include study_id, ih_los_days}
 }
 \value{
-nothing
+An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
 This function visualizes the Cumulative number of patients enrolled for each bucket of number

@@ -10,7 +10,7 @@ expected_and_followup_visit_overall(analytic)
 \item{analytic}{This is the analytic data set that must include study_id, followup_data}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function only looks at the designated overall form(s) for a 

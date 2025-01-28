@@ -32,7 +32,7 @@ baseline_characteristics_percent_nm(
 \item{education_levels}{sets default values and orders for education meta construct}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the categorical percentages of baseline characteristics sex, age, race, and education

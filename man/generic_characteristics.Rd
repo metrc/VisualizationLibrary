@@ -31,7 +31,7 @@ generic_characteristics(
 must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 Runs basic count statistics for a number of constructs. Missing values are 
@@ -39,6 +39,7 @@ given the value "Missing."
 }
 \examples{
 \dontrun{
-generic_characteristics()
+
+generic_characteristics("Replace with Analytic Tibble", constructs="stages", names_vec="Stages")
 }
 }

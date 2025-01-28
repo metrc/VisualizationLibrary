@@ -11,7 +11,7 @@ not_enrolled_for_other_reasons(analytic)
 nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_other, constraint_other_txt, screened}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes list of study_ids who were screened howevere were not enrolled for "Other"

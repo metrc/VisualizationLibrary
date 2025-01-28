@@ -7,21 +7,15 @@
 closed_adherence_sextant(analytic, footnotes = NULL)
 }
 \arguments{
-\item{analytic}{study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk}
+\item{analytic}{This is the analytic data set that must include adherence_to_intervention_dwc,
+adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, treatment_arm}
 }
 \value{
-nothing
-
-Closed followup followup_2wk_status_by_site_tobra
-
-html table
+An HTML table.
 }
 \description{
 This function visualizes the treatment characteristics per protocol and assignmnet for Sextant for
 each treatment group
-
-This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
-medical record review(crf08) for tobra weekly report
 }
 \examples{
 \dontrun{

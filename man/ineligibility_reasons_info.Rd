@@ -11,7 +11,7 @@ ineligibility_reasons_info(analytic)
 facilitycode, screened, ineligible, and ineligibility_reasons}
 }
 \value{
-visualization
+An HTML table.
 }
 \description{
 \

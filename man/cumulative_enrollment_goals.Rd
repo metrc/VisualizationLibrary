@@ -16,7 +16,7 @@ cumulative_enrollment_goals(analytic, start_date, end_date, participant_goal)
 \item{participant_goal}{The goal number of participants for the study.}
 }
 \value{
-Nothing (intended for plotting)
+An HTML string containing an image tag with the base64-encoded consort diagram in PNG format. (intended for plotting)
 }
 \description{
 This function visualizes the cumulative number of patients enrolled, accompanied by 

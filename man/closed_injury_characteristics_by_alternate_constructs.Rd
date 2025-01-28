@@ -11,7 +11,7 @@ closed_injury_characteristics_by_alternate_constructs(analytic)
 injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type}
 }
 \value{
-A kable table
+An HTML table.
 }
 \description{
 This function visualizes the certain injury characteristics for study participants study injuries by treatment arm
