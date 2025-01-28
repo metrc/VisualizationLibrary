@@ -1847,10 +1847,6 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
       names(new) <- paste0(name_str, ' (n=', total, ')')
       index_vec <- c(index_vec, new)
       
-      out <- out %>%
-        mutate(temp = ifelse(temp %in% c('FALSE', 'TRUE'),
-                             str_to_title(temp),
-                             temp))
       if (is.null(out)) {
         out <- inner
       } else {
