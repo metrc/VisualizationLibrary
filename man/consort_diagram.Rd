@@ -29,7 +29,6 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 This function visualizes the categorical percentages of study status as well as followup completions
 }
 \examples{
-\dontrun{
-consort_diagram()
-}
+consort_diagram("Replace with Analytic Tibble")
+
 }

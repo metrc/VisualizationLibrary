@@ -1139,11 +1139,17 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' consort_diagram()
-#' }
+#' consort_diagram("Replace with Analytic Tibble")
+#' 
 consort_diagram <- function(analytic, final_period="12 Month", definitive_event = "Definitive Fixation Complete" , not_expected_adjudicated=TRUE){
-  
+  analytic <- if_needed_generate_example_data(analytic, 
+                                              example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
+                                                                     "randomized", "enrolled", "adjudicated_discontinued", 
+                                                                     "completed", "safety_set", "exclusive_safety_set", "not_completed", 
+                                                                     "not_expected", "active", "missed_final_followup", "incomplete_final_followup", "time_zero"), 
+                                              example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                                                                "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                                                                "Boolean", "Boolean", "Boolean", "Boolean", "Date"))
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
            adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup) %>% 
