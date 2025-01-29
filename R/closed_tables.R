@@ -1709,7 +1709,8 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
                                  "other4" = "Other")) 
   
   
-  unique_study_df <- df_1%>%
+  unique_study_df <- df_1%>% 
+    mutate(severity = ifelse(is.na(severity), "Unknown", severity)) %>% 
     group_by(complication, severity) %>%
     summarize(
       unique_ids = n_distinct(study_id)  
