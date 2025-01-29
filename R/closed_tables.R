@@ -1003,9 +1003,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_appendix_A_SAEs()
-#' }
+#' 
 closed_appendix_A_SAEs <- function(analytic){
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
@@ -1165,10 +1163,12 @@ closed_appendix_C_not_expected_not_completed <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_appendix_D_protocol_deviation()
-#' }
+#' closed_appendix_D_protocol_deviation("Replace with Analytic Tibble")
+#' 
 closed_appendix_D_protocol_deviation <- function(analytic){
+  analytic <- if_needed_generate_example_data(analytic,
+                                              example_constructs = "protocol_deviation_data",
+                                              example_types = "(';new_row: ', '|')FacilityCode|Date|Date|Category|Character") 
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
