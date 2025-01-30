@@ -10,7 +10,8 @@ generic_characteristics(
   names_vec = c(),
   filter_cols = c("enrolled"),
   titlecase = FALSE,
-  splits = NULL
+  splits = NULL,
+  subcategory_constructs = c()
 )
 }
 \arguments{
@@ -25,9 +26,12 @@ generic_characteristics(
 \item{titlecase}{Changes construct values to Title Case}
 
 \item{splits}{Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them}
+
+\item{subcategory_constructs}{This allows a characteristic to have a construct as a sub category, 
+must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 Runs basic count statistics for a number of constructs. Missing values are 
@@ -35,6 +39,7 @@ given the value "Missing."
 }
 \examples{
 \dontrun{
-generic_characteristics()
+
+generic_characteristics("Replace with Analytic Tibble", constructs="stages", names_vec="Stages")
 }
 }

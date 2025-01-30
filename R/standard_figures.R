@@ -135,7 +135,7 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period
 #' @param definitive_event Event either DF or DWC
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -259,12 +259,12 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
 #' @description This function visualizes the categorical percentages of Study Status
 #' for the NSAID study
 #'
-#' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
+#' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, pre_ineligible, screened, eligible, ineligible,
 #' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
 #' @param final_period Defaults to 12 Month
 #' @param adjudicated whether to use adjudicated discontinued and not expected
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -277,14 +277,14 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
   
   pre_Screened <- sum(pre_analytic$pre_screened, na.rm=TRUE)
   pre_Eligible <- sum(pre_analytic$pre_eligible, na.rm=TRUE)
-  pre_Ineligible <- pre_Screened - pre_Eligible
+  pre_Ineligible <- sum(pre_analytic$pre_ineligible, na.rm=TRUE)
   
   analytic <- analytic %>% 
     filter(screened == TRUE) 
   
   Screened <- sum(analytic$screened, na.rm=TRUE)
   Eligible <- sum(analytic$eligible, na.rm=TRUE)
-  Ineligible <- Screened - Eligible
+  Ineligible <- sum(analytic$ineligible, na.rm=TRUE)
   
   Consented <- sum(analytic %>% 
                      filter(eligible) %>% 
@@ -410,7 +410,7 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
 #' @param final_period Defaults to 12 Month
 #' @param adjudicated whether to use adjudicated discontinued and not expected
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -439,7 +439,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
                    pull(refused), na.rm=TRUE)
   
   analytic <- analytic %>% 
-    filter(screened == TRUE) 
+    filter(screened == TRUE & consented==TRUE) 
   
   Screened <- sum(analytic$screened, na.rm=TRUE)
   Eligible <- sum(analytic$eligible, na.rm=TRUE)
@@ -557,7 +557,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
 #' @param adjudicated whether to use adjudicated discontinued and not expected
 #' @param definitive_event the definitive event
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -708,7 +708,7 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
 #'
 #' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -760,7 +760,7 @@ cumulative_percentage_ankle_injuries <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -812,7 +812,7 @@ cumulative_percentage_plateau_injuries <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled, facilitycode
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -853,7 +853,7 @@ enrollment_by_injury_and_site <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, facilitycode
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -895,16 +895,20 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #'
 #' @description This function visualizes the Cumulative number of patients enrolled
 #'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date 
+#' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date
+#' @param bar_mode set to TRUE to remove the line
+#' @param goal sets the y axis
+#' @param goal_percent if goal is supplied then sets the bar height to percent
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
 #' \dontrun{
-#' cumulative_enrolled()
+#' cumulative_enrolled("Replace with Analytic Tibble")
+#' cumulative_enrolled("Replace with Analytic Tibble", bar_mode=TRUE)
 #' }
-cumulative_enrolled <- function(analytic, add_discrete=TRUE){
+cumulative_enrolled <- function(analytic, bar_mode=FALSE, goal=NULL, goal_percent=FALSE){
   
   df <- analytic %>%  select(study_id, enrolled, consent_date) %>% 
     filter(!is.na(consent_date)) %>% 
@@ -920,22 +924,44 @@ cumulative_enrolled <- function(analytic, add_discrete=TRUE){
     arrange(year_month) %>%
     mutate(cumulative_value = cumsum(Total))
   
+  if(!is.null(goal) && goal_percent) {
+    yyyy_mm <- yyyy_mm %>%
+      mutate(
+        Total = (Total/goal) * 100,
+        cumulative_value = (cumulative_value/goal) * 100
+      )
+    y_lab <- "Cumulative Percent"
+    y_max <- max(100, max(yyyy_mm$cumulative_value))
+    y_scale <- scale_y_continuous(labels = function(x) paste0(x, "%"))
+  } else if(!is.null(goal)) {
+    y_lab <- "Enrolled"
+    y_max <- goal
+    y_scale <- scale_y_continuous()
+  } else {
+    y_lab <- "Enrolled"
+    y_max <- max(yyyy_mm$cumulative_value)
+    y_scale <- scale_y_continuous()
+  }
   
-  if(add_discrete){
+  if(!bar_mode){
     g <- ggplot(yyyy_mm) +
       geom_bar(aes(x = factor(year_month), y = Total, group = 1), stat = "identity", fill = "blue3", color = "black", size = 0.3) +
-      geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +  # Add the 'data' argument
-      labs(title = "Cumulative Enrollment with Discrete Enrollment by Month", x = "Month", y = "Enrolled") +
+      geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +
+      labs(title = "Cumulative Enrollment with Discrete Enrollment by Month", x = "Month", y = y_lab) +
       theme_minimal() +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
-  } else{
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+      coord_cartesian(ylim = c(0, y_max)) +
+      y_scale
+  } else {
     g <- ggplot(yyyy_mm) +
-      geom_line(aes(x = factor(year_month), y = cumulative_value), data = yyyy_mm, stat = "identity", group = 1) +  # Add the 'data' argument
-      labs(title = "Cumulative Enrollment by Month", x = "Month", y = "Enrolled") +
+      geom_col(aes(x = factor(year_month), y = cumulative_value), fill = "blue3") +
+      labs(title = "Cumulative Enrollment by Month", x = "Month", y = y_lab) +
       theme_minimal() +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.5))
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+      coord_cartesian(ylim = c(0, y_max)) +
+      y_scale
   }
-
+  
   temp_png_path <- tempfile(fileext = ".png")
   ggsave(temp_png_path, plot = g, width = 2500, height = 1000, units = 'px')
   image_data <- base64enc::base64encode(temp_png_path)
@@ -944,14 +970,13 @@ cumulative_enrolled <- function(analytic, add_discrete=TRUE){
   
   return(img_tag)
 }
-
 #' Monthly Discrete Enrollment
 #'
 #' @description This function visualizes the discrete number of patients enrolled by month
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date 
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -998,7 +1023,7 @@ discrete_enrolled <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, ih_los_days
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
@@ -1049,7 +1074,7 @@ cumulative_enrolled_los <- function(analytic){
 #' @param end_date The end date for the analysis.
 #' @param participant_goal The goal number of participants for the study.
 #'
-#' @return Nothing (intended for plotting)
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format. (intended for plotting)
 #' @export
 #'
 #' @examples
@@ -1110,15 +1135,21 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #' @param definitive_event Event either DF or DWC
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' consort_diagram()
-#' }
+#' consort_diagram("Replace with Analytic Tibble")
+#' 
 consort_diagram <- function(analytic, final_period="12 Month", definitive_event = "Definitive Fixation Complete" , not_expected_adjudicated=TRUE){
-  
+  analytic <- if_needed_generate_example_data(analytic, 
+                                              example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
+                                                                     "randomized", "enrolled", "adjudicated_discontinued", 
+                                                                     "completed", "safety_set", "exclusive_safety_set", "not_completed", 
+                                                                     "not_expected", "active", "missed_final_followup", "incomplete_final_followup", "time_zero"), 
+                                              example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                                                                "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                                                                "Boolean", "Boolean", "Boolean", "Boolean", "Date"))
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
            adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup) %>% 
@@ -1451,7 +1482,7 @@ vislib_query_issues_per_site <- function(analytic) {
 #' @param final_period Defaults to 12 Month
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
 #'
-#' @return nothing
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples

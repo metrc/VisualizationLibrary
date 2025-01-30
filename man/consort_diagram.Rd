@@ -23,13 +23,12 @@ safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_fi
 \item{not_expected_adjudicated}{whether to note that the Not Expected was adjudicated}
 }
 \value{
-nothing
+An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
 This function visualizes the categorical percentages of study status as well as followup completions
 }
 \examples{
-\dontrun{
-consort_diagram()
-}
+consort_diagram("Replace with Analytic Tibble")
+
 }

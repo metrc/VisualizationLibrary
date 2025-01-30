@@ -7,7 +7,7 @@
 #'
 #' @param analytic This is the analytic data set that must include treatment_arm injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -121,7 +121,7 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
 #' @param education_levels sets default values and orders for education meta construct
 #' @param military_levels sets default values and orders for military meta construct
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -280,7 +280,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #' @param race_levels sets default values and orders for race meta construct
 #' @param education_levels sets default values and orders for education meta construct
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -428,7 +428,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
 #' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -436,7 +436,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' closed_not_complete_sae_deviation_by_type()
 #' }
 closed_not_complete_sae_deviation_by_type <- function(analytic){
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '5afd5dc48775007bc78935fca9ec73bc')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '197e475aa642695d15049e9fcfb1c7c0')
   
   n_act <- NA
   n_disc <- NA
@@ -579,13 +579,18 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
     indents_vec <- c(indents_vec, 1 + n_act + 1 + n_disc + 1 + 1 + 1 + n_dsc + 1 + n_dp + 1 + seq(n_da) + 1)
   }
   
-  indents_vec <- indents_vec[indents_vec <= nrow(df_final)]
+  indents_vec <- indents_vec[indents_vec <= nrow(df_table)]
   
-  first_indents_vec <- c(ifelse(n_act==0, vector(mode="integer"), seq(n_act) + 1),
-                         ifelse(n_disc==0, vector(mode="integer"),seq(n_disc) + 1 + n_act + 1), seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1 + 1)
+  first_indents_vec <- seq(1+n_dsc+1+n_dp+1+n_da) + 1 + n_act + 1 + n_disc + 1 + 1 + 1
   
-  first_indents_vec <- first_indents_vec[!is.na(first_indents_vec)]
-
+  if(n_disc>0){
+    first_indents_vec <- c(seq(n_disc) + 1 + n_act + 1, first_indents_vec)
+  }
+  
+  if(n_act>0){
+    first_indents_vec <- c(seq(n_act) + 1, first_indents_vec)
+  }
+  
   vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
                                                                    paste0("Group A n=", nrow(df_a %>% filter(enrolled)), ' <sub>(Enrolled)</sub>'), 
                                                                    paste0("Group B n=", nrow(df_b %>% filter(enrolled)), ' <sub>(Enrolled)</sub>'), 
@@ -612,7 +617,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, 
 #' not_completed_reason, protocol_deviation_full_data, sae_count
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -816,7 +821,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
 #'
 #' @param analytic This is the analytic data set that must include study_id, complication_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -994,7 +999,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, sae_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1047,7 +1052,7 @@ closed_appendix_A_SAEs <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, sae_data, death_date
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1097,7 +1102,7 @@ closed_appendix_B_deaths <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, not_expected_data, not_completed_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1156,14 +1161,16 @@ closed_appendix_C_not_expected_not_completed <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, protocol_deviation_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_appendix_D_protocol_deviation()
-#' }
+#' closed_appendix_D_protocol_deviation("Replace with Analytic Tibble")
+#' 
 closed_appendix_D_protocol_deviation <- function(analytic){
+  analytic <- if_needed_generate_example_data(analytic,
+                                              example_constructs = "protocol_deviation_data",
+                                              example_types = "(';new_row: ', '|')FacilityCode|Date|Date|Category|Character") 
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
@@ -1217,7 +1224,7 @@ closed_appendix_D_protocol_deviation <- function(analytic){
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
 #' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, and treatment_arm
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1258,7 +1265,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
 #'
 #' @param analytic This is the analytic data set that must include site_certified_date
 #'
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1300,7 +1307,7 @@ closed_certification_date_data <- function(analytic){
 #' @param analytic This is the analytic data set that must include enrolled, treatment_arm, injury_classification_ankle_ao, injury_at_work, injury_in_battle,
 #' injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type
 
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1439,7 +1446,7 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
 #' @param analytic This is the analytic data set that must include enrolled, treatment_arm,
 #' injury_gustilo_type, injury_amputation_status
 #'
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1535,7 +1542,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
 #' @param discontinued_colname this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')
 #' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct if you want it included (defaults to FALSE)
 #'
-#' @return html table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1552,12 +1559,12 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
     filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
   if(is.null(footnotes)){
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set),
                   "<h4>Group B</h4><br />",
                   enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set))
   } else{
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
                   enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE))
@@ -1576,7 +1583,7 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
 #' @param analytic This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
 #' dssi_adjudication_pending_6mo
 #'
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1646,7 +1653,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
 #' @param analytic This is the analytic data set that must include study_id, complication_data, treatment_arm
 #' @param days it is a keyword argument to pass in the number of days to get cut off date for complications
 #' 
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1704,7 +1711,8 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
                                  "other4" = "Other")) 
   
   
-  unique_study_df <- df_1%>%
+  unique_study_df <- df_1%>% 
+    mutate(severity = ifelse(is.na(severity), "Unknown", severity)) %>% 
     group_by(complication, severity) %>%
     summarize(
       unique_ids = n_distinct(study_id)  
@@ -1712,6 +1720,7 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
     ungroup()
   
   new_df <- df_1 %>% select(-study_id) %>% 
+    mutate(severity = ifelse(is.na(severity), "Unknown", severity)) %>% 
     group_by(complication, severity) %>% 
     summarize(Total = sum(Total, na.rm = TRUE))
   
@@ -1811,16 +1820,7 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
 #' @param analytic This is the analytic data set that must include adherence_to_intervention_dwc,
 #' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, treatment_arm
 #'
-#' @return nothing
-#' 
-#' Closed followup followup_2wk_status_by_site_tobra
-#'
-#' @description This function visualizes 2 weeks followup status by site for Clinical followup form(crf09) and patient
-#' medical record review(crf08) for tobra weekly report 
-#'
-#' @param analytic study_id, df_date, enrolled, facilitycode, followup_status_crf08_2wk, followup_status_crf09_2wk
-#' 
-#' @return html table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1861,7 +1861,7 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
 #' @param analytic This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
 #' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -1967,15 +1967,16 @@ closed_characteristics_treatment <- function(analytic){
 #' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode, treatment_arm
 #' @param discontinued meta construct for discontinued
 #' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
+#' @param only_total hide all the site specific rows
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' \dontrun{
 #' closed_enrollment_status_by_site_var_discontinued()
 #' }
-closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued", footnotes = NULL){
+closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued",only_total=FALSE, footnotes = NULL){
    #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
@@ -1985,12 +1986,12 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
     filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
   if(is.null(footnotes)){
-    out <- paste0("<h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname),
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, only_total=only_total),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname))
+                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, only_total=only_total))
   } else{
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE))
@@ -2008,7 +2009,7 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
 #' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, treatment_arm
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2025,12 +2026,12 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
     filter(treatment_arm=="Group B")
   
   if(is.null(footnotes)){
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_a),
                   "<h4>Group B</h4><br />",
                   ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_b))
   } else{
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_a) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
                   ih_and_dc_crossover_monitoring_by_site_cutoff_date(df_b) %>% add_footnote(footnotes, notation="number", escape = FALSE))
@@ -2050,7 +2051,7 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2188,7 +2189,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
 #' @param analytic This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
 #' treatment_arm
 #'
-#' @return A kable table
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2300,7 +2301,7 @@ closed_fracture_characteristics <- function(analytic){
 #' @param form_selection the form to be considered in the visualization
 #' @param name optional argument for changing the name of the followup form, for aesthetic use
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2601,7 +2602,7 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' @param forms the form to be considered in the visualization
 #' @param names This is the analytic data set that must include study_id, followup_data
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2753,7 +2754,7 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
 #' @param forms followup forms to output, as found in the followup_data construct
 #' @param timepoints timepoints to output, as found in the followup_data construct
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2913,8 +2914,11 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' @param filter_cols The columns to filter the the data by (for totals and missing counts)
 #' @param titlecase Changes construct values to Title Case
 #' @param splits Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them
+#' @param subcategory_constructs This allows a characteristic to have a construct as a sub category, 
+#' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
 #'
-#' @return nothing
+#'
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -2923,12 +2927,15 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' closed_generic_characteristics()
 #' }
 closed_generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
-                                    filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL){
+                                    filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
+                                    subcategory_constructs = c()){
   
-  confirm_stability_of_related_visual('generic_characteristics', 'ae09ca020fb9528891b5f8922c2be584')
+  confirm_stability_of_related_visual('generic_characteristics', 'eaf3c24dd6f7b5b48c12c2348f56c9d2')
   
   out <- NULL
   index_vec <- c()
+  sub_index_vec <- c()
+  sub_bold_index_vec <- c()
   
   if(is.null(splits)){
     splits <- rep(NA, length(constructs))
@@ -2938,23 +2945,43 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
     }
   }
   
+  if(is_empty(subcategory_constructs)){
+    subcategory_constructs <- rep(NA, length(constructs))
+  } else{
+    if(length(subcategory_constructs) == 1) {
+      subcategory_constructs <- rep(subcategory_constructs, length(constructs))
+    }
+  }
+  
   for (i in seq(length(constructs))) {
     name_str <- names_vec[i]
     construct <- constructs[i]
+    sub_construct <- subcategory_constructs[i]
     
     if (!is.null(filter_cols)){
       if(length(filter_cols) == 1) {
         inner_analytic <- analytic %>%
-          filter(!!sym(filter_cols))
+          filter(!!sym(filter_cols)) %>%
+          select(study_id, all_of(c(constructs, subcategory_constructs)[!is.na(c(constructs,subcategory_constructs))]), treatment_arm)
       } else {
         inner_analytic <- analytic %>%
-          filter(!!sym(filter_cols[i]))
+          filter(!!sym(filter_cols[i])) %>%
+          select(study_id, all_of(c(constructs, subcategory_constructs)[!is.na(c(constructs,subcategory_constructs))]), treatment_arm)
       }
     }
     total <- nrow(inner_analytic)
+    a_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group A"))
+    b_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group B"))
     
-    inner <- inner_analytic %>% 
-      mutate(temp = as.character(replace_na(!!sym(construct), "Missing"))) 
+    inner <- inner_analytic %>%
+      mutate(temp = !!sym(construct)) %>% 
+      mutate(temp =  replace_na(as.character(temp), "Missing"))
+    
+    if(!is.na(sub_construct)){
+      inner <- inner %>% 
+        mutate(sub_temp = !!sym(sub_construct)) %>% 
+        mutate(sub_temp =  replace_na(as.character(sub_temp), "Missing"))
+    }
     
     inner_split <- splits[i]
     
@@ -2963,44 +2990,147 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         separate_rows(temp,sep = inner_split)
     }
     
-    inner <- inner %>% 
-      group_by(temp, treatment_arm) %>% 
-      count(temp) %>% 
-      mutate(percentage = format_count_percent(n, total)) %>% 
-      select(-n) %>%
-      mutate(header = name_str) %>%
-      arrange(temp == "Missing") %>%
-      pivot_wider(
-        names_from = treatment_arm,
-        values_from = percentage,
-        values_fill = "0 (0%)"
-      )%>%
-      select(temp, header, `Group A`, `Group B`)
+    if(!is.na(sub_construct)){
+      sub_cats <- sort(unique(inner$sub_temp))
+      if("Missing" %in% sub_cats){
+        sub_cats <- c(sub_cats[sub_cats != "Missing"],"Missing")
+      }
+      row_count <- ifelse(is.null(out),0,nrow(out))
+      new_row_count <- 0
+      for(sub_cat in sub_cats){
+        category_df <- inner %>% 
+          filter(sub_temp==sub_cat) %>% 
+          select(-sub_temp) %>% 
+          group_by(temp, treatment_arm) %>% 
+          count(temp)
+        
+        category_df_all <- inner %>% 
+          filter(sub_temp==sub_cat) %>% 
+          select(-sub_temp) %>% 
+          group_by(temp) %>% 
+          count(temp) %>% 
+          mutate(Total = format_count_percent(n, sum(category_df$n))) %>% 
+          mutate(header = name_str) %>%
+          arrange(temp == "Missing")
+        
+        category_tot <- sum(category_df_all$n)
+        category_tot_a <- sum(category_df %>% filter(treatment_arm=="Group A") %>% pull(n))
+        category_tot_b <- sum(category_df %>% filter(treatment_arm=="Group B") %>% pull(n))
+        tot_df <- tibble(temp=sub_cat, header=name_str,
+                         "Group A"=format_count_percent(category_tot_a, total),
+                         "Group B"=format_count_percent(category_tot_b, total),
+                         Total=format_count_percent(category_tot, total))
+        
+        category_df <- category_df   %>% 
+          mutate(percentage = 
+                   ifelse(treatment_arm == 'Group A', 
+                          format_count_percent(n,  category_tot_a),
+                          ifelse(treatment_arm == 'Group B', format_count_percent(n,  category_tot_b), NA)
+                          )
+                   ) %>% 
+          select(-n) %>%
+          mutate(header = name_str) %>%
+          arrange(temp == "Missing") %>%
+          pivot_wider(
+            names_from = treatment_arm,
+            values_from = percentage,
+            values_fill = "0 (0%)"
+          )
+        
+        category_df <- full_join(category_df_all %>% select(-n), category_df)
+        
+        if(!"Group A" %in% colnames(category_df)){
+          category_df <- category_df %>% 
+            mutate("Group A" = "0 (0%)")
+        }
+        if(!"Group B" %in% colnames(category_df)){
+          category_df <- category_df %>% 
+            mutate("Group B" = "0 (0%)")
+        }
+        
+        category_df <- category_df %>%
+          select(temp, header, `Group A`, `Group B`, Total)
+        
+        if (titlecase) {
+          category_df <- category_df %>%
+            mutate(temp = str_to_title(temp))
+        }
+        
+        if (is.null(out)) {
+          out <- bind_rows(tot_df, category_df)
+        } else {
+          out <- rbind(out, tot_df, category_df)
+        }
+        sub_bold_index_vec <- c(sub_bold_index_vec, row_count+1)
+        sub_index_vec <- c(sub_index_vec, seq(nrow(category_df))+ row_count+1)
+        row_count <- row_count + nrow(category_df) + 1
+        new_row_count <- new_row_count + nrow(category_df) + 1
+      }
+      new <- new_row_count
+      names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')')
+      index_vec <- c(index_vec, new)
+    } else{
+      inner_some <- inner %>% 
+        group_by(temp, treatment_arm) %>% 
+        count(temp) %>% 
+        mutate(percentage = format_count_percent(n, total)) %>% 
+        select(-n) %>%
+        mutate(header = name_str) %>%
+        arrange(temp == "Missing") %>%
+        pivot_wider(
+          names_from = treatment_arm,
+          values_from = percentage,
+          values_fill = "0 (0%)"
+        )%>%
+        select(temp, header, `Group A`, `Group B`)
       
-    
-    if (titlecase) {
-      inner <- inner %>%
-        mutate(temp = str_to_title(temp))
-    }
-    
-    new <- nrow(inner)
-    names(new) <- paste0(name_str, ' (n=', total, ')')
-    index_vec <- c(index_vec, new)
-    
-    if (is.null(out)) {
-      out <- inner
-    } else {
-      out <- rbind(out, inner)
+      
+      inner_all <- inner %>% 
+        group_by(temp) %>% 
+        count(temp) %>% 
+        mutate(Total = format_count_percent(n, total)) %>% 
+        select(-n) %>%
+        mutate(header = name_str) %>%
+        arrange(temp == "Missing")
+      
+      inner <- full_join(inner_all, inner_some)%>%
+        select(temp, header, `Group A`, `Group B`, Total)
+      
+      
+      if (titlecase) {
+        inner <- inner %>%
+          mutate(temp = str_to_title(temp))
+      }
+      
+      new <- nrow(inner)
+      names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')')
+      index_vec <- c(index_vec, new)
+      
+      if (is.null(out)) {
+        out <- inner
+      } else {
+        out <- rbind(out, inner)
+      }
     }
   }
   out <- out %>%
     select(-header)
   
-  vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B")) %>%
-    add_indent(c(seq(nrow(out)))) %>% 
-    row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
-    pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
-    kable_styling("striped", full_width = F, position="left")
+  if(is_empty(sub_bold_index_vec)){
+    vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
+      add_indent(c(seq(nrow(out)))) %>% 
+      row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
+      pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+      kable_styling("striped", full_width = F, position="left")
+  }else{
+    vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
+      add_indent(c(seq(nrow(out)))) %>% 
+      add_indent(sub_index_vec) %>% 
+      row_spec(sub_bold_index_vec, bold = TRUE) %>% 
+      row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
+      pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+      kable_styling("striped", full_width = F, position="left")
+  }
   
   return(vis)
 }
@@ -3013,7 +3143,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
 #' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
 #' facilitycode, late_ineligible
 #'
-#' @return nothing
+#' @return An HTML table.
 #' @export
 #'
 #' @examples
@@ -3029,7 +3159,7 @@ closed_enrollment_status_by_site <- function(analytic){
   df_b <- analytic %>% 
     filter(is.na(treatment_arm)|treatment_arm=="Group B")
   
-    out <- paste0("<h4>Group A</h4><br />",
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   enrollment_status_by_site(df_a),
                   "<h4>Group B</h4><br />",
                   enrollment_status_by_site(df_b))

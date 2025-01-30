@@ -12,7 +12,7 @@ closed_complications_overall(analytic, min_days = NULL, cutoff_days = NULL)
 \item{days}{it is a keyword argument to pass in the number of days to get cut off date for complications}
 }
 \value{
-A kable table
+An HTML table.
 }
 \description{
 This function visualizes the number of complications(number of subjects) reported at all time points(Overall) 

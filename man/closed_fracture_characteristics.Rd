@@ -11,7 +11,7 @@ closed_fracture_characteristics(analytic)
 treatment_arm}
 }
 \value{
-A kable table
+An HTML table.
 }
 \description{
 This function visualizes fracture characteristics, broken down by tibial plateau or pilon,

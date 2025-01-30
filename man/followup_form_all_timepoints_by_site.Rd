@@ -19,7 +19,7 @@ followup_form_all_timepoints_by_site(
 \item{included_colmns}{Defaults to c("Expected", "Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete')}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 Returns the designated followup form status by site, for all timepoints

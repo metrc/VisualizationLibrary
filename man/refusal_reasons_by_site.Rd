@@ -10,7 +10,7 @@ refusal_reasons_by_site(analytic)
 \item{analytic}{This is the analytic data set that must include facilitycode, screened, refused, refused_reason}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the reasons of refusal, total refused and total screened by each site.
