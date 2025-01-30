@@ -10,13 +10,12 @@ closed_appendix_D_protocol_deviation(analytic)
 \item{analytic}{This is the analytic data set that must include study_id, protocol_deviation_data}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes any protocol deviations occurred during the study time period.
 }
 \examples{
-\dontrun{
-closed_appendix_D_protocol_deviation()
-}
+closed_appendix_D_protocol_deviation("Replace with Analytic Tibble")
+
 }

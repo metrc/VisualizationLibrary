@@ -18,7 +18,7 @@ The package contains base-level (i.e., 'user-level') code for creating data visu
     - Injury characteristics
     - Follow-up visit status
     - Adverse events and protocol deviations
-    - And more
+    - And more!
 
 ## Installation 
 

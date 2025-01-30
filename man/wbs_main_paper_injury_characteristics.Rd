@@ -12,7 +12,7 @@ injury_type, injury_classification_ankle_ota, definitive_fixation_construct,
 definitive_fixation_type, soft_tissue_closure, enrolled}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function outputs a table with various injury characteristics for enrolled patients with "Ankle"

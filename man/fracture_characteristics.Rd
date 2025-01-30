@@ -10,7 +10,7 @@ fracture_characteristics(analytic)
 \item{analytic}{This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes fracture characteristics, broken down by tibial plateau or pilon, 

@@ -26,7 +26,7 @@ facilitycode, screened_date}
 \item{include_exclusive_safety_set}{this is a toggle that will include a exclusive_safety_set construct if you want it included (defaults to FALSE)}
 }
 \value{
-html table
+An HTML table.
 }
 \description{
 This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week by treatment arm

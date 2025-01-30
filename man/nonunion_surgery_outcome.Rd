@@ -11,7 +11,7 @@ nonunion_surgery_outcome(analytic)
 followup_expected_3mo, followup_expected_12mo, nonunion_90days,  nonunion_1yr}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 This function visualizes the Nonunion surgery outcome

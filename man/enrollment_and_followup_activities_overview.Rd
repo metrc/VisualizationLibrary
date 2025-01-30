@@ -14,7 +14,7 @@ facilitycode, screened, enrolled, eligible, screened_date}
 to find the data for}
 }
 \value{
-visualization
+An HTML table.
 }
 \description{
 Returns the screened, overall, and follow-up data, separated by sites

@@ -14,7 +14,7 @@ closed_followup_forms_all_timepoints(analytic, forms = NULL, timepoints = NULL)
 \item{timepoints}{timepoints to output, as found in the followup_data construct}
 }
 \value{
-nothing
+An HTML table.
 }
 \description{
 Returns the designated followup forms status at a specified range
