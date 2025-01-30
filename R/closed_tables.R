@@ -2261,9 +2261,11 @@ closed_fracture_characteristics <- function(analytic){
   df_final_b <- inner_fracture_characteristics(df_b)
   df_final_full <- inner_fracture_characteristics(df)
   
-  df_table <- full_join(df_final_a, df_final_b, by = "type", suffix = c(" (Group A)", " (Group B)")) %>%
-    left_join(df_final_full, by = "type") %>%
-    select(type, ends_with(" (Group A)"), ends_with(" (Group B)"), percentage)
+  df_table <- full_join(df_final_full, df_final_a, by = "type") %>%
+    left_join(df_final_b, by = "type") %>%
+    mutate(percentage.y = ifelse(is.na(percentage.y), '0 (0%)', percentage.y)) %>% 
+    mutate(percentage = ifelse(is.na(percentage), '0 (0%)', percentage.y)) %>% 
+    select(type, percentage.y, percentage, percentage.x)
   
   cnames <- c(' ', paste0('Group A (n=', sum(df_a$enrolled), ')'),
               paste0('Group B (n=', sum(df_b$enrolled), ')'),
@@ -2273,7 +2275,7 @@ closed_fracture_characteristics <- function(analytic){
   
   n_closed <- nrow(df_table %>% filter(str_detect(type, "Closed Fracture")))
   n_open <- nrow(df_table %>% filter(str_detect(type, "Open Fracture")))
-  n_frac <- nrow(df_table %>% filter(str_detect(type, "Tibial")|str_detect(type, 'Unknown')))
+  n_frac <- nrow(df_table %>% filter(str_detect(type, "Tibial")|str_detect(type, 'Unknown') | str_detect(type, 'Fibula')))
   n_tscherne <- nrow(df_table %>% filter(str_detect(type, "Tscherne")))
   n_gustilo <- nrow(df_table %>% filter(str_detect(type, "Type")))
   
