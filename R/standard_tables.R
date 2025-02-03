@@ -2893,9 +2893,7 @@ expected_and_followup_visit_overall <- function(analytic){
 #' @export
 #'
 #' @examples
-#' 
 #' followup_form_at_timepoint_by_site("Replace with Analytic Tibble", "2 Unit Period", "Form 3")
-#' 
 #' 
 followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
   analytic <- if_needed_generate_example_data(analytic, 
