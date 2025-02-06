@@ -71,7 +71,8 @@ enrollment_status_by_site <- function(analytic){
 #' @description This function visualizes the enrollment totals for each site
 #'
 #' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode
+#' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode,
+#' consent_date, not_randomized
 #' @param discontinued meta construct for discontinued
 #' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
 #' @param only_total hide all the site specific rows
@@ -80,11 +81,18 @@ enrollment_status_by_site <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' enrollment_status_by_site_var_discontinued()
-#' }
-enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued", only_total=FALSE){
- 
+#' enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble")
+#' 
+enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", 
+                                                       discontinued_colname="Discontinued", only_total=FALSE){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "eligible", "refused", "consented", "enrolled", 
+                           "not_consented", "site_certified_days", "facilitycode", "consent_date",
+                           "not_randomized", "discontinued"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Number", "FacilityCode", "Date", "Boolean", "Boolean"))
+  
   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, site_certified_days, 
            facilitycode, all_of(discontinued))
@@ -3023,10 +3031,14 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' followup_form_all_timepoints_by_site()
-#' }
+#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", "2 Unit Period", "Form 3")
+#' 
 followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete')){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("facilitycode", "followup_data"), 
+    example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date"))
+  
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
