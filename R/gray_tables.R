@@ -118,20 +118,16 @@ ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
 #' adherence_by_site("Replace with Analytic Tibble")
 #' 
 adherence_by_site <- function(analytic){
-  if (analytic == 'Replace with Analytic Tibble') {
-    example_mode <- TRUE
-  } else {
-    example_mode <- FALSE
-  }
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', 'df_date', 'enrolled', 'treatment_arm'),
-    example_types = c('FacilityCode', 'Date', 'Boolean', "NamedCategory['Group A' 'Group B']"))
+    example_types = c('FacilityCode', 'Date', 'Boolean', "TreatmentArm"))
   
   df <- analytic %>%
     select(facilitycode, enrolled, df_date, treatment_arm) %>% 
     filter(enrolled) %>%
-    mutate(df_date = ifelse(!example_mode, na_if(df_date, "NA"), df_date)) %>% 
+    mutate(df_date = as.character(df_date)) %>%
+    mutate(df_date = na_if(df_date, "NA")) %>% 
     mutate(df_complete = ifelse(!is.na(df_date), TRUE, FALSE)) 
   
   treatment_total <- (sum(df$treatment_arm, na.rm = TRUE))
