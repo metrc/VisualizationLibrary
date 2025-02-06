@@ -434,17 +434,25 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #'
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
-#' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
+#' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count, treatment_arm
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_not_complete_sae_deviation_by_type()
-#' }
+#' closed_not_complete_sae_deviation_by_type("Replace with Analytic Tibble")
+#' 
 closed_not_complete_sae_deviation_by_type <- function(analytic){
   confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '197e475aa642695d15049e9fcfb1c7c0')
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("enrolled", "not_expected_reason", "not_completed_reason",
+                           "protocol_deviation_screen_consent", "protocol_deviation_procedural",
+                           "protocol_deviation_administrative", "sae_count", "treatment_arm",
+                           "not_completed", "consented"), 
+    example_types = c("Boolean", "Category", "Category", "Category", "Category",
+                      "Category", "Number", "TreatmentArm", "Boolean", "Boolean"))
   
   n_act <- NA
   n_disc <- NA
