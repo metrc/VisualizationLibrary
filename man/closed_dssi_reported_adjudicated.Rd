@@ -18,7 +18,6 @@ This function visualizes the treatment crossover or any nonadherence occured dur
 study by treatment arm.
 }
 \examples{
-\dontrun{
-closed_dssi_reported_adjudicated(analytic)
-}
+closed_dssi_reported_adjudicated("Replace with Analytic Tibble")
+
 }

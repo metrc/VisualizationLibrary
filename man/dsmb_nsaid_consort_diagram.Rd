@@ -12,7 +12,9 @@ dsmb_nsaid_consort_diagram(
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, eligible, 
-consented, not_consented, randomized, enrolled, refused, df_surg_completed, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
+consented, not_consented, randomized, enrolled, refused, df_surg_completed, completed, 
+not_completed, not_expected, active, missed_final_followup, incomplete_final_followup,
+adjudicated_discontinued}
 
 \item{final_period}{Defaults to 12 Month}
 
@@ -28,7 +30,6 @@ This function visualizes the categorical percentages of Study Status
 for the NSAID study
 }
 \examples{
-\dontrun{
-dsmb_nsaid_consort_diagram()
-}
+dsmb_nsaid_consort_diagram("Replace with Analytic Tibble")
+
 }

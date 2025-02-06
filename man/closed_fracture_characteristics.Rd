@@ -18,7 +18,6 @@ This function visualizes fracture characteristics, broken down by tibial plateau
 and then closed or open fracture with tscherne grades and gustilo types respectively by treatment arm
 }
 \examples{
-\dontrun{
-closed_fracture_characteristics(analytic)
-}
+closed_fracture_characteristics("Replace with Analytic Tibble")
+
 }

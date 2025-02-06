@@ -44,7 +44,6 @@ An HTML table.
 This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military
 }
 \examples{
-\dontrun{
-closed_baseline_characteristics_percent()
-}
+closed_baseline_characteristics_percent("Replace with Analytic Tibble")
+
 }

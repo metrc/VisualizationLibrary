@@ -17,7 +17,6 @@ An HTML table.
 This function visualizes the Nonunion surgery outcome
 }
 \examples{
-\dontrun{
-nonunion_surgery_outcome()
-}
+nonunion_surgery_outcome("Replace with Analytic Tibble")
+
 }

@@ -15,8 +15,3 @@ An HTML table.
 \description{
 This function visualizes any death occurred during the study time period.
 }
-\examples{
-\dontrun{
-closed_appendix_B_deaths()
-}
-}
