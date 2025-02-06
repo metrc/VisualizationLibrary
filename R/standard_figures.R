@@ -1027,10 +1027,14 @@ discrete_enrolled <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' cumulative_enrolled_los()
-#' }
+#' cumulative_enrolled_los("Replace with Analytic Tibble")
+#' 
 cumulative_enrolled_los <- function(analytic){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("ih_los_days"), 
+    example_types = c("Number"))
   
   df <- analytic %>%  select(study_id, ih_los_days) %>% 
     filter(ih_los_days != 'Missing' & !is.na(ih_los_days))
