@@ -22,7 +22,6 @@ reasons, not people, and so will not total the number of participants considered
 ineligible.
 }
 \examples{
-\dontrun{
-top_5_ineligibility_reasons()
-}
+top_5_ineligibility_reasons("Replace with Analytic Tibble")
+
 }
