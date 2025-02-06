@@ -3178,10 +3178,14 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' followup_forms_at_timepoint_by_site()
-#' }
+#' followup_forms_at_timepoint_by_site("Replace with Analytic Tibble")
+#' 
 followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("facilitycode", "followup_data"), 
+    example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date"))
+  
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
