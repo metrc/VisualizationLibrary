@@ -87,11 +87,11 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
                                                        discontinued_colname="Discontinued", only_total=FALSE){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c("screened", "eligible", "refused", "consented", "enrolled", 
+    example_constructs = c("screened", "eligible", "refused", "consented", "enrolled", "randomized",
                            "not_consented", "site_certified_days", "facilitycode", "consent_date",
                            "not_randomized", "discontinued"), 
-    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
-                      "Boolean", "Number", "FacilityCode", "Date", "Boolean", "Boolean"))
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
+                      "Boolean", "Date", "FacilityCode", "Date", "Boolean", "Boolean"))
   
   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, site_certified_days, 
