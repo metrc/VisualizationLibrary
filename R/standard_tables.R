@@ -2090,10 +2090,17 @@ other_reason_refusal_by_site <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' not_enrolled_for_other_reasons()
-#' }
+#' not_enrolled_for_other_reasons("Replace with Analytic Tibble")
+#' 
 not_enrolled_for_other_reasons <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("facilitycode", "able_to_participate", "nonparticipation_text_given", 
+                           "constraint_noconsent", "constraint_admin", "constraint_other", 
+                           "constraint_other_txt", "screened"), 
+    example_types = c("FacilityCode", "Boolean", "Character", 
+                      "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean"))
   
   df1 <- analytic %>%  select(study_id, facilitycode, able_to_participate, nonparticipation_text_given, 
                               constraint_noconsent, constraint_admin, constraint_other, constraint_other_txt, screened) %>% 
