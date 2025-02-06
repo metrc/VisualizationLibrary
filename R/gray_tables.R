@@ -220,10 +220,15 @@ adherence_sextant <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' characteristics_treatment()
-#' }
+#' characteristics_treatment("Replace with Analytic Tibble")
+#' 
 characteristics_treatment <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('enrolled', 'df_date', 'plat_df_surgical_incision', 'pil_df_surgical_incision', 'df_number_procedures', 
+                           'adherence_to_intervention'), 
+    example_types = c('Boolean', 'Date', 'Category', 'Category', 'Number', 'Boolean'))
+  
   df <- analytic %>% 
     select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, adherence_to_intervention) %>% 
     filter(enrolled)
