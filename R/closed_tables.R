@@ -1999,11 +1999,19 @@ closed_characteristics_treatment <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_enrollment_status_by_site_var_discontinued()
-#' }
+#' closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble")
+#' 
 closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued",only_total=FALSE, footnotes = NULL){
-   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("screened", "eligible", "refused", "not_consented", "consented", 
+                           "not_randomized", "randomized", "enrolled", "site_certified_days", 
+                           "facilitycode", "discontinued"),
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Number", 
+                      "FacilityCode", "Boolean")) 
+  
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
     filter(is.na(treatment_arm)|treatment_arm=="Group A")
@@ -2331,11 +2339,17 @@ closed_fracture_characteristics <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_followup_form_at_timepoint_by_site()
-#' }
+#' closed_followup_form_at_timepoint_by_site("Replace with Analytic Tibble")
+#' 
 closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
   confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', '878c411fde80fea78add23f5defe4c14')
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("facilitycode", "followup_data", "treatment_arm"), 
+    example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date",
+                      "TreatmentArm"))
+  
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
