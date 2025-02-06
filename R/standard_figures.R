@@ -877,16 +877,19 @@ enrollment_by_injury_and_site <- function(analytic){
 #'
 #' @description This function visualizes the enrollment by each site for each patient
 #'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, facilitycode
+#' @param analytic This is the analytic data set that must include study_id, enrolled, facilitycode, consent_date
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' enrollment_by_site()
-#' }
+#' enrollment_by_site("Replace with Analytic Tibble")
+#' 
 enrollment_by_site <- function(analytic, number_order = FALSE){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("facilitycode", "enrolled", "consent_date"), 
+    example_types = c("FacilityCode", "Boolean", "Date"))
   
   df <- analytic %>%  select(study_id, enrolled, facilitycode, consent_date) %>% 
     filter(enrolled == TRUE) %>% 
