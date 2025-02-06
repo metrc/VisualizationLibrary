@@ -125,14 +125,22 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_baseline_characteristics_percent()
-#' }
+#' closed_baseline_characteristics_percent("Replace with Analytic Tibble")
+#' 
 closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicity_race", education="education_level", military="military_status",
                                                        sex_levels=c("Female","Male", "Missing"), 
                                                        race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
                                                        education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
                                                        military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("sex", "ethnicity_race", "education_level", "age", "age_group",
+                           "enrolled", "military_status", "treatment_arm"),
+    example_types = c("NamedCategory['Female' 'Male' 'Missing']", "NamedCategory['Non-Hispanic White' 'Non-Hispanic Black' 'Hispanic' 'Other' 'Missing']",
+                      "NamedCategory['Less than High School' 'GED or High School Diploma' 'More than High School' 'Refused / Don't know' 'Missing']",
+                      "Number", "Category", "Boolean", "NamedCategory['Active Military' 'Active Reserves' 'Not Active Duty' 'Missing']",
+                      "TreatmentArm")) 
   
   confirm_stability_of_related_visual("baseline_characteristics_percent", "7aadae1abf473348fab0c8b12f86228e")
   
