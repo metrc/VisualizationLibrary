@@ -17,7 +17,6 @@ nothing
 This function visualizes the crossovers by site in hospital and at discharge
 }
 \examples{
-\dontrun{
-ih_and_dc_crossover_monitoring_by_site()
-}
+ih_and_dc_crossover_monitoring_by_site("Replace with Analytic Tibble")
+
 }
