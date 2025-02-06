@@ -1056,10 +1056,13 @@ closed_appendix_A_SAEs <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_appendix_B_deaths()
-#' }
+#' closed_appendix_B_deaths("Replace with Analytic Tibble)
 closed_appendix_B_deaths <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("sae_data", "death_date"),
+    example_types = c("(';new_row: ', '|')FacilityCode|TreatmentArm|Boolean|Date|Date|Number|Category|Category|Category|Character",
+                      "Date")) 
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
@@ -1824,11 +1827,16 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' closed_adherence_sextant("Replace with Analytic Tibble")
 #' 
-#' closed_adherence_sextant()
-#' }
 closed_adherence_sextant <- function(analytic, footnotes=NULL){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("treatment_arm", "adherence_to_intervention_dwc",
+                           "adherence_to_intervention_post_dwc", "adherence_to_no_other_antibiotic_dwc", 
+                           "dwc_date", "enrolled"),
+    example_types = c("TreatmentArm", "Boolean", "Boolean", "Boolean", 
+                      "Date", "Boolean")) 
   
   confirm_stability_of_related_visual('adherence_sextant', 'a7970bc0e7a68c4a3210c478baa0fdbc')
   
