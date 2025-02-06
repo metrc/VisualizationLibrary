@@ -2227,11 +2227,18 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_fracture_characteristics(analytic)
-#' }
+#' closed_fracture_characteristics("Replace with Analytic Tibble")
+#' 
 closed_fracture_characteristics <- function(analytic){
   confirm_stability_of_related_visual('fracture_characteristics', '57f21346c4b2acf70ff51b42f7bb2ee5')
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("enrolled", "fracture_type", "injury_gustilo", "injury_classification_tscherne",
+                           "treatment_arm"), 
+    example_types = c("Boolean", "NamedCategory['Tibial Plateau' 'Tibial Pilon' 'Tibial Shaft' 'Fibula' 'Unknown']", 
+                      "NamedCategory['I' 'II' 'IIIA']", "NamedCategory['C0' 'CI' 'CII' 'CIII']",
+                      "TreatmentArm"))
   
   inner_fracture_characteristics <- function(df) {
     total <- sum(df$enrolled)
