@@ -130,7 +130,9 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period
 #' for the NSAID study
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, 
-#' consented, not_consented, randomized, enrolled, refused, df_surg_completed, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
+#' consented, not_consented, randomized, enrolled, refused, df_surg_completed, completed, 
+#' not_completed, not_expected, active, missed_final_followup, incomplete_final_followup,
+#' adjudicated_discontinued
 #' @param final_period Defaults to 12 Month
 #' @param definitive_event Event either DF or DWC
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
@@ -139,10 +141,20 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' dsmb_nsaid_consort_diagram()
-#' }
+#' dsmb_nsaid_consort_diagram("Replace with Analytic Tibble")
+#' 
 dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_expected_adjudicated=TRUE){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "eligible", "adjudicated_discontinued",
+                           "consented", "not_consented", "randomized", "enrolled", "refused", 
+                           "df_surg_completed", "completed", 
+                           "not_completed", "not_expected", "active", "missed_final_followup", 
+                           "incomplete_final_followup"),
+    example_types = c("Boolean", "Boolean", "Boolean",
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean"))
+  
   analytic <- analytic %>% 
     filter(screened == TRUE) 
   
@@ -268,10 +280,21 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' dsmb_consort_diagram_pre_no_def()
-#' }
+#' dsmb_consort_diagram_pre_no_def("Replace with Analytic Tibble")
+#' 
 dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", adjudicated=FALSE){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
+                           "randomized", "enrolled", "adjudicated_discontinued", 
+                           "completed", "safety_set", "exclusive_safety_set", "not_completed", 
+                           "not_expected", "active", "missed_final_followup", "incomplete_final_followup", 
+                           "time_zero", "pre_screened", "pre_eligible", "pre_ineligible",
+                           "discontinued"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Date", "Boolean",
+                      "Boolean", "Boolean", "Boolean", "Boolean"))
   
   pre_analytic <- analytic
   
@@ -764,11 +787,14 @@ cumulative_percentage_ankle_injuries <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' cumulative_percentage_plateau_injuries()
-#' }
+#' cumulative_percentage_plateau_injuries("Replace with Analytic Tibble)
+#' 
 cumulative_percentage_plateau_injuries <- function(analytic){
-
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("injury_type", "enrolled", "consent_date"), 
+    example_types = c("NamedCategory['plateau' 'other']", "Boolean", "Date"))
+  
   df <- analytic %>%  select(study_id, injury_type, enrolled, consent_date) %>% 
     filter(enrolled = TRUE) %>% 
     filter(!is.na(injury_type)) %>%
@@ -851,16 +877,19 @@ enrollment_by_injury_and_site <- function(analytic){
 #'
 #' @description This function visualizes the enrollment by each site for each patient
 #'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, facilitycode
+#' @param analytic This is the analytic data set that must include study_id, enrolled, facilitycode, consent_date
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' enrollment_by_site()
-#' }
+#' enrollment_by_site("Replace with Analytic Tibble")
+#' 
 enrollment_by_site <- function(analytic, number_order = FALSE){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("facilitycode", "enrolled", "consent_date"), 
+    example_types = c("FacilityCode", "Boolean", "Date"))
   
   df <- analytic %>%  select(study_id, enrolled, facilitycode, consent_date) %>% 
     filter(enrolled == TRUE) %>% 
@@ -1027,10 +1056,14 @@ discrete_enrolled <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' cumulative_enrolled_los()
-#' }
+#' cumulative_enrolled_los("Replace with Analytic Tibble")
+#' 
 cumulative_enrolled_los <- function(analytic){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("ih_los_days"), 
+    example_types = c("Number"))
   
   df <- analytic %>%  select(study_id, ih_los_days) %>% 
     filter(ih_los_days != 'Missing' & !is.na(ih_los_days))
@@ -1142,14 +1175,15 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #' consort_diagram("Replace with Analytic Tibble")
 #' 
 consort_diagram <- function(analytic, final_period="12 Month", definitive_event = "Definitive Fixation Complete" , not_expected_adjudicated=TRUE){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
-                                                                     "randomized", "enrolled", "adjudicated_discontinued", 
-                                                                     "completed", "safety_set", "exclusive_safety_set", "not_completed", 
-                                                                     "not_expected", "active", "missed_final_followup", "incomplete_final_followup", "time_zero"), 
-                                              example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
-                                                                "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
-                                                                "Boolean", "Boolean", "Boolean", "Boolean", "Date"))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
+                           "randomized", "enrolled", "adjudicated_discontinued", 
+                           "completed", "safety_set", "exclusive_safety_set", "not_completed", 
+                            "not_expected", "active", "missed_final_followup", "incomplete_final_followup", "time_zero"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Date"))
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
            adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup) %>% 

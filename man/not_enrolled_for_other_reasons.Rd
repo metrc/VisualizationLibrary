@@ -18,7 +18,6 @@ This function visualizes list of study_ids who were screened howevere were not e
 reasons
 }
 \examples{
-\dontrun{
-not_enrolled_for_other_reasons()
-}
+not_enrolled_for_other_reasons("Replace with Analytic Tibble")
+
 }

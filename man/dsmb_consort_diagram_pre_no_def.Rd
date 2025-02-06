@@ -26,7 +26,6 @@ This function visualizes the categorical percentages of Study Status
 for the NSAID study
 }
 \examples{
-\dontrun{
-dsmb_consort_diagram_pre_no_def()
-}
+dsmb_consort_diagram_pre_no_def("Replace with Analytic Tibble")
+
 }

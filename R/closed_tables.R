@@ -125,14 +125,22 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_baseline_characteristics_percent()
-#' }
+#' closed_baseline_characteristics_percent("Replace with Analytic Tibble")
+#' 
 closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicity_race", education="education_level", military="military_status",
                                                        sex_levels=c("Female","Male", "Missing"), 
                                                        race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
                                                        education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
                                                        military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("sex", "ethnicity_race", "education_level", "age", "age_group",
+                           "enrolled", "military_status", "treatment_arm"),
+    example_types = c("NamedCategory['Female' 'Male' 'Missing']", "NamedCategory['Non-Hispanic White' 'Non-Hispanic Black' 'Hispanic' 'Other' 'Missing']",
+                      "NamedCategory['Less than High School' 'GED or High School Diploma' 'More than High School' 'Refused / Don't know' 'Missing']",
+                      "Number", "Category", "Boolean", "NamedCategory['Active Military' 'Active Reserves' 'Not Active Duty' 'Missing']",
+                      "TreatmentArm")) 
   
   confirm_stability_of_related_visual("baseline_characteristics_percent", "7aadae1abf473348fab0c8b12f86228e")
   
@@ -426,17 +434,25 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #'
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
-#' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
+#' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count, treatment_arm
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_not_complete_sae_deviation_by_type()
-#' }
+#' closed_not_complete_sae_deviation_by_type("Replace with Analytic Tibble")
+#' 
 closed_not_complete_sae_deviation_by_type <- function(analytic){
   confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '197e475aa642695d15049e9fcfb1c7c0')
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("enrolled", "not_expected_reason", "not_completed_reason",
+                           "protocol_deviation_screen_consent", "protocol_deviation_procedural",
+                           "protocol_deviation_administrative", "sae_count", "treatment_arm",
+                           "not_completed", "consented"), 
+    example_types = c("Boolean", "Category", "Category", "Category", "Category",
+                      "Category", "Number", "TreatmentArm", "Boolean", "Boolean"))
   
   n_act <- NA
   n_disc <- NA
@@ -1056,10 +1072,13 @@ closed_appendix_A_SAEs <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_appendix_B_deaths()
-#' }
+#' closed_appendix_B_deaths("Replace with Analytic Tibble)
 closed_appendix_B_deaths <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("sae_data", "death_date"),
+    example_types = c("(';new_row: ', '|')FacilityCode|TreatmentArm|Boolean|Date|Date|Number|Category|Category|Category|Character",
+                      "Date")) 
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
@@ -1587,10 +1606,15 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_dssi_reported_adjudicated(analytic)
-#' }
+#' closed_dssi_reported_adjudicated("Replace with Analytic Tibble")
+#' 
 closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", "followup_expected_6mo", "dssi_reported_6mo",
+                           "dssi_adjudicated_6mo", "dssi_adjudication_pending_6mo",
+                           "treatment_arm"),
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "TreatmentArm")) 
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
@@ -1824,11 +1848,16 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
 #' @export
 #'
 #' @examples
-#' \dontrun{
+#' closed_adherence_sextant("Replace with Analytic Tibble")
 #' 
-#' closed_adherence_sextant()
-#' }
 closed_adherence_sextant <- function(analytic, footnotes=NULL){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("treatment_arm", "adherence_to_intervention_dwc",
+                           "adherence_to_intervention_post_dwc", "adherence_to_no_other_antibiotic_dwc", 
+                           "dwc_date", "enrolled"),
+    example_types = c("TreatmentArm", "Boolean", "Boolean", "Boolean", 
+                      "Date", "Boolean")) 
   
   confirm_stability_of_related_visual('adherence_sextant', 'a7970bc0e7a68c4a3210c478baa0fdbc')
   
@@ -1865,10 +1894,15 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_characteristics_treatment()
-#' }
+#' closed_characteristics_treatment("Replace with Analytic Tibble")
+#' 
 closed_characteristics_treatment <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("treatment_arm", "enrolled", "df_date", "plat_df_surgical_incision",
+                           "pil_df_surgical_incision", "df_number_procedures", "adherence_to_intervention"),
+    example_types = c("TreatmentArm", "Boolean", "Date", "Category",
+                      "Category", "Number", "Boolean")) 
   
   confirm_stability_of_related_visual('characteristics_treatment', 'da790cf8c715e5b060788e7865bfdbcd')
   
@@ -1973,11 +2007,19 @@ closed_characteristics_treatment <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_enrollment_status_by_site_var_discontinued()
-#' }
+#' closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble")
+#' 
 closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued",only_total=FALSE, footnotes = NULL){
-   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("screened", "eligible", "refused", "not_consented", "consented", 
+                           "not_randomized", "randomized", "enrolled", "site_certified_days", 
+                           "facilitycode", "discontinued"),
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Number", 
+                      "FacilityCode", "Boolean")) 
+  
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
   df_a <- analytic %>% 
     filter(is.na(treatment_arm)|treatment_arm=="Group A")
@@ -2013,11 +2055,19 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date()
-#' }
+#' closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date("Replace with Analytic Tibble")
+#' 
 closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, footnotes = NULL){
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("enrolled", "df_surg_completed", "ih_discharge_date", 
+                           "crossover_inpatient", "crossover_discharge", "ih_discharge_date_on_time_zero",
+                           "facilitycode", "treatment_arm"), 
+    example_types = c("Boolean", "Boolean", "Date", 
+                      "Boolean", "Boolean", "Boolean",
+                      "FacilityCode", "TreatmentArm"))
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -2193,11 +2243,18 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_fracture_characteristics(analytic)
-#' }
+#' closed_fracture_characteristics("Replace with Analytic Tibble")
+#' 
 closed_fracture_characteristics <- function(analytic){
   confirm_stability_of_related_visual('fracture_characteristics', '57f21346c4b2acf70ff51b42f7bb2ee5')
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("enrolled", "fracture_type", "injury_gustilo", "injury_classification_tscherne",
+                           "treatment_arm"), 
+    example_types = c("Boolean", "NamedCategory['Tibial Plateau' 'Tibial Pilon' 'Tibial Shaft' 'Fibula' 'Unknown']", 
+                      "NamedCategory['I' 'II' 'IIIA']", "NamedCategory['C0' 'CI' 'CII' 'CIII']",
+                      "TreatmentArm"))
   
   inner_fracture_characteristics <- function(df) {
     total <- sum(df$enrolled)
@@ -2305,11 +2362,17 @@ closed_fracture_characteristics <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_followup_form_at_timepoint_by_site()
-#' }
+#' closed_followup_form_at_timepoint_by_site("Replace with Analytic Tibble")
+#' 
 closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
   confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', '878c411fde80fea78add23f5defe4c14')
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("facilitycode", "followup_data", "treatment_arm"), 
+    example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date",
+                      "TreatmentArm"))
+  
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
