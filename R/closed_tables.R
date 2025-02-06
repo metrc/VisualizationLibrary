@@ -1598,10 +1598,15 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_dssi_reported_adjudicated(analytic)
-#' }
+#' closed_dssi_reported_adjudicated("Replace with Analytic Tibble")
+#' 
 closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", "followup_expected_6mo", "dssi_reported_6mo",
+                           "dssi_adjudicated_6mo", "dssi_adjudication_pending_6mo",
+                           "treatment_arm"),
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "TreatmentArm")) 
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
