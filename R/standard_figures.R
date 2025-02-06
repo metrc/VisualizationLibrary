@@ -130,7 +130,9 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period
 #' for the NSAID study
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, 
-#' consented, not_consented, randomized, enrolled, refused, df_surg_completed, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
+#' consented, not_consented, randomized, enrolled, refused, df_surg_completed, completed, 
+#' not_completed, not_expected, active, missed_final_followup, incomplete_final_followup,
+#' adjudicated_discontinued
 #' @param final_period Defaults to 12 Month
 #' @param definitive_event Event either DF or DWC
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
@@ -139,10 +141,20 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' dsmb_nsaid_consort_diagram()
-#' }
+#' dsmb_nsaid_consort_diagram("Replace with Analytic Tibble")
+#' 
 dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_expected_adjudicated=TRUE){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "eligible", "adjudicated_discontinued",
+                           "consented", "not_consented", "randomized", "enrolled", "refused", 
+                           "df_surg_completed", "completed", 
+                           "not_completed", "not_expected", "active", "missed_final_followup", 
+                           "incomplete_final_followup"),
+    example_types = c("Boolean", "Boolean", "Boolean",
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean"))
+  
   analytic <- analytic %>% 
     filter(screened == TRUE) 
   
