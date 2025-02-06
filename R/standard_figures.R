@@ -268,10 +268,21 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' dsmb_consort_diagram_pre_no_def()
-#' }
+#' dsmb_consort_diagram_pre_no_def("Replace with Analytic Tibble")
+#' 
 dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", adjudicated=FALSE){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
+                           "randomized", "enrolled", "adjudicated_discontinued", 
+                           "completed", "safety_set", "exclusive_safety_set", "not_completed", 
+                           "not_expected", "active", "missed_final_followup", "incomplete_final_followup", 
+                           "time_zero", "pre_screened", "pre_eligible", "pre_ineligible",
+                           "discontinued"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Date", "Boolean",
+                      "Boolean", "Boolean", "Boolean", "Boolean"))
   
   pre_analytic <- analytic
   
