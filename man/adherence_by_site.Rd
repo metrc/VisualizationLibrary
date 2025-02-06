@@ -7,7 +7,7 @@
 adherence_by_site(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include facilitycode, df_date, df_randomized_treatment}
+\item{analytic}{This is the analytic data set that must include facilitycode, df_date}
 }
 \value{
 nothing
@@ -16,7 +16,6 @@ nothing
 This function visualizes the treatment crossover or any nonadherence occured during the study.
 }
 \examples{
-\dontrun{
-adherence_by_site()
-}
+adherence_by_site("Replace with Analytic Tibble")
+
 }

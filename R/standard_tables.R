@@ -673,14 +673,20 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' baseline_characteristics_percent_nm()
-#' }
+#' baseline_characteristics_percent_nm("Replace with Analytic Tibble)
+#' 
 baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethnicity_race", education="education_level",
                                              sex_levels=c("Female","Male", "Missing"), 
                                              race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
                                              education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing")
                                              ){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("sex", "ethnicity_race", "education_level", "age", "age_group",
+                           "enrolled"),
+    example_types = c("NamedCategory['Female' 'Male' 'Missing']", "NamedCategory['Non-Hispanic White' 'Non-Hispanic Black' 'Hispanic' 'Other' 'Missing']",
+                      "NamedCategory['Less than High School' 'GED or High School Diploma' 'More than High School' 'Refused / Don't know' 'Missing']",
+                      "Number", "Category", "Boolean")) 
   
   constructs <- c(sex, race, education)
   
