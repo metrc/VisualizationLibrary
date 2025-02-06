@@ -3612,10 +3612,14 @@ enrollment_and_followup_activities_overview <- function(analytic, form_name = 'O
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' top_5_ineligibility_reasons()
-#' }
+#' top_5_ineligibility_reasons("Replace with Analytic Tibble")
+#' 
 ineligibility_reasons_info <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("facilitycode", "screened", "ineligible", "ineligibility_reasons"), 
+    example_types = c("FacilityCode", "Boolean", "Boolean", "Category-N"))
+  
   raw <- analytic %>%
     select(study_id, facilitycode, ineligibility_reasons, screened, ineligible)
   
@@ -3692,11 +3696,10 @@ ineligibility_reasons_info <- function(analytic){
   all_sites <- raw %>%
     pull(facilitycode) %>%
     unique()
-  all_sites <- sites[!is.na(all_sites)]
+  all_sites <- all_sites[!is.na(all_sites)]
   
   sites_combined <- tibble()
   for (site in c('TOTAL', all_sites)) {
-    print(site)
     sites_combined <- rbind(sites_combined, per_site(site))
   }
   
