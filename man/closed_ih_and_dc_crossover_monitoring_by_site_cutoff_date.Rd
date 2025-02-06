@@ -21,7 +21,6 @@ This function visualizes the crossovers by site in hospital and at discharge
 after 01/01/2021
 }
 \examples{
-\dontrun{
-closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date()
-}
+closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date("Replace with Analytic Tibble")
+
 }
