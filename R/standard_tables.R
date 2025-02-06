@@ -1910,10 +1910,13 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' amputations_and_gustilo_injury_characteristics()
-#' }
+#' amputations_and_gustilo_injury_characteristics("Replace with Analytic Tibble")
+#' 
 amputations_and_gustilo_injury_characteristics <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('enrolled', 'injury_gustilo_type', 'injury_amputation_status'),
+    example_types = c('Boolean', 'Category', 'Category')) 
   
   pull <- analytic %>% 
     filter(enrolled) %>%

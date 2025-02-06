@@ -2014,10 +2014,10 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
     analytic,
     example_constructs = c("screened", "eligible", "refused", "not_consented", "consented", 
                            "not_randomized", "randomized", "enrolled", "site_certified_days", 
-                           "facilitycode", "discontinued"),
+                           "facilitycode", "discontinued", 'treatment_arm'),
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
-                      "Boolean", "Boolean", "Boolean", "Number", 
-                      "FacilityCode", "Boolean")) 
+                      "Boolean", "Boolean", "Boolean", "Date", 
+                      "FacilityCode", "Boolean", "TreatmentArm")) 
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   

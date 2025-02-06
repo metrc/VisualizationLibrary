@@ -18,7 +18,6 @@ This function visualizes the injury characteristics for amputations and Gustilo 
 Sextant study
 }
 \examples{
-\dontrun{
-amputations_and_gustilo_injury_characteristics()
-}
+amputations_and_gustilo_injury_characteristics("Replace with Analytic Tibble")
+
 }
