@@ -37,8 +37,3 @@ An HTML table.
 \description{
 This function visualizes the categorical percentages of baseline characteristics sex, age, race, and education
 }
-\examples{
-\dontrun{
-baseline_characteristics_percent_nm()
-}
-}

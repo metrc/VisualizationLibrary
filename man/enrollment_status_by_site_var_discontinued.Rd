@@ -13,7 +13,8 @@ enrollment_status_by_site_var_discontinued(
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, 
-eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode}
+eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode,
+consent_date, not_randomized}
 
 \item{discontinued}{meta construct for discontinued}
 
@@ -28,7 +29,6 @@ An HTML table.
 This function visualizes the enrollment totals for each site
 }
 \examples{
-\dontrun{
-enrollment_status_by_site_var_discontinued()
-}
+enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble")
+
 }

@@ -18,8 +18,6 @@ This function visualizes the treatment characteristics per protocol and assignmn
 each treatment group
 }
 \examples{
-\dontrun{
+closed_adherence_sextant("Replace with Analytic Tibble")
 
-closed_adherence_sextant()
-}
 }

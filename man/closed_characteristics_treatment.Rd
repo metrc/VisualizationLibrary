@@ -17,7 +17,6 @@ An HTML table.
 This function visualizes the treatment characteristics per protocol and assignment for tobra.
 }
 \examples{
-\dontrun{
-closed_characteristics_treatment()
-}
+closed_characteristics_treatment("Replace with Analytic Tibble")
+
 }
