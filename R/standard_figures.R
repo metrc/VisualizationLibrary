@@ -17,7 +17,7 @@
 #' dsmb_consort_diagram("Replace with Analytic Tibble")
 #' 
 dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period = '12 Month', late_ineligible="late_ineligible", late_ineligible_str="Late Ineligible", not_expected_adjudicated=FALSE){
-  analytic <- if_needed_generate_example_data("Replace with Analytic Tibble",
+  analytic <- if_needed_generate_example_data(analytic,
                                               example_constructs = c('screened', 'eligible', 'consented', 'refused', 'discontinued_pre_randomization', 'randomized', 'late_ineligible',
                                                                      'enrolled', 'completed', 'not_completed', 'not_expected', 'active', 'missed_final_followup', 'incomplete_final_followup'),
                                               example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean',
@@ -592,7 +592,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
 #' dsmb_consort_diagram_pre_shifted_consent("Replace with Analytic Tibble")
 #' 
 dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 Month", adjudicated=FALSE, definitive_event = "Nerve Surgery"){
-  analytic <- if_needed_generate_example_data("Replace with Analytic Tibble",
+  analytic <- if_needed_generate_example_data(analytic,
                                               example_constructs = c('pre_screened', 'pre_eligible', 'screened', 'eligible', 'consented', 'not_consented', 
                                                                      'randomized', 'enrolled', 'refused', 'completed', 'not_completed', 'not_expected', 
                                                                      'active', 'missed_final_followup', 'incomplete_final_followup'),
@@ -748,7 +748,7 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
 #' cumulative_percentage_ankle_injuries("Replace with Analytic Tibble")
 #' 
 cumulative_percentage_ankle_injuries <- function(analytic){
-  analytic <- if_needed_generate_example_data("Replace with Analytic Tibble", 
+  analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('injury_type', 'enrolled', "consent_date"), 
                                               example_types = c('NamedCategory[\'ankle\']', 'Boolean', "Date"))
 
@@ -857,7 +857,7 @@ cumulative_percentage_plateau_injuries <- function(analytic){
 #' enrollment_by_injury_and_site("Replace with Analytic Tibble")
 #' 
 enrollment_by_injury_and_site <- function(analytic){
-  analytic <- if_needed_generate_example_data("Replace with Analytic Tibble", 
+  analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('injury_type', "enrolled", "facilitycode", 'consent_date'), 
                                               example_types = c("NamedCategory[\'ankle\' \'plateau\']", "Boolean", 'FacilityCode', 'Date'))
   
@@ -951,7 +951,7 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #' cumulative_enrolled("Replace with Analytic Tibble", bar_mode=TRUE)
 #' 
 cumulative_enrolled <- function(analytic, bar_mode=FALSE, goal=NULL, goal_percent=FALSE){
-  analytic <- if_needed_generate_example_data("Replace with Analytic Tibble", 
+  analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('enrolled', "consent_date"), 
                                               example_types = c('Boolean', "Date"))
   
