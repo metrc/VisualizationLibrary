@@ -25,7 +25,6 @@ An HTML table.
 Returns the designated followup form status by site, for all timepoints
 }
 \examples{
-\dontrun{
-followup_form_all_timepoints_by_site()
-}
+followup_form_all_timepoints_by_site("Replace with Analytic Tibble", "2 Unit Period", "Form 3")
+
 }
