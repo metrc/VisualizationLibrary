@@ -29,7 +29,6 @@ An HTML table.
 This function visualizes the enrollment totals for each site
 }
 \examples{
-\dontrun{
-closed_enrollment_status_by_site_var_discontinued()
-}
+closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble")
+
 }

@@ -17,7 +17,6 @@ This function visualizes the Cumulative number of patients enrolled for each buc
 of days stay during the admission
 }
 \examples{
-\dontrun{
-cumulative_enrolled_los()
-}
+cumulative_enrolled_los("Replace with Analytic Tibble")
+
 }

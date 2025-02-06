@@ -16,8 +16,3 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 This function visualizes the Cumulative percentage for number of patients with Plateau injuries 
 over the period of Year-Months(YYYY-MM, consent_date) out of 100
 }
-\examples{
-\dontrun{
-cumulative_percentage_plateau_injuries()
-}
-}
