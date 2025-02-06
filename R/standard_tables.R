@@ -1582,10 +1582,15 @@ complications_by_severity_relatedness <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' nonunion_surgery_outcome()
-#' }
+#' nonunion_surgery_outcome("Replace with Analytic Tibble")
+#' 
 nonunion_surgery_outcome <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("enrolled", "followup_expected_3mo", "followup_expected_12mo",
+                           "nonunion_90days", "nonunion_1yr"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean"))
+  
   df <- analytic %>% 
     select(enrolled, followup_expected_3mo, nonunion_90days, followup_expected_12mo, nonunion_1yr) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
