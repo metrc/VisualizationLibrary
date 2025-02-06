@@ -1391,6 +1391,7 @@ vislib_query_issues_per_site_basic <- function(analytic) {
 #' }
 vislib_query_issues_per_site <- function(analytic) {
   
+  
   queries_full <- analytic %>%
     select(analytic_query_database) %>%
     separate_rows(analytic_query_database, sep = 'NEWROW:') %>%
