@@ -764,11 +764,14 @@ cumulative_percentage_ankle_injuries <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' cumulative_percentage_plateau_injuries()
-#' }
+#' cumulative_percentage_plateau_injuries("Replace with Analytic Tibble)
+#' 
 cumulative_percentage_plateau_injuries <- function(analytic){
-
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("injury_type", "enrolled", "consent_date"), 
+    example_types = c("NamedCategory['plateau' 'other']", "Boolean", "Date"))
+  
   df <- analytic %>%  select(study_id, injury_type, enrolled, consent_date) %>% 
     filter(enrolled = TRUE) %>% 
     filter(!is.na(injury_type)) %>%
