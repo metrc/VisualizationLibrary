@@ -2600,10 +2600,20 @@ wbs_main_paper_injury_characteristics <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' wbs_main_paper_patient_characteristics()
-#' }
+#' wbs_main_paper_patient_characteristics("Replace with Analytic Tibble")
+#' 
 wbs_main_paper_patient_characteristics <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("enrolled", "injury_type", "sex", "age", "ethnicity_race", "education_level",
+                           "patient_reported_self_efficacy_6mo", "patient_reported_self_efficacy_12mo",
+                           "preinjury_productive_activity", "preinjury_work_demand", "preinjury_work_hours",
+                           "tobacco_use", "bmi", "preinjury_health", "insurance_type"), 
+    example_types = c("Boolean", "NamedCategory['ankle' 'other']", "Category", "Number", 
+                      "Category", "Category", "Category", "Category",
+                      "Category", "Category", "Category", "Boolean", "Number", 
+                      "Category", "Category"))
+  
   df <- analytic %>% select(enrolled, injury_type, sex, age, ethnicity_race, education_level,
                             patient_reported_self_efficacy_6mo, patient_reported_self_efficacy_12mo,
                             preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
