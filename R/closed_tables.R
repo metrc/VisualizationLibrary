@@ -1881,10 +1881,15 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_characteristics_treatment()
-#' }
+#' closed_characteristics_treatment("Replace with Analytic Tibble")
+#' 
 closed_characteristics_treatment <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("treatment_arm", "enrolled", "df_date", "plat_df_surgical_incision",
+                           "pil_df_surgical_incision", "df_number_procedures", "adherence_to_intervention"),
+    example_types = c("TreatmentArm", "Boolean", "Date", "Category",
+                      "Category", "Number", "Boolean")) 
   
   confirm_stability_of_related_visual('characteristics_treatment', 'da790cf8c715e5b060788e7865bfdbcd')
   
