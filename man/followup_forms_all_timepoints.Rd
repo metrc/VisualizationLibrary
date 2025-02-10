@@ -26,7 +26,6 @@ Returns the designated followup forms status at a specified range
 of timepoints, not specified by site
 }
 \examples{
-\dontrun{
-followup_forms_all_timepoints()
-}
+followup_forms_all_timepoints("Replace with Analytic Tibble")
+
 }

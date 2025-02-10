@@ -1076,7 +1076,8 @@ closed_appendix_A_SAEs <- function(analytic){
 #' @export
 #'
 #' @examples
-#' closed_appendix_B_deaths("Replace with Analytic Tibble)
+#' closed_appendix_B_deaths("Replace with Analytic Tibble")
+#' 
 closed_appendix_B_deaths <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,

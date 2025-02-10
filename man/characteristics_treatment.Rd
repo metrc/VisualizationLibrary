@@ -17,7 +17,6 @@ nothing
 This function visualizes the treatment characteristics per protocol and assignment for tobra.
 }
 \examples{
-\dontrun{
-characteristics_treatment()
-}
+characteristics_treatment("Replace with Analytic Tibble")
+
 }

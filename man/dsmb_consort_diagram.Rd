@@ -32,7 +32,6 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 This function visualizes the categorical percentages of Study Status for any study, similar to the NSAID consort diagram, but with customization endpoints.
 }
 \examples{
-\dontrun{
-dsmb_consort_diagram()
-}
+dsmb_consort_diagram("Replace with Analytic Tibble")
+
 }

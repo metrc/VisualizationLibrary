@@ -12,7 +12,7 @@ not_complete_sae_deviation_by_type_auto_categories(
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, not_expected_reason, 
-not_completed_reason, protocol_deviation_full_data, sae_count}
+not_completed_reason, not_completed, protocol_deviation_full_data, sae_count, consented}
 }
 \value{
 An HTML table.
@@ -23,7 +23,6 @@ This function visualizes the number of non-completions, not expected, and SAEs f
 Now with AUTO Protocol Deviation Categorization!
 }
 \examples{
-\dontrun{
-not_complete_sae_deviation_by_type_auto_categories()
-}
+not_complete_sae_deviation_by_type_auto_categories("Replace with Analytic Tibble")
+
 }
