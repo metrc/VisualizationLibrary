@@ -1298,9 +1298,10 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #' ineligibility_by_reasons("Replace with Analytic Tibble")
 #' 
 ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reasons = 5, only_total=FALSE){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                             example_constructs = c('facilitycode', "screened", "ineligible", 'ineligibility_reasons'), 
-                                             example_types = c('FacilityCode', 'Boolean', 'Boolean', 'Category'))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('facilitycode', "screened", "ineligible", 'ineligibility_reasons'), 
+    example_types = c('FacilityCode', 'Boolean', 'Boolean', 'Category'))
   
   if (pre_screened) { 
     analytic <- analytic %>% 
@@ -1652,10 +1653,14 @@ nonunion_surgery_outcome <- function(analytic){
 #' injury_characteristics_by_alternate_constructs("Replace with Analytic Tibble")
 #' 
 injury_characteristics_by_alternate_constructs <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('injury_classification_ankle_ao', 'injury_at_work', 'injury_in_battle', 
-                                                                     'injury_in_blast', 'injury_date', 'injury_mechanism', 'injury_side', 'injury_classification_tscherne', 'injury_type'), 
-                                              example_types = c('Category', 'Boolean', 'Boolean', "Boolean", 'Date', 'Category', 'Category', 'Category', 'Category'))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('injury_classification_ankle_ao', 'injury_at_work', 'injury_in_battle', 
+                           'injury_in_blast', 'injury_date', 'injury_mechanism', 
+                           'injury_side', 'injury_classification_tscherne', 'injury_type',
+                           'enrolled'), 
+    example_types = c('Category', 'Boolean', 'Boolean', "Boolean", 'Date', 'Category', 
+                      'Category', 'Category', 'Category', 'Boolean'))
   
   df <- analytic %>% 
     select(enrolled, injury_classification_ankle_ao, injury_at_work, injury_in_battle, 
@@ -1947,7 +1952,7 @@ amputations_and_gustilo_injury_characteristics <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c('enrolled', 'injury_gustilo_type', 'injury_amputation_status'),
-    example_types = c('Boolean', 'Category', 'Category')) 
+    example_types = c('Boolean', 'Category-U7', 'Category-U3')) 
   
   pull <- analytic %>% 
     filter(enrolled) %>%
@@ -2641,7 +2646,7 @@ wbs_main_paper_injury_characteristics <- function(analytic){
 #' @export
 #'
 #' @examples
-#' wbs_main_paper_patient_characteristics("Replace with Analytic Tibble")
+#' wbs_main_paper_patient_characteristics(analytic)
 #' 
 wbs_main_paper_patient_characteristics <- function(analytic){
   analytic <- if_needed_generate_example_data(
@@ -2650,10 +2655,10 @@ wbs_main_paper_patient_characteristics <- function(analytic){
                            "patient_reported_self_efficacy_6mo", "patient_reported_self_efficacy_12mo",
                            "preinjury_productive_activity", "preinjury_work_demand", "preinjury_work_hours",
                            "tobacco_use", "bmi", "preinjury_health", "insurance_type"), 
-    example_types = c("Boolean", "NamedCategory['ankle' 'other']", "Category", "Number", 
-                      "Category", "Category", "Category", "Category",
-                      "Category", "Category", "Category", "Boolean", "Number", 
-                      "Category", "Category"))
+    example_types = c("Boolean", "NamedCategory['ankle' 'other']", "Category-U3", 
+                      "Number-U100", "Category-U5", "Number-U10", "Number-U10", "Category-U4",
+                      "Category-U4", "Category-U4", "Number-U60", "Boolean", "Number-U60", 
+                      "Category-U4", "Category-U4"))
   
   df <- analytic %>% select(enrolled, injury_type, sex, age, ethnicity_race, education_level,
                             patient_reported_self_efficacy_6mo, patient_reported_self_efficacy_12mo,
@@ -3678,7 +3683,7 @@ enrollment_and_followup_activities_overview <- function(analytic, form_name = 'O
 #' @export
 #'
 #' @examples
-#' top_5_ineligibility_reasons("Replace with Analytic Tibble")
+#' ineligibility_reasons_info("Replace with Analytic Tibble")
 #' 
 ineligibility_reasons_info <- function(analytic){
   analytic <- if_needed_generate_example_data(
