@@ -28,7 +28,6 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 This function visualizes the categorical percentages of Study Status
 }
 \examples{
-\dontrun{
-dsmb_consort_diagram_pre_shifted_consent()
-}
+dsmb_consort_diagram_pre_shifted_consent("Replace with Analytic Tibble")
+
 }

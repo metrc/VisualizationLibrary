@@ -18,7 +18,6 @@ This function visualizes the number of non-completions, not expected, and SAEs f
 "enrolled" participants and Protocol Deviations by type for all the "consented" participants.
 }
 \examples{
-\dontrun{
-not_complete_sae_deviation_by_type()
-}
+not_complete_sae_deviation_by_type("Replace with Analytic Tibble")
+
 }

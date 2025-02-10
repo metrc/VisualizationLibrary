@@ -26,7 +26,6 @@ An HTML table.
 Returns summary statistics on the number of days to complete various follow-up forms.
 }
 \examples{
-\dontrun{
-followup_completion_time_stats()
-}
+followup_completion_time_stats("Replace with Analytic Tibble")
+
 }

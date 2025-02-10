@@ -18,7 +18,6 @@ An HTML table.
 This function visualizes the enrollment totals for each site
 }
 \examples{
-\dontrun{
-enrollment_status_by_site()
-}
+enrollment_status_by_site("Replace with Analytic Tibble")
+
 }
