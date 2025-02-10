@@ -291,12 +291,12 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
-                           "randomized", "enrolled", "adjudicated_discontinued", 
+                           "randomized", "enrolled", "adjudicated_discontinued", "not_consented",
                            "completed", "safety_set", "exclusive_safety_set", "not_completed", 
                            "not_expected", "active", "missed_final_followup", "incomplete_final_followup", 
                            "time_zero", "pre_screened", "pre_eligible", "pre_ineligible",
                            "discontinued"), 
-    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
                       "Boolean", "Boolean", "Boolean", "Boolean", "Date", "Boolean",
                       "Boolean", "Boolean", "Boolean", "Boolean"))
@@ -1406,6 +1406,7 @@ vislib_query_issues_per_site_basic <- function(analytic) {
 #' vislib_query_issues_per_site()
 #' }
 vislib_query_issues_per_site <- function(analytic) {
+  
   
   queries_full <- analytic %>%
     select(analytic_query_database) %>%
