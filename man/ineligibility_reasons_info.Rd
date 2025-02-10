@@ -22,6 +22,6 @@ reasons, not people, and so will not total the number of participants considered
 ineligible.
 }
 \examples{
-top_5_ineligibility_reasons("Replace with Analytic Tibble")
+ineligibility_reasons_info("Replace with Analytic Tibble")
 
 }
