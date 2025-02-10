@@ -142,7 +142,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
                       "Number", "Category", "Boolean", "NamedCategory['Active Military' 'Active Reserves' 'Not Active Duty' 'Missing']",
                       "TreatmentArm")) 
   
-  confirm_stability_of_related_visual("baseline_characteristics_percent", "7aadae1abf473348fab0c8b12f86228e")
+  confirm_stability_of_related_visual("baseline_characteristics_percent", "a94af36b5ce50165af1612005be223db")
   
   sex_df <- tibble()
   age_df <- tibble()
@@ -300,7 +300,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
                                                        race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
                                                        education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing")){
   
-  confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "c4fd1326d7565a6da1bb0467b4e1a155")
+  confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "0e1b1d126517b5d4678db6f4023603ec")
   
   sex_df <- tibble()
   age_df <- tibble()
@@ -443,7 +443,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' closed_not_complete_sae_deviation_by_type("Replace with Analytic Tibble")
 #' 
 closed_not_complete_sae_deviation_by_type <- function(analytic){
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '197e475aa642695d15049e9fcfb1c7c0')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', 'e34a42f4df3317645c855dd066efa19e')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -642,7 +642,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
 #' }
 closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")){
   
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', 'a23028eb9fd76744bbefab342f6dd6cd')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', 'faa854f7497503c9165267d9ea4ca653')
   
   n_act <- NA
   n_disc <- NA
@@ -1076,7 +1076,8 @@ closed_appendix_A_SAEs <- function(analytic){
 #' @export
 #'
 #' @examples
-#' closed_appendix_B_deaths("Replace with Analytic Tibble)
+#' closed_appendix_B_deaths("Replace with Analytic Tibble")
+#' 
 closed_appendix_B_deaths <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -1254,7 +1255,7 @@ closed_appendix_D_protocol_deviation <- function(analytic){
 #' closed_ih_and_dc_crossover_monitoring_by_site("Replace with Analytic Tibble")
 #' 
 closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = NULL){
-  confirm_stability_of_related_visual('ih_and_dc_crossover_monitoring_by_site', '1a7b5d1f609833623e6a3a48a3bcc5c2')
+  confirm_stability_of_related_visual('ih_and_dc_crossover_monitoring_by_site', 'c028f0d077842c22c8c6b3bf61baecd2')
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('facilitycode', 'enrolled', 'df_surg_completed', 'ih_discharge_date', 'crossover_inpatient', 
                                                                      'crossover_discharge', 'ih_discharge_date_on_time_zero', 'treatment_arm'),
@@ -1487,7 +1488,7 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
 #' }
 closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
   
-  confirm_stability_of_related_visual("amputations_and_gustilo_injury_characteristics", "11da8d8c3b7ef63d4bca5ce8c8351c42")
+  confirm_stability_of_related_visual("amputations_and_gustilo_injury_characteristics", "493f014fc6b6920b62cbe6d8e92fff56")
   
   inner_amputations_and_gustilo_injury_characteristics <- function(pull) {
     inj_gust <- pull %>%
@@ -1920,7 +1921,7 @@ closed_characteristics_treatment <- function(analytic){
     example_types = c("TreatmentArm", "Boolean", "Date", "Category",
                       "Category", "Number", "Boolean")) 
   
-  confirm_stability_of_related_visual('characteristics_treatment', 'da790cf8c715e5b060788e7865bfdbcd')
+  confirm_stability_of_related_visual('characteristics_treatment', '560adce14e9d8085cd5c991e701bd780')
   
   inner_characteristics_treatment <- function(df){
     total <- sum(df$enrolled, na.rm=T)
@@ -2030,10 +2031,10 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
     analytic,
     example_constructs = c("screened", "eligible", "refused", "not_consented", "consented", 
                            "not_randomized", "randomized", "enrolled", "site_certified_days", 
-                           "facilitycode", "discontinued"),
+                           "facilitycode", "discontinued", 'treatment_arm'),
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
-                      "Boolean", "Boolean", "Boolean", "Number", 
-                      "FacilityCode", "Boolean")) 
+                      "Boolean", "Boolean", "Boolean", "Date", 
+                      "FacilityCode", "Boolean", "TreatmentArm")) 
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
