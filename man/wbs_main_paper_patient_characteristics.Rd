@@ -19,6 +19,6 @@ This function outputs a table with various patient characteristics/demographics 
 patients with "Ankle" injuries. This table is produced for Weight bearing main paper.
 }
 \examples{
-wbs_main_paper_patient_characteristics("Replace with Analytic Tibble")
+wbs_main_paper_patient_characteristics(analytic)
 
 }
