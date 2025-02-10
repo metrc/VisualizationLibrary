@@ -1079,7 +1079,7 @@ cumulative_enrolled_los <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("ih_los_days"), 
-    example_types = c("Number"))
+    example_types = c("Number-U30"))
   
   df <- analytic %>%  select(study_id, ih_los_days) %>% 
     filter(ih_los_days != 'Missing' & !is.na(ih_los_days))
