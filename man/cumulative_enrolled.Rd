@@ -27,8 +27,7 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 This function visualizes the Cumulative number of patients enrolled
 }
 \examples{
-\dontrun{
 cumulative_enrolled("Replace with Analytic Tibble")
 cumulative_enrolled("Replace with Analytic Tibble", bar_mode=TRUE)
-}
+
 }

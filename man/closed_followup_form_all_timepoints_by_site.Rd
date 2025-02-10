@@ -26,7 +26,6 @@ Returns the designated followup form status by site, for all timepoints,
 separated by treatment_arm
 }
 \examples{
-\dontrun{
-closed-followup_form_all_timepoints_by_site()
-}
+closed_followup_form_all_timepoints_by_site("Replace with Analytic Tibble")
+
 }

@@ -16,7 +16,6 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 This function visualizes the enrollment by each site for each injury_type
 }
 \examples{
-\dontrun{
-enrollment_by_injury_and_site()
-}
+enrollment_by_injury_and_site("Replace with Analytic Tibble")
+
 }
