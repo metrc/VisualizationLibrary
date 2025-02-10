@@ -17,7 +17,6 @@ This function visualizes the Cumulative percentage for number of patients with a
 of Year-Months(YYYY-MM) out of 526
 }
 \examples{
-\dontrun{
-cumulative_percentage_ankle_injuries()
-}
+cumulative_percentage_ankle_injuries("Replace with Analytic Tibble")
+
 }

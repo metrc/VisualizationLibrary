@@ -19,7 +19,6 @@ This function outputs a table with various injury characteristics for enrolled p
 injuries. This table is produced for Weight bearing main paper.
 }
 \examples{
-\dontrun{
-wbs_main_paper_injury_characteristics()
-}
+wbs_main_paper_injury_characteristics("Replace with Analytic Tibble")
+
 }

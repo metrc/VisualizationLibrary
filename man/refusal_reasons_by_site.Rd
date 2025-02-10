@@ -16,7 +16,6 @@ An HTML table.
 This function visualizes the reasons of refusal, total refused and total screened by each site.
 }
 \examples{
-\dontrun{
-refusal_reasons_by_site()
-}
+refusal_reasons_by_site("Replace with Analytic Tibble")
+
 }

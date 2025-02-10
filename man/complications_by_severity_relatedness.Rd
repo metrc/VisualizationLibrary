@@ -16,7 +16,6 @@ An HTML table.
 This function visualizes the complications by severity and relatedness for dsmb report
 }
 \examples{
-\dontrun{
-complications_by_severity_relatedness()
-}
+complications_by_severity_relatedness("Replace with Analytic Tibble")
+
 }

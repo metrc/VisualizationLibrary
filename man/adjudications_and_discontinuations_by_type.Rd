@@ -19,7 +19,6 @@ This function visualizes the number of discontinuations, SAEs and Protocol Devia
 This was originally made for NSAID
 }
 \examples{
-\dontrun{
-adjudications_and_discontinuations_by_type()
-}
+adjudications_and_discontinuations_by_type("Replace with Analytic Tibble")
+
 }
