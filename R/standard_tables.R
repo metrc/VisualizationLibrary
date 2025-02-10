@@ -706,7 +706,7 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
                            "enrolled"),
     example_types = c("NamedCategory['Female' 'Male' 'Missing']", "NamedCategory['Non-Hispanic White' 'Non-Hispanic Black' 'Hispanic' 'Other' 'Missing']",
                       "NamedCategory['Less than High School' 'GED or High School Diploma' 'More than High School' 'Refused / Don't know' 'Missing']",
-                      "Number", "Category", "Boolean")) 
+                      "Number-U100", "Category-U5", "Boolean")) 
   
   constructs <- c(sex, race, education)
   
