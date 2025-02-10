@@ -17,7 +17,6 @@ This function returns a list of sites and their dates of
 local, DOD, and METRC certifications by treatment arm
 }
 \examples{
-\dontrun{
-closed_certification_date_data()
-}
+closed_certification_date_data("Replace with Analytic Tibble")
+
 }

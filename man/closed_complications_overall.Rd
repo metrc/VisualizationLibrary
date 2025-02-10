@@ -19,7 +19,6 @@ This function visualizes the number of complications(number of subjects) reporte
 from time_zero overall, and by each treatment arm.
 }
 \examples{
-\dontrun{
-closed_complications_overall(analytic)
-}
+closed_complications_overall("Replace with Analytic Tibble")
+
 }

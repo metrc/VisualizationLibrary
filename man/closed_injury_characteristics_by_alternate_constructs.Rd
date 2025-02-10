@@ -17,7 +17,6 @@ An HTML table.
 This function visualizes the certain injury characteristics for study participants study injuries by treatment arm
 }
 \examples{
-\dontrun{
-closed_injury_characteristics_by_alternate_constructs(analytic)
-}
+closed_injury_characteristics_by_alternate_constructs("Replace with Analytic Tibble")
+
 }

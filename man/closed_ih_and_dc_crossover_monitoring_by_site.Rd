@@ -17,7 +17,6 @@ An HTML table.
 This function visualizes the crossovers by site in hospital and at discharge
 }
 \examples{
-\dontrun{
-closed_ih_and_dc_crossover_monitoring_by_site()
-}
+closed_ih_and_dc_crossover_monitoring_by_site("Replace with Analytic Tibble")
+
 }

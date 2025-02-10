@@ -30,7 +30,6 @@ This function visualizes the number of patients deemed ineligible by the top N r
 for exclusion criteria.
 }
 \examples{
-\dontrun{
-ineligibility_by_reasons()
-}
+ineligibility_by_reasons("Replace with Analytic Tibble")
+
 }
