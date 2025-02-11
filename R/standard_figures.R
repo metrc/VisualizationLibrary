@@ -1335,7 +1335,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
 #' vislib_query_issues_per_site_basic()
 #' }
 vislib_query_issues_per_site_basic <- function(analytic) {
-  
+
   queries <- analytic %>%
     select(analytic_query_database) %>%
     separate_rows(analytic_query_database, sep = 'NEWROW:') %>%
