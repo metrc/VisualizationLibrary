@@ -17,6 +17,6 @@ Returns the designated followup forms status by site at a specifict
 period
 }
 \examples{
-followup_forms_at_timepoint_by_site("Replace with Analytic Tibble")
+followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", '3 Month', c('Form 3', 'Form 2'))
 
 }
