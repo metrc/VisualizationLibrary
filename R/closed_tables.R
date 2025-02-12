@@ -1301,7 +1301,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
 closed_certification_date_data <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c('treatment_arm', "site_cert_date"), 
+    example_constructs = c('treatment_arm', "site_certified_date"), 
     example_types = c('TreatmentArm', 'FacilityCode;Date;Date;Boolean;Number'))
   
   date_today <- Sys.Date()
@@ -1313,8 +1313,8 @@ closed_certification_date_data <- function(analytic){
   df <- analytic %>%
     filter(!is.na(treatment_arm)) %>%
     group_by(treatment_arm) %>%
-    mutate(site_cert_date = na_if(site_certified_date, "NA")) %>%
-    separate(site_cert_date, cols, sep = ';') %>%
+    mutate(site_certified_date = na_if(site_certified_date, "NA")) %>%
+    separate(site_certified_date, cols, sep = ';') %>%
     select(treatment_arm, Facility, `Local (or sIRB) Approval Date`, `DoD Approval Date`,
            `Certified by MCC to Start Screening`, `Days Number of Days Certified (as of Thursday, March 07, 2024)`) %>%
     filter(!is.na(Facility))

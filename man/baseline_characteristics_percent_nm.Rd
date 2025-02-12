@@ -37,3 +37,7 @@ An HTML table.
 \description{
 This function visualizes the categorical percentages of baseline characteristics sex, age, race, and education
 }
+\examples{
+baseline_characteristics_percent_nm("Replace with Analytic Tibble")
+
+}
