@@ -7,7 +7,7 @@
 closed_complications_by_severity_relatedness(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, complication_data}
+\item{analytic}{This is the analytic data set that must include study_id, complication_data, treatment_arm}
 }
 \value{
 An HTML table.
@@ -16,7 +16,6 @@ An HTML table.
 This function visualizes the complications by severity and relatedness for dsmb report
 }
 \examples{
-\dontrun{
-closed_complications_by_severity_relatedness()
-}
+closed_complications_by_severity_relatedness("Replace with Analytic Tibble")
+
 }

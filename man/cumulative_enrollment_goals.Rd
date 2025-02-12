@@ -24,7 +24,6 @@ a participant goal curve which demonstrates the goal relative to the actual cumu
 and a second curve which demonstrates the necessary growth in order to meet that goal, all within a specified start and end date..
 }
 \examples{
-\dontrun{
-cumulative_enrollment_goals()
-}
+cumulative_enrollment_goals("Replace with Analytic Tibble")
+
 }
