@@ -16,7 +16,6 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 This function visualizes the discrete number of patients enrolled by month
 }
 \examples{
-\dontrun{
-discrete_enrolled()
-}
+discrete_enrolled("Replace with Analytic Tibble")
+
 }

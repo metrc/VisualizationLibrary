@@ -7,7 +7,7 @@
 closed_expected_and_followup_visit_overall(analytic, footnotes = NULL)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, followup_data}
+\item{analytic}{This is the analytic data set that must include study_id, followup_data, treatment_arm}
 }
 \value{
 An HTML table.
@@ -20,7 +20,6 @@ and organizes them by its detected levels of followup periods.
 The function separates the data for the two study groups by treatment arm
 }
 \examples{
-\dontrun{
-closed_expected_and_followup_visit_overall()
-}
+closed_expected_and_followup_visit_overall("Replace with Analytic Tibble")
+
 }

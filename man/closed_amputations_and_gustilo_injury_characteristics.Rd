@@ -17,8 +17,3 @@ An HTML table.
 This function visualizes the injury characteristics for amputations and Gustilo Injury types for
 Sextant study by treatment arm
 }
-\examples{
-\dontrun{
-closed_amputations_and_gustilo_injury_characteristics(analytic)
-}
-}

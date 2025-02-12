@@ -16,7 +16,7 @@ enrollment_by_site_last_days_var_disc(
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
-facilitycode, screened_date}
+facilitycode, screened_date, consented, randomized, consent_date, discontinued}
 
 \item{days}{the number of last days to include in the last days summary section of the table}
 
@@ -33,7 +33,6 @@ An HTML table.
 This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week
 }
 \examples{
-\dontrun{
-enrollment_by_site_last_days_var_disc()
-}
+enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble")
+
 }

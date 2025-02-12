@@ -8,7 +8,7 @@ adherence_sextant(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include adherence_to_intervention_dwc,
-adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc}
+adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, enrolled, dwc_date}
 }
 \value{
 nothing
@@ -17,7 +17,6 @@ nothing
 This function visualizes the treatment characteristics per protocol and assignmnet for Sextant.
 }
 \examples{
-\dontrun{
-adherence_sextant()
-}
+adherence_sextant("Replace with Analytic Tibble")
+
 }
