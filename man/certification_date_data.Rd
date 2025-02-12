@@ -19,7 +19,7 @@ This function returns a list of sites and their dates of
 local, DOD, and METRC certifications
 }
 \examples{
-\dontrun{
-ineligibility_by_reasons()
-}
+certification_date_data("Replace with Analytic Tibble")
+certification_date_data("Replace with Analytic Tibble", exclude_local_irb = TRUE)
+
 }
