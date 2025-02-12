@@ -693,7 +693,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
 #' @export
 #'
 #' @examples
-#' baseline_characteristics_percent_nm("Replace with Analytic Tibble)
+#' baseline_characteristics_percent_nm("Replace with Analytic Tibble")
 #' 
 baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethnicity_race", education="education_level",
                                              sex_levels=c("Female","Male", "Missing"), 
@@ -2975,13 +2975,13 @@ expected_and_followup_visit_overall <- function(analytic){
 #' @export
 #'
 #' @examples
-#' followup_form_at_timepoint_by_site("Replace with Analytic Tibble", "2 Unit Period", "Form 3")
+#' followup_form_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", "Form 3")
 #' 
 followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("facilitycode", "followup_data"), 
-    example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date"))
+    example_types = c("FacilityCode", "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
@@ -3099,13 +3099,13 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
 #' @export
 #'
 #' @examples
-#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", "2 Unit Period", "Form 3")
+#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", c('3 Month', '6 Month'), "Form 3")
 #' 
 followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete')){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("facilitycode", "followup_data"), 
-    example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date"))
+    example_types = c("FacilityCode", "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
@@ -3246,13 +3246,13 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
 #' @export
 #'
 #' @examples
-#' followup_forms_at_timepoint_by_site("Replace with Analytic Tibble")
+#' followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", '3 Month', c('Form 3', 'Form 2'))
 #' 
 followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("facilitycode", "followup_data"), 
-    example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date"))
+    example_types = c("FacilityCode", "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
@@ -3384,12 +3384,13 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
 #' @export
 #'
 #' @examples
-#' followup_forms_all_timepoints("Replace with Analytic Tibble")
+#' followup_forms_all_timepoints("Replace with Analytic Tibble", c('Form 3', 'Form 2'), c('3 Month', '6 Month'))
 #' 
 followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = NULL, vertical = TRUE){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('facilitycode', "followup_data"), 
-                                              example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('facilitycode', "followup_data"), 
+    example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
