@@ -26,7 +26,6 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 This function visualizes the categorical percentages of study status as well as followup completions for studies that do not include a definitive event
 }
 \examples{
-\dontrun{
-consort_diagram_no_definitive_event()
-}
+consort_diagram_no_definitive_event("Replace with Analytic Tibble")
+
 }

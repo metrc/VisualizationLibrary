@@ -18,7 +18,6 @@ given study, as designated in the respective followup_data long file
 and organizes them by its detected levels of followup periods.
 }
 \examples{
-\dontrun{
-expected_and_followup_visit_overall()
-}
+expected_and_followup_visit_overall("Replace with Analytic Tibble")
+
 }

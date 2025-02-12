@@ -12,7 +12,7 @@ followup_form_at_timepoint_by_site(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, followup_data, treatment_arm}
+\item{analytic}{This is the analytic data set that must include study_id, followup_data}
 
 \item{timepoint}{the point in time to be considered in the visualization}
 

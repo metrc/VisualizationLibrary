@@ -54,6 +54,7 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 }
 
 
+
 #' Crossover Monitoring by Site since 01/01/2024
 #'
 #' @description This function visualizes the crossovers by site in hospital and at discharge 
@@ -66,10 +67,15 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' ih_and_dc_crossover_monitoring_by_site_cutoff_date()
-#' }
+#' ih_and_dc_crossover_monitoring_by_site_cutoff_date("Replace with Analytic Tibble")
+#' 
 ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", "df_surg_completed", "ih_discharge_date", "crossover_inpatient", "crossover_discharge",
+                           "ih_discharge_date_on_time_zero", "facilitycode"),
+    example_types = c("Boolean", "Boolean", "Date", "Boolean", "Boolean", "Boolean", "FacilityCode")) 
+  
   df <- analytic %>% 
     select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero)  %>% 
     filter(as.Date(ih_discharge_date) > as.Date("2024-01-01")) %>% 
@@ -164,16 +170,20 @@ adherence_by_site <- function(analytic){
 #' @description This function visualizes the treatment characteristics per protocol and assignmnet for Sextant. 
 #'
 #' @param analytic This is the analytic data set that must include adherence_to_intervention_dwc,
-#' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc
+#' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, enrolled, dwc_date
 #'
 #' @return nothing
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' adherence_sextant()
-#' }
+#' adherence_sextant("Replace with Analytic Tibble")
+#' 
 adherence_sextant <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("adherence_to_intervention_dwc", "adherence_to_intervention_post_dwc",
+                           "adherence_to_no_other_antibiotic_dwc", "enrolled", "dwc_date"),
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Date")) 
   
   df <- analytic %>% 
     select(adherence_to_intervention_dwc,
