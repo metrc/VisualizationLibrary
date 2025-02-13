@@ -39,6 +39,6 @@ given the value "Missing."
 }
 \examples{
 \dontrun{
-closed_generic_characteristics()
+generic_characteristics("Replace with Analytic Tibble", constructs="stages", names_vec="Stages")
 }
 }

@@ -12,7 +12,7 @@ followup_form_at_timepoint_by_site(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, followup_data, treatment_arm}
+\item{analytic}{This is the analytic data set that must include study_id, followup_data}
 
 \item{timepoint}{the point in time to be considered in the visualization}
 
@@ -28,6 +28,6 @@ Returns the designated followup form status across all sites,
 for a single timepoint and separated by the treatment_arm variable
 }
 \examples{
-followup_form_at_timepoint_by_site("Replace with Analytic Tibble", "2 Unit Period", "Form 3")
+followup_form_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", "Form 3")
 
 }
