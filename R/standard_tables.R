@@ -159,25 +159,21 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #'
 #' @description This function visualizes Ankle and Plateau X-Ray and Measurement Status
 #'
-#' @param analytic This is the analytic data set that must include followup_expected_6wk, 
-#' followup_expected_3mo, followup_expected_6mo, followup_expected_12mo, injury_type, followup_data,
-#' radiographs_taken_6wk, radiographs_taken_3mo, radiographs_taken_6mo,
-#' plat_tib_fib_overlap_6mo, plat_sagittal_pl_alignment_6mo, plat_patella_centered_6mo, 
-#' plat_medial_prox_tibia_deg_6mo, plat_medial_lateral_diff_6mo, plat_condylar_width_6mo, plat_art_step_off_medial_6mo, 
-#' plat_art_step_off_lateral_6mo, plat_femur_tibia_deg_6mo,
-#' plat_tib_fib_overlap_3mo, plat_sagittal_pl_alignment_3mo, plat_patella_centered_3mo, 
-#' plat_medial_prox_tibia_deg_3mo, plat_medial_lateral_diff_3mo, plat_condylar_width_3mo, plat_art_step_off_medial_3mo, 
-#' plat_art_step_off_lateral_3mo, plat_femur_tibia_deg_3mo,
-#' plat_tib_fib_overlap_6wk, plat_sagittal_pl_alignment_6wk, plat_patella_centered_6wk, 
-#' plat_medial_prox_tibia_deg_6wk, plat_medial_lateral_diff_6wk, plat_condylar_width_6wk, plat_art_step_off_medial_6wk, 
-#' plat_art_step_off_lateral_6wk, plat_femur_tibia_deg_6wk,
-#' plat_tib_fib_overlap_12mo, plat_sagittal_pl_alignment_12mo, plat_patella_centered_12mo, 
-#' plat_medial_prox_tibia_deg_12mo, plat_medial_lateral_diff_12mo, plat_condylar_width_12mo, plat_art_step_off_medial_12mo, 
-#' plat_art_step_off_lateral_12mo, plat_femur_tibia_deg_12mo
-#' ankle_talar_tilt_degrees_6wk, ankle_sagital_disp_6wk, ankle_coronal_plane_disp_6wk, 
-#' ankle_talar_tilt_degrees_3mo, ankle_sagital_disp_3mo, ankle_coronal_plane_disp_3mo, 
-#' ankle_talar_tilt_degrees_6mo, ankle_sagital_disp_6mo, ankle_coronal_plane_disp_6mo, 
-#' ankle_talar_tilt_degrees_12mo, ankle_sagital_disp_12mo, ankle_coronal_plane_disp_12mo
+#' @param analytic This is the analytic data set that must include followup_expected_6wk,followup_expected_3mo,followup_expected_6mo, 
+#' followup_expected_12mo,injury_type,followup_data,radiographs_taken_6wk, 
+#' radiographs_taken_3mo,radiographs_taken_6mo,plat_tib_fib_overlap_6mo, 
+#' plat_sagittal_pl_alignment_6mo, plat_patella_centered_6mo, plat_medial_prox_tibia_deg_6mo, 
+#' plat_medial_lateral_diff_6mo,plat_condylar_width_6mo,plat_art_step_off_medial_6mo, 
+#' plat_art_step_off_lateral_6mo,plat_femur_tibia_deg_6mo,plat_tib_fib_overlap_3mo, 
+#' plat_sagittal_pl_alignment_3mo,plat_patella_centered_3mo,plat_medial_prox_tibia_deg_3mo, 
+#' plat_medial_lateral_diff_3mo,plat_condylar_width_3mo,plat_art_step_off_medial_3mo, 
+#' plat_art_step_off_lateral_3mo,plat_femur_tibia_deg_3mo,plat_tib_fib_overlap_6wk, 
+#' plat_sagittal_pl_alignment_6wk,plat_patella_centered_6wk,plat_medial_prox_tibia_deg_6wk, 
+#' plat_medial_lateral_diff_6wk,plat_condylar_width_6wk,plat_art_step_off_medial_6wk, 
+#' plat_art_step_off_lateral_6wk,plat_femur_tibia_deg_6wk,ankle_talar_tilt_degrees_6wk, 
+#' ankle_sagital_disp_6wk,ankle_coronal_plane_disp_6wk,ankle_talar_tilt_degrees_3mo, 
+#' ankle_sagital_disp_3mo,ankle_coronal_plane_disp_3mo,ankle_talar_tilt_degrees_6mo, 
+#' ankle_sagital_disp_6mo,ankle_coronal_plane_disp_6mo
 #' 
 #'
 #' @return An HTML table.
@@ -693,7 +689,7 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
 #' @export
 #'
 #' @examples
-#' baseline_characteristics_percent_nm("Replace with Analytic Tibble)
+#' baseline_characteristics_percent_nm("Replace with Analytic Tibble")
 #' 
 baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethnicity_race", education="education_level",
                                              sex_levels=c("Female","Male", "Missing"), 
@@ -706,7 +702,7 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
                            "enrolled"),
     example_types = c("NamedCategory['Female' 'Male' 'Missing']", "NamedCategory['Non-Hispanic White' 'Non-Hispanic Black' 'Hispanic' 'Other' 'Missing']",
                       "NamedCategory['Less than High School' 'GED or High School Diploma' 'More than High School' 'Refused / Don't know' 'Missing']",
-                      "Number", "Category", "Boolean")) 
+                      "Number-U100", "Category-U5", "Boolean")) 
   
   constructs <- c(sex, race, education)
   
@@ -808,7 +804,7 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
 #' "enrolled" participants and Protocol Deviations by type for all the "consented" participants. 
 #'
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
-#' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count
+#' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count, not_completed, sae_count
 #'
 #' @return An HTML table.
 #' @export
@@ -817,10 +813,14 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
 #' not_complete_sae_deviation_by_type("Replace with Analytic Tibble")
 #' 
 not_complete_sae_deviation_by_type <- function(analytic){
-  analytic <- if_needed_generate_example_data("Replace with Analytic Tibble", 
-                                              example_constructs = c('enrolled', 'not_expected_reason', 'not_completed_reason', 'protocol_deviation_screen_consent', 
-                                                                     'protocol_deviation_procedural', 'protocol_deviation_administrative', 'sae_count'), 
-                                              example_types = c('Boolean', 'Category', 'Category', 'Category', 'Category', 'Category', 'Number'))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("enrolled", "not_expected_reason", "not_completed_reason",
+                           "protocol_deviation_screen_consent", "protocol_deviation_procedural",
+                           "protocol_deviation_administrative", "sae_count", 
+                           "not_completed", "consented"), 
+    example_types = c("Boolean", "Category", "Category", "Category", "Category",
+                      "Category", "Number", "Boolean", "Boolean"))
   
   total <- sum(analytic$enrolled, na.rm=T)
   not_completed_df <- analytic %>% 
@@ -1298,9 +1298,10 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #' ineligibility_by_reasons("Replace with Analytic Tibble")
 #' 
 ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reasons = 5, only_total=FALSE){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                             example_constructs = c('facilitycode', "screened", "ineligible", 'ineligibility_reasons'), 
-                                             example_types = c('FacilityCode', 'Boolean', 'Boolean', 'Category'))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('facilitycode', "screened", "ineligible", 'ineligibility_reasons'), 
+    example_types = c('FacilityCode', 'Boolean', 'Boolean', 'Category'))
   
   if (pre_screened) { 
     analytic <- analytic %>% 
@@ -1416,10 +1417,15 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' ineligibility_by_reasons()
-#' }
+#' certification_date_data("Replace with Analytic Tibble")
+#' certification_date_data("Replace with Analytic Tibble", exclude_local_irb = TRUE)
+#' 
 certification_date_data <- function(analytic, exclude_local_irb=FALSE){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = "site_certified_date",
+    example_types = "FacilityCode;Date;Date;Date;NamedCategory['2 days' '3 days' '4 days' '40 days']") 
+  
   df <- analytic %>% 
     select(site_certified_date) %>%
     unique()
@@ -1652,10 +1658,14 @@ nonunion_surgery_outcome <- function(analytic){
 #' injury_characteristics_by_alternate_constructs("Replace with Analytic Tibble")
 #' 
 injury_characteristics_by_alternate_constructs <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('injury_classification_ankle_ao', 'injury_at_work', 'injury_in_battle', 
-                                                                     'injury_in_blast', 'injury_date', 'injury_mechanism', 'injury_side', 'injury_classification_tscherne', 'injury_type'), 
-                                              example_types = c('Category', 'Boolean', 'Boolean', "Boolean", 'Date', 'Category', 'Category', 'Category', 'Category'))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('injury_classification_ankle_ao', 'injury_at_work', 'injury_in_battle', 
+                           'injury_in_blast', 'injury_date', 'injury_mechanism', 
+                           'injury_side', 'injury_classification_tscherne', 'injury_type',
+                           'enrolled'), 
+    example_types = c('Category', 'Boolean', 'Boolean', "Boolean", 'Date', 'Category', 
+                      'Category', 'Category', 'Category', 'Boolean'))
   
   df <- analytic %>% 
     select(enrolled, injury_classification_ankle_ao, injury_at_work, injury_in_battle, 
@@ -1947,7 +1957,7 @@ amputations_and_gustilo_injury_characteristics <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c('enrolled', 'injury_gustilo_type', 'injury_amputation_status'),
-    example_types = c('Boolean', 'Category', 'Category')) 
+    example_types = c('Boolean', 'Category-U7', 'Category-U3')) 
   
   pull <- analytic %>% 
     filter(enrolled) %>%
@@ -2096,10 +2106,13 @@ refusal_reasons_by_site <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' other_reason_refusal_by_site()
-#' }
+#' other_reason_refusal_by_site("Replace with Analytic Tibble")
+#' 
 other_reason_refusal_by_site <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("screened_date", "refused_reason_other", "facilitycode"),
+    example_types = c("Date", "Character", "FacilityCode")) 
   
   df1 <- analytic %>%  select(study_id, facilitycode, screened_date, refused_reason_other) %>% 
     filter(!is.na(refused_reason_other)) %>% 
@@ -2169,15 +2182,19 @@ not_enrolled_for_other_reasons <- function(analytic){
 #' and then closed or open fracture with tscherne grades and gustilo types respectively
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
+#' injury_classification_tscherne
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' fracture_characteristics()
-#' }
+#' fracture_characteristics("Replace with Analytic Tibble")
+#' 
 fracture_characteristics <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", "fracture_type","injury_gustilo", "injury_classification_tscherne"),
+    example_types = c("Boolean", "Category", "Category", "Category")) 
   
   df <- analytic %>% select(study_id, enrolled, fracture_type, injury_gustilo, injury_classification_tscherne) %>% 
     filter(enrolled) %>% 
@@ -2252,7 +2269,7 @@ fracture_characteristics <- function(analytic){
 #' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week 
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
-#' facilitycode, screened_date
+#' facilitycode, screened_date, consented, randomized, consent_date, discontinued
 #' @param days the number of last days to include in the last days summary section of the table
 #' @param discontinued this is a meta construct where you can specify your discontinued construct like 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
 #' @param discontinued_colname this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')
@@ -2262,15 +2279,22 @@ fracture_characteristics <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' enrollment_by_site_last_days_var_disc()
-#' }
+#' enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble")
+#' 
 enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, 
                                                   discontinued="discontinued", 
                                                   discontinued_colname="Discontinued", 
                                                   include_exclusive_safety_set=FALSE, 
                                                   average = FALSE, 
                                                   cumulative_data = TRUE){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "eligible", "refused", "consented", "enrolled", "randomized",
+                           "not_consented", "site_certified_days", "facilitycode", "consent_date",
+                           "not_randomized", "discontinued", "consented_and_randomized", "screened_date", "exclusive_safety_set"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
+                      "Boolean", "Date", "FacilityCode", "Date", "Boolean", "Boolean",
+                      "Boolean", "Date", "Boolean"))
   
   if(include_exclusive_safety_set){
     df <- analytic %>% 
@@ -2641,7 +2665,7 @@ wbs_main_paper_injury_characteristics <- function(analytic){
 #' @export
 #'
 #' @examples
-#' wbs_main_paper_patient_characteristics("Replace with Analytic Tibble")
+#' wbs_main_paper_patient_characteristics(analytic)
 #' 
 wbs_main_paper_patient_characteristics <- function(analytic){
   analytic <- if_needed_generate_example_data(
@@ -2650,10 +2674,10 @@ wbs_main_paper_patient_characteristics <- function(analytic){
                            "patient_reported_self_efficacy_6mo", "patient_reported_self_efficacy_12mo",
                            "preinjury_productive_activity", "preinjury_work_demand", "preinjury_work_hours",
                            "tobacco_use", "bmi", "preinjury_health", "insurance_type"), 
-    example_types = c("Boolean", "NamedCategory['ankle' 'other']", "Category", "Number", 
-                      "Category", "Category", "Category", "Category",
-                      "Category", "Category", "Category", "Boolean", "Number", 
-                      "Category", "Category"))
+    example_types = c("Boolean", "NamedCategory['ankle' 'other']", "Category-U3", 
+                      "Number-U100", "Category-U5", "Number-U10", "Number-U10", "Category-U4",
+                      "Category-U4", "Category-U4", "Number-U60", "Boolean", "Number-U60", 
+                      "Category-U4", "Category-U4"))
   
   df <- analytic %>% select(enrolled, injury_type, sex, age, ethnicity_race, education_level,
                             patient_reported_self_efficacy_6mo, patient_reported_self_efficacy_12mo,
@@ -2865,10 +2889,13 @@ wbs_main_paper_patient_characteristics <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' expected_and_followup_visit_overall()
-#' }
+#' expected_and_followup_visit_overall("Replace with Analytic Tibble")
+#' 
 expected_and_followup_visit_overall <- function(analytic){
+  analytic <- if_needed_generate_example_data(analytic,
+                                              example_constructs = c("followup_data"),
+                                              example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date")) 
+  
   df <- analytic %>% 
     select(study_id, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
@@ -2961,7 +2988,7 @@ expected_and_followup_visit_overall <- function(analytic){
 #' @description Returns the designated followup form status across all sites, 
 #' for a single timepoint and separated by the treatment_arm variable
 #'
-#' @param analytic This is the analytic data set that must include study_id, followup_data, treatment_arm
+#' @param analytic This is the analytic data set that must include study_id, followup_data
 #' @param timepoint the point in time to be considered in the visualization
 #' @param form_selection the form to be considered in the visualization
 #' @param name optional argument for changing the name of the followup form, for aesthetic use
@@ -2970,13 +2997,13 @@ expected_and_followup_visit_overall <- function(analytic){
 #' @export
 #'
 #' @examples
-#' followup_form_at_timepoint_by_site("Replace with Analytic Tibble", "2 Unit Period", "Form 3")
+#' followup_form_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", "Form 3")
 #' 
 followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("facilitycode", "followup_data"), 
-    example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date"))
+    example_types = c("FacilityCode", "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
@@ -3094,13 +3121,13 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
 #' @export
 #'
 #' @examples
-#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", "2 Unit Period", "Form 3")
+#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", c('3 Month', '6 Month'), "Form 3")
 #' 
 followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete')){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("facilitycode", "followup_data"), 
-    example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date"))
+    example_types = c("FacilityCode", "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
@@ -3241,13 +3268,13 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
 #' @export
 #'
 #' @examples
-#' followup_forms_at_timepoint_by_site("Replace with Analytic Tibble")
+#' followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", '3 Month', c('Form 3', 'Form 2'))
 #' 
 followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("facilitycode", "followup_data"), 
-    example_types = c("FacilityCode", "(';', ',')Period|Period|Form|Status|Date"))
+    example_types = c("FacilityCode", "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
@@ -3379,12 +3406,13 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
 #' @export
 #'
 #' @examples
-#' followup_forms_all_timepoints("Replace with Analytic Tibble")
+#' followup_forms_all_timepoints("Replace with Analytic Tibble", c('Form 3', 'Form 2'), c('3 Month', '6 Month'))
 #' 
 followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = NULL, vertical = TRUE){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('facilitycode', "followup_data"), 
-                                              example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('facilitycode', "followup_data"), 
+    example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
@@ -3566,7 +3594,8 @@ followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = N
 #' enrollment_and_followup_activities_overview()
 #' }
 enrollment_and_followup_activities_overview <- function(analytic, form_name = 'Overall'){
-  followups <- analytic %>%
+  
+   followups <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 
     separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 
@@ -3678,7 +3707,7 @@ enrollment_and_followup_activities_overview <- function(analytic, form_name = 'O
 #' @export
 #'
 #' @examples
-#' top_5_ineligibility_reasons("Replace with Analytic Tibble")
+#' ineligibility_reasons_info("Replace with Analytic Tibble")
 #' 
 ineligibility_reasons_info <- function(analytic){
   analytic <- if_needed_generate_example_data(

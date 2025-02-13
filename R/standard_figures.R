@@ -442,10 +442,21 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' dsmb_consort_diagram_pre_no_def_shifted_consent()
-#' }
+#' dsmb_consort_diagram_pre_no_def_shifted_consent("Replace with Analytic Tibble")
+#' 
 dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_period="12 Month", adjudicated=FALSE){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
+                           "randomized", "enrolled", "adjudicated_discontinued", "not_consented",
+                           "completed", "safety_set", "exclusive_safety_set", "not_completed", 
+                           "not_expected", "active", "missed_final_followup", "incomplete_final_followup", 
+                           "time_zero", "pre_screened", "pre_eligible", "pre_ineligible",
+                           "discontinued"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Date", "Boolean",
+                      "Boolean", "Boolean", "Boolean", "Boolean"))
   
   pre_analytic <- analytic %>% 
     filter(pre_screened == TRUE)
@@ -1015,6 +1026,7 @@ cumulative_enrolled <- function(analytic, bar_mode=FALSE, goal=NULL, goal_percen
   
   return(img_tag)
 }
+
 #' Monthly Discrete Enrollment
 #'
 #' @description This function visualizes the discrete number of patients enrolled by month
@@ -1025,10 +1037,13 @@ cumulative_enrolled <- function(analytic, bar_mode=FALSE, goal=NULL, goal_percen
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' discrete_enrolled()
-#' }
+#' discrete_enrolled("Replace with Analytic Tibble")
+#' 
 discrete_enrolled <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", "consent_date"),
+    example_types = c("Boolean", "Date")) 
   
   df <- analytic %>%  select(study_id, enrolled, consent_date) %>% 
     filter(!is.na(consent_date)) %>% 
@@ -1079,7 +1094,7 @@ cumulative_enrolled_los <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("ih_los_days"), 
-    example_types = c("Number"))
+    example_types = c("Number-U30"))
   
   df <- analytic %>%  select(study_id, ih_los_days) %>% 
     filter(ih_los_days != 'Missing' & !is.na(ih_los_days))
@@ -1127,10 +1142,13 @@ cumulative_enrolled_los <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' cumulative_enrollment_goals()
-#' }
+#' cumulative_enrollment_goals("Replace with Analytic Tibble")
+#' 
 cumulative_enrollment_goals <- function(analytic, start_date, end_date, participant_goal){
+  analytic <- if_needed_generate_example_data(analytic, 
+                                              example_constructs = c('enrolled', 'consent_date'), 
+                                              example_types = c('Boolean', 'Date'))
+  
   df <- analytic %>% 
     select(study_id, enrolled, consent_date)
   
@@ -1335,7 +1353,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
 #' vislib_query_issues_per_site_basic()
 #' }
 vislib_query_issues_per_site_basic <- function(analytic) {
-  
+
   queries <- analytic %>%
     select(analytic_query_database) %>%
     separate_rows(analytic_query_database, sep = 'NEWROW:') %>%
@@ -1537,10 +1555,16 @@ vislib_query_issues_per_site <- function(analytic) {
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' consort_diagram_no_definitive_event()
-#' }
+#' consort_diagram_no_definitive_event("Replace with Analytic Tibble")
+#' 
 consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month", not_expected_adjudicated=TRUE){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", "randomized", "enrolled", 
+                           "adjudicated_discontinued", "completed", "safety_set", "exclusive_safety_set", "not_completed", 
+                           "not_expected", "active", "missed_final_followup", "incomplete_final_followup"),
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean")) 
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, 
