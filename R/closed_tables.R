@@ -1133,10 +1133,13 @@ closed_appendix_B_deaths <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_appendix_C_not_expected_not_completed()
-#' }
+#' closed_appendix_C_not_expected_not_completed("Replace with Analytic Tibble")
+#' 
 closed_appendix_C_not_expected_not_completed <- function(analytic){
+  analytic <- if_needed_generate_example_data(analytic,
+                                              example_constructs = c("not_expected_data", "not_completed_data"),
+                                              example_types = c("FacilityCode;TreatmentArm;Date;Date;Number;Category",
+                                                                "FacilityCode;TreatmentArm;Date;Date;Number;Category"))
  
     #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
