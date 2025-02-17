@@ -309,7 +309,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
   race_df <- tibble()
   education_df <- tibble()
   
-  inner_baseline_characteristics_percent <- function(inner_analytic){
+  inner_baseline_characteristics_percent_nm <- function(inner_analytic){
     constructs <- c(sex, race, education)
     
     sex_default <- tibble(type=sex_levels)
