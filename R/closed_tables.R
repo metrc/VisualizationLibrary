@@ -444,7 +444,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' closed_not_complete_sae_deviation_by_type("Replace with Analytic Tibble")
 #' 
 closed_not_complete_sae_deviation_by_type <- function(analytic){
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', 'e34a42f4df3317645c855dd066efa19e')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', 'f2fda2495bb5637a2181cb670e62622e')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -1900,7 +1900,7 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
     example_types = c("TreatmentArm", "Boolean", "Boolean", "Boolean", 
                       "Date", "Boolean")) 
   
-  confirm_stability_of_related_visual('adherence_sextant', 'a7970bc0e7a68c4a3210c478baa0fdbc')
+  confirm_stability_of_related_visual('adherence_sextant', 'dffdf49f31e7c00274374f2103141409')
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -2154,7 +2154,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
                                               example_constructs = c("followup_data","treatment_arm"),
                                               example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date","Boolean")) 
   
-  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '77de8c47cc6a64cdcec6ddd54a5becbe')
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '819920a6d38957636bee47fb326150f0')
   
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
@@ -2291,7 +2291,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
 #' closed_fracture_characteristics("Replace with Analytic Tibble")
 #' 
 closed_fracture_characteristics <- function(analytic){
-  confirm_stability_of_related_visual('fracture_characteristics', '57f21346c4b2acf70ff51b42f7bb2ee5')
+  confirm_stability_of_related_visual('fracture_characteristics', 'fe024116685f39115df0add9c2ad061b')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
