@@ -2852,7 +2852,7 @@ wbs_main_paper_patient_characteristics <- function(analytic){
                     df_physical_demand, df_work_hours_final, df_tobacco, df_bmi_final, df_preinjury_health, df_insurance) 
   
   
-  index_vec_a <- c("Age" = 2, "Sex" = 3, "Race Ethnicity" = 5,
+  index_vec_a <- c("Age" = 1, "Sex" = 2, "Race Ethnicity" = 5,
                    "Education" = 5,  "Self Efficacy for return to Usual Activities"=4, 
                    "Preinjury Usual Major Activity" = 4, "Physical Demand of Job"= 6,
                    "Hours worked per week" = 2, "Tobacco Use" = 4, "BMI" = 2, "Preinjury Health" = 6, 
@@ -2870,7 +2870,7 @@ wbs_main_paper_patient_characteristics <- function(analytic){
   table_raw<- kable(df_for_table, format="html", align='l') %>%
     pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position='left') %>% 
-    row_spec(c(0,2,5,10,15,19,23,29,31,35,37,43,46), extra_css = "border-bottom: 1px solid;")
+    row_spec(c(0,1,3,8,13,17,21,27,29,33,35,41,44), extra_css = "border-bottom: 1px solid;")
   
   
   return(table_raw)

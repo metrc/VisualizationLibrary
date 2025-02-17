@@ -16,7 +16,6 @@ An HTML table.
 This function visualizes any not completedness and not expectedness occurred during the study time period.
 }
 \examples{
-\dontrun{
-closed_appendix_C_not_expected_not_completed()
-}
+closed_appendix_C_not_expected_not_completed("Replace with Analytic Tibble")
+
 }
