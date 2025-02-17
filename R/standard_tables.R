@@ -1146,15 +1146,14 @@ not_complete_sae_deviation_by_type_auto_categories <- function(analytic, categor
 adjudications_and_discontinuations_by_type <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c('inappropriate_enrollment', 'late_ineligible', 'late_refusal', 'withdrawn_patient', 'withdrawn_physician', 
+    example_constructs = c('screened', 'inappropriate_enrollment', 'late_ineligible', 'late_refusal', 'withdrawn_patient', 'withdrawn_physician', 
                            'dead', 'sae_count', 'protocol_deviation_screen_consent', 'protocol_deviation_procedural', 'protocol_deviation_administrative'), 
-    example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Number', 'Category', 'Category', 'Category'))
+    example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Number', 'Category', 'Category', 'Category'))
   
   df <- analytic %>% 
     filter(screened == TRUE) %>% 
     select(inappropriate_enrollment, late_ineligible, late_refusal, withdrawn_patient, withdrawn_physician, #adjudication_pending, 
            dead, sae_count, protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative) %>% 
-    
     mutate(na_count = rowSums(is.na(select(., 
                                            study_discontinuation,
                                            protocol_deviation_screen_consent,
