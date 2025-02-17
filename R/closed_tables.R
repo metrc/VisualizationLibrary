@@ -309,7 +309,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
   race_df <- tibble()
   education_df <- tibble()
   
-  inner_baseline_characteristics_percent <- function(inner_analytic){
+  inner_baseline_characteristics_percent_nm <- function(inner_analytic){
     constructs <- c(sex, race, education)
     
     sex_default <- tibble(type=sex_levels)
@@ -444,7 +444,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' closed_not_complete_sae_deviation_by_type("Replace with Analytic Tibble")
 #' 
 closed_not_complete_sae_deviation_by_type <- function(analytic){
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', 'e34a42f4df3317645c855dd066efa19e')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', 'f2fda2495bb5637a2181cb670e62622e')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -1133,10 +1133,13 @@ closed_appendix_B_deaths <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_appendix_C_not_expected_not_completed()
-#' }
+#' closed_appendix_C_not_expected_not_completed("Replace with Analytic Tibble")
+#' 
 closed_appendix_C_not_expected_not_completed <- function(analytic){
+  analytic <- if_needed_generate_example_data(analytic,
+                                              example_constructs = c("not_expected_data", "not_completed_data"),
+                                              example_types = c("FacilityCode;TreatmentArm;Date;Date;Number;Category",
+                                                                "FacilityCode;TreatmentArm;Date;Date;Number;Category"))
  
     #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
@@ -1901,7 +1904,7 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
     example_types = c("TreatmentArm", "Boolean", "Boolean", "Boolean", 
                       "Date", "Boolean")) 
   
-  confirm_stability_of_related_visual('adherence_sextant', 'a7970bc0e7a68c4a3210c478baa0fdbc')
+  confirm_stability_of_related_visual('adherence_sextant', 'dffdf49f31e7c00274374f2103141409')
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -2155,7 +2158,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
                                               example_constructs = c("followup_data","treatment_arm"),
                                               example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date","Boolean")) 
   
-  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '77de8c47cc6a64cdcec6ddd54a5becbe')
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '819920a6d38957636bee47fb326150f0')
   
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
