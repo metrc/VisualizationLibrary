@@ -1354,7 +1354,7 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
                                               example_constructs = c('enrolled', 'treatment_arm', 'injury_classification_ankle_ao', 'injury_at_work', 'injury_in_battle', 
                                                                      'injury_in_blast', 'injury_date', 'injury_mechanism', 'injury_side', 'injury_classification_tscherne', 'injury_type'), 
                                               example_types = c('Boolean', 'TreatmentArm', 'Category', 'Boolean', 'Boolean', 
-                                                                "NamedCategory[\'Yes\' \'No\' \'Missing\']", 'Date', 'Category', "NamedCategory[\'Left\' \'Right\' \'Missing\']", 'Category', "NamedCategory[\'Blunt\' \'Penetrating\' \'Missing\']"))
+                                                                "NamedCategory['Yes' 'No' 'Missing']", 'Date', 'Category', "NamedCategory['Left' 'Right' 'Missing']", 'Category', "NamedCategory['Blunt' 'Penetrating' 'Missing']"))
   
   inner_injury_characteristics_by_alternate_constructs <- function(df) {
     total <- sum(df$enrolled)
