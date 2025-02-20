@@ -3,7 +3,7 @@
 #' Closed Injury characteristics for OTA classification and Schatzker Type injuries
 #'
 #' @description This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
-#' injuries
+#' injuries 
 #'
 #' @param analytic This is the analytic data set that must include treatment_arm injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled
 #'
@@ -1638,11 +1638,12 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
 
 #' Closed Deep Surgical Site Infection reported & adjudicated
 #'
-#' @description This function visualizes the treatment crossover or any nonadherence occured during the Tobra
+#' @description 
+#' This function visualizes the treatment crossover or any nonadherence occured during the Tobra
 #' study by treatment arm.
 #'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
-#' dssi_adjudication_pending_6mo
+#' @param analytic This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, 
+#' dssi_reported_6mo, dssi_adjudicated_6mo, dssi_adjudication_pending_6mo, dssi_count
 #'
 #' @return An HTML table.
 #' @export
@@ -1655,8 +1656,8 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
     analytic,
     example_constructs = c("enrolled", "followup_expected_6mo", "dssi_reported_6mo",
                            "dssi_adjudicated_6mo", "dssi_adjudication_pending_6mo",
-                           "treatment_arm"),
-    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "TreatmentArm")) 
+                           "treatment_arm", "dssi_count"),
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "TreatmentArm", "Number-U5")) 
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
@@ -1664,7 +1665,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
     
   df <- pull %>% 
     select(study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
-           dssi_adjudication_pending_6mo)
+           dssi_adjudication_pending_6mo, dssi_count)
   
   total_ids_dssi <- df %>% 
     filter(dssi_reported_6mo & enrolled) %>% 
@@ -1676,7 +1677,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
     select(-enrolled, -study_id) %>%
     summarize(
       `Number of participants with visits expected at 6 months` = paste(sum(followup_expected_6mo, na.rm = TRUE)), 
-      `Deep surgical site infections reported within 6 months` = paste0(sum(dssi_reported_6mo, na.rm = TRUE), " (", total_ids_dssi, ")"),
+      `Deep surgical site infections reported within 6 months (# of patients with infections)` = paste0(sum(dssi_count, na.rm = TRUE), " (", total_ids_dssi, ")"),
       `Deep surgical site infection adjudicated at 6 months` = paste(sum(dssi_adjudicated_6mo, na.rm = TRUE)),
       `Participant with infections yet to be adjudicated within 6 months from time zero` = paste(sum(dssi_adjudication_pending_6mo, na.rm = TRUE))) %>% 
     pivot_longer(everything()) %>% 
@@ -1689,7 +1690,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
   pull <- analytic %>%
     filter(enrolled) %>%
     select(study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
-           dssi_adjudication_pending_6mo, treatment_arm)
+           dssi_adjudication_pending_6mo, treatment_arm, dssi_count)
   
   pull_a <- pull %>% filter(treatment_arm == "Group A")
   pull_b <- pull %>% filter(treatment_arm == "Group B")
