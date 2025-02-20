@@ -3,7 +3,7 @@
 #' Closed Injury characteristics for OTA classification and Schatzker Type injuries
 #'
 #' @description This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
-#' injuries
+#' injuries 
 #'
 #' @param analytic This is the analytic data set that must include treatment_arm injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled
 #'
