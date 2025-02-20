@@ -309,7 +309,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
   race_df <- tibble()
   education_df <- tibble()
   
-  inner_baseline_characteristics_percent <- function(inner_analytic){
+  inner_baseline_characteristics_percent_nm <- function(inner_analytic){
     constructs <- c(sex, race, education)
     
     sex_default <- tibble(type=sex_levels)
@@ -1353,10 +1353,11 @@ closed_certification_date_data <- function(analytic){
 #' closed_injury_characteristics_by_alternate_constructs("Replace with Analytic Tibble")
 #' 
 closed_injury_characteristics_by_alternate_constructs <- function(analytic){
-  analytic <- if_needed_generate_example_data("Replace with Analytic Tibble", 
-                                              example_constructs = c('treatment_arm', 'injury_classification_ankle_ao', 'injury_at_work', 'injury_in_battle', 
+  analytic <- if_needed_generate_example_data(analytic, 
+                                              example_constructs = c('enrolled', 'treatment_arm', 'injury_classification_ankle_ao', 'injury_at_work', 'injury_in_battle', 
                                                                      'injury_in_blast', 'injury_date', 'injury_mechanism', 'injury_side', 'injury_classification_tscherne', 'injury_type'), 
-                                              example_types = c('TreatmentArm', 'Category', 'Boolean', 'Boolean', "Boolean", 'Date', 'Category', 'Category', 'Category', 'Category'))
+                                              example_types = c('Boolean', 'TreatmentArm', 'Category', 'Boolean', 'Boolean', 
+                                                                "NamedCategory['Yes' 'No' 'Missing']", 'Date', 'Category', "NamedCategory['Left' 'Right' 'Missing']", 'Category', "NamedCategory['Blunt' 'Penetrating' 'Missing']"))
   
   inner_injury_characteristics_by_alternate_constructs <- function(df) {
     total <- sum(df$enrolled)
@@ -1454,9 +1455,12 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
   df_final_b <- inner_injury_characteristics_by_alternate_constructs(df_b)
   df_final_full <- inner_injury_characteristics_by_alternate_constructs(df)
   
-  df_table <- full_join(df_final_a, df_final_b, by = "type", suffix = c(" (Group A)", " (Group B)")) %>%
-    left_join(df_final_full, by = "type") %>%
-    select(type, ends_with(" (Group A)"), ends_with(" (Group B)"), ends_with("percentage"))
+  df_table <- cbind(df_final_a, df_final_b, df_final_full) %>%
+    select(type...1, percentage...2, percentage...4, percentage...6) %>% 
+    rename(type = type...1,
+           "percentage (Group A)" = percentage...2, 
+           "percentage (Group B)" = percentage...4,
+           "percentage" = percentage...6)
   
   cnames <- c(' ', paste('Group A (n=', sum(df_a$enrolled), ')'),
               paste('Group B (n=', sum(df_b$enrolled), ')'),
@@ -1727,8 +1731,8 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
  inner_complications_overall <- function(df){ 
    analytic <- if_needed_generate_example_data(analytic,
-                                               example_constructs = c("complication_data", 'time_zero'),
-                                               example_types = c("(';new_row: ', '|')FollowupPeriod|Form|Category|Category|Character|Date|Category|Category|Character", 'Date'))  
+                                               example_constructs = c("complication_data", 'time_zero', 'treatment_arm'),
+                                               example_types = c("(';new_row: ', '|')FollowupPeriod|Form|Category|Category|Character|Date|Category|Category|Character", 'Date', 'TreatmentArm'))  
    
   df <- df %>%  
     select(study_id, complication_data, time_zero) %>% 

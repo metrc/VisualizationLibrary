@@ -237,7 +237,7 @@ characteristics_treatment <- function(analytic){
     analytic, 
     example_constructs = c('enrolled', 'df_date', 'plat_df_surgical_incision', 'pil_df_surgical_incision', 'df_number_procedures', 
                            'adherence_to_intervention'), 
-    example_types = c('Boolean', 'Date', 'Category', 'Category', 'Number', 'Boolean'))
+    example_types = c('Boolean', 'Date', 'Category', 'Category', 'Number-U4', 'Boolean'))
   
   df <- analytic %>% 
     select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, adherence_to_intervention) %>% 
