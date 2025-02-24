@@ -2495,12 +2495,6 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
 #' wbs_main_paper_injury_characteristics("Replace with Analytic Tibble")
 #' 
 wbs_main_paper_injury_characteristics <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('injury_classification_weber', 'injury_classification_lauge_hansen', 'injury_gustilo', 'injury_type', 
-                                                                     'injury_classification_ankle_ota', 'definitive_fixation_construct', 'definitive_fixation_type', 
-                                                                     'soft_tissue_closure', 'enrolled'), 
-                                              example_types = c('Category', 'Category', 'Category', 'Category', 'Category', 'Category', 'Category', 'Category', 'Boolean'))
-  
   df <- analytic %>% 
     select(injury_classification_weber, injury_classification_lauge_hansen, injury_gustilo, injury_type, 
            injury_classification_ankle_ota, definitive_fixation_construct, definitive_fixation_type, 
