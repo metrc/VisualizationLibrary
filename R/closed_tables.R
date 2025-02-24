@@ -658,8 +658,8 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
   df_b <- analytic %>% 
     filter(treatment_arm =="Group B")
   
-  inner_closed_not_complete_sae_deviation_by_type <- function(analytic, group){
-    total <- sum(analytic$enrolled, na.rm=T)
+  inner_closed_not_complete_sae_deviation_by_type <- function(inner_analytic, group){
+    total <- sum(inner_analytic$enrolled, na.rm=T)
     not_completed_df <- analytic %>% 
       select(enrolled, not_completed_reason, not_completed) %>% 
       mutate(not_completed_reason = ifelse(not_completed, not_completed_reason, NA)) %>% 
@@ -672,7 +672,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
     
     not_completed_df_tot <- tibble(type="Not Completed", n=sum(not_completed_df$n))
     
-    not_expected_df <- analytic %>% 
+    not_expected_df <- inner_analytic %>% 
       select(enrolled, not_expected_reason) %>% 
       filter(enrolled) %>% 
       count(not_expected_reason) %>%
@@ -682,7 +682,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
     
     not_expected_df_tot <- tibble(type="Not Expected", n=sum(not_expected_df$n))
     
-    sae_df <- analytic %>% 
+    sae_df <- inner_analytic %>% 
       select(study_id, enrolled, sae_count) %>% 
       filter(enrolled & sae_count>0) %>% 
       mutate(sae_count = "SAE") %>% 
@@ -695,10 +695,10 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
       sae_df <- tibble(type = "SAE", n = 0)
     }
     
-    analytic <- analytic %>% 
+    inner_analytic <- inner_analytic %>% 
       mutate(protocol_deviation_data = protocol_deviation_full_data)
     
-    deviations_df <- analytic %>% 
+    deviations_df <- inner_analytic %>% 
       select(study_id, consented, protocol_deviation_data) %>% 
       separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
       separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
@@ -720,7 +720,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
     
     deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviations_df$n))
     
-    consented <- sum(analytic$consented, na.rm = TRUE)
+    consented <- sum(inner_analytic$consented, na.rm = TRUE)
     consented_df <- tibble(type = " ", n = paste0(group, " n=", consented, ' <sub>(Consented)</sub>'))
     
     df_final_top <- rbind(not_completed_df_tot, not_completed_df, not_expected_df_tot, not_expected_df, sae_df, consented_df) 
@@ -825,7 +825,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
       row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>%
       row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
       row_spec(1 + n_act + 1 + n_disc + 1 + 1, extra_css = "border-bottom: 1px solid; font-weight: bold") %>% 
-      row_spec(nrow(df_final), extra_css = "border-bottom: 1px solid") %>%
+      row_spec(nrow(df_table), extra_css = "border-bottom: 1px solid") %>%
       kable_styling("striped", full_width = F, position = "left")
   }
   return(vis)
