@@ -2495,12 +2495,6 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
 #' wbs_main_paper_injury_characteristics("Replace with Analytic Tibble")
 #' 
 wbs_main_paper_injury_characteristics <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('injury_classification_weber', 'injury_classification_lauge_hansen', 'injury_gustilo', 'injury_type', 
-                                                                     'injury_classification_ankle_ota', 'definitive_fixation_construct', 'definitive_fixation_type', 
-                                                                     'soft_tissue_closure', 'enrolled'), 
-                                              example_types = c('Category', 'Category', 'Category', 'Category', 'Category', 'Category', 'Category', 'Category', 'Boolean'))
-  
   df <- analytic %>% 
     select(injury_classification_weber, injury_classification_lauge_hansen, injury_gustilo, injury_type, 
            injury_classification_ankle_ota, definitive_fixation_construct, definitive_fixation_type, 
@@ -2625,9 +2619,22 @@ wbs_main_paper_injury_characteristics <- function(analytic){
                                                           'Screws', 'Screws Only', 'Screws and Plates', 'Delayed primary closure', 'Flap(rotational or free)',
                                                           'Primary closure', 'STSG', 'Missing'))) 
   
-  index_vec_a <- c("OTA Injury Classification" = 5, "Weber Classification" = 3, "Lauge-Hansen Classification" = 5,
-                   "Gustilo Type" = 5,  "Fixation Constructs"=5, "Fixation Types" = 13, "Soft Tissue Closure"= 5)
-  index_vec_b <- c(" " = 23, "Medial"=5, "Lateral"=4, "Posterior"=4,  " "= 5)
+  index_vec_a <- c(
+    "OTA Injury Classification" = df_table_raw %>% filter(Category=='OTA') %>% nrow(), 
+    "Weber Classification" = df_table_raw %>% filter(Category=='Weber') %>% nrow(), 
+    "Lauge-Hansen Classification" = df_table_raw %>% filter(Category=='Lauge Hansen') %>% nrow(),
+    "Gustilo Type" = df_table_raw %>% filter(Category=='Gustilo') %>% nrow(),  
+    "Fixation Constructs"= df_table_raw %>% filter(Category=='Construct') %>% nrow(), 
+    "Fixation Types" = df_table_raw %>% filter(Category=='Medial'|Category=='Lateral'|Category=='Posterior') %>% nrow(), 
+    "Soft Tissue Closure"= df_table_raw %>% filter(Category=='Tissue') %>% nrow()
+    )
+  index_vec_b <- c(
+    " " = 21, 
+    "Medial"= df_table_raw %>% filter(Category=='Medial') %>% nrow(), 
+    "Lateral"= df_table_raw %>% filter(Category=='Lateral') %>% nrow(), 
+    "Posterior"= df_table_raw %>% filter(Category=='Posterior') %>% nrow(),
+    " "= 5
+    )
   
   
   title <- paste("Total = ", total)
@@ -2639,13 +2646,11 @@ wbs_main_paper_injury_characteristics <- function(analytic){
     rename(" " = heading) %>% 
     rename(!!title := n) 
   
-  
-  
   table_raw<- kable(df_for_table, format="html", align='l') %>%
     pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>% 
     pack_rows(index = index_vec_b, label_row_css = "text-align:left", bold = FALSE) %>% 
     kable_styling("striped", full_width = F, position='left') %>% 
-    row_spec(c(0,5,8,13,18,23,36,41), extra_css = "border-bottom: 1px solid;")
+    row_spec(c(0,4,7,12,16,21,34), extra_css = "border-bottom: 1px solid;")
   
   return(table_raw)
 }
