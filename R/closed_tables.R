@@ -303,12 +303,6 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
   
   confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "fe7cb8b490a86eccd44baa0eaab32b6d")
   
-  sex_df <- tibble()
-  age_df <- tibble()
-  age_group_df <- tibble()
-  race_df <- tibble()
-  education_df <- tibble()
-  
   inner_baseline_characteristics_percent_nm <- function(inner_analytic){
     constructs <- c(sex, race, education)
     
@@ -390,7 +384,6 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
       ungroup()
     df_final
   }
-  
   
   df_a <- analytic %>% filter(treatment_arm=="Group A")
   df_b <- analytic %>% filter(treatment_arm=="Group B")
@@ -811,7 +804,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
       row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>%
       row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
       row_spec(1 + n_act + 1 + n_disc + 1 + 1, extra_css = "border-bottom: 1px solid; font-weight: bold") %>% 
-      row_spec(nrow(df_final), extra_css = "border-bottom: 1px solid") %>%
+      row_spec(nrow(df_table), extra_css = "border-bottom: 1px solid") %>%
       kable_styling("striped", full_width = F, position = "left")
   } else{
     vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
@@ -2154,10 +2147,11 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #' closed_expected_and_followup_visit_overall("Replace with Analytic Tibble")
 #' 
 closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL){
-  
-  analytic <- if_needed_generate_example_data(analytic,
-                                              example_constructs = c("followup_data","treatment_arm"),
-                                              example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date","Boolean")) 
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("followup_data","treatment_arm"),
+    example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date",
+                      "Boolean")) 
   
   confirm_stability_of_related_visual('expected_and_followup_visit_overall', '819920a6d38957636bee47fb326150f0')
   
@@ -2175,7 +2169,6 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
   
   fu_levels <- pull$followup_period %>% unique()
   fu_levels <- fu_levels[!is.na(fu_levels)]
-  
 
   split_arm <- list('Group A' = c(), 'Group B' = c())
   
@@ -2662,12 +2655,6 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
     facilities <- c('TOTAL', facilities)
     facilities <- facilities[!is.na(facilities)]
     
-    timepoints <- df %>% 
-      filter(form==form_selection) %>% 
-      pull(followup_period) %>% 
-      unique()
-    timepoints <- timepoints[!is.na(timepoints)]
-    
     form_df <- tibble(
       Facility = facilities
     )
@@ -2685,6 +2672,12 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
                                              'Not Started', 'Incomplete'), times = length(timepoints)))
     form_df
   }
+  
+  timepoints <- df %>% 
+    filter(form==form_selection) %>% 
+    pull(followup_period) %>% 
+    unique()
+  timepoints <- timepoints[!is.na(timepoints)]
   
   df_a_collected <- inner_per_treatment_arm(df_a)
   df_b_collected <- inner_per_treatment_arm(df_b)
