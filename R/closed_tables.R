@@ -2879,7 +2879,7 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
 #' @examples
 #' closed_followup_forms_all_timepoints("Replace with Analytic Tibble")
 #' 
-closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = NULL){
+closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = NULL, vertical = TRUE){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
@@ -2960,12 +2960,12 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
     
     divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
     names(divisor_expected) <- names(final_pre_pct)[-1]
-    divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+    divisor_complete <- final_pre_pct[3, -1] %>% as.numeric()
     names(divisor_complete) <- names(final_pre_pct)[-1]
     
     top <- final_pre_pct %>% 
-      slice_head(n=2) %>%
-      slice_tail(n=1) %>% 
+      slice_head(n=3) %>%
+      slice_tail(n=2) %>% 
       mutate(across(-status, 
                     ~ format_count_percent(., divisor_expected[cur_column()]),
                     .names = "{.col}"))
@@ -2977,7 +2977,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
                     .names = "{.col}"))
     
     middle <- final_pre_pct %>% 
-      slice_head(n=4) %>% 
+      slice_head(n=5) %>% 
       slice_tail(n=2) %>% 
       mutate(across(-status, 
                     ~ format_count_percent(., divisor_complete[cur_column()]),
@@ -3011,16 +3011,50 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
   header <- c(1, rep(length(timepoints), times = length(forms)))
   names(header) <- c(' ', paste(forms, 'Form Status'))
   
-  vis <- kable(full_collected, format="html", align='l') %>%
-    add_indent(c(3,4)) %>%
-    add_indent(c(10,11)) %>%
-    add_indent(c(17,18)) %>%
-    add_header_above(header) %>%
-    pack_rows(index = c('Group A' = nrow(df_a_collected),
-                        'Group B' = nrow(df_b_collected),
-                        'Total' = nrow(total_collected))) %>%
-    kable_styling("striped", full_width = F, position='left')
-  
+  if (vertical) {
+    out_long <- NULL
+    i <- 2
+    for (package in names(header[-1])) {
+      colcount <- as.numeric(header[package]) - 1
+      colindex <- i + colcount
+      temp_df <- full_collected[i:colindex]
+      if (is.null(out_long)) {
+        out_long <- temp_df
+      } else {
+        out_long <- bind_rows(out_long, temp_df)
+      }
+      i <- colindex + 1
+    }
+    
+    out_long <- out_long %>%
+      mutate(across(everything(), ~replace(., is.na(.), "."))) %>%
+      mutate(Status = rep(c("Expected", "Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'), 
+                          length(forms)*3)) %>%
+      select(Status, everything())
+    
+    
+    unpacked_vis <- kable(out_long, format="html", align='l')  %>%
+      kable_styling("striped", full_width = F, position='left')
+    
+    i <- 1
+    for (package in names(header[-1])) {
+      vis <- unpacked_vis %>%
+        pack_rows(package, i, i + 23) %>%
+        pack_rows('Group A', i, i + 7) %>%
+        pack_rows('Group B', i + 8, i + 15) %>%
+        pack_rows('Total', i + 16, i + 23) %>%
+        add_indent(c(i+3, i+4, i+12, i+13, i+20, i+21))
+      i <- i + 24
+    }
+  } else if (!vertical) {
+    vis <- kable(full_collected, format="html", align='l') %>%
+      add_indent(c(4,5,12,13,20,21)) %>%
+      add_header_above(header) %>%
+      pack_rows(index = c('Group A' = nrow(df_a_collected),
+                          'Group B' = nrow(df_b_collected),
+                          'Total' = nrow(total_collected))) %>%
+      kable_styling("striped", full_width = F, position='left')
+  }
   return(vis)
 }
 
