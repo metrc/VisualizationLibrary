@@ -2655,12 +2655,6 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
     facilities <- c('TOTAL', facilities)
     facilities <- facilities[!is.na(facilities)]
     
-    timepoints <- df %>% 
-      filter(form==form_selection) %>% 
-      pull(followup_period) %>% 
-      unique()
-    timepoints <- timepoints[!is.na(timepoints)]
-    
     form_df <- tibble(
       Facility = facilities
     )
@@ -2678,6 +2672,12 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
                                              'Not Started', 'Incomplete'), times = length(timepoints)))
     form_df
   }
+  
+  timepoints <- df %>% 
+    filter(form==form_selection) %>% 
+    pull(followup_period) %>% 
+    unique()
+  timepoints <- timepoints[!is.na(timepoints)]
   
   df_a_collected <- inner_per_treatment_arm(df_a)
   df_b_collected <- inner_per_treatment_arm(df_b)
