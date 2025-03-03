@@ -2569,7 +2569,7 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', 
                                                         included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'),
                                                         footnotes = NULL){
-  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', '76462363d142eebdbcf60b62e806b082')
+  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', '8bd48058fce7d721f2d18b6e9308df50')
   analytic <- if_needed_generate_example_data(analytic, 
                                           example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
                                           example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 'TreatmentArm'))
@@ -2587,9 +2587,6 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
   df_a <- df %>% filter(treatment_arm == 'Group A') %>% select(-treatment_arm)
   df_b <- df %>% filter(treatment_arm == 'Group B') %>% select(-treatment_arm)
   df <- df %>% select(-treatment_arm)
-  
-  timepoints <- df %>% filter(form==form_selection) %>% pull(followup_period) %>% unique()
-  timepoints <- timepoints[!is.na(timepoints)]
   
   inner_per_treatment_arm <- function(df) {
     form_collected <- function(form_selection, timepoint, facility = 'TOTAL'){
@@ -2651,7 +2648,8 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
         slice_head(n=2) %>%
         slice_tail(n=1)
       
-      out <- rbind(not_expected_row, expected_row, top, middle, bottom) %>%         rename(Status = status) %>%
+      out <- rbind(not_expected_row, expected_row, top, middle, bottom) %>%         
+        rename(Status = status) %>%
         pivot_wider(values_from = -Status, names_from = Status) %>%
         mutate(Facility = facility) %>%
         select(Facility, everything())
@@ -2663,6 +2661,12 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
       unique()
     facilities <- c('TOTAL', facilities)
     facilities <- facilities[!is.na(facilities)]
+    
+    timepoints <- df %>% 
+      filter(form==form_selection) %>% 
+      pull(followup_period) %>% 
+      unique()
+    timepoints <- timepoints[!is.na(timepoints)]
     
     form_df <- tibble(
       Facility = facilities
