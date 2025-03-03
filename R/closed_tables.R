@@ -2728,8 +2728,8 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' \dontrun{
 #' closex_followup_forms_at_timepoint_by_site()
 #' }
-closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, pretty_names = NULL){
-  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '98f0d266c706fb6be2a647cffe144564')
+closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
+  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '3b1ff938637e400445cd2f89a1ee6cdd')
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
@@ -2845,10 +2845,10 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
   colnames(full_collected) <- cols
   
   header <- c(1,rep(8, length(forms)))
-  if (is.null(pretty_names)) {
+  if (is.null(names)) {
     header_names <- c(' ', paste0(forms, ' Status at ', timepoint, ' Period'))
   } else {
-    header_names <- c(' ', paste0(pretty_names, ' Status at ', timepoint, ' Period'))
+    header_names <- c(' ', paste0(names, ' Status at ', timepoint, ' Period'))
   }
   
   names(header) <- header_names
