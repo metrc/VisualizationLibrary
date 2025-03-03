@@ -1943,7 +1943,7 @@ closed_characteristics_treatment <- function(analytic){
     example_types = c("TreatmentArm", "Boolean", "Date", "Category",
                       "Category", "Number", "Boolean")) 
   
-  confirm_stability_of_related_visual('characteristics_treatment', '560adce14e9d8085cd5c991e701bd780')
+  confirm_stability_of_related_visual('characteristics_treatment', 'f0557c2e652d0c58c5f6771b3dbdcd39')
   
   inner_characteristics_treatment <- function(df){
     total <- sum(df$enrolled, na.rm=T)
