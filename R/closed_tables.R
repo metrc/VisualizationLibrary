@@ -298,10 +298,19 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethnicity_race", education="education_level",
                                                        sex_levels=c("Female","Male", "Missing"), 
                                                        race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
-                                                       education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing")){
+                                                       education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", 
+                                                                          "Refused / Don't know", "Missing")){
   
   
   confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "fe7cb8b490a86eccd44baa0eaab32b6d")
+  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("sex", "ethnicity_race", "education_level", "age", "age_group",
+                           "enrolled", 'treatment_arm'),
+    example_types = c("NamedCategory['Female' 'Male' 'Missing']", "NamedCategory['Non-Hispanic White' 'Non-Hispanic Black' 'Hispanic' 'Other' 'Missing']",
+                      "NamedCategory['Less than High School' 'GED or High School Diploma' 'More than High School' 'Refused / Don't know' 'Missing']",
+                      "Number-U100", "Category-U5", "Boolean", 'TreatmentArm')) 
   
   inner_baseline_characteristics_percent_nm <- function(inner_analytic){
     constructs <- c(sex, race, education)
