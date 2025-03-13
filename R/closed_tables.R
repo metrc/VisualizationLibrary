@@ -3,7 +3,7 @@
 #' Closed Injury characteristics for OTA classification and Schatzker Type injuries
 #'
 #' @description This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
-#' injuries
+#' injuries 
 #'
 #' @param analytic This is the analytic data set that must include treatment_arm injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled
 #'
@@ -303,12 +303,6 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
   
   confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "fe7cb8b490a86eccd44baa0eaab32b6d")
   
-  sex_df <- tibble()
-  age_df <- tibble()
-  age_group_df <- tibble()
-  race_df <- tibble()
-  education_df <- tibble()
-  
   inner_baseline_characteristics_percent_nm <- function(inner_analytic){
     constructs <- c(sex, race, education)
     
@@ -390,7 +384,6 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
       ungroup()
     df_final
   }
-  
   
   df_a <- analytic %>% filter(treatment_arm=="Group A")
   df_b <- analytic %>% filter(treatment_arm=="Group B")
@@ -658,8 +651,8 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
   df_b <- analytic %>% 
     filter(treatment_arm =="Group B")
   
-  inner_closed_not_complete_sae_deviation_by_type <- function(analytic, group){
-    total <- sum(analytic$enrolled, na.rm=T)
+  inner_closed_not_complete_sae_deviation_by_type <- function(inner_analytic, group){
+    total <- sum(inner_analytic$enrolled, na.rm=T)
     not_completed_df <- analytic %>% 
       select(enrolled, not_completed_reason, not_completed) %>% 
       mutate(not_completed_reason = ifelse(not_completed, not_completed_reason, NA)) %>% 
@@ -672,7 +665,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
     
     not_completed_df_tot <- tibble(type="Not Completed", n=sum(not_completed_df$n))
     
-    not_expected_df <- analytic %>% 
+    not_expected_df <- inner_analytic %>% 
       select(enrolled, not_expected_reason) %>% 
       filter(enrolled) %>% 
       count(not_expected_reason) %>%
@@ -682,7 +675,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
     
     not_expected_df_tot <- tibble(type="Not Expected", n=sum(not_expected_df$n))
     
-    sae_df <- analytic %>% 
+    sae_df <- inner_analytic %>% 
       select(study_id, enrolled, sae_count) %>% 
       filter(enrolled & sae_count>0) %>% 
       mutate(sae_count = "SAE") %>% 
@@ -695,10 +688,10 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
       sae_df <- tibble(type = "SAE", n = 0)
     }
     
-    analytic <- analytic %>% 
+    inner_analytic <- inner_analytic %>% 
       mutate(protocol_deviation_data = protocol_deviation_full_data)
     
-    deviations_df <- analytic %>% 
+    deviations_df <- inner_analytic %>% 
       select(study_id, consented, protocol_deviation_data) %>% 
       separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
       separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
@@ -720,7 +713,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
     
     deviation_df_tot <- tibble(type="Protocol Deviations",n=sum(deviations_df$n))
     
-    consented <- sum(analytic$consented, na.rm = TRUE)
+    consented <- sum(inner_analytic$consented, na.rm = TRUE)
     consented_df <- tibble(type = " ", n = paste0(group, " n=", consented, ' <sub>(Consented)</sub>'))
     
     df_final_top <- rbind(not_completed_df_tot, not_completed_df, not_expected_df_tot, not_expected_df, sae_df, consented_df) 
@@ -811,7 +804,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
       row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>%
       row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
       row_spec(1 + n_act + 1 + n_disc + 1 + 1, extra_css = "border-bottom: 1px solid; font-weight: bold") %>% 
-      row_spec(nrow(df_final), extra_css = "border-bottom: 1px solid") %>%
+      row_spec(nrow(df_table), extra_css = "border-bottom: 1px solid") %>%
       kable_styling("striped", full_width = F, position = "left")
   } else{
     vis <- kable(df_table, format="html", align='l',  col.names = c(' ', 
@@ -825,7 +818,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
       row_spec(1 + n_act + 1 + n_disc, extra_css = "border-bottom: 1px solid") %>%
       row_spec(1 + n_act + 1 + n_disc + 1, extra_css = "border-bottom: 1px solid") %>%
       row_spec(1 + n_act + 1 + n_disc + 1 + 1, extra_css = "border-bottom: 1px solid; font-weight: bold") %>% 
-      row_spec(nrow(df_final), extra_css = "border-bottom: 1px solid") %>%
+      row_spec(nrow(df_table), extra_css = "border-bottom: 1px solid") %>%
       kable_styling("striped", full_width = F, position = "left")
   }
   return(vis)
@@ -1638,11 +1631,12 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
 
 #' Closed Deep Surgical Site Infection reported & adjudicated
 #'
-#' @description This function visualizes the treatment crossover or any nonadherence occured during the Tobra
+#' @description 
+#' This function visualizes the treatment crossover or any nonadherence occured during the Tobra
 #' study by treatment arm.
 #'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
-#' dssi_adjudication_pending_6mo
+#' @param analytic This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, 
+#' dssi_reported_6mo, dssi_adjudicated_6mo, dssi_adjudication_pending_6mo, dssi_count
 #'
 #' @return An HTML table.
 #' @export
@@ -1655,8 +1649,8 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
     analytic,
     example_constructs = c("enrolled", "followup_expected_6mo", "dssi_reported_6mo",
                            "dssi_adjudicated_6mo", "dssi_adjudication_pending_6mo",
-                           "treatment_arm"),
-    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "TreatmentArm")) 
+                           "treatment_arm", "dssi_count"),
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "TreatmentArm", "Number-U5")) 
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
@@ -1664,7 +1658,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
     
   df <- pull %>% 
     select(study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
-           dssi_adjudication_pending_6mo)
+           dssi_adjudication_pending_6mo, dssi_count)
   
   total_ids_dssi <- df %>% 
     filter(dssi_reported_6mo & enrolled) %>% 
@@ -1676,7 +1670,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
     select(-enrolled, -study_id) %>%
     summarize(
       `Number of participants with visits expected at 6 months` = paste(sum(followup_expected_6mo, na.rm = TRUE)), 
-      `Deep surgical site infections reported within 6 months` = paste0(sum(dssi_reported_6mo, na.rm = TRUE), " (", total_ids_dssi, ")"),
+      `Deep surgical site infections reported within 6 months (# of patients with infections)` = paste0(sum(dssi_count, na.rm = TRUE), " (", total_ids_dssi, ")"),
       `Deep surgical site infection adjudicated at 6 months` = paste(sum(dssi_adjudicated_6mo, na.rm = TRUE)),
       `Participant with infections yet to be adjudicated within 6 months from time zero` = paste(sum(dssi_adjudication_pending_6mo, na.rm = TRUE))) %>% 
     pivot_longer(everything()) %>% 
@@ -1689,7 +1683,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
   pull <- analytic %>%
     filter(enrolled) %>%
     select(study_id, enrolled, followup_expected_6mo, dssi_reported_6mo, dssi_adjudicated_6mo, 
-           dssi_adjudication_pending_6mo, treatment_arm)
+           dssi_adjudication_pending_6mo, treatment_arm, dssi_count)
   
   pull_a <- pull %>% filter(treatment_arm == "Group A")
   pull_b <- pull %>% filter(treatment_arm == "Group B")
@@ -1949,7 +1943,7 @@ closed_characteristics_treatment <- function(analytic){
     example_types = c("TreatmentArm", "Boolean", "Date", "Category",
                       "Category", "Number", "Boolean")) 
   
-  confirm_stability_of_related_visual('characteristics_treatment', '560adce14e9d8085cd5c991e701bd780')
+  confirm_stability_of_related_visual('characteristics_treatment', 'f0557c2e652d0c58c5f6771b3dbdcd39')
   
   inner_characteristics_treatment <- function(df){
     total <- sum(df$enrolled, na.rm=T)
@@ -2153,10 +2147,11 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #' closed_expected_and_followup_visit_overall("Replace with Analytic Tibble")
 #' 
 closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL){
-  
-  analytic <- if_needed_generate_example_data(analytic,
-                                              example_constructs = c("followup_data","treatment_arm"),
-                                              example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date","Boolean")) 
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("followup_data","treatment_arm"),
+    example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date",
+                      "Boolean")) 
   
   confirm_stability_of_related_visual('expected_and_followup_visit_overall', '819920a6d38957636bee47fb326150f0')
   
@@ -2174,7 +2169,6 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
   
   fu_levels <- pull$followup_period %>% unique()
   fu_levels <- fu_levels[!is.na(fu_levels)]
-  
 
   split_arm <- list('Group A' = c(), 'Group B' = c())
   
@@ -2568,7 +2562,7 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', 
                                                         included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'),
                                                         footnotes = NULL){
-  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', '76462363d142eebdbcf60b62e806b082')
+  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', '8bd48058fce7d721f2d18b6e9308df50')
   analytic <- if_needed_generate_example_data(analytic, 
                                           example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
                                           example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 'TreatmentArm'))
@@ -2586,9 +2580,6 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
   df_a <- df %>% filter(treatment_arm == 'Group A') %>% select(-treatment_arm)
   df_b <- df %>% filter(treatment_arm == 'Group B') %>% select(-treatment_arm)
   df <- df %>% select(-treatment_arm)
-  
-  timepoints <- df %>% filter(form==form_selection) %>% pull(followup_period) %>% unique()
-  timepoints <- timepoints[!is.na(timepoints)]
   
   inner_per_treatment_arm <- function(df) {
     form_collected <- function(form_selection, timepoint, facility = 'TOTAL'){
@@ -2650,7 +2641,8 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
         slice_head(n=2) %>%
         slice_tail(n=1)
       
-      out <- rbind(not_expected_row, expected_row, top, middle, bottom) %>%         rename(Status = status) %>%
+      out <- rbind(not_expected_row, expected_row, top, middle, bottom) %>%         
+        rename(Status = status) %>%
         pivot_wider(values_from = -Status, names_from = Status) %>%
         mutate(Facility = facility) %>%
         select(Facility, everything())
@@ -2680,6 +2672,12 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
                                              'Not Started', 'Incomplete'), times = length(timepoints)))
     form_df
   }
+  
+  timepoints <- df %>% 
+    filter(form==form_selection) %>% 
+    pull(followup_period) %>% 
+    unique()
+  timepoints <- timepoints[!is.na(timepoints)]
   
   df_a_collected <- inner_per_treatment_arm(df_a)
   df_b_collected <- inner_per_treatment_arm(df_b)
@@ -2727,8 +2725,8 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' \dontrun{
 #' closex_followup_forms_at_timepoint_by_site()
 #' }
-closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, pretty_names = NULL){
-  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '98f0d266c706fb6be2a647cffe144564')
+closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
+  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '3b1ff938637e400445cd2f89a1ee6cdd')
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
@@ -2844,10 +2842,10 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
   colnames(full_collected) <- cols
   
   header <- c(1,rep(8, length(forms)))
-  if (is.null(pretty_names)) {
+  if (is.null(names)) {
     header_names <- c(' ', paste0(forms, ' Status at ', timepoint, ' Period'))
   } else {
-    header_names <- c(' ', paste0(pretty_names, ' Status at ', timepoint, ' Period'))
+    header_names <- c(' ', paste0(names, ' Status at ', timepoint, ' Period'))
   }
   
   names(header) <- header_names
@@ -2878,7 +2876,7 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
 #' @examples
 #' closed_followup_forms_all_timepoints("Replace with Analytic Tibble")
 #' 
-closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = NULL){
+closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = NULL, vertical = TRUE){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
@@ -2959,12 +2957,12 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
     
     divisor_expected <- final_pre_pct[1, -1] %>% as.numeric()
     names(divisor_expected) <- names(final_pre_pct)[-1]
-    divisor_complete <- final_pre_pct[2, -1] %>% as.numeric()
+    divisor_complete <- final_pre_pct[3, -1] %>% as.numeric()
     names(divisor_complete) <- names(final_pre_pct)[-1]
     
     top <- final_pre_pct %>% 
-      slice_head(n=2) %>%
-      slice_tail(n=1) %>% 
+      slice_head(n=3) %>%
+      slice_tail(n=2) %>% 
       mutate(across(-status, 
                     ~ format_count_percent(., divisor_expected[cur_column()]),
                     .names = "{.col}"))
@@ -2976,7 +2974,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
                     .names = "{.col}"))
     
     middle <- final_pre_pct %>% 
-      slice_head(n=4) %>% 
+      slice_head(n=5) %>% 
       slice_tail(n=2) %>% 
       mutate(across(-status, 
                     ~ format_count_percent(., divisor_complete[cur_column()]),
@@ -3010,16 +3008,50 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
   header <- c(1, rep(length(timepoints), times = length(forms)))
   names(header) <- c(' ', paste(forms, 'Form Status'))
   
-  vis <- kable(full_collected, format="html", align='l') %>%
-    add_indent(c(3,4)) %>%
-    add_indent(c(10,11)) %>%
-    add_indent(c(17,18)) %>%
-    add_header_above(header) %>%
-    pack_rows(index = c('Group A' = nrow(df_a_collected),
-                        'Group B' = nrow(df_b_collected),
-                        'Total' = nrow(total_collected))) %>%
-    kable_styling("striped", full_width = F, position='left')
-  
+  if (vertical) {
+    out_long <- NULL
+    i <- 2
+    for (package in names(header[-1])) {
+      colcount <- as.numeric(header[package]) - 1
+      colindex <- i + colcount
+      temp_df <- full_collected[i:colindex]
+      if (is.null(out_long)) {
+        out_long <- temp_df
+      } else {
+        out_long <- bind_rows(out_long, temp_df)
+      }
+      i <- colindex + 1
+    }
+    
+    out_long <- out_long %>%
+      mutate(across(everything(), ~replace(., is.na(.), "."))) %>%
+      mutate(Status = rep(c("Expected", "Not Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'), 
+                          length(forms)*3)) %>%
+      select(Status, everything())
+    
+    
+    unpacked_vis <- kable(out_long, format="html", align='l')  %>%
+      kable_styling("striped", full_width = F, position='left')
+    
+    i <- 1
+    for (package in names(header[-1])) {
+      vis <- unpacked_vis %>%
+        pack_rows(package, i, i + 23) %>%
+        pack_rows('Group A', i, i + 7) %>%
+        pack_rows('Group B', i + 8, i + 15) %>%
+        pack_rows('Total', i + 16, i + 23) %>%
+        add_indent(c(i+3, i+4, i+12, i+13, i+20, i+21))
+      i <- i + 24
+    }
+  } else if (!vertical) {
+    vis <- kable(full_collected, format="html", align='l') %>%
+      add_indent(c(4,5,12,13,20,21)) %>%
+      add_header_above(header) %>%
+      pack_rows(index = c('Group A' = nrow(df_a_collected),
+                          'Group B' = nrow(df_b_collected),
+                          'Total' = nrow(total_collected))) %>%
+      kable_styling("striped", full_width = F, position='left')
+  }
   return(vis)
 }
 
