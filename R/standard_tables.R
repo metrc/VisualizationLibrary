@@ -3954,6 +3954,7 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
   return(vis)
 }
 
+
 #' Not enrolled reason
 #'
 #' @description This function visualizes list of study_ids who were are not enrolled, the reasons, and the screening notes
@@ -3964,7 +3965,7 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
 #' @return An HTML table.
 #' @export
 #'
-#' @examples
+#' @examples                     
 #' not_enrolled_reason("Replace with Analytic Tibble")
 #' 
 not_enrolled_reason <- function(analytic){
@@ -3988,4 +3989,154 @@ not_enrolled_reason <- function(analytic){
   
   return(output)
 }
+                       
 
+#' Outcome by Site
+#'
+#' @description 
+#' Returns summary statistics on the number of days to complete various follow-up forms.
+#'
+#' @param analytic This is the analytic data set that must include study_id, outcome_data, facilitycode, and enrolled
+#' @param outcome_name the name of the outcome to be considered in the visualization
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' outcome_by_site("Replace with Analytic Tibble", 'test_outcome')
+#' 
+outcome_by_site <- function(analytic, outcome_name) {
+  analytic <- if_needed_generate_example_data(analytic, 
+                                              example_constructs = c('outcome_data', 'facilitycode', 'enrolled'), 
+                                              example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check', 'event']|Number|Number|Date", 'FacilityCode', 'Boolean'))
+  # Extract the relevant outcome data
+  outcome_data <- analytic %>%
+    select(study_id, outcome_data, facilitycode, enrolled) %>%
+    filter(enrolled) %>%
+    # Split the outcome_data string
+    separate_rows(outcome_data, sep=";") %>% 
+    # Split each record into columns
+    separate(
+      outcome_data,
+      c("outcome_name", "target_days", "expected_days", "time_zero", 
+        "outcome_date_extended", "outcome_type", "outcome_days_extended", 
+        "outcome_days", "outcome_date"),
+      sep = ","
+    ) %>%
+    # Filter for the specific outcome
+    filter(outcome_name == !!outcome_name) %>%
+    # Convert numeric columns
+    mutate(
+      target_days = as.numeric(target_days),
+      expected_days = as.numeric(expected_days),
+      outcome_days_extended = as.numeric(outcome_days_extended),
+      outcome_days = as.numeric(outcome_days)
+    )
+  
+  # Calculate overall statistics
+  overall_stats <- outcome_data %>%
+    summarise(
+      n_total = n(),
+      n_missing = sum(is.na(outcome_days)),
+      min_days = min(outcome_days, na.rm = TRUE),
+      max_days = max(outcome_days, na.rm = TRUE),
+      avg_days = format_mean_sd(outcome_days, decimals = 0),
+      pct_target = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(target_days, na.rm = TRUE) *100, 0), "%"),
+      pct_expected = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%")
+    ) %>%
+    mutate(facilitycode = "Overall")
+  
+  # Calculate site-specific statistics
+  site_stats <- outcome_data %>%
+    group_by(facilitycode) %>%
+    summarise(
+      n_total = n(),
+      n_missing = sum(is.na(outcome_days)),
+      min_days = min(outcome_days, na.rm = TRUE),
+      max_days = max(outcome_days, na.rm = TRUE),
+      avg_days = format_mean_sd(outcome_days, decimals = 0),
+      pct_target = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(target_days, na.rm = TRUE) *100, 0), "%"),
+      pct_expected = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%")
+    ) %>%
+    ungroup() %>%
+    arrange(desc(pct_expected))
+  
+  # Combine overall and site-specific statistics
+  results <- bind_rows(overall_stats, site_stats)
+  
+  results <- results %>%
+    rename(`N (Participants)` = n_total,
+           `Missing Time to Event (Participants)` = n_missing,
+           `Minimum (Days)` = min_days,
+           `Maximum (Days)` = max_days,
+           `Mean (Standard Deviation)` = avg_days,
+           `Percent of Target` = pct_target,
+           `Percent of Expected` = pct_expected,
+           `Site` = facilitycode) %>%
+    select(`Site`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Target`, `Percent of Expected`)
+  
+  vis <- kable(results, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
+
+#' Outcome by Name Overall
+#'
+#' @description 
+#' Returns summary statistics on the number of days to complete various follow-up forms.
+#'
+#' @param analytic This is the analytic data set that must include study_id, outcome_data, and enrolled
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' outcome_by_name_overall("Replace with Analytic Tibble")
+#' 
+outcome_by_name_overall <- function(analytic) {
+  analytic <- if_needed_generate_example_data(analytic, 
+                                              example_constructs = c('outcome_data', 'enrolled'), 
+                                              example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check', 'event']|Number|Number|Date", 'Boolean'))
+  
+  outcome_data <- analytic %>%
+    select(study_id, outcome_data, enrolled) %>%
+    filter(enrolled) %>%
+    separate_rows(outcome_data, sep=";") %>%
+    separate(outcome_data, c('outcome_name', 'target_days', 'expected_days', 'time_zero', 'outcome_date_extended', 'outcome_type', 'outcome_days_extended', 'outcome_days', 'outcome_date'), sep=",")
+
+  stats <- outcome_data %>%
+    mutate(outcome_days = as.numeric(outcome_days)) %>%
+    mutate(target_days = as.numeric(target_days)) %>%
+    mutate(expected_days = as.numeric(expected_days)) %>%
+    group_by(outcome_name) %>%
+    summarise(
+      n_total = n(),
+      n_missing = sum(is.na(outcome_days)),
+      min_days = min(outcome_days, na.rm = TRUE),
+      max_days = max(outcome_days, na.rm = TRUE),
+      avg_days = format_mean_sd(outcome_days, decimals = 0),
+      pct_target = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(target_days, na.rm = TRUE) *100, 0), "%"),
+      pct_expected = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%")
+    )
+
+  results <- stats %>%
+    rename(`N (Participants)` = n_total,
+           `Missing Time to Event (Participants)` = n_missing,
+           `Minimum (Days)` = min_days,
+           `Maximum (Days)` = max_days,
+           `Mean (Standard Deviation)` = avg_days,
+           `Percent of Target` = pct_target,
+           `Percent of Expected` = pct_expected,
+           `Outcome` = outcome_name) %>%
+    select(`Outcome`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Target`, `Percent of Expected`)
+
+  # cleanup the names of the outcomes by replacing the underscores with spaces and capitalizing the first letter
+  results <- results %>%
+    mutate(Outcome = str_replace_all(Outcome, "_", " "))
+  
+  vis <- kable(results, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}

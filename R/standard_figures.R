@@ -1,4 +1,3 @@
-
 #' DSMB Consort Diagram
 #'
 #' @description This function visualizes the categorical percentages of Study Status for any study, similar to the NSAID consort diagram, but with customization endpoints.
@@ -1675,5 +1674,141 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
   image_data <- base64enc::base64encode(temp_png_path)
   img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 1200px;">', image_data)
   file.remove(c(temp_svg_path, temp_png_path))
+  return(img_tag)
+}
+
+#' Visualize patient outcomes by ID over time
+#'
+#' @description This function creates a timeline visualization for each patient showing events relative to time zero for SINGLE event outcomes.
+#'
+#' @param analytic This is the analytic data set that must include study_id, facilitycode, events_data, outcome_data and time_zero
+#' @param event_name The specific event to track (will mark first occurrence specially)
+#' @param random_sample Optional integer to limit to a random sample of IDs
+#'
+#' @return An HTML string containing an image tag with the base64-encoded timeline visualization in PNG format.
+#' @export
+#'
+#' @examples
+#' outcome_by_id(analytic_data, "deep_ssi_adjudicated")
+#' 
+outcome_by_id <- function(analytic, event_name, random_sample = NULL) {
+  # Check if required columns exist
+  required_cols <- c("study_id", "facilitycode", "events_data", "outcome_data", "time_zero" , "enrolled")
+  missing_cols <- required_cols[!required_cols %in% names(analytic)]
+  
+  if (length(missing_cols) > 0) {
+    stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
+  }
+  
+  analytic <- analytic %>% filter(enrolled == TRUE)
+
+  if (!is.null(random_sample)) {
+    sample_ids <- sample(unique(analytic$study_id), random_sample)
+    analytic <- analytic %>% filter(study_id %in% sample_ids)
+  }
+
+  # Process the events_data column
+  events_df <- analytic %>%
+    select(study_id, facilitycode, events_data, outcome_data, time_zero) %>%
+    separate_rows(events_data, sep = ";") %>%
+    separate(events_data, into = c("period", "name", "form", "type", "date"), sep = ",") %>% 
+    filter(name == event_name)
+  
+  # Parse the outcome_data
+  outcome_parsed <- analytic %>%
+    select(study_id, outcome_data) %>%
+    separate_rows(outcome_data, sep = ";") %>%
+    separate(outcome_data, into = c("outcome_name", "target_days", "expected_days", 
+                                   "time_zero", "outcome_date_extended", "outcome_type", 
+                                   "outcome_days_extended", "outcome_days", "outcome_date"), 
+             sep = ",") %>%
+    mutate(target_days = as.numeric(target_days),
+           expected_days = as.numeric(expected_days),
+           outcome_days = as.numeric(outcome_days),
+           outcome_days_extended = as.numeric(outcome_days_extended),
+           time_zero = as.Date(time_zero),
+           outcome_date = as.Date(outcome_date),
+           outcome_date_extended = as.Date(outcome_date_extended)) %>% 
+    filter(outcome_name == event_name)
+  
+  # Extract the information for the event of interest
+  event_outcomes <- outcome_parsed %>% 
+    filter(outcome_name == event_name) %>%
+    select(study_id, target_days, expected_days, outcome_days, outcome_days_extended)
+  
+  # Convert date to proper format and join with outcome info
+  events_df <- events_df %>%
+    mutate(date = as.Date(date),
+           time_zero = as.Date(time_zero),
+           days_from_zero = as.numeric(difftime(date, time_zero, units = "days")),
+           patient_label = paste(facilitycode, study_id, sep = "-")) %>%
+    # Filter out events before time_zero
+    filter(days_from_zero >= 0) %>% 
+    left_join(event_outcomes, by = "study_id") %>% 
+    arrange(patient_label) %>% 
+    select(-study_id, -facilitycode, -period)
+  
+  patients_df <- events_df %>%
+    select(patient_label, outcome_days, outcome_days_extended) %>% 
+    distinct()
+  
+  # Get the global target_days (should be same for all patients)
+  target_days <- unique(event_outcomes$target_days)[1]
+  
+  # Create the plot
+  g <- ggplot() +
+    # Patient timeline base lines - solid until first event or outcome_days
+    geom_segment(data = patients_df, 
+                aes(x = 0, y = patient_label, 
+                   xend = outcome_days, 
+                   yend = patient_label),
+                size = 1) +
+    
+    # Dotted line after first event until outcome_days
+    geom_segment(data = patients_df, 
+                aes(x = outcome_days, 
+                    y = patient_label, 
+                    xend = outcome_days_extended, yend = patient_label),
+                linetype = "dotted", size = 1) +
+    
+    # Vertical line at target_days
+    geom_vline(xintercept = target_days, linetype = "dashed", color = "red") +
+    
+    # Event points - now with size mapping for "event" type
+    geom_point(data = events_df, 
+              aes(x = days_from_zero, y = patient_label, color = form, shape = type,
+                  size = type == "event")) +
+    
+    # Formatting with classic paper theme
+    scale_size_manual(values = c("TRUE" = 5, "FALSE" = 2), guide = "none") +
+    scale_color_brewer(palette = "Set1", direction = -1) +  # More muted color palette
+    labs(title = paste("Patient outcomes tracking:", str_replace_all(event_name, "_"," ")),
+         subtitle = "Solid line until first event or expected follow-up date. Red line at target date.",
+         x = "Days from time zero",
+         y = "Study ID") +
+    theme_minimal() +
+    theme(text = element_text(family = "serif"),
+          plot.background = element_rect(fill = "white", color = NA),
+          panel.grid.major = element_line(color = "gray90"),
+          panel.grid.minor = element_line(color = "gray95"),
+          axis.line = element_line(color = "black"),
+          axis.ticks = element_line(color = "black"),
+          legend.position = "bottom",
+          plot.title = element_text(size = 14, face = "bold"),
+          plot.subtitle = element_text(size = 10, face = "italic", margin = margin(b = 20)),  # Add bottom margin to subtitle
+          plot.margin = margin(t = 20, r = 20, b = 20, l = 20))  # Add overall plot margins
+  
+  # Add annotation for target days mark
+  g <- g + annotate("text", x = target_days, y = 0, 
+                   label = paste0("Target (", target_days, " days)"), 
+                   vjust = 2, color = "red")  # Changed y to 0 and vjust to 2 to position below
+  
+  # Save and convert to base64 image
+  temp_png_path <- tempfile(fileext = ".png")
+  ggsave(temp_png_path, plot = g, width = 10, height = max(8, nrow(patients_df) * 0.2), units = 'in', dpi = 200, limitsize = FALSE)
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Patient outcomes timeline" style="max-width: 100%%; width: 100%%;">', image_data)
+  file.remove(temp_png_path)
+  
   return(img_tag)
 }
