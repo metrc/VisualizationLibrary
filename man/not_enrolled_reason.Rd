@@ -17,6 +17,7 @@ This function visualizes list of study_ids who were are not enrolled, the reason
 reasons
 }
 \examples{
+                    
 not_enrolled_reason("Replace with Analytic Tibble")
 
 }
