@@ -1470,9 +1470,9 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
 #' complications_by_severity_relatedness("Replace with Analytic Tibble")
 #' 
 complications_by_severity_relatedness <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic,
+  analytic <- if_needed_generate_example_data("Replace with Analytic Tibble",
                                               example_constructs = "complication_data",
-                                              example_types = "(';new_row: ', '|')FollowupPeriod|Form|Category|Category|Character|Date|Category|Category|Character") 
+                                              example_types = "(';new_row: ', '|')FollowupPeriod|Date|NamedCategory['Superficial-infection' 'Deep-Infection' 'Deep-Infection, Not Involving Bone' 'Deep-Infection, Septic Joint' 'Non-Union' 'Malunion' 'Loss of limb/amputation' 'Fixation failure' 'Peri-implant Fracture' 'Reaction to Hardware' 'Wound Dehiscence' 'Wound Seroma/Hematoma' 'Flap failure' 'Tendon Injury' 'Delayed Wound Healing' 'Cellulitis' 'DVT/PE' 'Joint Arthritis' 'Other' 'Other' 'Other' 'Other' 'Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|Character|Character|Date|NamedCategory['Definitely related' 'Probably related' 'Possibly related' 'Unlikely related' 'Unrelated' 'Don't know']|NamedCategory['Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|NamedCategory['Operative' 'Non-operative' 'No treatment']|NamedCategory['New' 'Previous']|Character") 
   
   comp <- analytic %>%  select(study_id, complication_data) %>% 
     filter(!is.na(complication_data))
@@ -2358,7 +2358,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
   
   for(last_day in last_days){
     new_last_day_df <- df %>% 
-      mutate(screened_date = ymd(screened_date)) %>% 
+      mutate(screened_date = as.Date(screened_date)) %>% 
       mutate(screened_last = ifelse(screened_date > last_day, TRUE, FALSE)) %>% 
       mutate(eligible_last = ifelse(screened_last, eligible, FALSE)) %>% 
       mutate(enrolled_last = ifelse(screened_last, enrolled, FALSE)) %>% 
@@ -2857,7 +2857,7 @@ wbs_main_paper_patient_characteristics <- function(analytic){
                     df_physical_demand, df_work_hours_final, df_tobacco, df_bmi_final, df_preinjury_health, df_insurance) 
   
   
-  index_vec_a <- c("Age" = 1, "Sex" = 2, "Race Ethnicity" = 5,
+  index_vec_a <- c("Age" = 2, "Sex" = 3, "Race Ethnicity" = 5,
                    "Education" = 5,  "Self Efficacy for return to Usual Activities"=4, 
                    "Preinjury Usual Major Activity" = 4, "Physical Demand of Job"= 6,
                    "Hours worked per week" = 2, "Tobacco Use" = 4, "BMI" = 2, "Preinjury Health" = 6, 
@@ -2875,7 +2875,7 @@ wbs_main_paper_patient_characteristics <- function(analytic){
   table_raw<- kable(df_for_table, format="html", align='l') %>%
     pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position='left') %>% 
-    row_spec(c(0,1,3,8,13,17,21,27,29,33,35,41,44), extra_css = "border-bottom: 1px solid;")
+    row_spec(c(0,2,5,10,15,19,23,29,31,35,37,43,46), extra_css = "border-bottom: 1px solid;")
   
   
   return(table_raw)
@@ -3955,6 +3955,42 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
 }
 
 
+#' Not enrolled reason
+#'
+#' @description This function visualizes list of study_ids who were are not enrolled, the reasons, and the screening notes
+#' reasons
+#'
+#' @param analytic This is the analytic data set that must include study_id, facilitycode, study_id, not_enrolled_reason, pre_screened_notes
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples                     
+#' not_enrolled_reason("Replace with Analytic Tibble")
+#' 
+not_enrolled_reason <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("facilitycode", "study_id", "not_enrolled_reason", 
+                           "pre_screened_notes"), 
+    example_types = c("FacilityCode", "Number", "Character", 
+                      "Character"))
+  
+  df <- analytic %>% select(facilitycode, study_id, not_enrolled_reason, pre_screened_notes) %>% 
+    filter(!is.na(not_enrolled_reason)) %>% 
+    rename(`Site` = facilitycode,
+           `ID` = study_id,
+           `Reason for Not Enrolling` = not_enrolled_reason,
+           `Screening Notes` = pre_screened_notes)
+  
+  
+  output <- kable(df, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
+}
+                       
+
 #' Outcome by Site
 #'
 #' @description 
@@ -4044,7 +4080,6 @@ outcome_by_site <- function(analytic, outcome_name) {
   
   return(vis)
 }
-
 
 #' Outcome by Name Overall
 #'
