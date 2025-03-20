@@ -22,6 +22,6 @@ An HTML string containing an image tag with the base64-encoded timeline visualiz
 This function creates a timeline visualization for each patient showing events relative to time zero for SINGLE event outcomes.
 }
 \examples{
-outcome_by_id(analytic_data, "deep_ssi_adjudicated")
+outcome_by_id("Replace with Analytic Tibble", "test_outcome")
 
 }
