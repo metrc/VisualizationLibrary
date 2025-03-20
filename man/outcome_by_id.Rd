@@ -4,7 +4,7 @@
 \alias{outcome_by_id}
 \title{Visualize patient outcomes by ID over time}
 \usage{
-outcome_by_id(analytic, event_name, random_sample = NULL)
+outcome_by_id(analytic, event_name, random_sample = NULL, facilitycodes = NULL)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, facilitycode, events_data, outcome_data and time_zero}
@@ -12,6 +12,8 @@ outcome_by_id(analytic, event_name, random_sample = NULL)
 \item{event_name}{The specific event to track (will mark first occurrence specially)}
 
 \item{random_sample}{Optional integer to limit to a random sample of IDs}
+
+\item{facilitycodes}{Optional character vector to limit to a certain facilities}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded timeline visualization in PNG format.

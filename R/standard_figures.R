@@ -1684,6 +1684,7 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
 #' @param analytic This is the analytic data set that must include study_id, facilitycode, events_data, outcome_data and time_zero
 #' @param event_name The specific event to track (will mark first occurrence specially)
 #' @param random_sample Optional integer to limit to a random sample of IDs
+#' @param facilitycodes Optional character vector to limit to a certain facilities
 #'
 #' @return An HTML string containing an image tag with the base64-encoded timeline visualization in PNG format.
 #' @export
@@ -1691,7 +1692,7 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
 #' @examples
 #' outcome_by_id(analytic_data, "deep_ssi_adjudicated")
 #' 
-outcome_by_id <- function(analytic, event_name, random_sample = NULL) {
+outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilitycodes = NULL) {
   # Check if required columns exist
   required_cols <- c("study_id", "facilitycode", "events_data", "outcome_data", "time_zero" , "enrolled")
   missing_cols <- required_cols[!required_cols %in% names(analytic)]
@@ -1705,6 +1706,10 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL) {
   if (!is.null(random_sample)) {
     sample_ids <- sample(unique(analytic$study_id), random_sample)
     analytic <- analytic %>% filter(study_id %in% sample_ids)
+  }
+  
+  if (!is.null(facilitycodes)) {
+    analytic <- analytic %>% filter(facilitycode %in% facilitycodes)
   }
 
   # Process the events_data column
