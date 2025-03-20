@@ -4008,7 +4008,7 @@ not_enrolled_reason <- function(analytic){
 outcome_by_site <- function(analytic, outcome_name) {
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('outcome_data', 'facilitycode', 'enrolled'), 
-                                              example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check', 'event']|Number|Number|Date", 'FacilityCode', 'Boolean'))
+                                              example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'FacilityCode', 'Boolean'))
   # Extract the relevant outcome data
   outcome_data <- analytic %>%
     select(study_id, outcome_data, facilitycode, enrolled) %>%
@@ -4097,7 +4097,7 @@ outcome_by_site <- function(analytic, outcome_name) {
 outcome_by_name_overall <- function(analytic) {
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('outcome_data', 'enrolled'), 
-                                              example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check', 'event']|Number|Number|Date", 'Boolean'))
+                                              example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'Boolean'))
   
   outcome_data <- analytic %>%
     select(study_id, outcome_data, enrolled) %>%

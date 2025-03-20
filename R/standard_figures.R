@@ -1690,9 +1690,18 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
 #' @export
 #'
 #' @examples
-#' outcome_by_id(analytic_data, "deep_ssi_adjudicated")
+#' outcome_by_id("Replace with Analytic Tibble", "test_outcome")
 #' 
 outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilitycodes = NULL) {
+  analytic <- if_needed_generate_example_data(analytic, 
+                                              example_constructs = c('outcome_data', 'enrolled', 'time_zero', 'facilitycode', 'events_data'), 
+                                              example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date",
+                                                                'Boolean',
+                                                                'Date',
+                                                                'FacilityCode',
+                                                                "(';', ',')Period|NamedCategory['test_outcome']|Form|NamedCategory['check' 'event']|Date"))
+  
+  
   # Check if required columns exist
   required_cols <- c("study_id", "facilitycode", "events_data", "outcome_data", "time_zero" , "enrolled")
   missing_cols <- required_cols[!required_cols %in% names(analytic)]
@@ -1754,7 +1763,7 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     select(-study_id, -facilitycode, -period)
   
   patients_df <- events_df %>%
-    select(patient_label, outcome_days, outcome_days_extended) %>% 
+    select(patient_label, outcome_days, outcome_days_extended, expected_days) %>% 
     distinct()
   
   # Get the global target_days (should be same for all patients)
@@ -1762,7 +1771,6 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
   
   # Create the plot
   g <- ggplot() +
-    # Patient timeline base lines - solid until first event or outcome_days
     geom_segment(data = patients_df, 
                 aes(x = 0, y = patient_label, 
                    xend = outcome_days, 
@@ -1770,7 +1778,14 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
                 size = 1) +
     
     # Dotted line after first event until outcome_days
-    geom_segment(data = patients_df, 
+    geom_segment(data = patients_df %>% filter(outcome_days < expected_days), 
+                 aes(x = outcome_days, 
+                     y = patient_label, 
+                     xend = expected_days, yend = patient_label),
+                 linetype = "dotted", size = 1, color = "red") +
+    
+    # Dotted line after first event until outcome_days
+    geom_segment(data = patients_df %>% filter(outcome_days < outcome_days_extended), 
                 aes(x = outcome_days, 
                     y = patient_label, 
                     xend = outcome_days_extended, yend = patient_label),
