@@ -1760,7 +1760,8 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     filter(days_from_zero >= 0) %>% 
     left_join(event_outcomes, by = "study_id") %>% 
     arrange(patient_label) %>% 
-    select(-study_id, -facilitycode, -period)
+    filter((time_zero+365)<Sys.Date()) %>% 
+    select(-study_id, -facilitycode, -period) 
   
   patients_df <- events_df %>%
     select(patient_label, outcome_days, outcome_days_extended, expected_days) %>% 
