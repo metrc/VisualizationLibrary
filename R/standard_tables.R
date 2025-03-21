@@ -4025,6 +4025,7 @@ outcome_by_site <- function(analytic, outcome_name) {
     ) %>%
     # Filter for the specific outcome
     filter(outcome_name == !!outcome_name) %>%
+    filter((as.Date(time_zero)+365)<Sys.Date()) %>% 
     # Convert numeric columns
     mutate(
       target_days = as.numeric(target_days),
@@ -4103,7 +4104,8 @@ outcome_by_name_overall <- function(analytic) {
     select(study_id, outcome_data, enrolled) %>%
     filter(enrolled) %>%
     separate_rows(outcome_data, sep=";") %>%
-    separate(outcome_data, c('outcome_name', 'target_days', 'expected_days', 'time_zero', 'outcome_date_extended', 'outcome_type', 'outcome_days_extended', 'outcome_days', 'outcome_date'), sep=",")
+    separate(outcome_data, c('outcome_name', 'target_days', 'expected_days', 'time_zero', 'outcome_date_extended', 'outcome_type', 'outcome_days_extended', 'outcome_days', 'outcome_date'), sep=",") %>% 
+    filter((as.Date(time_zero)+365)<Sys.Date())
 
   stats <- outcome_data %>%
     mutate(outcome_days = as.numeric(outcome_days)) %>%
