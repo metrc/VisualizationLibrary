@@ -2857,11 +2857,24 @@ wbs_main_paper_patient_characteristics <- function(analytic){
                     df_physical_demand, df_work_hours_final, df_tobacco, df_bmi_final, df_preinjury_health, df_insurance) 
   
   
-  index_vec_a <- c("Age" = 2, "Sex" = 3, "Race Ethnicity" = 5,
-                   "Education" = 5,  "Self Efficacy for return to Usual Activities"=4, 
-                   "Preinjury Usual Major Activity" = 4, "Physical Demand of Job"= 6,
-                   "Hours worked per week" = 2, "Tobacco Use" = 4, "BMI" = 2, "Preinjury Health" = 6, 
-                   "Insurance Type" = 3)
+  index_vec_a <- c(
+    "Age" = nrow(df_age_final),
+    "Sex" = nrow(df_sex),
+    "Race Ethnicity" = nrow(df_race_ethnicity),
+    "Education" = nrow(df_education),
+    "Self Efficacy for return to Usual Activities" = nrow(df_self_efficacy_final),
+    "Preinjury Usual Major Activity" = nrow(df_usual_major_activity),
+    "Physical Demand of Job" = nrow(df_physical_demand),
+    "Hours worked per week" = nrow(df_work_hours_final),
+    "Tobacco Use" = nrow(df_tobacco),
+    "BMI" = nrow(df_bmi_final),
+    "Preinjury Health" = nrow(df_preinjury_health),
+    "Insurance Type" = nrow(df_insurance)
+  )
+  
+  # Compute the cumulative row indices for adding bottom borders.
+  # The first element (0) is used for the header row.
+  border_rows <- c(0, cumsum(index_vec_a))
   
   title <- paste("Total = ", total)
   
@@ -2875,7 +2888,7 @@ wbs_main_paper_patient_characteristics <- function(analytic){
   table_raw<- kable(df_for_table, format="html", align='l') %>%
     pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position='left') %>% 
-    row_spec(c(0,2,5,10,15,19,23,29,31,35,37,43,46), extra_css = "border-bottom: 1px solid;")
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
   
   
   return(table_raw)
