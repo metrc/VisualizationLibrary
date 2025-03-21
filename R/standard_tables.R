@@ -4060,7 +4060,9 @@ outcome_by_site <- function(analytic, outcome_name) {
       pct_expected = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%")
     ) %>%
     ungroup() %>%
-    arrange(desc(pct_expected))
+    mutate(order_col = as.numeric(str_remove(pct_expected,"%"))) %>% 
+    arrange(desc(order_col)) %>% 
+    select(-order_col)
   
   # Combine overall and site-specific statistics
   results <- bind_rows(overall_stats, site_stats)
