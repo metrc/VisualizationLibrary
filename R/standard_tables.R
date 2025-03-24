@@ -1478,9 +1478,9 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
 #' complications_by_severity_relatedness("Replace with Analytic Tibble")
 #' 
 complications_by_severity_relatedness <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic,
+  analytic <- if_needed_generate_example_data("Replace with Analytic Tibble",
                                               example_constructs = "complication_data",
-                                              example_types = "(';new_row: ', '|')FollowupPeriod|Form|Category|Category|Character|Date|Category|Category|Character") 
+                                              example_types = "(';new_row: ', '|')FollowupPeriod|Date|NamedCategory['Superficial-infection' 'Deep-Infection' 'Deep-Infection, Not Involving Bone' 'Deep-Infection, Septic Joint' 'Non-Union' 'Malunion' 'Loss of limb/amputation' 'Fixation failure' 'Peri-implant Fracture' 'Reaction to Hardware' 'Wound Dehiscence' 'Wound Seroma/Hematoma' 'Flap failure' 'Tendon Injury' 'Delayed Wound Healing' 'Cellulitis' 'DVT/PE' 'Joint Arthritis' 'Other' 'Other' 'Other' 'Other' 'Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|Character|Character|Date|NamedCategory['Definitely related' 'Probably related' 'Possibly related' 'Unlikely related' 'Unrelated' 'Don't know']|NamedCategory['Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|NamedCategory['Operative' 'Non-operative' 'No treatment']|NamedCategory['New' 'Previous']|Character") 
   
   comp <- analytic %>%  select(study_id, complication_data) %>% 
     filter(!is.na(complication_data))
@@ -2368,7 +2368,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
   
   for(last_day in last_days){
     new_last_day_df <- df %>% 
-      mutate(screened_date = ymd(screened_date)) %>% 
+      mutate(screened_date = as.Date(screened_date)) %>% 
       mutate(screened_last = ifelse(screened_date > last_day, TRUE, FALSE)) %>% 
       mutate(eligible_last = ifelse(screened_last, eligible, FALSE)) %>% 
       mutate(enrolled_last = ifelse(screened_last, enrolled, FALSE)) %>% 
@@ -2867,11 +2867,24 @@ wbs_main_paper_patient_characteristics <- function(analytic){
                     df_physical_demand, df_work_hours_final, df_tobacco, df_bmi_final, df_preinjury_health, df_insurance) 
   
   
-  index_vec_a <- c("Age" = 1, "Sex" = 2, "Race Ethnicity" = 5,
-                   "Education" = 5,  "Self Efficacy for return to Usual Activities"=4, 
-                   "Preinjury Usual Major Activity" = 4, "Physical Demand of Job"= 6,
-                   "Hours worked per week" = 2, "Tobacco Use" = 4, "BMI" = 2, "Preinjury Health" = 6, 
-                   "Insurance Type" = 3)
+  index_vec_a <- c(
+    "Age" = nrow(df_age_final),
+    "Sex" = nrow(df_sex),
+    "Race Ethnicity" = nrow(df_race_ethnicity),
+    "Education" = nrow(df_education),
+    "Self Efficacy for return to Usual Activities" = nrow(df_self_efficacy_final),
+    "Preinjury Usual Major Activity" = nrow(df_usual_major_activity),
+    "Physical Demand of Job" = nrow(df_physical_demand),
+    "Hours worked per week" = nrow(df_work_hours_final),
+    "Tobacco Use" = nrow(df_tobacco),
+    "BMI" = nrow(df_bmi_final),
+    "Preinjury Health" = nrow(df_preinjury_health),
+    "Insurance Type" = nrow(df_insurance)
+  )
+  
+  # Compute the cumulative row indices for adding bottom borders.
+  # The first element (0) is used for the header row.
+  border_rows <- c(0, cumsum(index_vec_a))
   
   title <- paste("Total = ", total)
   
@@ -2885,7 +2898,7 @@ wbs_main_paper_patient_characteristics <- function(analytic){
   table_raw<- kable(df_for_table, format="html", align='l') %>%
     pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>% 
     kable_styling("striped", full_width = F, position='left') %>% 
-    row_spec(c(0,1,3,8,13,17,21,27,29,33,35,41,44), extra_css = "border-bottom: 1px solid;")
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
   
   
   return(table_raw)
@@ -3966,4 +3979,192 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
 }
 
 
+#' Not enrolled reason
+#'
+#' @description This function visualizes list of study_ids who were are not enrolled, the reasons, and the screening notes
+#' reasons
+#'
+#' @param analytic This is the analytic data set that must include study_id, facilitycode, study_id, not_enrolled_reason, pre_screened_notes
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples                     
+#' not_enrolled_reason("Replace with Analytic Tibble")
+#' 
+not_enrolled_reason <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("facilitycode", "study_id", "not_enrolled_reason", 
+                           "pre_screened_notes"), 
+    example_types = c("FacilityCode", "Number", "Character", 
+                      "Character"))
+  
+  df <- analytic %>% select(facilitycode, study_id, not_enrolled_reason, pre_screened_notes) %>% 
+    filter(!is.na(not_enrolled_reason)) %>% 
+    rename(`Site` = facilitycode,
+           `ID` = study_id,
+           `Reason for Not Enrolling` = not_enrolled_reason,
+           `Screening Notes` = pre_screened_notes)
+  
+  
+  output <- kable(df, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
+}
+                       
 
+#' Outcome by Site
+#'
+#' @description 
+#' Returns summary statistics on the number of days to complete various follow-up forms.
+#'
+#' @param analytic This is the analytic data set that must include study_id, outcome_data, facilitycode, and enrolled
+#' @param outcome_name the name of the outcome to be considered in the visualization
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' outcome_by_site("Replace with Analytic Tibble", 'test_outcome')
+#' 
+outcome_by_site <- function(analytic, outcome_name) {
+  analytic <- if_needed_generate_example_data(analytic, 
+                                              example_constructs = c('outcome_data', 'facilitycode', 'enrolled'), 
+                                              example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'FacilityCode', 'Boolean'))
+  # Extract the relevant outcome data
+  outcome_data <- analytic %>%
+    select(study_id, outcome_data, facilitycode, enrolled) %>%
+    filter(enrolled) %>%
+    # Split the outcome_data string
+    separate_rows(outcome_data, sep=";") %>% 
+    # Split each record into columns
+    separate(
+      outcome_data,
+      c("outcome_name", "target_days", "expected_days", "time_zero", 
+        "outcome_date_extended", "outcome_type", "outcome_days_extended", 
+        "outcome_days", "outcome_date"),
+      sep = ","
+    ) %>%
+    # Filter for the specific outcome
+    filter(outcome_name == !!outcome_name) %>%
+    filter((as.Date(time_zero)+365)<Sys.Date()) %>% 
+    # Convert numeric columns
+    mutate(
+      target_days = as.numeric(target_days),
+      expected_days = as.numeric(expected_days),
+      outcome_days_extended = as.numeric(outcome_days_extended),
+      outcome_days = as.numeric(outcome_days)
+    )
+  
+  # Calculate overall statistics
+  overall_stats <- outcome_data %>%
+    summarise(
+      n_total = n(),
+      n_missing = sum(is.na(outcome_days)),
+      min_days = min(outcome_days, na.rm = TRUE),
+      max_days = max(outcome_days, na.rm = TRUE),
+      avg_days = format_mean_sd(outcome_days, decimals = 0),
+      pct_target = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(target_days, na.rm = TRUE) *100, 0), "%"),
+      pct_expected = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%")
+    ) %>%
+    mutate(facilitycode = "Overall")
+  
+  # Calculate site-specific statistics
+  site_stats <- outcome_data %>%
+    group_by(facilitycode) %>%
+    summarise(
+      n_total = n(),
+      n_missing = sum(is.na(outcome_days)),
+      min_days = min(outcome_days, na.rm = TRUE),
+      max_days = max(outcome_days, na.rm = TRUE),
+      avg_days = format_mean_sd(outcome_days, decimals = 0),
+      pct_target = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(target_days, na.rm = TRUE) *100, 0), "%"),
+      pct_expected = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%")
+    ) %>%
+    ungroup() %>%
+    mutate(order_col = as.numeric(str_remove(pct_expected,"%"))) %>% 
+    arrange(desc(order_col)) %>% 
+    select(-order_col)
+  
+  # Combine overall and site-specific statistics
+  results <- bind_rows(overall_stats, site_stats)
+  
+  results <- results %>%
+    rename(`N (Participants)` = n_total,
+           `Missing Time to Event (Participants)` = n_missing,
+           `Minimum (Days)` = min_days,
+           `Maximum (Days)` = max_days,
+           `Mean (Standard Deviation)` = avg_days,
+           `Percent of Target` = pct_target,
+           `Percent of Expected` = pct_expected,
+           `Site` = facilitycode) %>%
+    select(`Site`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Target`, `Percent of Expected`)
+  
+  vis <- kable(results, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
+
+#' Outcome by Name Overall
+#'
+#' @description 
+#' Returns summary statistics on the number of days to complete various follow-up forms.
+#'
+#' @param analytic This is the analytic data set that must include study_id, outcome_data, and enrolled
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' outcome_by_name_overall("Replace with Analytic Tibble")
+#' 
+outcome_by_name_overall <- function(analytic) {
+  analytic <- if_needed_generate_example_data(analytic, 
+                                              example_constructs = c('outcome_data', 'enrolled'), 
+                                              example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'Boolean'))
+  
+  outcome_data <- analytic %>%
+    select(study_id, outcome_data, enrolled) %>%
+    filter(enrolled) %>%
+    separate_rows(outcome_data, sep=";") %>%
+    separate(outcome_data, c('outcome_name', 'target_days', 'expected_days', 'time_zero', 'outcome_date_extended', 'outcome_type', 'outcome_days_extended', 'outcome_days', 'outcome_date'), sep=",") %>% 
+    filter((as.Date(time_zero)+365)<Sys.Date())
+
+  stats <- outcome_data %>%
+    mutate(outcome_days = as.numeric(outcome_days)) %>%
+    mutate(target_days = as.numeric(target_days)) %>%
+    mutate(expected_days = as.numeric(expected_days)) %>%
+    group_by(outcome_name) %>%
+    summarise(
+      n_total = n(),
+      n_missing = sum(is.na(outcome_days)),
+      min_days = min(outcome_days, na.rm = TRUE),
+      max_days = max(outcome_days, na.rm = TRUE),
+      avg_days = format_mean_sd(outcome_days, decimals = 0),
+      pct_target = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(target_days, na.rm = TRUE) *100, 0), "%"),
+      pct_expected = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%")
+    )
+
+  results <- stats %>%
+    rename(`N (Participants)` = n_total,
+           `Missing Time to Event (Participants)` = n_missing,
+           `Minimum (Days)` = min_days,
+           `Maximum (Days)` = max_days,
+           `Mean (Standard Deviation)` = avg_days,
+           `Percent of Target` = pct_target,
+           `Percent of Expected` = pct_expected,
+           `Outcome` = outcome_name) %>%
+    select(`Outcome`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Target`, `Percent of Expected`)
+
+  # cleanup the names of the outcomes by replacing the underscores with spaces and capitalizing the first letter
+  results <- results %>%
+    mutate(Outcome = str_replace_all(Outcome, "_", " "))
+  
+  vis <- kable(results, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
