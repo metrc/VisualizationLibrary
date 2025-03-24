@@ -14,7 +14,7 @@ adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, enroll
 nothing
 }
 \description{
-This function visualizes the treatment characteristics per protocol and assignmnet for Sextant.
+This function visualizes the treatment characteristics per protocol and assignment for Sextant.
 }
 \examples{
 adherence_sextant("Replace with Analytic Tibble")

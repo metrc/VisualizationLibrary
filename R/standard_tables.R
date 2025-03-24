@@ -13,13 +13,14 @@
 #' enrollment_status_by_site("Replace with Analytic Tibble")
 #' 
 enrollment_status_by_site <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('screened', 'eligible', 'refused', 'consented', 'enrolled', 'not_consented', 
-                                                                     'discontinued_pre_randomization', 'site_certified_days', 
-                                                                     'facilitycode', 'late_ineligible'), 
-                                              example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Number',
-                                                                'FacilityCode', 'Boolean'))
-  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('screened', 'eligible', 'refused', 'consented', 'enrolled', 'not_consented', 
+                           'discontinued_pre_randomization', 'site_certified_days', 
+                           'facilitycode', 'late_ineligible'), 
+    example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Number',
+                      'FacilityCode', 'Boolean'))
+
   df <- analytic %>% 
     select(screened, eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
            facilitycode, late_ineligible) %>% 
@@ -974,12 +975,13 @@ not_complete_sae_deviation_by_type <- function(analytic){
 #' not_complete_sae_deviation_by_type_auto_categories("Replace with Analytic Tibble")
 #' 
 not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('enrolled', "protocol_deviation_full_data", "not_expected_reason", 'not_completed', 
-                                                                     'not_completed_reason', 'sae_count', 'consented'), 
-                                              example_types = c('Boolean', "(';new_row: ', '|')FacilityCode|Date|Category|Date|Category|Character", 'Category', 'Boolean',
-                                                                'Category', 'Number', 'Boolean'))
-  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('enrolled', "protocol_deviation_full_data", "not_expected_reason", 'not_completed', 
+                           'not_completed_reason', 'sae_count', 'consented'), 
+    example_types = c('Boolean', "(';new_row: ', '|')FacilityCode|Date|Category|Date|Category|Character", 'Category', 'Boolean',
+                      'Category', 'Number', 'Boolean'))
+
   total <- sum(analytic$enrolled, na.rm=T)
   not_completed_df <- analytic %>% 
     select(enrolled, not_completed_reason, not_completed) %>% 
@@ -2028,10 +2030,11 @@ amputations_and_gustilo_injury_characteristics <- function(analytic){
 #' refusal_reasons_by_site("Replace with Analytic Tibble")
 #' 
 refusal_reasons_by_site <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('facilitycode', "screened", "refused", 'refused_reason'), 
-                                              example_types = c('FacilityCode', 'Boolean', 'Boolean', 'Category'))
-  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('facilitycode', "screened", "refused", 'refused_reason'), 
+    example_types = c('FacilityCode', 'Boolean', 'Boolean', 'Category'))
+
   df <- analytic %>% 
     select(facilitycode, screened, refused, refused_reason) %>% 
     filter(screened == TRUE) 
@@ -2896,10 +2899,11 @@ wbs_main_paper_patient_characteristics <- function(analytic){
 #' expected_and_followup_visit_overall("Replace with Analytic Tibble")
 #' 
 expected_and_followup_visit_overall <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic,
-                                              example_constructs = c("followup_data"),
-                                              example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date")) 
-  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("followup_data"),
+    example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date")) 
+
   df <- analytic %>% 
     select(study_id, followup_data) %>% 
     separate_rows(followup_data, sep=";") %>% 

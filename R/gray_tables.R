@@ -14,7 +14,8 @@
 ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c("facilitycode", "enrolled", "df_surg_completed", "ih_discharge_date", "crossover_inpatient",
+    example_constructs = c("facilitycode", "enrolled", "df_surg_completed", "ih_discharge_date", 
+                           "crossover_inpatient",
                            "crossover_discharge", "ih_discharge_date_on_time_zero"),
     example_types = c("FacilityCode", "Boolean", "Boolean", "Date", "Boolean",
                       "Boolean", "Boolean"))
@@ -72,7 +73,8 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,
-    example_constructs = c("enrolled", "df_surg_completed", "ih_discharge_date", "crossover_inpatient", "crossover_discharge",
+    example_constructs = c("enrolled", "df_surg_completed", "ih_discharge_date", "crossover_inpatient", 
+                           "crossover_discharge",
                            "ih_discharge_date_on_time_zero", "facilitycode"),
     example_types = c("Boolean", "Boolean", "Date", "Boolean", "Boolean", "Boolean", "FacilityCode")) 
   
@@ -172,7 +174,7 @@ adherence_by_site <- function(analytic){
 
 #' adherence_sextant
 #'
-#' @description This function visualizes the treatment characteristics per protocol and assignmnet for Sextant. 
+#' @description This function visualizes the treatment characteristics per protocol and assignment for Sextant. 
 #'
 #' @param analytic This is the analytic data set that must include adherence_to_intervention_dwc,
 #' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, enrolled, dwc_date

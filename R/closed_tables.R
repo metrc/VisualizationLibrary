@@ -1355,12 +1355,17 @@ closed_certification_date_data <- function(analytic){
 #' closed_injury_characteristics_by_alternate_constructs("Replace with Analytic Tibble")
 #' 
 closed_injury_characteristics_by_alternate_constructs <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('enrolled', 'treatment_arm', 'injury_classification_ankle_ao', 'injury_at_work', 'injury_in_battle', 
-                                                                     'injury_in_blast', 'injury_date', 'injury_mechanism', 'injury_side', 'injury_classification_tscherne', 'injury_type'), 
-                                              example_types = c('Boolean', 'TreatmentArm', 'Category', 'Boolean', 'Boolean', 
-                                                                "NamedCategory['Yes' 'No' 'Missing']", 'Date', 'Category', "NamedCategory['Left' 'Right' 'Missing']", 'Category', "NamedCategory['Blunt' 'Penetrating' 'Missing']"))
-  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('enrolled', 'treatment_arm', 'injury_classification_ankle_ao', 
+                           'injury_at_work', 'injury_in_battle', 
+                           'injury_in_blast', 'injury_date', 'injury_mechanism', 
+                           'injury_side', 'injury_classification_tscherne', 'injury_type'), 
+    example_types = c('Boolean', 'TreatmentArm', 'Category', 'Boolean', 'Boolean', 
+                      "NamedCategory['Yes' 'No' 'Missing']", 'Date', 'Category', 
+                      "NamedCategory['Left' 'Right' 'Missing']", 'Category', 
+                      "NamedCategory['Blunt' 'Penetrating' 'Missing']"))
+
   inner_injury_characteristics_by_alternate_constructs <- function(df) {
     total <- sum(df$enrolled)
     type_df <- df %>% 
@@ -3313,11 +3318,14 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
 #' 
 closed_enrollment_status_by_site <- function(analytic){
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
-  analytic <- if_needed_generate_example_data(analytic,
-                                              example_constructs = c('screened', 'eligible', 'refused', 'consented', 'enrolled', 'not_consented', 'discontinued_pre_randomization', 'site_certified_days', 
-                                                                     'facilitycode', 'late_ineligible', 'treatment_arm'),
-                                              example_types = c('Boolean', 'Boolean', "Boolean", "Boolean", 'Boolean', 'Boolean', 'Boolean', 'Number', 'FacilityCode', 'Boolean', 'TreatmentArm'))
-  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('screened', 'eligible', 'refused', 'consented', 'enrolled', 
+                           'not_consented', 'discontinued_pre_randomization', 'site_certified_days', 
+                           'facilitycode', 'late_ineligible', 'treatment_arm'),
+    example_types = c('Boolean', 'Boolean', "Boolean", "Boolean", 'Boolean', 'Boolean', 
+                      'Boolean', 'Number', 'FacilityCode', 'Boolean', 'TreatmentArm'))
+
   df_a <- analytic %>% 
     filter(is.na(treatment_arm)|treatment_arm=="Group A")
   
