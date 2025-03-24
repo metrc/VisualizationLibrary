@@ -14,7 +14,8 @@ pil_df_surgical_incision, df_number_procedures, adherence_to_intervention}
 nothing
 }
 \description{
-This function visualizes the treatment characteristics per protocol and assignment for tobra.
+This function visualizes the treatment characteristics per protocol and assignment 
+for tobra.
 }
 \examples{
 characteristics_treatment("Replace with Analytic Tibble")

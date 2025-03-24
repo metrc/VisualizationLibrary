@@ -2,7 +2,7 @@
 % Please edit documentation in R/closed_tables.R
 \name{closed_amputations_and_gustilo_injury_characteristics}
 \alias{closed_amputations_and_gustilo_injury_characteristics}
-\title{Closed Amputations and Gustilo Injury Characteristics}
+\title{Amputations and Gustilo injury characteristics, closed version}
 \usage{
 closed_amputations_and_gustilo_injury_characteristics(analytic)
 }
@@ -14,6 +14,6 @@ injury_gustilo_type, injury_amputation_status}
 An HTML table.
 }
 \description{
-This function visualizes the injury characteristics for amputations and Gustilo Injury types for
-Sextant study by treatment arm
+This function visualizes the injury characteristics for amputations and Gustilo 
+Injury types for Sextant study by treatment arm
 }

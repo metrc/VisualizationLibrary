@@ -121,16 +121,18 @@ ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
 #' column is determined by the existence of a value for the df_date construct. Notably,
 #' this visualization determines adherence based on the existence of a value for 
 #' the treatment_arm construct.
+#' 
+#' A similar visualization is adherence_sextant, which uses multiple constructs to determine 
+#' all types of adherence.
 #'
-#' @param analytic analytic data set that must include fields facilitycode, df_date,
-#' enrolled, treatment_arm
+#' @param analytic analytic data set that must include constructs facilitycode, 
+#' df_date, enrolled, treatment_arm
 #'
-#' @return visualization
+#' @return html table
 #' @export
 #'
 #' @examples
 #' adherence_by_site("Replace with Analytic Tibble")
-#' 
 adherence_by_site <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -231,7 +233,9 @@ adherence_sextant <- function(analytic){
 
 #' characteristics_treatment
 #'
-#' @description This function visualizes the treatment characteristics per protocol and assignment for tobra. 
+#' @description 
+#' This function visualizes the treatment characteristics per protocol and assignment 
+#' for tobra. 
 #'
 #' @param analytic This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
 #' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention

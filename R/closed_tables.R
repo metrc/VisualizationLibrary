@@ -1491,10 +1491,11 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
 }
 
 
-#' Closed Amputations and Gustilo Injury Characteristics
+#' Amputations and Gustilo injury characteristics, closed version
 #'
-#' @description This function visualizes the injury characteristics for amputations and Gustilo Injury types for
-#' Sextant study by treatment arm
+#' @description 
+#' This function visualizes the injury characteristics for amputations and Gustilo 
+#' Injury types for Sextant study by treatment arm
 #'
 #' @param analytic This is the analytic data set that must include enrolled, treatment_arm,
 #' injury_gustilo_type, injury_amputation_status
@@ -1889,10 +1890,11 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
 
 
 
-#' Closed adherence_sextant
+#' Adherence: Sextant, closed
 #'
-#' @description This function visualizes the treatment characteristics per protocol and assignmnet for Sextant for
-#' each treatment group
+#' @description 
+#' This function visualizes the treatment characteristics per protocol and assignment for Sextant for
+#' each treatment group.
 #'
 #' @param analytic This is the analytic data set that must include adherence_to_intervention_dwc,
 #' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, treatment_arm
