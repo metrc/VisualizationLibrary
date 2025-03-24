@@ -15,8 +15,8 @@ dead; sae_count; protocol_deviation_screen_consent; protocol_deviation_procedura
 An HTML table.
 }
 \description{
-This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
-This was originally made for NSAID
+This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type.
+This was originally made for NSAID.
 }
 \examples{
 adjudications_and_discontinuations_by_type("Replace with Analytic Tibble")

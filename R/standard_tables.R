@@ -158,7 +158,8 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 
 #' Ankle and Plateau X-Ray and Measurement Status
 #'
-#' @description This function visualizes Ankle and Plateau X-Ray and Measurement Status
+#' @description 
+#' This function visualizes Ankle and Plateau X-Ray and Measurement Status.
 #'
 #' @param analytic This is the analytic data set that must include followup_expected_6wk,followup_expected_3mo,followup_expected_6mo, 
 #' followup_expected_12mo,injury_type,followup_data,radiographs_taken_6wk, 
@@ -543,7 +544,9 @@ injury_ankle_plateau_characteristics <- function(analytic){
 
 #' Baseline Characteristics Percent 
 #'
-#' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, military, enrolled
+#' @description 
+#' This function visualizes the categorical distribution of baseline characteristics 
+#' sex, age, race, education, military, enrolled.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, age, age_group
 #' @param sex is a meta construct that is required that defaults to "sex"
@@ -676,7 +679,8 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
 
 #' Baseline Characteristics Percent (No Military Status)
 #'
-#' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, and education
+#' @description This function visualizes the categorical distribution of baseline 
+#' characteristics sex, age, race, and education
 #'
 #' @param analytic This is the analytic data set that must include enrolled, age, age_group
 #' @param sex is a meta construct that is required that defaults to "sex"
@@ -1132,8 +1136,9 @@ not_complete_sae_deviation_by_type_auto_categories <- function(analytic, categor
 
 #' Number of Adjudications and Discontinuations by type
 #'
-#' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
-#' This was originally made for NSAID
+#' @description 
+#' This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type.
+#' This was originally made for NSAID.
 #'
 #' @param analytic This is the analytic data set that must include screened; inappropriate_enrollment; 
 #' late_ineligible; late_refusal; withdrawn_patient; withdrawn_physician; adjudication_pending; 
@@ -1408,8 +1413,9 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
 
 #' Status of IRB Approvals and Certification by Site
 #'
-#' @description This function returns a list of sites and their dates of 
-#' local, DOD, and METRC certifications
+#' @description 
+#' This function returns a list of sites and their dates of 
+#' local, DOD, and METRC certifications.
 #'
 #' @param analytic This is the analytic data set that must include site_certified_date
 #' @param exclude_local_irb defaults to False
@@ -1942,8 +1948,9 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
 
 #' Amputations and Gustilo Injury Characteristics
 #'
-#' @description This function visualizes the injury characteristics for amputations and Gustilo Injury types for 
-#' Sextant study
+#' @description 
+#' This function visualizes the injury characteristics for amputations and Gustilo Injury types for 
+#' Sextant.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, 
 #' injury_gustilo_type, injury_amputation_status
