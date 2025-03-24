@@ -136,11 +136,13 @@ adherence_by_site <- function(analytic){
     mutate(df_date = na_if(df_date, "NA")) %>% 
     mutate(df_complete = ifelse(!is.na(df_date), TRUE, FALSE)) 
   
-  treatment_total <- (sum(df$treatment_arm, na.rm = TRUE))
+  treatment_total <- sum(!is.na(df$treatment_arm))
   
   df2 <- df %>% 
     group_by(facilitycode) %>% 
-    summarize(elig_enr = sum(enrolled, na.rm = TRUE), df_total = sum(df_complete, na.rm = TRUE), treatment_completed = sum(treatment_arm, na.rm = TRUE)) %>% 
+    summarize(elig_enr = sum(enrolled, na.rm = TRUE), 
+              df_total = sum(df_complete, na.rm = TRUE), 
+              treatment_completed = sum(!is.na(treatment_arm))) %>% 
     mutate(treatment_completed = format_count_percent(treatment_completed, df_total)) 
   
   enrolled_total <- (sum(df2$elig_enr, na.rm = TRUE))
