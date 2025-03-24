@@ -117,7 +117,10 @@ ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
 #'
 #' @description 
 #' Visualizes the status of patient study completion, organized by site. The returned 
-#' table has 4 columns: Site, Enrolled, DWC complete, and adherence.
+#' table has 4 columns: Site, Enrolled, DWC complete, and adherence. The DWC complete
+#' column is determined by the existence of a value for the df_date construct. Notably,
+#' this visualization determines adherence based on the existence of a value for 
+#' the treatment_arm construct.
 #'
 #' @param analytic analytic data set that must include fields facilitycode, df_date,
 #' enrolled, treatment_arm
