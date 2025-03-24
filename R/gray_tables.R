@@ -111,13 +111,16 @@ ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
 }
 
 
-#' adherence by site
+#' Adherence by site
 #'
-#' @description This function visualizes the treatment crossover or any nonadherence occured during the study.
+#' @description 
+#' Visualizes the status of patient study completion, organized by site. The returned 
+#' table has 4 columns: Site, Enrolled, DWC complete, and adherence.
 #'
-#' @param analytic This is the analytic data set that must include facilitycode, df_date
+#' @param analytic analytic data set that must include fields facilitycode, df_date,
+#' enrolled, treatment_arm
 #'
-#' @return nothing
+#' @return visualization
 #' @export
 #'
 #' @examples
