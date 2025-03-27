@@ -2,7 +2,7 @@
 % Please edit documentation in R/closed_tables.R
 \name{closed_adherence_sextant}
 \alias{closed_adherence_sextant}
-\title{Closed adherence_sextant}
+\title{Adherence: Sextant, closed}
 \usage{
 closed_adherence_sextant(analytic, footnotes = NULL)
 }
@@ -14,8 +14,8 @@ adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, treatm
 An HTML table.
 }
 \description{
-This function visualizes the treatment characteristics per protocol and assignmnet for Sextant for
-each treatment group
+This function visualizes the treatment characteristics per protocol and assignment for Sextant for
+each treatment group.
 }
 \examples{
 closed_adherence_sextant("Replace with Analytic Tibble")

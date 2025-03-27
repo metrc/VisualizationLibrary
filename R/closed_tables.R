@@ -298,10 +298,19 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethnicity_race", education="education_level",
                                                        sex_levels=c("Female","Male", "Missing"), 
                                                        race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
-                                                       education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing")){
+                                                       education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", 
+                                                                          "Refused / Don't know", "Missing")){
   
   
   confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "fe7cb8b490a86eccd44baa0eaab32b6d")
+  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("sex", "ethnicity_race", "education_level", "age", "age_group",
+                           "enrolled", 'treatment_arm'),
+    example_types = c("NamedCategory['Female' 'Male' 'Missing']", "NamedCategory['Non-Hispanic White' 'Non-Hispanic Black' 'Hispanic' 'Other' 'Missing']",
+                      "NamedCategory['Less than High School' 'GED or High School Diploma' 'More than High School' 'Refused / Don't know' 'Missing']",
+                      "Number-U100", "Category-U5", "Boolean", 'TreatmentArm')) 
   
   inner_baseline_characteristics_percent_nm <- function(inner_analytic){
     constructs <- c(sex, race, education)
@@ -1346,12 +1355,17 @@ closed_certification_date_data <- function(analytic){
 #' closed_injury_characteristics_by_alternate_constructs("Replace with Analytic Tibble")
 #' 
 closed_injury_characteristics_by_alternate_constructs <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('enrolled', 'treatment_arm', 'injury_classification_ankle_ao', 'injury_at_work', 'injury_in_battle', 
-                                                                     'injury_in_blast', 'injury_date', 'injury_mechanism', 'injury_side', 'injury_classification_tscherne', 'injury_type'), 
-                                              example_types = c('Boolean', 'TreatmentArm', 'Category', 'Boolean', 'Boolean', 
-                                                                "NamedCategory['Yes' 'No' 'Missing']", 'Date', 'Category', "NamedCategory['Left' 'Right' 'Missing']", 'Category', "NamedCategory['Blunt' 'Penetrating' 'Missing']"))
-  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('enrolled', 'treatment_arm', 'injury_classification_ankle_ao', 
+                           'injury_at_work', 'injury_in_battle', 
+                           'injury_in_blast', 'injury_date', 'injury_mechanism', 
+                           'injury_side', 'injury_classification_tscherne', 'injury_type'), 
+    example_types = c('Boolean', 'TreatmentArm', 'Category', 'Boolean', 'Boolean', 
+                      "NamedCategory['Yes' 'No' 'Missing']", 'Date', 'Category', 
+                      "NamedCategory['Left' 'Right' 'Missing']", 'Category', 
+                      "NamedCategory['Blunt' 'Penetrating' 'Missing']"))
+
   inner_injury_characteristics_by_alternate_constructs <- function(df) {
     total <- sum(df$enrolled)
     type_df <- df %>% 
@@ -1477,10 +1491,11 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
 }
 
 
-#' Closed Amputations and Gustilo Injury Characteristics
+#' Amputations and Gustilo injury characteristics, closed version
 #'
-#' @description This function visualizes the injury characteristics for amputations and Gustilo Injury types for
-#' Sextant study by treatment arm
+#' @description 
+#' This function visualizes the injury characteristics for amputations and Gustilo 
+#' Injury types for Sextant study by treatment arm
 #'
 #' @param analytic This is the analytic data set that must include enrolled, treatment_arm,
 #' injury_gustilo_type, injury_amputation_status
@@ -1875,10 +1890,11 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
 
 
 
-#' Closed adherence_sextant
+#' Adherence: Sextant, closed
 #'
-#' @description This function visualizes the treatment characteristics per protocol and assignmnet for Sextant for
-#' each treatment group
+#' @description 
+#' This function visualizes the treatment characteristics per protocol and assignment for Sextant for
+#' each treatment group.
 #'
 #' @param analytic This is the analytic data set that must include adherence_to_intervention_dwc,
 #' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, treatment_arm
@@ -3304,11 +3320,14 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
 #' 
 closed_enrollment_status_by_site <- function(analytic){
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
-  analytic <- if_needed_generate_example_data(analytic,
-                                              example_constructs = c('screened', 'eligible', 'refused', 'consented', 'enrolled', 'not_consented', 'discontinued_pre_randomization', 'site_certified_days', 
-                                                                     'facilitycode', 'late_ineligible', 'treatment_arm'),
-                                              example_types = c('Boolean', 'Boolean', "Boolean", "Boolean", 'Boolean', 'Boolean', 'Boolean', 'Number', 'FacilityCode', 'Boolean', 'TreatmentArm'))
-  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('screened', 'eligible', 'refused', 'consented', 'enrolled', 
+                           'not_consented', 'discontinued_pre_randomization', 'site_certified_days', 
+                           'facilitycode', 'late_ineligible', 'treatment_arm'),
+    example_types = c('Boolean', 'Boolean', "Boolean", "Boolean", 'Boolean', 'Boolean', 
+                      'Boolean', 'Number', 'FacilityCode', 'Boolean', 'TreatmentArm'))
+
   df_a <- analytic %>% 
     filter(is.na(treatment_arm)|treatment_arm=="Group A")
   

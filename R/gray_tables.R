@@ -14,7 +14,8 @@
 ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c("facilitycode", "enrolled", "df_surg_completed", "ih_discharge_date", "crossover_inpatient",
+    example_constructs = c("facilitycode", "enrolled", "df_surg_completed", "ih_discharge_date", 
+                           "crossover_inpatient",
                            "crossover_discharge", "ih_discharge_date_on_time_zero"),
     example_types = c("FacilityCode", "Boolean", "Boolean", "Date", "Boolean",
                       "Boolean", "Boolean"))
@@ -72,7 +73,8 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,
-    example_constructs = c("enrolled", "df_surg_completed", "ih_discharge_date", "crossover_inpatient", "crossover_discharge",
+    example_constructs = c("enrolled", "df_surg_completed", "ih_discharge_date", "crossover_inpatient", 
+                           "crossover_discharge",
                            "ih_discharge_date_on_time_zero", "facilitycode"),
     example_types = c("Boolean", "Boolean", "Date", "Boolean", "Boolean", "Boolean", "FacilityCode")) 
   
@@ -111,18 +113,26 @@ ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
 }
 
 
-#' adherence by site
+#' Adherence by site
 #'
-#' @description This function visualizes the treatment crossover or any nonadherence occured during the study.
+#' @description 
+#' Visualizes the status of patient study completion, organized by site. The returned 
+#' table has 4 columns: Site, Enrolled, DWC complete, and adherence. The DWC complete
+#' column is determined by the existence of a value for the df_date construct. Notably,
+#' this visualization determines adherence based on the existence of a value for 
+#' the treatment_arm construct.
+#' 
+#' A similar visualization is adherence_sextant, which uses multiple constructs to determine 
+#' all types of adherence.
 #'
-#' @param analytic This is the analytic data set that must include facilitycode, df_date
+#' @param analytic analytic data set that must include constructs facilitycode, 
+#' df_date, enrolled, treatment_arm
 #'
-#' @return nothing
+#' @return html table
 #' @export
 #'
 #' @examples
 #' adherence_by_site("Replace with Analytic Tibble")
-#' 
 adherence_by_site <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -136,11 +146,13 @@ adherence_by_site <- function(analytic){
     mutate(df_date = na_if(df_date, "NA")) %>% 
     mutate(df_complete = ifelse(!is.na(df_date), TRUE, FALSE)) 
   
-  treatment_total <- (sum(df$treatment_arm, na.rm = TRUE))
+  treatment_total <- sum(!is.na(df$treatment_arm))
   
   df2 <- df %>% 
     group_by(facilitycode) %>% 
-    summarize(elig_enr = sum(enrolled, na.rm = TRUE), df_total = sum(df_complete, na.rm = TRUE), treatment_completed = sum(treatment_arm, na.rm = TRUE)) %>% 
+    summarize(elig_enr = sum(enrolled, na.rm = TRUE), 
+              df_total = sum(df_complete, na.rm = TRUE), 
+              treatment_completed = sum(!is.na(treatment_arm))) %>% 
     mutate(treatment_completed = format_count_percent(treatment_completed, df_total)) 
   
   enrolled_total <- (sum(df2$elig_enr, na.rm = TRUE))
@@ -167,7 +179,7 @@ adherence_by_site <- function(analytic){
 
 #' adherence_sextant
 #'
-#' @description This function visualizes the treatment characteristics per protocol and assignmnet for Sextant. 
+#' @description This function visualizes the treatment characteristics per protocol and assignment for Sextant. 
 #'
 #' @param analytic This is the analytic data set that must include adherence_to_intervention_dwc,
 #' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, enrolled, dwc_date
@@ -221,7 +233,9 @@ adherence_sextant <- function(analytic){
 
 #' characteristics_treatment
 #'
-#' @description This function visualizes the treatment characteristics per protocol and assignment for tobra. 
+#' @description 
+#' This function visualizes the treatment characteristics per protocol and assignment 
+#' for tobra. 
 #'
 #' @param analytic This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
 #' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention

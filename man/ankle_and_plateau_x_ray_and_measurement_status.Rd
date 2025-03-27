@@ -27,7 +27,7 @@ ankle_sagital_disp_6mo,ankle_coronal_plane_disp_6mo}
 An HTML table.
 }
 \description{
-This function visualizes Ankle and Plateau X-Ray and Measurement Status
+This function visualizes Ankle and Plateau X-Ray and Measurement Status.
 }
 \examples{
 \dontrun{

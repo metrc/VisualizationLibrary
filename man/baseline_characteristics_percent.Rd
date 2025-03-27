@@ -41,7 +41,8 @@ baseline_characteristics_percent(
 An HTML table.
 }
 \description{
-This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, military, enrolled
+This function visualizes the categorical distribution of baseline characteristics 
+sex, age, race, education, military, enrolled.
 }
 \examples{
 baseline_characteristics_percent("Replace with Analytic Tibble")
