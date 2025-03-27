@@ -2,18 +2,23 @@
 % Please edit documentation in R/gray_tables.R
 \name{adherence_by_site}
 \alias{adherence_by_site}
-\title{adherence by site}
+\title{Adherence by site}
 \usage{
 adherence_by_site(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include facilitycode, df_date}
+\item{analytic}{analytic data set that must include fields facilitycode, df_date,
+enrolled, treatment_arm}
 }
 \value{
-nothing
+visualization
 }
 \description{
-This function visualizes the treatment crossover or any nonadherence occured during the study.
+Visualizes the status of patient study completion, organized by site. The returned 
+table has 4 columns: Site, Enrolled, DWC complete, and adherence. The DWC complete
+column is determined by the existence of a value for the df_date construct. Notably,
+this visualization determines adherence based on the existence of a value for 
+the treatment_arm construct.
 }
 \examples{
 adherence_by_site("Replace with Analytic Tibble")

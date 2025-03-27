@@ -16,12 +16,16 @@
 #' dsmb_consort_diagram("Replace with Analytic Tibble")
 #' 
 dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period = '12 Month', late_ineligible="late_ineligible", late_ineligible_str="Late Ineligible", not_expected_adjudicated=FALSE){
-  analytic <- if_needed_generate_example_data(analytic,
-                                              example_constructs = c('screened', 'eligible', 'consented', 'refused', 'discontinued_pre_randomization', 'randomized', 'late_ineligible',
-                                                                     'enrolled', 'completed', 'not_completed', 'not_expected', 'active', 'missed_final_followup', 'incomplete_final_followup'),
-                                              example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean',
-                                                                'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean'))
-  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('screened', 'eligible', 'consented', 'refused', 'discontinued_pre_randomization', 
+                           'randomized', 'late_ineligible',
+                           'enrolled', 'completed', 'not_completed', 'not_expected', 
+                           'active', 'missed_final_followup', 'incomplete_final_followup'),
+    example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 
+                      'Boolean', 'Boolean',
+                      'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean'))
+
   analytic <- analytic %>% 
   filter(screened == TRUE) 
   late_ineligible_var <- late_ineligible
@@ -602,13 +606,14 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
 #' dsmb_consort_diagram_pre_shifted_consent("Replace with Analytic Tibble")
 #' 
 dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 Month", adjudicated=FALSE, definitive_event = "Nerve Surgery"){
-  analytic <- if_needed_generate_example_data(analytic,
-                                              example_constructs = c('pre_screened', 'pre_eligible', 'screened', 'eligible', 'consented', 'not_consented', 
-                                                                     'randomized', 'enrolled', 'refused', 'completed', 'not_completed', 'not_expected', 
-                                                                     'active', 'missed_final_followup', 'incomplete_final_followup'),
-                                              example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean',
-                                                                'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean'))
-  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('pre_screened', 'pre_eligible', 'screened', 'eligible', 'consented', 'not_consented', 
+                           'randomized', 'enrolled', 'refused', 'completed', 'not_completed', 'not_expected', 
+                           'active', 'missed_final_followup', 'incomplete_final_followup'),
+    example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean',
+                      'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean'))
+
   pre_analytic <- analytic %>% 
     filter(pre_screened == TRUE)
   
@@ -758,9 +763,10 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
 #' cumulative_percentage_ankle_injuries("Replace with Analytic Tibble")
 #' 
 cumulative_percentage_ankle_injuries <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('injury_type', 'enrolled', "consent_date"), 
-                                              example_types = c('NamedCategory[\'ankle\']', 'Boolean', "Date"))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('injury_type', 'enrolled', "consent_date"), 
+    example_types = c('NamedCategory[\'ankle\']', 'Boolean', "Date"))
 
   df <- analytic %>%  select(study_id, injury_type, enrolled, consent_date) %>% 
     filter(enrolled = TRUE) %>% 
@@ -867,10 +873,11 @@ cumulative_percentage_plateau_injuries <- function(analytic){
 #' enrollment_by_injury_and_site("Replace with Analytic Tibble")
 #' 
 enrollment_by_injury_and_site <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('injury_type', "enrolled", "facilitycode", 'consent_date'), 
-                                              example_types = c("NamedCategory[\'ankle\' \'plateau\']", "Boolean", 'FacilityCode', 'Date'))
-  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('injury_type', "enrolled", "facilitycode", 'consent_date'), 
+    example_types = c("NamedCategory[\'ankle\' \'plateau\']", "Boolean", 'FacilityCode', 'Date'))
+
   df <- analytic %>%  select(study_id, injury_type, enrolled, facilitycode, consent_date) %>% 
     filter(enrolled = TRUE) %>% 
     filter(!is.na(injury_type)) %>% 
@@ -1213,7 +1220,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
     example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
                            "randomized", "enrolled", "adjudicated_discontinued", 
                            "completed", "safety_set", "exclusive_safety_set", "not_completed", 
-                            "not_expected", "active", "missed_final_followup", "incomplete_final_followup", "time_zero"), 
+                           "not_expected", "active", "missed_final_followup", "incomplete_final_followup", "time_zero"), 
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
                       "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
                       "Boolean", "Boolean", "Boolean", "Boolean", "Date"))
@@ -1559,8 +1566,10 @@ vislib_query_issues_per_site <- function(analytic) {
 consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month", not_expected_adjudicated=TRUE){
   analytic <- if_needed_generate_example_data(
     analytic,
-    example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", "randomized", "enrolled", 
-                           "adjudicated_discontinued", "completed", "safety_set", "exclusive_safety_set", "not_completed", 
+    example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
+                           "randomized", "enrolled", 
+                           "adjudicated_discontinued", "completed", "safety_set", 
+                           "exclusive_safety_set", "not_completed", 
                            "not_expected", "active", "missed_final_followup", "incomplete_final_followup"),
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean")) 

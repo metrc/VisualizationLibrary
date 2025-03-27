@@ -15,7 +15,7 @@ An HTML table.
 }
 \description{
 This function visualizes the injury characteristics for amputations and Gustilo Injury types for 
-Sextant study
+Sextant.
 }
 \examples{
 amputations_and_gustilo_injury_characteristics("Replace with Analytic Tibble")

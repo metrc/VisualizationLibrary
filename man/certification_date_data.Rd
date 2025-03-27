@@ -16,7 +16,7 @@ An HTML table.
 }
 \description{
 This function returns a list of sites and their dates of 
-local, DOD, and METRC certifications
+local, DOD, and METRC certifications.
 }
 \examples{
 certification_date_data("Replace with Analytic Tibble")
