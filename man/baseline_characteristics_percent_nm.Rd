@@ -2,7 +2,7 @@
 % Please edit documentation in R/standard_tables.R
 \name{baseline_characteristics_percent_nm}
 \alias{baseline_characteristics_percent_nm}
-\title{Baseline Characteristics Percent (No Military Status)}
+\title{Baseline characteristics percent (no military status)}
 \usage{
 baseline_characteristics_percent_nm(
   analytic,
@@ -17,28 +17,42 @@ baseline_characteristics_percent_nm(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include enrolled, age, age_group}
+\item{analytic}{analytic dataset that must include enrolled, age, age_group, and all the constructs
+specified in the following construct name parameters}
 
-\item{sex}{is a meta construct that is required that defaults to "sex"}
+\item{sex}{name of the construct of the sex characteristic, defaults to "sex"}
 
-\item{race}{is a meta construct that is required that defaults to "ethnicity_race"}
+\item{race}{name of the construct of the race characteristic, defaults to "ethnicity_race"}
 
-\item{education}{is a meta construct that is required that defaults to "education_level"}
+\item{education}{name of the construct of the education characteristic, defaults to "education_level"}
 
-\item{sex_levels}{sets default values and orders for sex meta construct}
+\item{sex_levels}{default values and orders for sex characteristic}
 
-\item{race_levels}{sets default values and orders for race meta construct}
+\item{race_levels}{default values and orders for race characteristic}
 
-\item{education_levels}{sets default values and orders for education meta construct}
+\item{education_levels}{default values and orders for education characteristic}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes the categorical distribution of baseline 
-characteristics sex, age, race, and education
+Visualizes the categorical distribution of values for the baseline characteristics sex, age, race, 
+and education. This function, as opposed to baseline_characteristics_percent, does not return data
+for any military construct. Also returns the distribution of the age_group construct.
+
+For each characteristic, this function takes two parameters: the construct name parameter and the  
+construct levels parameter. The construct name parameter specifies the name of the construct to use for  
+the corresponding characteristic, while the construct levels parameter specifies the expected values for  
+each characteristic. The construct levels parameters create the rows of an empty table that analytic  
+data is full joined to, so if, for example, you expect the sex column to contain the values male,  
+female, and missing and the analytic dataset you provide only has male and missing, the function will  
+have a row of female with a count of 0. The construct levels parameter also creates the order of the
+rows. Notably, the function will return values found in the analytic dataset that are not specified 
+in the levels parameter.
 }
 \examples{
 baseline_characteristics_percent_nm("Replace with Analytic Tibble")
+baseline_characteristics_percent_nm("Replace with Analytic Tibble", race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Asian / Pacific Islander", "Other", "Missing"))
+baseline_characteristics_percent_nm("Replace with Analytic Tibble", sex_levels=c("Male","Female", "Missing"))
 
 }
