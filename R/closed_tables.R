@@ -276,31 +276,51 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 } 
 
 
-#' Closed Baseline Characteristics Percent (No Military Status)
+#' Closed baseline characteristics percent (no military status)
 #'
-#' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, and education
+#' @description 
+#' This is the closed version of the baseline_characteristics_percent visualization, so the code is applied
+#' to Group A, Group B, and all participants (including theoretically those who do not have a treatment 
+#' assignment, so long as they are enrolled).
+#' 
+#' Visualizes the categorical distribution of values for the baseline characteristics sex, age, race, 
+#' and education. This function, as opposed to baseline_characteristics_percent, does not return data
+#' for any military construct. Also returns the distribution of the age_group construct.
+#' 
+#' For each characteristic, this function takes two parameters: the construct name parameter and the  
+#' construct levels parameter. The construct name parameter specifies the name of the construct to use for  
+#' the corresponding characteristic, while the construct levels parameter specifies the expected values for  
+#' each characteristic. The construct levels parameters create the rows of an empty table that analytic  
+#' data is full joined to, so if, for example, you expect the sex column to contain the values male,  
+#' female, and missing and the analytic dataset you provide only has male and missing, the function will  
+#' have a row of female with a count of 0. The construct levels parameter also creates the order of the
+#' rows. Notably, the function will return values found in the analytic dataset that are not specified 
+#' in the levels parameter.
 #'
-#' @param analytic This is the analytic data set that must include treatment_arm enrolled, age, age_group
-#' @param sex is a meta construct that is required that defaults to "sex"
-#' @param race is a meta construct that is required that defaults to "race_ethnicity"
-#' @param education is a meta construct that is required that defaults to "education_level"
-#' @param sex_levels sets default values and orders for sex meta construct
-#' @param race_levels sets default values and orders for race meta construct
-#' @param education_levels sets default values and orders for education meta construct
+#' @param analytic analytic dataset that must include enrolled, age, age_group, treatment_arm and all 
+#' the constructs specified in the following construct name parameters
+#' @param sex name of the construct of the sex characteristic, defaults to "sex"
+#' @param race name of the construct of the race characteristic, defaults to "ethnicity_race"
+#' @param education name of the construct of the education characteristic, defaults to "education_level"
+#' @param sex_levels default values and orders for sex characteristic
+#' @param race_levels default values and orders for race characteristic
+#' @param education_levels default values and orders for education characteristic
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_baseline_characteristics_percent_nm()
-#' }
+#' closed_baseline_characteristics_percent_nm("Replace with Analytic Tibble")
+#' closed_baseline_characteristics_percent_nm("Replace with Analytic Tibble", 
+#'   race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Asian / Pacific Islander", "Other", "Missing"))
+#' closed_baseline_characteristics_percent_nm("Replace with Analytic Tibble", 
+#'   sex_levels=c("Male","Female", "Missing"))
+#' 
 closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethnicity_race", education="education_level",
                                                        sex_levels=c("Female","Male", "Missing"), 
                                                        race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
                                                        education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", 
                                                                           "Refused / Don't know", "Missing")){
-  
   
   confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "fe7cb8b490a86eccd44baa0eaab32b6d")
   
@@ -318,7 +338,6 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
     sex_default <- tibble(type=sex_levels)
     race_default <- tibble(type=race_levels)
     education_default <- tibble(type=education_levels)
-    
     
     df <- inner_analytic %>% 
       select(enrolled, age_group, age, all_of(constructs)) %>% 
@@ -347,7 +366,6 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
     age_df <<- df %>% 
       summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))%>% 
       mutate(Category = 'age')
-    
     
     age_group_df <<- df %>% 
       mutate(age_group = replace_na(age_group, "Missing")) %>% 
