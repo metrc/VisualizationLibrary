@@ -279,23 +279,9 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 #' Closed baseline characteristics percent (no military status)
 #'
 #' @description 
-#' This is the closed version of the baseline_characteristics_percent visualization, so the code is applied
+#' This is the closed version of the baseline_characteristics_percent visualization, so its code is applied
 #' to Group A, Group B, and all participants (including theoretically those who do not have a treatment 
 #' assignment, so long as they are enrolled).
-#' 
-#' Visualizes the categorical distribution of values for the baseline characteristics sex, age, race, 
-#' and education. This function, as opposed to baseline_characteristics_percent, does not return data
-#' for any military construct. Also returns the distribution of the age_group construct.
-#' 
-#' For each characteristic, this function takes two parameters: the construct name parameter and the  
-#' construct levels parameter. The construct name parameter specifies the name of the construct to use for  
-#' the corresponding characteristic, while the construct levels parameter specifies the expected values for  
-#' each characteristic. The construct levels parameters create the rows of an empty table that analytic  
-#' data is full joined to, so if, for example, you expect the sex column to contain the values male,  
-#' female, and missing and the analytic dataset you provide only has male and missing, the function will  
-#' have a row of female with a count of 0. The construct levels parameter also creates the order of the
-#' rows. Notably, the function will return values found in the analytic dataset that are not specified 
-#' in the levels parameter.
 #'
 #' @param analytic analytic dataset that must include enrolled, age, age_group, treatment_arm and all 
 #' the constructs specified in the following construct name parameters
@@ -1956,7 +1942,7 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
 }
 
 
-#' closed characteristics_treatment
+#' Closed characteristics treatment
 #'
 #' @description This function visualizes the treatment characteristics per protocol and assignment for tobra. 
 #'

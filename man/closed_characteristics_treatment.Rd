@@ -2,7 +2,7 @@
 % Please edit documentation in R/closed_tables.R
 \name{closed_characteristics_treatment}
 \alias{closed_characteristics_treatment}
-\title{closed characteristics_treatment}
+\title{Closed characteristics treatment}
 \usage{
 closed_characteristics_treatment(analytic)
 }
