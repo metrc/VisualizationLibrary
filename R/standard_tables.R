@@ -677,24 +677,39 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
   return(vis) 
 } 
 
-#' Baseline Characteristics Percent (No Military Status)
+#' Baseline characteristics percent (no military status)
 #'
-#' @description This function visualizes the categorical distribution of baseline 
-#' characteristics sex, age, race, and education
+#' @description 
+#' Visualizes the categorical distribution of values for the baseline characteristics sex, age, race, 
+#' and education. This function, as opposed to baseline_characteristics_percent, does not return data
+#' for any military construct. Also returns the distribution of the age_group construct.
+#' 
+#' For each characteristic, this function takes two parameters: the construct name parameter and the  
+#' construct levels parameter. The construct name parameter specifies the name of the construct to use for  
+#' the corresponding characteristic, while the construct levels parameter specifies the expected values for  
+#' each characteristic. The construct levels parameters create the rows of an empty table that analytic  
+#' data is full joined to, so if, for example, you expect the sex column to contain the values male,  
+#' female, and missing and the analytic dataset you provide only has male and missing, the function will  
+#' have a row of female with a count of 0. The construct levels parameter also creates the order of the
+#' rows. Notably, the function will return values found in the analytic dataset that are not specified 
+#' in the levels parameter.
 #'
-#' @param analytic This is the analytic data set that must include enrolled, age, age_group
-#' @param sex is a meta construct that is required that defaults to "sex"
-#' @param race is a meta construct that is required that defaults to "ethnicity_race"
-#' @param education is a meta construct that is required that defaults to "education_level"
-#' @param sex_levels sets default values and orders for sex meta construct
-#' @param race_levels sets default values and orders for race meta construct
-#' @param education_levels sets default values and orders for education meta construct
+#' @param analytic analytic dataset that must include enrolled, age, age_group, and all the constructs
+#' specified in the following construct name parameters
+#' @param sex name of the construct of the sex characteristic, defaults to "sex"
+#' @param race name of the construct of the race characteristic, defaults to "ethnicity_race"
+#' @param education name of the construct of the education characteristic, defaults to "education_level"
+#' @param sex_levels default values and orders for sex characteristic
+#' @param race_levels default values and orders for race characteristic
+#' @param education_levels default values and orders for education characteristic
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' baseline_characteristics_percent_nm("Replace with Analytic Tibble")
+#' baseline_characteristics_percent_nm("Replace with Analytic Tibble", race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Asian / Pacific Islander", "Other", "Missing"))
+#' baseline_characteristics_percent_nm("Replace with Analytic Tibble", sex_levels=c("Male","Female", "Missing"))
 #' 
 baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethnicity_race", education="education_level",
                                              sex_levels=c("Female","Male", "Missing"), 
