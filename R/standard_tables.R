@@ -682,7 +682,8 @@ baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicit
 #' @description 
 #' Visualizes the categorical distribution of values for the baseline characteristics sex, age, race, 
 #' and education. This function, as opposed to baseline_characteristics_percent, does not return data
-#' for any military construct. Also returns the distribution of the age_group construct.
+#' for any military construct. Also returns the distribution of the age_group construct. Only participants
+#' who are enrolled will be counted.
 #' 
 #' For each characteristic, this function takes two parameters: the construct name parameter and the  
 #' construct levels parameter. The construct name parameter specifies the name of the construct to use for  
