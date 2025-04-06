@@ -26,7 +26,12 @@ safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_fi
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the categorical percentages of study status as well as followup completions
+This function visualizes the categorical percentages of study status as well as followup completions. 
+Consort diagrams are almost fully customizable in their implementation. 
+
+For other consort diagrams that may better fit your study, refer to: consort_diagram, consort_diagram_no_definitive_event, 
+dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
+dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram.
 }
 \examples{
 consort_diagram("Replace with Analytic Tibble")

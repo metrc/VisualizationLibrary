@@ -11,11 +11,12 @@ not_enrolled_for_other_reasons(analytic)
 nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_other, constraint_other_txt, screened}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-This function visualizes list of study_ids who were screened howevere were not enrolled for "Other"
-reasons
+Visualizes the list of study_ids who were screened however were not enrolled for reasons labeled 'other'.
+
+See also the complementary table: not_enrolled_reason
 }
 \examples{
 not_enrolled_for_other_reasons("Replace with Analytic Tibble")

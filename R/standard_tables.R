@@ -1,12 +1,12 @@
 #' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled
 #'
-#' @description This function visualizes the enrollment totals for each site
+#' @description Visualizes the enrollment totals for each site.
 #'
 #' @param analytic This is the analytic data set that must include screened, 
 #' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
 #' facilitycode, late_ineligible
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -75,7 +75,10 @@ enrollment_status_by_site <- function(analytic){
 
 #' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled (Variable Discontinued)
 #'
-#' @description This function visualizes the enrollment totals for each site
+#' @description This function visualizes the totals of each include construct by site, split into among eligible and among consented.
+#' 
+#' #' For other enrollment by site visualizations that may better fit your study, please look at: enrollment_by_site, 
+#' enrollment_by_site_last_days_var_disc, enrollment_status_by_site, enrollment_status_by_site_var_discontinued
 #'
 #' @param analytic This is the analytic data set that must include screened, 
 #' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode,
@@ -542,11 +545,13 @@ injury_ankle_plateau_characteristics <- function(analytic){
   return(table_raw)
 }
 
-#' Baseline Characteristics Percent 
+#' Baseline characteristics percent 
 #'
 #' @description 
-#' This function visualizes the categorical distribution of baseline characteristics 
-#' sex, age, race, education, military, enrolled.
+#' Visualizes the categorical distribution of baseline characteristics 
+#' sex, age, race, education, military, enrolled. See below as this is a generic visualization and includes meta construct for each of the 
+#' analysis outputs. You may also specify the levels that these outputs have in the function call. 
+#' Outputs two columns: type (sex, age, race, education, military), and their respective counts and percentages.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, age, age_group
 #' @param sex is a meta construct that is required that defaults to "sex"
@@ -558,7 +563,7 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #' @param education_levels sets default values and orders for education meta construct
 #' @param military_levels sets default values and orders for military meta construct
 #'
-#' @return An HTML table.
+#' @return html table 
 #' @export
 #'
 #' @examples
@@ -807,11 +812,13 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
 #'
 #' @description This function visualizes the number of non-completions, not expected, and SAEs for only 
 #' "enrolled" participants and Protocol Deviations by type for all the "consented" participants. 
+#' 
+#' Refer to not_complete_sae_deviation_by_type_auto_categories.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
 #' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count, not_completed, sae_count
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -1411,16 +1418,17 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
 }
 
 
-#' Status of IRB Approvals and Certification by Site
+#' Status of IRB approvals and certification by site
 #'
 #' @description 
-#' This function returns a list of sites and their dates of 
-#' local, DOD, and METRC certifications.
+#' Visualizes the sites for a given study and their dates of 
+#' local, DOD, and METRC certifications. This function outputs 5 columns, Facility, Local or sIRB approval date, DoD approval date, 
+#' certified by MCC to start screening, Number of days certified. To run this visualization a study needs qa site_certified_date long file.
 #'
 #' @param analytic This is the analytic data set that must include site_certified_date
 #' @param exclude_local_irb defaults to False
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -1652,7 +1660,8 @@ nonunion_surgery_outcome <- function(analytic){
 
 #' Injury Characteristics
 #'
-#' @description This function visualizes the certain injury characteristics for study participants study injuries
+#' @description This function visualizes the certain injury characteristics for study participants study injuries, 
+#' ross reference the potential usage of this visualization with injury_characteristics
 #'
 #' @param analytic This is the analytic data set that must include enrolled, injury_classification_ankle_ao, injury_at_work, injury_in_battle, 
 #' injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type
@@ -1776,8 +1785,10 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #' Generic Characteristics
 #'
 #' @description 
-#' Runs basic count statistics for a number of constructs. Missing values are 
+#' Visualize basic count statistics for a number of constructs. Missing values are 
 #' given the value "Missing."
+#' 
+#' For other relevant characteristics counting visualizations, please see: baseline_characteristics_percent, baseline_characteristics_percent_nm
 #'
 #' @param analytic This is the analytic data set 
 #' @param constructs The constructs to run statistics from
@@ -1788,7 +1799,7 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #' @param subcategory_constructs This allows a characteristic to have a construct as a sub category, 
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -1946,16 +1957,18 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
 
 
 
-#' Amputations and Gustilo Injury Characteristics
+#' Amputations and gustilo injury characteristics
 #'
 #' @description 
-#' This function visualizes the injury characteristics for amputations and Gustilo Injury types for 
-#' Sextant.
+#' Visualizes the injury characteristics for the amputation status (by category), 
+#' and the fracture type (by gustilo), for each in the given study.
+#' The returned table has two columns, one for the amputation status 
+#' and gustilo type, and one for their respective counts.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, 
 #' injury_gustilo_type, injury_amputation_status
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -2106,12 +2119,14 @@ refusal_reasons_by_site <- function(analytic){
 
 #' Other reason of refusal by each site
 #'
-#' @description This function visualizes list of each "Other" reason of refusal, total screened by each site.
+#' @description Visualizes list of each "Other" reason of refusal, total screened by each site.
+#' 
+#' See also the complementary table: refusal_reasons_by_site
 #'
 #' @param analytic This is the analytic data set that must include study_id, facilitycode, screened_date, 
 #' refused_reason_other
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -2138,13 +2153,14 @@ other_reason_refusal_by_site <- function(analytic){
 
 #' Not enrolled for other reasons
 #'
-#' @description This function visualizes list of study_ids who were screened howevere were not enrolled for "Other"
-#' reasons
+#' @description Visualizes the list of study_ids who were screened however were not enrolled for reasons labeled 'other'.
+#' 
+#' See also the complementary table: not_enrolled_reason
 #'
 #' @param analytic This is the analytic data set that must include study_id, facilitycode, able_to_participate, 
 #' nonparticipation_text_given, constraint_noconsent, constraint_admin, constraint_other, constraint_other_txt, screened
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -2275,7 +2291,10 @@ fracture_characteristics <- function(analytic){
 
 #' enrollment_by_site tobra and sextant (var discontinued)
 #'
-#' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week 
+#' @description Visualizes the number of subjects enrolled, not enrolled etc, with parameter specifications to include more columns. 
+#' 
+#' For other enrollment by site visualizations that may better fit your study, please look at: enrollment_by_site, 
+#' enrollment_by_site_last_days_var_disc, enrollment_status_by_site, enrollment_status_by_site_var_discontinued
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
 #' facilitycode, screened_date, consented, randomized, consent_date, discontinued
@@ -2668,14 +2687,17 @@ wbs_main_paper_injury_characteristics <- function(analytic){
 
 #' Weight Bearing Patient Characteristics for Main paper
 #'
-#' @description This function outputs a table with various patient characteristics/demographics for enrolled 
-#' patients with "Ankle" injuries. This table is produced for Weight bearing main paper. 
+#' @description Visualizes various patient characteristics/demographics for enrolled 
+#' patients with "Ankle" injuries. 
+#' 
+#' NOTE: This table was originally produced for Weight bearing main paper, but may apply to your study, 
+#' see the used constructs for more. 
 #'
 #' @param analytic enrolled, injury_type, sex, age, ethnicity_race, education_level, patient_reported_self_efficacy_6mo, 
 #' patient_reported_self_efficacy_12mo, preinjury_productive_activity, preinjury_work_demand, 
 #' preinjury_work_hours, tobacco_use, bmi, preinjury_health, insurance_type
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -3014,7 +3036,10 @@ expected_and_followup_visit_overall <- function(analytic){
 #' Followup Data Single Form and Timepoint By Site
 #'
 #' @description Returns the designated followup form status across all sites, 
-#' for a single timepoint and separated by the treatment_arm variable
+#' for a single timepoint.
+#' 
+#' #' For other manipulations of the followup_data long file that may better fit your study, please see: followup_completion_time_stats, 
+#' followup_form_all_timepoints_by_site, followup_form_at_timepoint_by_site, followup_forms_all_timepoints, followup_forms_at_timepoint_by_site
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
 #' @param timepoint the point in time to be considered in the visualization
@@ -3287,8 +3312,10 @@ followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Ove
 
 #' Followup Data Multiple Forms and Single Timepoints By Site
 #'
-#' @description Returns the designated followup forms status by site at a specifict
-#' period
+#' @description Visualizes the specified follow-up forms at a specific timeppoint, listed by site.
+#' 
+#' #' For other manipulations of this file that may better fit your study, please see: followup_completion_time_stats, 
+#' followup_form_all_timepoints_by_site, followup_form_at_timepoint_by_site, followup_forms_all_timepoints, followup_forms_at_timepoint_by_site
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
 #'
@@ -3840,14 +3867,18 @@ ineligibility_reasons_info <- function(analytic){
 #' Follow-up Forms Time to Complete
 #'
 #' @description 
-#' Returns summary statistics on the number of days to complete various follow-up forms.
+#' Returns summary statistics on the number of days to complete various follow-up forms. Each study will have a 'unique' followup data long file, 
+#' this visualization manipulates a part of that file to return that info for the desired forms.
+#' 
+#' For other manipulations of the followup_data long file that may better fit your study, please see: followup_completion_time_stats, 
+#' followup_form_all_timepoints_by_site, followup_form_at_timepoint_by_site, followup_forms_all_timepoints, followup_forms_at_timepoint_by_site
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data, event_time_zero,
 #' and enrolled
 #' @param timepoints the point in time to be considered in the visualization
 #' @param form_selection the form to be considered in the visualization
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples

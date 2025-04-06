@@ -10,14 +10,17 @@ closed_expected_and_followup_visit_overall(analytic, footnotes = NULL)
 \item{analytic}{This is the analytic data set that must include study_id, followup_data, treatment_arm}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-This function only looks at the designated overall form(s) for a 
+Visualizes the designated overall form(s) for a 
 given study, as designated in the respective followup_data long file 
-and organizes them by its detected levels of followup periods. 
+and organizes them by detected levels of followup periods. 
 
-The function separates the data for the two study groups by treatment arm
+The function separates the data for the two study groups by treatment arm.
+
+This is a closed version of expected_and_followup_visit_overall, request if expected_and_followup_visit_overall is present in your study. 
+See expected_and_followup_visit_overall for more information.
 }
 \examples{
 closed_expected_and_followup_visit_overall("Replace with Analytic Tibble")

@@ -2,7 +2,7 @@
 % Please edit documentation in R/standard_tables.R
 \name{baseline_characteristics_percent}
 \alias{baseline_characteristics_percent}
-\title{Baseline Characteristics Percent}
+\title{Baseline characteristics percent}
 \usage{
 baseline_characteristics_percent(
   analytic,
@@ -38,11 +38,13 @@ baseline_characteristics_percent(
 \item{military_levels}{sets default values and orders for military meta construct}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-This function visualizes the categorical distribution of baseline characteristics 
-sex, age, race, education, military, enrolled.
+Visualizes the categorical distribution of baseline characteristics 
+sex, age, race, education, military, enrolled. See below as this is a generic visualization and includes meta construct for each of the 
+analysis outputs. You may also specify the levels that these outputs have in the function call. 
+Outputs two columns: type (sex, age, race, education, military), and their respective counts and percentages.
 }
 \examples{
 baseline_characteristics_percent("Replace with Analytic Tibble")

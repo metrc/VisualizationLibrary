@@ -15,11 +15,14 @@ closed_not_complete_sae_deviation_by_type_auto_categories(
 not_completed_reason, protocol_deviation_full_data, sae_count}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
+Visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 Now with AUTO Protocol Deviation Categorization!
+
+This is a closed version of not_complete_sae_deviation_by_type_auto_categories, request if not_complete_sae_deviation_by_type_auto_categories is present in your study. 
+See not_complete_sae_deviation_by_type_auto_categories for more information.
 }
 \examples{
 \dontrun{

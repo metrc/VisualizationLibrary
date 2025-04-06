@@ -1,6 +1,10 @@
 #' DSMB Consort Diagram
 #'
 #' @description This function visualizes the categorical percentages of Study Status for any study, similar to the NSAID consort diagram, but with customization endpoints.
+#' 
+#' For other consort diagrams that may better fit your study, refer to: consort_diagram, consort_diagram_no_definitive_event, 
+#' dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
+#' dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram. 
 #'
 #' @param analytic The analytic data set that must include the following columns: screened, eligible, consented, refused, discontinued_pre_randomization,
 #'  randomized, late_ineligible, enrolled, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
@@ -136,6 +140,10 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period
 #'
 #' @description This function visualizes the categorical percentages of Study Status
 #' for the NSAID study
+#' 
+#' For other consort diagrams that may better fit your study, refer to: consort_diagram, consort_diagram_no_definitive_event, 
+#' dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
+#' dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram. 
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, 
 #' consented, not_consented, randomized, enrolled, refused, df_surg_completed, completed, 
@@ -435,6 +443,10 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
 #' DSMB Consort Diagram With Pre Screened and No Definitive Event
 #'
 #' @description This function visualizes the categorical percentages of Study Status
+#' 
+#' For other consort diagrams that may better fit your study, refer to: consort_diagram, consort_diagram_no_definitive_event, 
+#' dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
+#' dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram. 
 #'
 #' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
 #' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
@@ -862,7 +874,7 @@ cumulative_percentage_plateau_injuries <- function(analytic){
 
 #' Enrollment of subjects for ankle and plateau injuries by each site
 #'
-#' @description This function visualizes the enrollment by each site for each injury_type
+#' @description Visualizes the enrollment by each site for each injury_type, in bar chart, with bars including all injury types, colored to differentiate.
 #'
 #' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled, facilitycode
 #'
@@ -953,7 +965,7 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 
 #' Cumulative enrollment
 #'
-#' @description This function visualizes the Cumulative number of patients enrolled
+#' @description This function visualizes the cumulative number of patients enrolled, by month.
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date
 #' @param bar_mode set to TRUE to remove the line
@@ -1135,9 +1147,9 @@ cumulative_enrolled_los <- function(analytic){
 
 #' Cumulative Enrollment with Goals
 #'
-#' @description This function visualizes the cumulative number of patients enrolled, accompanied by 
+#' @description Visualizes the cumulative number of patients enrolled, accompanied by 
 #' a participant goal curve which demonstrates the goal relative to the actual cumulative participant enrollment process, 
-#' and a second curve which demonstrates the necessary growth in order to meet that goal, all within a specified start and end date..
+#' and a second curve which demonstrates the necessary growth in order to meet that goal, all within a specified start and end date.
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date.
 #' @param start_date The start date for the analysis.
@@ -1148,7 +1160,7 @@ cumulative_enrolled_los <- function(analytic){
 #' @export
 #'
 #' @examples
-#' cumulative_enrollment_goals("Replace with Analytic Tibble")
+#' cumulative_enrollment_goals("Replace with Analytic Tibble", "01-01-2025", "12-31-2026", 500)
 #' 
 cumulative_enrollment_goals <- function(analytic, start_date, end_date, participant_goal){
   analytic <- if_needed_generate_example_data(analytic, 
@@ -1199,7 +1211,12 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 
 #' Consort Diagram
 #'
-#' @description This function visualizes the categorical percentages of study status as well as followup completions
+#' @description This function visualizes the categorical percentages of study status as well as followup completions. 
+#' Consort diagrams are almost fully customizable in their implementation. 
+#' 
+#' For other consort diagrams that may better fit your study, refer to: consort_diagram, consort_diagram_no_definitive_event, 
+#' dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
+#' dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram. 
 #'
 #' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible,
 #' refused, consented, randomized, enrolled, time_zero, adjudicated_discontinued, completed, 
@@ -1348,10 +1365,13 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
 #' Visualization Library: Issues per site (Basic)
 #'
 #' @description Visualizes the number of open and untouched issues per site,
-#' determined by the status column in the query_database being set to "Deteected".
+#' determined by the status column in the query_database being set to "Detected".
+#' NOTE: this is not a dsmb visualization
+#' 
+#' See also: vislib_query_issues_per_site
 #'
 #'
-#' @return table of data quality confirmation forms
+#' @return html table
 #' @export
 #'
 #' @examples

@@ -12,11 +12,14 @@ patient_reported_self_efficacy_12mo, preinjury_productive_activity, preinjury_wo
 preinjury_work_hours, tobacco_use, bmi, preinjury_health, insurance_type}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-This function outputs a table with various patient characteristics/demographics for enrolled 
-patients with "Ankle" injuries. This table is produced for Weight bearing main paper.
+Visualizes various patient characteristics/demographics for enrolled 
+patients with "Ankle" injuries. 
+
+NOTE: This table was originally produced for Weight bearing main paper, but may apply to your study, 
+see the used constructs for more.
 }
 \examples{
 wbs_main_paper_patient_characteristics(analytic)

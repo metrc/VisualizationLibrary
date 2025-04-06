@@ -12,10 +12,13 @@ eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomiz
 facilitycode, late_ineligible}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-This function visualizes the enrollment totals for each site
+Visualizes the enrollment totals for each site.
+
+This is a closed version of enrollment_status_by_site, request if enrollment_status_by_site is present in your study. 
+See enrollment_status_by_site for more information.
 }
 \examples{
 closed_enrollment_status_by_site("Replace with Analytic Tibble")
