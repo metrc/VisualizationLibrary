@@ -19,11 +19,11 @@ cumulative_enrollment_goals(analytic, start_date, end_date, participant_goal)
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format. (intended for plotting)
 }
 \description{
-This function visualizes the cumulative number of patients enrolled, accompanied by 
+Visualizes the cumulative number of patients enrolled, accompanied by 
 a participant goal curve which demonstrates the goal relative to the actual cumulative participant enrollment process, 
-and a second curve which demonstrates the necessary growth in order to meet that goal, all within a specified start and end date..
+and a second curve which demonstrates the necessary growth in order to meet that goal, all within a specified start and end date.
 }
 \examples{
-cumulative_enrollment_goals("Replace with Analytic Tibble")
+cumulative_enrollment_goals("Replace with Analytic Tibble", "01-01-2025", "12-31-2026", 500)
 
 }

@@ -31,11 +31,14 @@ closed_generic_characteristics(
 must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-Runs basic count statistics for a number of constructs. Missing values are 
+Visualizes basic count statistics for a number of constructs. Missing values are 
 given the value "Missing."
+
+This is a closed version of generic_characteristics, request if generic_characteristics is present in your study. 
+See generic_characteristics for more information.
 }
 \examples{
 \dontrun{

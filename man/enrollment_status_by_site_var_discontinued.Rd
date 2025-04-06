@@ -26,7 +26,10 @@ consent_date, not_randomized}
 An HTML table.
 }
 \description{
-This function visualizes the enrollment totals for each site
+This function visualizes the totals of each include construct by site, split into among eligible and among consented.
+
+#' For other enrollment by site visualizations that may better fit your study, please look at: enrollment_by_site, 
+enrollment_by_site_last_days_var_disc, enrollment_status_by_site, enrollment_status_by_site_var_discontinued
 }
 \examples{
 enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble")

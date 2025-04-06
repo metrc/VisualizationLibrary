@@ -7,11 +7,14 @@
 vislib_query_issues_per_site_basic(analytic)
 }
 \value{
-table of data quality confirmation forms
+html table
 }
 \description{
 Visualizes the number of open and untouched issues per site,
-determined by the status column in the query_database being set to "Deteected".
+determined by the status column in the query_database being set to "Detected".
+NOTE: this is not a dsmb visualization
+
+See also: vislib_query_issues_per_site
 }
 \examples{
 \dontrun{
