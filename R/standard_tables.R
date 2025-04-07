@@ -4,9 +4,8 @@
 #' Visualizes the count of the study statuses for each site, as well as displaying the days the site 
 #' has been certified.
 #'
-#' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
-#' facilitycode, late_ineligible
+#' @param analytic analytic data set that must include screened, eligible, refused, consented, enrolled, 
+#' not_consented, discontinued_pre_randomization, site_certified_days, facilitycode, late_ineligible
 #'
 #' @return An HTML table.
 #' @export
@@ -1005,7 +1004,10 @@ not_complete_sae_deviation_by_type <- function(analytic){
 #' Visualizes the number of non-completions, not expected, and SAEs for enrolled participants and Protocol 
 #' Deviations by type for consented participants. Amongst enrolled, counts instances of presence of the
 #' construct not_completed_reason for Not Completed count, not_expected_reason for Not expected count,
-#' sae_count not being 0 for SAE count.
+#' and sae_count not being 0 for SAE count. Protocol deviation counts are extracted from the protocol_deviation_full_data
+#' long file, where "Other. . ." values are truncated to "Other."
+#' 
+#' Categories of protocol deviations are separated by indentation.
 #'
 #' @param analytic analytic data set that must include enrolled, not_expected_reason, not_completed_reason, 
 #' not_completed, protocol_deviation_full_data, sae_count, consented

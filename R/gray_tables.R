@@ -1,7 +1,8 @@
 #' Crossover Monitoring by Site
 #'
 #' @description 
-#' Visualizes the crossovers by site in hospital and at discharge.
+#' Visualizes hospital discharges and patient crossovers out of the number of patients enrolled. Data
+#' is organized per site.
 #'
 #' @param analytic analytic data set that must include enrolled, df_surg_completed, ih_discharge_date, 
 #' crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
@@ -124,8 +125,8 @@ ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
 #' A similar visualization is adherence_sextant, which uses multiple constructs to determine 
 #' all types of adherence.
 #'
-#' @param analytic analytic data set that must include constructs facilitycode, 
-#' df_date, enrolled, treatment_arm
+#' @param analytic analytic data set that must include constructs facilitycode, df_date, enrolled, 
+#' treatment_arm
 #'
 #' @return html table
 #' @export

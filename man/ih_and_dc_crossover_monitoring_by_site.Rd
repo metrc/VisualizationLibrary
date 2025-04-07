@@ -14,7 +14,8 @@ crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and fa
 nothing
 }
 \description{
-Visualizes the crossovers by site in hospital and at discharge.
+Visualizes hospital discharges and patient crossovers out of the number of patients enrolled. Data
+is organized per site.
 }
 \examples{
 ih_and_dc_crossover_monitoring_by_site("Replace with Analytic Tibble")
