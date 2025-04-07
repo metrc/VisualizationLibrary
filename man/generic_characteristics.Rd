@@ -31,11 +31,13 @@ generic_characteristics(
 must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-Runs basic count statistics for a number of constructs. Missing values are 
+Visualize basic count statistics for a number of constructs. Missing values are 
 given the value "Missing."
+
+For other relevant characteristics counting visualizations, please see: baseline_characteristics_percent, baseline_characteristics_percent_nm
 }
 \examples{
 \dontrun{

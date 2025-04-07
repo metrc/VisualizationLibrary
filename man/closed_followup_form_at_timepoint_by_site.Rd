@@ -21,11 +21,14 @@ closed_followup_form_at_timepoint_by_site(
 \item{name}{optional argument for changing the name of the followup form, for aesthetic use}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-Returns the designated followup form status across all sites, 
+Visualizes the designated followup form status across all sites, 
 for a single timepoint and separated by the treatment_arm variable
+
+This is a closed version of followup_form_at_timepoint_by_site, request if followup_form_at_timepoint_by_site is present in your study. 
+See followup_form_at_timepoint_by_site for more information.
 }
 \examples{
 closed_followup_form_at_timepoint_by_site("Replace with Analytic Tibble")

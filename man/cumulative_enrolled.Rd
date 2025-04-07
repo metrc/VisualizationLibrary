@@ -24,7 +24,7 @@ cumulative_enrolled(
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the Cumulative number of patients enrolled
+This function visualizes the cumulative number of patients enrolled, by month.
 }
 \examples{
 cumulative_enrolled("Replace with Analytic Tibble")

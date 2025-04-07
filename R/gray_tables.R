@@ -58,13 +58,15 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 
 #' Crossover Monitoring by Site since 01/01/2024
 #'
-#' @description This function visualizes the crossovers by site in hospital and at discharge 
-#' after 01/01/2021
+#' @description Visualizes the crossovers by site in hospital and at discharge 
+#' after 01/01/2021, by site.
+#' 
+#' For a visualization of the same data not by site, see: ih_and_dc_crossover_monitoring_cutoff_date
 #'
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
 #' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
 #'
-#' @return nothing
+#' @return html table
 #' @export
 #'
 #' @examples

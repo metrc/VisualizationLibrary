@@ -10,10 +10,13 @@ closed_complications_by_severity_relatedness(analytic)
 \item{analytic}{This is the analytic data set that must include study_id, complication_data, treatment_arm}
 }
 \value{
-An HTML table.
+html_table
 }
 \description{
-This function visualizes the complications by severity and relatedness for dsmb report
+visualizes the complications by severity and relatedness for dsmb report
+
+This is a closed version of complications_by_severity_relatedness, request if complications_by_severity_relatedness is present in your study. 
+See complications_by_severity_relatedness for more information.
 }
 \examples{
 closed_complications_by_severity_relatedness("Replace with Analytic Tibble")

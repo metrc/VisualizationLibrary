@@ -2,7 +2,7 @@
 % Please edit documentation in R/standard_tables.R
 \name{amputations_and_gustilo_injury_characteristics}
 \alias{amputations_and_gustilo_injury_characteristics}
-\title{Amputations and Gustilo Injury Characteristics}
+\title{Amputations and gustilo injury characteristics}
 \usage{
 amputations_and_gustilo_injury_characteristics(analytic)
 }
@@ -10,12 +10,13 @@ amputations_and_gustilo_injury_characteristics(analytic)
 \item{analytic}{analytic data set that must include constructs enrolled, injury_gustilo_type, injury_amputation_status}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-Visualizes the data for amputations and injury Gustilo type. In order for the indents to work properly,
-the injury_gustilo_type construct must contain 7 unique values and the injury_amputation_status construct
-must contain 3 unique values.
+Visualizes the injury characteristics for the amputation status (by category), and the fracture type 
+(by gustilo). In order for the indents to work properly, the injury_gustilo_type 
+construct must contain 7 unique values and the injury_amputation_status construct must contain 3 
+unique values.
 }
 \examples{
 amputations_and_gustilo_injury_characteristics("Replace with Analytic Tibble")

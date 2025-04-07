@@ -11,10 +11,12 @@ other_reason_refusal_by_site(analytic)
 refused_reason_other}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-Prints a table of all the "Other" reasons given for refusal of participation.
+Returns a table of descriptions of all of the "Other" reasons given for refusal to participate.
+
+See also the complementary table: refusal_reasons_by_site
 }
 \examples{
 other_reason_refusal_by_site("Replace with Analytic Tibble")

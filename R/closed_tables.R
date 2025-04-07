@@ -119,7 +119,10 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
 
 #' Closed Baseline Characteristics Percent 
 #'
-#' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military
+#' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military.
+#' 
+#' NOTE: This is a closed version of baseline_characteristics_percent, request if baseline_characteristics_percent is present in your study. 
+#' See baseline_characteristics_percent for more information.
 #'
 #' @param analytic This is the analytic data set that must include treatment_arm enrolled, age, age_group
 #' @param sex is a meta construct that is required that defaults to "sex"
@@ -646,13 +649,16 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
 
 #' Closed Number of Non-Completing Participants, SAEs, and Protocol Deviations by type
 #'
-#' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
+#' @description Visualizes the number of discontinuations, SAEs and Protocol Deviations by type
 #' Now with AUTO Protocol Deviation Categorization!
+#' 
+#' This is a closed version of not_complete_sae_deviation_by_type_auto_categories, request if not_complete_sae_deviation_by_type_auto_categories is present in your study. 
+#' See not_complete_sae_deviation_by_type_auto_categories for more information.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, 
 #' not_completed_reason, protocol_deviation_full_data, sae_count
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -852,11 +858,14 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
 
 #' Closed Complications by severity and relatedness
 #'
-#' @description This function visualizes the complications by severity and relatedness for dsmb report
+#' @description visualizes the complications by severity and relatedness for dsmb report
+#' 
+#' This is a closed version of complications_by_severity_relatedness, request if complications_by_severity_relatedness is present in your study. 
+#' See complications_by_severity_relatedness for more information.
 #'
 #' @param analytic This is the analytic data set that must include study_id, complication_data, treatment_arm
 #'
-#' @return An HTML table.
+#' @return html_table
 #' @export
 #'
 #' @examples
@@ -1032,12 +1041,14 @@ closed_complications_by_severity_relatedness <- function(analytic){
 
 #' Appendix A: Listing of Serious Adverse Events(SAEs) for closed report
 #'
-#' @description 
-#' Prints out formatted data for all the SAEs found in the sae_data long file.
+#' @description Visualizes appendix for all the serious adverse events noted for the patients.
+#' Uses only the standardized sae_data construct (this construct must be prepared correctly for your study)
+#' 
+#' This is an appendix visualization see the other available appendices to request as well for you closed report. 
 #'
 #' @param analytic This is the analytic data set that must include study_id, sae_data
 #'
-#' @return HTML.
+#' @return HTML
 #' @export
 #'
 #' @examples
@@ -1147,7 +1158,11 @@ closed_appendix_B_deaths <- function(analytic){
 
 #' Appendix C: Listing of any Not Expected and Not completed cases for closed report
 #'
-#' @description This function visualizes any not completedness and not expectedness occurred during the study time period.
+#' @description This function visualizes any not completeness and not expectedness occurred during the study time period.
+#' Uses the standard construct outputs for not_expected_data and not_complted data, 
+#' these constructs for your study must be prepared in the appropriate manner.
+#' 
+#' This is an appendix visualization see the other available appendices to request as well for you closed report. 
 #'
 #' @param analytic This is the analytic data set that must include study_id, not_expected_data, not_completed_data
 #'
@@ -1325,6 +1340,9 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
 #'
 #' @description This function returns a list of sites and their dates of
 #' local, DOD, and METRC certifications by treatment arm
+#' 
+#' NOTE: This is a closed version of certification_date_data, request if certification_date_data is present in your study. 
+#' See certification_date_data for more information.
 #'
 #' @param analytic This is the analytic data set that must include site_certified_date
 #'
@@ -1368,12 +1386,15 @@ closed_certification_date_data <- function(analytic){
 
 #' Closed Injury Characteristics
 #'
-#' @description This function visualizes the certain injury characteristics for study participants study injuries by treatment arm
+#' @description Visualizes the certain injury characteristics for study participants study injuries by treatment arm
+#' 
+#' This is a closed version of injury_characteristics_by_alternate_constructs, request if injury_characteristics_by_alternate_constructs is present in your study. 
+#' See injury_characteristics_by_alternate_constructs for more information.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, treatment_arm, injury_classification_ankle_ao, injury_at_work, injury_in_battle,
 #' injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type
 
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -1680,13 +1701,16 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
 #' Closed Deep Surgical Site Infection reported & adjudicated
 #'
 #' @description 
-#' This function visualizes the treatment crossover or any nonadherence occured during the Tobra
+#' Visualizes the treatment crossover or any nonadherence occured during the Tobra
 #' study by treatment arm.
+#' 
+#' This is a closed version of dssi_reported_adjudicated, request if dssi_reported_adjudicated is present in your study. 
+#' See dssi_reported_adjudicated for more information.
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, followup_expected_6mo, 
 #' dssi_reported_6mo, dssi_adjudicated_6mo, dssi_adjudication_pending_6mo, dssi_count
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -1930,11 +1954,13 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
 
 
 
-#' Adherence: Sextant, closed
+#' Closed adherence sextant
 #'
 #' @description 
 #' This function visualizes the treatment characteristics per protocol and assignment for Sextant for
-#' each treatment group.
+#' each treatment group. 
+#' 
+#' NOTE: This is a closed version of adherence_sextant, request if adherence_sextant is present in your study. See adherence_sextant for more information.
 #'
 #' @param analytic This is the analytic data set that must include adherence_to_intervention_dwc,
 #' adherence_to_intervention_post_dwc, adherence_to_no_other_antibiotic_dwc, treatment_arm
@@ -2147,15 +2173,18 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
 }
 
 
-#' Crossover Monitoring by Site since 01/01/2024
+#' Crossover monitoring by site since 01/01/2024
 #'
-#' @description This function visualizes the crossovers by site in hospital and at discharge 
-#' after 01/01/2021
+#' @description Visualizes the crossovers by site in hospital and at discharge 
+#' after 01/01/2021, by site.
+#' 
+#' This is a closed version of ih_and_dc_crossover_monitoring_by_site_cutoff_date, request if ih_and_dc_crossover_monitoring_by_site_cutoff_date is present in your study. 
+#' See ih_and_dc_crossover_monitoring_by_site_cutoff_date for more information.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
 #' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, treatment_arm
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -2197,15 +2226,18 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 
 #' Expected visit status for Overall Followup
 #'
-#' @description This function only looks at the designated overall form(s) for a 
+#' @description Visualizes the designated overall form(s) for a 
 #' given study, as designated in the respective followup_data long file 
-#' and organizes them by its detected levels of followup periods. 
+#' and organizes them by detected levels of followup periods. 
 #' 
-#' The function separates the data for the two study groups by treatment arm
+#' The function separates the data for the two study groups by treatment arm.
+#' 
+#' This is a closed version of expected_and_followup_visit_overall, request if expected_and_followup_visit_overall is present in your study. 
+#' See expected_and_followup_visit_overall for more information.
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data, treatment_arm
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -2458,15 +2490,18 @@ closed_fracture_characteristics <- function(analytic){
 
 #' Closed Followup Data Single Form and Timepoint By Site
 #'
-#' @description Returns the designated followup form status across all sites, 
+#' @description Visualizes the designated followup form status across all sites, 
 #' for a single timepoint and separated by the treatment_arm variable
+#' 
+#' This is a closed version of followup_form_at_timepoint_by_site, request if followup_form_at_timepoint_by_site is present in your study. 
+#' See followup_form_at_timepoint_by_site for more information.
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data, treatment_arm
 #' @param timepoint the point in time to be considered in the visualization
 #' @param form_selection the form to be considered in the visualization
 #' @param name optional argument for changing the name of the followup form, for aesthetic use
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -2780,18 +2815,21 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 
 #' Closed Followup Data Multiple Forms and Single Timepoint By Site
 #'
-#' @description Returns the designated followup form status by site
+#' @description Visualizes the designated followup form status by site.
+#' 
+#' This is a closed version of followup_forms_at_timepoint_by_site, request if followup_forms_at_timepoint_by_site is present in your study. 
+#' See followup_forms_at_timepoint_by_site for more information.
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
 #' @param timepoint the point in time to be considered in the visualization
 #' @param forms the form to be considered in the visualization
 #' @param names This is the analytic data set that must include study_id, followup_data
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
-#' closex_followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", forms = c("Form 2", "Form 4"))
+#' closed_followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", c("Form 2", "Form 4"))
 #' 
 closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
   confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '3b1ff938637e400445cd2f89a1ee6cdd')
@@ -3131,8 +3169,11 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' Closed Generic Characteristics
 #'
 #' @description 
-#' Runs basic count statistics for a number of constructs. Missing values are 
+#' Visualizes basic count statistics for a number of constructs. Missing values are 
 #' given the value "Missing."
+#' 
+#' This is a closed version of generic_characteristics, request if generic_characteristics is present in your study. 
+#' See generic_characteristics for more information.
 #'
 #' @param analytic This is the analytic data set 
 #' @param constructs The constructs to run statistics from
@@ -3144,7 +3185,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
 #'
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
@@ -3362,13 +3403,16 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
 
 #' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled
 #'
-#' @description This function visualizes the enrollment totals for each site
+#' @description Visualizes the enrollment totals for each site.
+#' 
+#' This is a closed version of enrollment_status_by_site, request if enrollment_status_by_site is present in your study. 
+#' See enrollment_status_by_site for more information.
 #'
 #' @param analytic This is the analytic data set that must include screened, 
 #' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
 #' facilitycode, late_ineligible
 #'
-#' @return An HTML table.
+#' @return html table
 #' @export
 #'
 #' @examples
