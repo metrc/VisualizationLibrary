@@ -7,14 +7,14 @@
 other_reason_refusal_by_site(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, facilitycode, screened_date, 
+\item{analytic}{analytic data set that must include study_id, facilitycode, screened_date, 
 refused_reason_other}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes list of each "Other" reason of refusal, total screened by each site.
+Prints a table of all the "Other" reasons given for refusal of participation.
 }
 \examples{
 other_reason_refusal_by_site("Replace with Analytic Tibble")
