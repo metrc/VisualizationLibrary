@@ -1156,9 +1156,10 @@ not_complete_sae_deviation_by_type_auto_categories <- function(analytic, categor
 #' This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type.
 #' This was originally made for NSAID.
 #'
-#' @param analytic This is the analytic data set that must include screened; inappropriate_enrollment; 
-#' late_ineligible; late_refusal; withdrawn_patient; withdrawn_physician; adjudication_pending; 
-#' dead; sae_count; protocol_deviation_screen_consent; protocol_deviation_procedural; protocol_deviation_administrative
+#' @param analytic This is the analytic data set that must include screened, inappropriate_enrollment, 
+#' late_ineligible, late_refusal, withdrawn_patient, withdrawn_physician, adjudication_pending, 
+#' dead, sae_count, protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative,
+#' study_discontinuation
 #'
 #' @return An HTML table.
 #' @export
@@ -1169,9 +1170,11 @@ not_complete_sae_deviation_by_type_auto_categories <- function(analytic, categor
 adjudications_and_discontinuations_by_type <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c('screened', 'inappropriate_enrollment', 'late_ineligible', 'late_refusal', 'withdrawn_patient', 'withdrawn_physician', 
-                           'dead', 'sae_count', 'protocol_deviation_screen_consent', 'protocol_deviation_procedural', 'protocol_deviation_administrative'), 
-    example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Number', 'Category', 'Category', 'Category'))
+    example_constructs = c('screened', 'inappropriate_enrollment', 'late_ineligible', 'late_refusal', 
+                           'withdrawn_patient', 'withdrawn_physician', 'dead', 'sae_count', 'protocol_deviation_screen_consent', 
+                           'protocol_deviation_procedural', 'protocol_deviation_administrative'), 
+    example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Number-U5', 
+                      'Category', 'Category', 'Category'))
   
   df <- analytic %>% 
     filter(screened == TRUE) %>% 
@@ -1965,11 +1968,11 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
 #' Amputations and Gustilo Injury Characteristics
 #'
 #' @description 
-#' This function visualizes the injury characteristics for amputations and Gustilo Injury types for 
-#' Sextant.
+#' Visualizes the data for amputations and injury Gustilo type. In order for the indents to work properly,
+#' the injury_gustilo_type construct must contain 7 unique values and the injury_amputation_status construct
+#' must contain 3 unique values. 
 #'
-#' @param analytic This is the analytic data set that must include enrolled, 
-#' injury_gustilo_type, injury_amputation_status
+#' @param analytic analytic data set that must include constructs enrolled, injury_gustilo_type, injury_amputation_status
 #'
 #' @return An HTML table.
 #' @export
@@ -1994,7 +1997,6 @@ amputations_and_gustilo_injury_characteristics <- function(analytic){
     group_by(injury_gustilo_type) %>%
     summarise(count = n()) %>%
     mutate(injury_gustilo_type = coalesce(injury_gustilo_type, 'Unknown'))
-  
   
   total <- inj_gust %>%
     mutate(count=as.numeric(count)) %>%

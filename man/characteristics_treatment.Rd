@@ -7,7 +7,7 @@
 characteristics_treatment(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
+\item{analytic}{analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
 pil_df_surgical_incision, df_number_procedures, adherence_to_intervention}
 }
 \value{

@@ -237,7 +237,7 @@ adherence_sextant <- function(analytic){
 #' This function visualizes the treatment characteristics per protocol and assignment 
 #' for tobra. 
 #'
-#' @param analytic This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
+#' @param analytic analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
 #' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention
 #'
 #' @return nothing
