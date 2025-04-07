@@ -2159,9 +2159,10 @@ refusal_reasons_by_site <- function(analytic){
 
 #' Other reason of refusal by each site
 #'
-#' @description This function visualizes list of each "Other" reason of refusal, total screened by each site.
+#' @description 
+#' Prints a table of all the "Other" reasons given for refusal of participation.
 #'
-#' @param analytic This is the analytic data set that must include study_id, facilitycode, screened_date, 
+#' @param analytic analytic data set that must include study_id, facilitycode, screened_date, 
 #' refused_reason_other
 #'
 #' @return An HTML table.

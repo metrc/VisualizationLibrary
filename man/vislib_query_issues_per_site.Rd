@@ -7,11 +7,13 @@
 vislib_query_issues_per_site(analytic)
 }
 \value{
-table of data quality confirmation forms
+HTML graph.
 }
 \description{
-Visualizes the number of open and untouched issues per site,
-determined by the status column in the query_database being set to "Deteected".
+Returns interactive HTML of the query status of all the sites. The data displays the current and two
+week previous status of the queries to show a sense of progress. To turn on this function, one must
+not only set up queries but also talk to the Analytic Team to move the queries into the Analytic 
+Codebase.
 }
 \examples{
 \dontrun{
