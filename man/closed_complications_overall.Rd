@@ -19,7 +19,9 @@ An HTML table.
 \description{
 Visualizes complication data and organizes it by treatment arm. Complications can be filtered to be
 within a certain window using the min_days and cutoff_days parameters. See attached example table 
-to see the format of the counts of complications.
+to see the format of the counts of complications. 
+
+This function automatically truncates Grade 4 data if there are no Grade 4 complications.
 }
 \examples{
 closed_complications_overall("Replace with Analytic Tibble")

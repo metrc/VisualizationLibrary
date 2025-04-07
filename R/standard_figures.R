@@ -279,6 +279,8 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
 #' @description 
 #' Visualizes the counts of different study statuses, including prescreening statuses. The diagram works
 #' from the final_followup constructs rather than any df ones.
+#' 
+#' See dsmb_consort_diagram and consort_diagram for similar options.
 #'
 #' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, pre_ineligible, 
 #' screened, eligible, ineligible, consented, not_consented, randomized, enrolled, refused, completed, 
@@ -291,6 +293,7 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
 #'
 #' @examples
 #' dsmb_consort_diagram_pre_no_def("Replace with Analytic Tibble")
+#' dsmb_consort_diagram_pre_no_def("Replace with Analytic Tibble", final_period = '3 Month', adjudicated = TRUE)
 #' 
 dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", adjudicated=FALSE){
   analytic <- if_needed_generate_example_data(
@@ -299,11 +302,11 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
                            "randomized", "enrolled", "adjudicated_discontinued", "not_consented",
                            "completed", "safety_set", "exclusive_safety_set", "not_completed", 
                            "not_expected", "active", "missed_final_followup", "incomplete_final_followup", 
-                           "time_zero", "pre_screened", "pre_eligible", "pre_ineligible",
+                           "pre_screened", "pre_eligible", "pre_ineligible",
                            "discontinued"), 
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
-                      "Boolean", "Boolean", "Boolean", "Boolean", "Date", "Boolean",
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean", "Boolean"))
   
   pre_analytic <- analytic
@@ -594,6 +597,8 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
 #' DSMB Consort Diagram With Pre Screened and No Definitive Event and with the Consented Group moved up
 #'
 #' @description 
+#' Visualizes all counts of study statuses.
+#' 
 #' Very similar to dsmb_consort_diagram_pre_no_def except the consented group is before screened in the
 #' chain of study statuses.
 #'
@@ -608,6 +613,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
 #'
 #' @examples
 #' dsmb_consort_diagram_pre_shifted_consent("Replace with Analytic Tibble")
+#' dsmb_consort_diagram_pre_shifted_consent("Replace with Analytic Tibble", definitive_event = 'TEST')
 #' 
 dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 Month", adjudicated=FALSE, definitive_event = "Nerve Surgery"){
   analytic <- if_needed_generate_example_data(
@@ -1094,7 +1100,7 @@ discrete_enrolled <- function(analytic){
 #' Cumulative enrollment for Length of Stay
 #'
 #' @description 
-#' Visualizes the distribution of the number of days recorded in the ih_los_days construct.
+#' Visualizes the distribution of the number of days recorded across the study in the ih_los_days construct.
 #'
 #' @param analytic This is the analytic data set that must include study_id, ih_los_days
 #'
@@ -1569,7 +1575,7 @@ vislib_query_issues_per_site <- function(analytic) {
 #' @param analytic analytic data set that must include study_id, screened, ineligible, eligible,
 #' refused, consented, randomized, enrolled, adjudicated_discontinued, completed, 
 #' safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
-#' @param final_period text of the final follow-up period in the diagram
+#' @param final_period labels the final follow-up period
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.

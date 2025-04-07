@@ -1032,7 +1032,8 @@ closed_complications_by_severity_relatedness <- function(analytic){
 
 #' Appendix A: Listing of Serious Adverse Events(SAEs) for closed report
 #'
-#' @description This function visualizes appendix for all the serious adverse events noted for the patients
+#' @description 
+#' Prints out formatted data for all the SAEs found in the sae_data long file.
 #'
 #' @param analytic This is the analytic data set that must include study_id, sae_data
 #'
@@ -1758,6 +1759,8 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
 #' Visualizes complication data and organizes it by treatment arm. Complications can be filtered to be
 #' within a certain window using the min_days and cutoff_days parameters. See attached example table 
 #' to see the format of the counts of complications. 
+#' 
+#' This function automatically truncates Grade 4 data if there are no Grade 4 complications.
 #'
 #' @param analytic analytic data set that must include study_id, complication_data, treatment_arm
 #' @param min_days keyword argument to pass in the number of days to get cut off date for complications
@@ -2102,7 +2105,7 @@ closed_characteristics_treatment <- function(analytic){
 #'
 #' @examples
 #' closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble")
-#' closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble", )
+#' closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble", only_total = TRUE)
 #' 
 closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", 
                                                               discontinued_colname="Discontinued",

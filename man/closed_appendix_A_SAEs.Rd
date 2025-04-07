@@ -13,7 +13,7 @@ closed_appendix_A_SAEs(analytic)
 HTML.
 }
 \description{
-This function visualizes appendix for all the serious adverse events noted for the patients
+Prints out formatted data for all the SAEs found in the sae_data long file.
 }
 \examples{
 closed_appendix_A_SAEs("Replace with Analytic Tibble")

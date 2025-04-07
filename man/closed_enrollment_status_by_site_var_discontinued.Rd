@@ -31,6 +31,6 @@ details.
 }
 \examples{
 closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble")
-closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble", )
+closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble", only_total = TRUE)
 
 }
