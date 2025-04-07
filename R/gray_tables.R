@@ -1,9 +1,11 @@
 #' Crossover Monitoring by Site
 #'
-#' @description This function visualizes the crossovers by site in hospital and at discharge
+#' @description 
+#' Visualizes hospital discharges and patient crossovers out of the number of patients enrolled. Data
+#' is organized per site.
 #'
-#' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
-#' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
+#' @param analytic analytic data set that must include enrolled, df_surg_completed, ih_discharge_date, 
+#' crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
 #'
 #' @return nothing
 #' @export
@@ -14,11 +16,9 @@
 ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c("facilitycode", "enrolled", "df_surg_completed", "ih_discharge_date", 
-                           "crossover_inpatient",
+    example_constructs = c("facilitycode", "enrolled", "df_surg_completed", "ih_discharge_date", "crossover_inpatient",
                            "crossover_discharge", "ih_discharge_date_on_time_zero"),
-    example_types = c("FacilityCode", "Boolean", "Boolean", "Date", "Boolean",
-                      "Boolean", "Boolean"))
+    example_types = c("FacilityCode", "Boolean", "Boolean", "Date", "Boolean", "Boolean", "Boolean"))
   
   df <- analytic %>% 
     select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, crossover_inpatient, 
@@ -127,8 +127,8 @@ ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
 #' A similar visualization is adherence_sextant, which uses multiple constructs to determine 
 #' all types of adherence.
 #'
-#' @param analytic analytic data set that must include constructs facilitycode, 
-#' df_date, enrolled, treatment_arm
+#' @param analytic analytic data set that must include constructs facilitycode, df_date, enrolled, 
+#' treatment_arm
 #'
 #' @return html table
 #' @export
@@ -233,13 +233,17 @@ adherence_sextant <- function(analytic){
 
 
 
-#' characteristics_treatment
+#' Characteristics of treatment
 #'
 #' @description 
-#' This function visualizes the treatment characteristics per protocol and assignment 
-#' for tobra. 
+#' Visualizes definitive fixation data and study protocol adherence. The function will be formatted 
+#' properly when analytic data includes at most two stages of definitive fixation.
+#' 
+#' Construct df_number_procedures determines the number of stages of definitive fixation. Constructs
+#' plat_df_surgical_incision and pil_df_surgical_incision use semicolon seperators to count the number 
+#' of incisions at the plateau and pilon sites.
 #'
-#' @param analytic This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
+#' @param analytic analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
 #' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention
 #'
 #' @return nothing
@@ -251,9 +255,9 @@ adherence_sextant <- function(analytic){
 characteristics_treatment <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c('enrolled', 'df_date', 'plat_df_surgical_incision', 'pil_df_surgical_incision', 'df_number_procedures', 
-                           'adherence_to_intervention'), 
-    example_types = c('Boolean', 'Date', 'Category', 'Category', 'Number-U4', 'Boolean'))
+    example_constructs = c('enrolled', 'df_date', 'plat_df_surgical_incision', 'pil_df_surgical_incision', 
+                           'df_number_procedures', 'adherence_to_intervention'), 
+    example_types = c('Boolean', 'Date', 'Category-NS', 'Category-NS', 'Number-U2', 'Boolean'))
   
   df <- analytic %>% 
     select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, adherence_to_intervention) %>% 

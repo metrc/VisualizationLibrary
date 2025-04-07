@@ -10,7 +10,7 @@ closed_appendix_A_SAEs(analytic)
 \item{analytic}{This is the analytic data set that must include study_id, sae_data}
 }
 \value{
-html table
+HTML
 }
 \description{
 Visualizes appendix for all the serious adverse events noted for the patients.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/closed_tables.R
 \name{closed_enrollment_by_site_last_days_var_disc}
 \alias{closed_enrollment_by_site_last_days_var_disc}
-\title{Closed enrollment_by_site tobra and sextant (var discontinued)}
+\title{Closed enrollment by site Tobra and Sextant (variable discontinued)}
 \usage{
 closed_enrollment_by_site_last_days_var_disc(
   analytic,
@@ -14,25 +14,31 @@ closed_enrollment_by_site_last_days_var_disc(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include screened, eligible, refused, consented, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+\item{analytic}{analytic data set that must include constructs screened, eligible, refused, consented, 
+not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
 facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm,}
 
 \item{days}{the number of last days to include in the last days summary section of the table}
 
-\item{discontinued}{this is a meta construct where you can specify your discontinued construct like 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')}
+\item{discontinued}{the name of the construct where you can specify your discontinued construct like 
+'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')}
 
-\item{discontinued_colname}{this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')}
+\item{discontinued_colname}{this determines the label applied to the discontinued column of your 
+choosing (defaults to 'Discontinued')}
 
-\item{include_exclusive_safety_set}{this is a toggle that will include a exclusive_safety_set construct if you want it included (defaults to FALSE)}
+\item{include_exclusive_safety_set}{this is a toggle that will include a exclusive_safety_set construct 
+if you want it included (defaults to FALSE)}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week by treatment arm
+This is the closed version of the enrollment_by_site_last_days_var_disc function; see its documentation
+for details.
 }
 \examples{
 closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble")
+closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", days = 100)
 closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", include_exclusive_safety_set = FALSE, footnotes = TRUE)
 closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", include_exclusive_safety_set = TRUE)
 

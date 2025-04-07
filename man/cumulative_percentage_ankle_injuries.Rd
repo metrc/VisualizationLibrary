@@ -7,14 +7,15 @@
 cumulative_percentage_ankle_injuries(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, injury_type, enrolled}
+\item{analytic}{analytic data set that must include study_id, injury_type (with an ankle value), 
+enrolled}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the Cumulative percentage for number of patients with ankle injuries over the period
-of Year-Months(YYYY-MM) out of 526
+Visualizes the number of study participants over time, using the consent_date construct. Only ankle
+injuries are accounted for.
 }
 \examples{
 cumulative_percentage_ankle_injuries("Replace with Analytic Tibble")

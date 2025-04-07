@@ -7,13 +7,14 @@
 discrete_enrolled(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, enrolled, consent_date}
+\item{analytic}{analytic data set that must include enrolled, consent_date}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the discrete number of patients enrolled by month
+Visualizes the discrete number of participants enrolled by month using the consent_date construct. 
+Notably, once a participant has been disenrolled, they are removed from this visualization.
 }
 \examples{
 discrete_enrolled("Replace with Analytic Tibble")

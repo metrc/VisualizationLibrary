@@ -7,15 +7,15 @@
 enrollment_status_by_site(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include screened, 
-eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
-facilitycode, late_ineligible}
+\item{analytic}{analytic data set that must include screened, eligible, refused, consented, enrolled, 
+not_consented, discontinued_pre_randomization, site_certified_days, facilitycode, late_ineligible}
 }
 \value{
 html table
 }
 \description{
-Visualizes the enrollment totals for each site.
+Visualizes the count of the study statuses for each site, as well as displaying the days the site 
+has been certified.
 }
 \examples{
 enrollment_status_by_site("Replace with Analytic Tibble")

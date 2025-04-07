@@ -7,14 +7,16 @@
 closed_not_complete_sae_deviation_by_type(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
-protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count, treatment_arm}
+\item{analytic}{analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
+protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, 
+sae_count, treatment_arm}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
+This is the closed version of the not_complete_sae_deviation_by_type function; see its documentation
+for details.
 }
 \examples{
 closed_not_complete_sae_deviation_by_type("Replace with Analytic Tibble")

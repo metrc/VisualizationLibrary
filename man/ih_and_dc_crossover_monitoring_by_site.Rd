@@ -7,14 +7,15 @@
 ih_and_dc_crossover_monitoring_by_site(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include enrolled, df_surg_completed, 
-ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode}
+\item{analytic}{analytic data set that must include enrolled, df_surg_completed, ih_discharge_date, 
+crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode}
 }
 \value{
 nothing
 }
 \description{
-This function visualizes the crossovers by site in hospital and at discharge
+Visualizes hospital discharges and patient crossovers out of the number of patients enrolled. Data
+is organized per site.
 }
 \examples{
 ih_and_dc_crossover_monitoring_by_site("Replace with Analytic Tibble")
