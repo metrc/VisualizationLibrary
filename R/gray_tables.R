@@ -1,9 +1,10 @@
 #' Crossover Monitoring by Site
 #'
-#' @description This function visualizes the crossovers by site in hospital and at discharge
+#' @description 
+#' Visualizes the crossovers by site in hospital and at discharge.
 #'
-#' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
-#' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
+#' @param analytic analytic data set that must include enrolled, df_surg_completed, ih_discharge_date, 
+#' crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
 #'
 #' @return nothing
 #' @export
@@ -14,11 +15,9 @@
 ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c("facilitycode", "enrolled", "df_surg_completed", "ih_discharge_date", 
-                           "crossover_inpatient",
+    example_constructs = c("facilitycode", "enrolled", "df_surg_completed", "ih_discharge_date", "crossover_inpatient",
                            "crossover_discharge", "ih_discharge_date_on_time_zero"),
-    example_types = c("FacilityCode", "Boolean", "Boolean", "Date", "Boolean",
-                      "Boolean", "Boolean"))
+    example_types = c("FacilityCode", "Boolean", "Boolean", "Date", "Boolean", "Boolean", "Boolean"))
   
   df <- analytic %>% 
     select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, crossover_inpatient, 

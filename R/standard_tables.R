@@ -476,30 +476,47 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
 #' @description This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
 #' injuries
 #'
-#' @param analytic This is the analytic data set that must include injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled
+#' @param analytic analytic data set that must include injury_type, injury_classification_ankle_ota, 
+#' injury_classification_plat_schatzker, enrolled
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' injury_ankle_plateau_characteristics()
-#' }
+#' injury_ankle_plateau_characteristics("Replace with Analytic Tibble")
+#' 
 injury_ankle_plateau_characteristics <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('injury_type', 'injury_classification_ankle_ota', 'injury_classification_plat_schatzker',
+                           'enrolled'),
+    example_types = c("NamedCategory['ankle' 'plateau']", 
+                      "NamedCategory['44B2' '44B3' '44C1' '44C2' '44A2' '44C3' '44B1']",
+                      "NamedCategory['Type IV' 'Type I']", "Boolean")) 
   
   df <- analytic %>% 
-    select(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled) %>%  filter(enrolled == TRUE)
+    select(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled) %>%  
+    filter(enrolled == TRUE)
   
   summary_totals <- df %>%
-    filter(injury_type == "plateau" & is.na(injury_classification_ankle_ota) | injury_type == "ankle" & is.na(injury_classification_plat_schatzker)) %>%
+    filter(injury_type == "plateau" & is.na(injury_classification_ankle_ota) | injury_type == "ankle" & 
+             is.na(injury_classification_plat_schatzker)) %>%
     group_by(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker) %>%
     summarise(Total = n()) %>%
     ungroup() %>% 
-    mutate(injury_classification_ankle_ota = ifelse(injury_type == "ankle" & is.na(injury_classification_ankle_ota) & is.na(injury_classification_plat_schatzker), "Missed", injury_classification_ankle_ota)) %>% 
-    mutate(injury_classification_plat_schatzker = ifelse(injury_type == "plateau" & is.na(injury_classification_ankle_ota) & is.na(injury_classification_plat_schatzker), "Missed", injury_classification_plat_schatzker)) %>% 
+    mutate(injury_classification_ankle_ota = ifelse(injury_type == "ankle" & is.na(injury_classification_ankle_ota) & 
+                                                      is.na(injury_classification_plat_schatzker), 
+                                                    "Missed", 
+                                                    injury_classification_ankle_ota)) %>% 
+    mutate(injury_classification_plat_schatzker = ifelse(injury_type == "plateau" & is.na(injury_classification_ankle_ota) & 
+                                                           is.na(injury_classification_plat_schatzker), 
+                                                         "Missed", 
+                                                         injury_classification_plat_schatzker)) %>% 
     select(-injury_type) %>% 
     mutate(Name = ifelse(!is.na(injury_classification_ankle_ota), injury_classification_ankle_ota, injury_classification_plat_schatzker)) %>% 
-    mutate(Category = ifelse(!is.na(injury_classification_ankle_ota), "O", "T")) %>% 
+    mutate(Category = ifelse(!is.na(injury_classification_ankle_ota), 
+                             "O", 
+                             "T")) %>% 
     select(-injury_classification_ankle_ota, -injury_classification_plat_schatzker)
   
   injury_type_total <- df %>% 
@@ -507,7 +524,9 @@ injury_ankle_plateau_characteristics <- function(analytic){
     summarise(Total = n()) %>%
     ungroup() %>% 
     rename(Name = injury_type) %>% 
-    mutate(Category = ifelse(Name == "ankle", "A", "P")) 
+    mutate(Category = ifelse(Name == "ankle", 
+                             "A", 
+                             "P")) 
   
   total_sum <- sum(injury_type_total$Total)
   total_ank <- injury_type_total$Total[injury_type_total$Name=="ankle"]
@@ -529,7 +548,6 @@ injury_ankle_plateau_characteristics <- function(analytic){
   schatzer_number <- summary_table %>% 
     filter(Category == "T") %>% 
     nrow()
-  
   
   df_table <- summary_table %>% 
     select(-Category)
@@ -983,12 +1001,14 @@ not_complete_sae_deviation_by_type <- function(analytic){
 
 #' Number of Non-Completing Participants, SAEs, and Protocol Deviations by type with AUTO Protocol Deviation Categorization
 #'
-#' @description This function visualizes the number of non-completions, not expected, and SAEs for only 
-#' "enrolled" participants and Protocol Deviations by type for all the "consented" participants. 
-#' Now with AUTO Protocol Deviation Categorization!
+#' @description 
+#' Visualizes the number of non-completions, not expected, and SAEs for enrolled participants and Protocol 
+#' Deviations by type for consented participants. Amongst enrolled, counts instances of presence of the
+#' construct not_completed_reason for Not Completed count, not_expected_reason for Not expected count,
+#' sae_count not being 0 for SAE count.
 #'
-#' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, 
-#' not_completed_reason, not_completed, protocol_deviation_full_data, sae_count, consented
+#' @param analytic analytic data set that must include enrolled, not_expected_reason, not_completed_reason, 
+#' not_completed, protocol_deviation_full_data, sae_count, consented
 #'
 #' @return An HTML table.
 #' @export
@@ -996,7 +1016,10 @@ not_complete_sae_deviation_by_type <- function(analytic){
 #' @examples
 #' not_complete_sae_deviation_by_type_auto_categories("Replace with Analytic Tibble")
 #' 
-not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")){
+not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
+                                                               category_defaults=c("Safety","Informed Consent",
+                                                                                   "Eligibility","Protocol Implementation",
+                                                                                   "Other")){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('enrolled', "protocol_deviation_full_data", "not_expected_reason", 'not_completed', 
@@ -1308,27 +1331,30 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 
 #' Number of patients Ineligible by Top 5 reasons of Exclusion
 #'
-#' @description This function visualizes the number of patients deemed ineligible by the top N reasons 
-#' for exclusion criteria. 
+#' @description 
+#' Visualizes the counts of ineligibility reasons (NOT NUMBER OF INELIGIBLE PARTICIPANTS) by site. The 
+#' function will display a user-specified number of reasons broken down, and then collate the rest into
+#' an "Other Reasons" column. Included are two columns depicting numbers of screened and ineligible
+#' study participants.
 #'
-#' @param analytic This is the analytic data set that must include facilitycode,  screened, ineligible, ineligibility_reasons, 
-#' @param pre_screened When pre_screened is TRUE then we will be using pre_ineligibility_reasons and pre_screened itself
-#' to list ineligibility reasons. 
-#' @param n_top_reasons is by default set to 5 but in case there are less than 5 reasons then as many columns would be 
-#' reflected in the ineligibility table as reasons exist.
-#' @param only_total hides non-total rows
+#' @param analytic analytic data set that must include facilitycode, screened, ineligible, ineligibility_reasons
+#' @param pre_screened when pre_screened is TRUE then uses pre-screening constructs
+#' @param n_top_reasons is by default set to 5 but in case there are less than 5 reasons then as many 
+#' columns would be reflected in the ineligibility table as reasons exist.
+#' @param only_total hides site specific rows
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' ineligibility_by_reasons("Replace with Analytic Tibble")
+#' ineligibility_by_reasons("Replace with Analytic Tibble", n_top_reasons = 3, only_total = TRUE)
 #' 
 ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reasons = 5, only_total=FALSE){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', "screened", "ineligible", 'ineligibility_reasons'), 
-    example_types = c('FacilityCode', 'Boolean', 'Boolean', 'Category'))
+    example_types = c('FacilityCode', 'Boolean', 'Boolean', 'Category-NS'))
   
   if (pre_screened) { 
     analytic <- analytic %>% 
@@ -1641,7 +1667,8 @@ complications_by_severity_relatedness <- function(analytic){
 
 #' Nonunion surgery outcome
 #'
-#' @description This function visualizes the Nonunion surgery outcome
+#' @description 
+#' Visualizes the checks at 3 Months and 12 Months across the count of Non-Union at those timepoints.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, 
 #' followup_expected_3mo, followup_expected_12mo, nonunion_90days,  nonunion_1yr
@@ -2211,13 +2238,14 @@ not_enrolled_for_other_reasons <- function(analytic){
 }
 
 
-#' Fracture Characteristics
+#' Fracture characteristics
 #'
 #' @description 
 #' This function visualizes fracture characteristics, broken down by tibial plateau or pilon, 
-#' and then closed or open fracture with tscherne grades and gustilo types respectively
+#' and then closed or open fracture with tscherne grades and gustilo types respectively. Percentages
+#' are frome within each type of fracture.
 #'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
+#' @param analytic analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo, 
 #' injury_classification_tscherne
 #'
 #' @return An HTML table.
@@ -2290,7 +2318,6 @@ fracture_characteristics <- function(analytic){
   n_frac <- nrow(fracture_type)
   n_tscherne <- nrow(tscherne)
   n_gustilo <- nrow(gustilo)
-  
   
   vis <- kable(df_final, format="html", align='l', col.names = NULL) %>%
     add_header_above(header) %>%  
