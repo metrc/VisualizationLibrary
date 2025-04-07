@@ -7,7 +7,8 @@
 injury_ankle_plateau_characteristics(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled}
+\item{analytic}{analytic data set that must include injury_type, injury_classification_ankle_ota, 
+injury_classification_plat_schatzker, enrolled}
 }
 \value{
 An HTML table.
@@ -17,7 +18,6 @@ This function visualizes the Injury characteristics for OTA classification and S
 injuries
 }
 \examples{
-\dontrun{
-injury_ankle_plateau_characteristics()
-}
+injury_ankle_plateau_characteristics("Replace with Analytic Tibble")
+
 }
