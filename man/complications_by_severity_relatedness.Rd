@@ -7,13 +7,19 @@
 complications_by_severity_relatedness(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, complication_data}
+\item{analytic}{analytic data set that must include complication_data}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes the complications by severity and relatedness for dsmb report
+Visualizes the complication_data long file. Data is shown for each grade and type of complication,
+as well as the number of study participants who experienced this complication (in brackets). IF a
+study is documenting unique or obscure complications that are not in the example table, then an update 
+to this function is necessary for the study. 
+
+Grade is determined by the severity column, with 2,1 being Mild or Moderate and 3, 4 being Severe
+and Life-threatening, respectively. Notably, a fatal complication results in a grade Unknown.
 }
 \examples{
 complications_by_severity_relatedness("Replace with Analytic Tibble")

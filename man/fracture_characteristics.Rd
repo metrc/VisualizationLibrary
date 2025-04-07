@@ -2,12 +2,12 @@
 % Please edit documentation in R/standard_tables.R
 \name{fracture_characteristics}
 \alias{fracture_characteristics}
-\title{Fracture Characteristics}
+\title{Fracture characteristics}
 \usage{
 fracture_characteristics(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
+\item{analytic}{analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo, 
 injury_classification_tscherne}
 }
 \value{
@@ -15,7 +15,8 @@ An HTML table.
 }
 \description{
 This function visualizes fracture characteristics, broken down by tibial plateau or pilon, 
-and then closed or open fracture with tscherne grades and gustilo types respectively
+and then closed or open fracture with tscherne grades and gustilo types respectively. Percentages
+are frome within each type of fracture.
 }
 \examples{
 fracture_characteristics("Replace with Analytic Tibble")

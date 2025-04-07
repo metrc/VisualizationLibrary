@@ -7,8 +7,8 @@
 adherence_by_site(analytic)
 }
 \arguments{
-\item{analytic}{analytic data set that must include constructs facilitycode, 
-df_date, enrolled, treatment_arm}
+\item{analytic}{analytic data set that must include constructs facilitycode, df_date, enrolled, 
+treatment_arm}
 }
 \value{
 html table

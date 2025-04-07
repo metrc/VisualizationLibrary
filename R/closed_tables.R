@@ -2,10 +2,12 @@
 
 #' Closed Injury characteristics for OTA classification and Schatzker Type injuries
 #'
-#' @description This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
-#' injuries 
+#' @description 
+#' This is the closed version of the injury_ankle_plateau_characteristics function; see its documentation
+#' for details
 #'
-#' @param analytic This is the analytic data set that must include treatment_arm injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled
+#' @param analytic analytic data set that must include treatment_arm, injury_type, injury_classification_ankle_ota, 
+#' injury_classification_plat_schatzker, enrolled
 #'
 #' @return An HTML table.
 #' @export
@@ -17,6 +19,14 @@
 closed_injury_ankle_plateau_characteristics <- function(analytic){
    
   confirm_stability_of_related_visual('injury_ankle_plateau_characteristics', 'f8abb9ea7ed258855162e2a98d3218a3')
+  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('treatment_arm', 'injury_type', 'injury_classification_ankle_ota', 'injury_classification_plat_schatzker',
+                           'enrolled'),
+    example_types = c("TreatmentArm", "NamedCategory['ankle' 'plateau']", 
+                      "NamedCategory['44B2' '44B3' '44C1' '44C2' '44A2' '44C3' '44B1']",
+                      "NamedCategory['Type IV' 'Type I']", "Boolean")) 
   
   df <- analytic %>% 
     select(injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled) %>%  
@@ -279,31 +289,36 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
 } 
 
 
-#' Closed Baseline Characteristics Percent (No Military Status)
+#' Closed baseline characteristics percent (no military status)
 #'
-#' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, and education
+#' @description 
+#' This is the closed version of the baseline_characteristics_percent visualization; see its documentation
+#' for details.
 #'
-#' @param analytic This is the analytic data set that must include treatment_arm enrolled, age, age_group
-#' @param sex is a meta construct that is required that defaults to "sex"
-#' @param race is a meta construct that is required that defaults to "race_ethnicity"
-#' @param education is a meta construct that is required that defaults to "education_level"
-#' @param sex_levels sets default values and orders for sex meta construct
-#' @param race_levels sets default values and orders for race meta construct
-#' @param education_levels sets default values and orders for education meta construct
+#' @param analytic analytic dataset that must include enrolled, age, age_group, treatment_arm and all 
+#' the constructs specified in the following construct name parameters
+#' @param sex name of the construct of the sex characteristic, defaults to "sex"
+#' @param race name of the construct of the race characteristic, defaults to "ethnicity_race"
+#' @param education name of the construct of the education characteristic, defaults to "education_level"
+#' @param sex_levels default values and orders for sex characteristic
+#' @param race_levels default values and orders for race characteristic
+#' @param education_levels default values and orders for education characteristic
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_baseline_characteristics_percent_nm()
-#' }
+#' closed_baseline_characteristics_percent_nm("Replace with Analytic Tibble")
+#' closed_baseline_characteristics_percent_nm("Replace with Analytic Tibble", 
+#'   race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Asian / Pacific Islander", "Other", "Missing"))
+#' closed_baseline_characteristics_percent_nm("Replace with Analytic Tibble", 
+#'   sex_levels=c("Male","Female", "Missing"))
+#' 
 closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethnicity_race", education="education_level",
                                                        sex_levels=c("Female","Male", "Missing"), 
                                                        race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
                                                        education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", 
                                                                           "Refused / Don't know", "Missing")){
-  
   
   confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "fe7cb8b490a86eccd44baa0eaab32b6d")
   
@@ -321,7 +336,6 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
     sex_default <- tibble(type=sex_levels)
     race_default <- tibble(type=race_levels)
     education_default <- tibble(type=education_levels)
-    
     
     df <- inner_analytic %>% 
       select(enrolled, age_group, age, all_of(constructs)) %>% 
@@ -350,7 +364,6 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
     age_df <<- df %>% 
       summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))%>% 
       mutate(Category = 'age')
-    
     
     age_group_df <<- df %>% 
       mutate(age_group = replace_na(age_group, "Missing")) %>% 
@@ -437,10 +450,13 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 
 #' Closed Number of Discontinued Participants, SAEs, and Protocol Deviations by type
 #'
-#' @description This function visualizes the number of discontinuations, SAEs and Protocol Deviations by type
+#' @description 
+#' This is the closed version of the not_complete_sae_deviation_by_type function; see its documentation
+#' for details.
 #'
-#' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
-#' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count, treatment_arm
+#' @param analytic analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
+#' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, 
+#' sae_count, treatment_arm
 #'
 #' @return An HTML table.
 #' @export
@@ -457,8 +473,8 @@ closed_not_complete_sae_deviation_by_type <- function(analytic){
                            "protocol_deviation_screen_consent", "protocol_deviation_procedural",
                            "protocol_deviation_administrative", "sae_count", "treatment_arm",
                            "not_completed", "consented"), 
-    example_types = c("Boolean", "Category", "Category", "Category", "Category",
-                      "Category", "Number", "TreatmentArm", "Boolean", "Boolean"))
+    example_types = c("Boolean", "Category", "Category-U3", "Category-U2", "Category-U3",
+                      "Category-U3", "Number-U5", "TreatmentArm", "Boolean", "Boolean"))
   
   n_act <- NA
   n_disc <- NA
@@ -1032,7 +1048,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, sae_data
 #'
-#' @return html table
+#' @return HTML
 #' @export
 #'
 #' @examples
@@ -1085,11 +1101,14 @@ closed_appendix_A_SAEs <- function(analytic){
 
 #' Appendix B: Listing of any Death for closed report
 #'
-#' @description This function visualizes any death occurred during the study time period.
+#' @description 
+#' Returns text describing sae data of all cases where the outcome is death. Death is determined by there
+#' being a value for the death_date construct or the value Death in the sae_outcome column of the sae_data
+#' long file.
 #'
-#' @param analytic This is the analytic data set that must include study_id, sae_data, death_date
+#' @param analytic analytic data set that must include constructs sae_data, death_date
 #'
-#' @return An HTML table.
+#' @return HTML.
 #' @export
 #'
 #' @examples
@@ -1147,7 +1166,7 @@ closed_appendix_B_deaths <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, not_expected_data, not_completed_data
 #'
-#' @return An HTML table.
+#' @return HTML.
 #' @export
 #'
 #' @examples
@@ -1205,20 +1224,23 @@ closed_appendix_C_not_expected_not_completed <- function(analytic){
 
 #' Appendix D: Listing of any protocol deviations for closed report
 #'
-#' @description This function visualizes any protocol deviations occurred during the study time period.
+#' @description 
+#' Returns HTML describing the information found in the protocol_deviation_data or protocol_deviation_full_data
+#' long file.
 #'
-#' @param analytic This is the analytic data set that must include study_id, protocol_deviation_data
+#' @param analytic analytic data set that must include study_id, protocol_deviation_data or protocol_deviation_full_data
 #'
-#' @return An HTML table.
+#' @return HTML.
 #' @export
 #'
 #' @examples
 #' closed_appendix_D_protocol_deviation("Replace with Analytic Tibble")
 #' 
 closed_appendix_D_protocol_deviation <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic,
-                                              example_constructs = "protocol_deviation_data",
-                                              example_types = "(';new_row: ', '|')FacilityCode|Date|Date|Category|Character") 
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = "protocol_deviation_data",
+    example_types = "(';new_row: ', '|')FacilityCode|Date|Date|Category|Character") 
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
@@ -1265,9 +1287,11 @@ closed_appendix_D_protocol_deviation <- function(analytic){
 
 
 
-#' Crossover Monitoring by Site Closed
+#' Closed crossover monitoring by site
 #'
-#' @description This function visualizes the crossovers by site in hospital and at discharge
+#' @description 
+#' This is the closed version of the ih_and_dc_crossover_monitoring_by_site function; see its documentation
+#' for details.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
 #' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, and treatment_arm
@@ -1516,17 +1540,16 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
 #' Amputations and Gustilo injury characteristics, closed version
 #'
 #' @description 
-#' This function visualizes the injury characteristics for amputations and Gustilo 
-#' Injury types for Sextant study by treatment arm
+#' This is the closed version of amputations_and_gustilo_injury_characteristics; see its documentation
+#' for details.
 #'
-#' @param analytic This is the analytic data set that must include enrolled, treatment_arm,
-#' injury_gustilo_type, injury_amputation_status
+#' @param analytic analytic data set that must include enrolled, treatment_arm, injury_gustilo_type, 
+#' injury_amputation_status
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' closed_amputations_and_gustilo_injury_characteristics("Replace with Analytic Tibble")
 #' 
 closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
@@ -1611,26 +1634,35 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
 
 
 
-#' Closed enrollment_by_site tobra and sextant (var discontinued)
+#' Closed enrollment by site Tobra and Sextant (variable discontinued)
 #'
-#' @description This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week by treatment arm
+#' @description 
+#' This is the closed version of the enrollment_by_site_last_days_var_disc function; see its documentation
+#' for details.
 #'
-#' @param analytic This is the analytic data set that must include screened, eligible, refused, consented, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+#' @param analytic analytic data set that must include constructs screened, eligible, refused, consented, 
+#' not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
 #' facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm, 
 #' @param days the number of last days to include in the last days summary section of the table
-#' @param discontinued this is a meta construct where you can specify your discontinued construct like 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
-#' @param discontinued_colname this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')
-#' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct if you want it included (defaults to FALSE)
+#' @param discontinued the name of the construct where you can specify your discontinued construct like 
+#' 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
+#' @param discontinued_colname this determines the label applied to the discontinued column of your 
+#' choosing (defaults to 'Discontinued')
+#' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct 
+#' if you want it included (defaults to FALSE)
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble")
+#' closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", days = 100)
 #' closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", include_exclusive_safety_set = FALSE, footnotes = TRUE)
 #' closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", include_exclusive_safety_set = TRUE)
 #' 
-closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, discontinued="discontinued", discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, footnotes=NULL){
+closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, discontinued="discontinued", 
+                                                         discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, 
+                                                         footnotes=NULL){
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -1747,168 +1779,175 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
 
 #' Closed complications reported overall from time_zero
 #'
-#' @description This function visualizes the number of complications(number of subjects) reported at all time points(Overall) 
-#' from time_zero overall, and by each treatment arm. 
+#' @description 
+#' Visualizes complication data and organizes it by treatment arm. Complications can be filtered to be
+#' within a certain window using the min_days and cutoff_days parameters. See attached example table 
+#' to see the format of the counts of complications. 
+#' 
+#' This function automatically truncates Grade 4 data if there are no Grade 4 complications.
 #'
-#' @param analytic This is the analytic data set that must include study_id, complication_data, treatment_arm
-#' @param days it is a keyword argument to pass in the number of days to get cut off date for complications
+#' @param analytic analytic data set that must include study_id, complication_data, treatment_arm
+#' @param min_days keyword argument to pass in the number of days to get cut off date for complications
+#' @param cutoff_days keyword argument to pass in the number of days to get cut off date for complications
 #' 
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' closed_complications_overall("Replace with Analytic Tibble")
+#' closed_complications_overall("Replace with Analytic Tibble", min_days = 365, cutoff_days = 730)
 #' 
 closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = NULL){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("complication_data", 'time_zero', 'treatment_arm'),
+    example_types = c("(';new_row: ', '|')FollowupPeriod|Form|Category|Category|Character|Date|Category|Category|Character", 
+                      'Date', 'TreatmentArm'))  
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
- inner_complications_overall <- function(df){ 
-   analytic <- if_needed_generate_example_data(analytic,
-                                               example_constructs = c("complication_data", 'time_zero', 'treatment_arm'),
-                                               example_types = c("(';new_row: ', '|')FollowupPeriod|Form|Category|Category|Character|Date|Category|Category|Character", 'Date', 'TreatmentArm'))  
-   
-  df <- df %>%  
-    select(study_id, complication_data, time_zero) %>% 
-    filter(!is.na(complication_data))
- 
-  unzipped_complication <- df %>%
-    separate_rows(complication_data, sep = ";new_row: ") %>% 
-    separate(complication_data, into = c('redcap_event_name', 'form_name', 'event_type', 'complication',
-                                         'notes', 'diagnosis_date', 'severity', 'treatment', 'other_info'), 
-             sep='\\|') 
+  inner_complications_overall <- function(df){ 
+    df <- df %>%  
+      select(study_id, complication_data, time_zero) %>% 
+      filter(!is.na(complication_data))
+    
+    unzipped_complication <- df %>%
+      separate_rows(complication_data, sep = ";new_row: ") %>% 
+      separate(complication_data, into = c('redcap_event_name', 'form_name', 'event_type', 'complication',
+                                           'notes', 'diagnosis_date', 'severity', 'treatment', 'other_info'), 
+               sep='\\|') 
+    
+    
+    if(is.null(min_days)){
+      df_pre_filter <- unzipped_complication 
+    } else {
+      df_pre_filter <- unzipped_complication %>% 
+        mutate(cut_off = as.Date(time_zero) + min_days) %>% 
+        filter(diagnosis_date >= cut_off)
+    }
+    
+    
+    if(is.null(cutoff_days)){
+      df_pre_filter <- df_pre_filter 
+    } else {
+      df_pre_filter <- df_pre_filter %>% 
+        mutate(cut_off = as.Date(time_zero) + cutoff_days) %>% 
+        filter(diagnosis_date < cut_off)
+    }
+    
+    df_1 <-  df_pre_filter %>% 
+      mutate(severity = case_when(
+        severity %in% c('Mild', 'Moderate') ~ "Grade 2,1",
+        severity == "Severe and Undesirable" ~ "Grade 3",
+        severity == "Life-threatening or disabling" ~ "Grade 4",
+        severity == "Fatal" ~ "Unknown",
+        TRUE ~ NA_character_
+      )) %>% 
+      select(study_id, complication, severity) %>% 
+      group_by(study_id, severity,complication) %>%
+      summarise(Total = n()) %>%
+      ungroup() %>% 
+      mutate(complication = recode(complication, 
+                                   "other1" = "Other",  
+                                   "other2" = "Other",
+                                   "other3" = "Other",
+                                   "other4" = "Other")) 
+    
+    
+    unique_study_df <- df_1%>% 
+      mutate(severity = ifelse(is.na(severity), "Unknown", severity)) %>% 
+      group_by(complication, severity) %>%
+      summarize(
+        unique_ids = n_distinct(study_id)  
+      ) %>%
+      ungroup()
+    
+    new_df <- df_1 %>% select(-study_id) %>% 
+      mutate(severity = ifelse(is.na(severity), "Unknown", severity)) %>% 
+      group_by(complication, severity) %>% 
+      summarize(Total = sum(Total, na.rm = TRUE))
+    
+    
+    combined_df <- left_join(new_df, unique_study_df) %>% 
+      mutate(Total = paste0(Total, "[", unique_ids, "]")) %>% 
+      select(-unique_ids) %>% 
+      mutate(severity = ifelse(is.na(severity), "Unknown", severity))
+    
+    
+    severity_categories <- c('Grade 4', 'Grade 3', 'Grade 2,1', 'Unknown')
+    level_order <- c("Deep Surgical Site Infection", "Cellulitis/Skin Infection", "Pin tract infection - treated with antibiotics and/or pin removal", 
+                     "Nonunion", "Malunion", "Flap Failure", "Loss of limb / amputation", "Fixation failure", 
+                     "Peri-implant Fracture", "Wound dehiscence", "Wound Seroma/Hematoma", "Tendon Rupture", 
+                     "Symptomatic Hardware", "Reaction to Vancomycin", "Reaction to Tobramycin", "Renal Insufficiency", "Other")
+    
+    
+    df_template <- tibble(
+      severity = c(severity_categories),
+    ) %>% group_by(severity) %>% 
+      reframe(complication = level_order)
+    
+    output_complication <- left_join(df_template, combined_df) 
+    
+    df_table_raw <- reorder_rows(output_complication, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
+    df_table_raw
   
- 
-  if(is.null(min_days)){
-    df_pre_filter <- unzipped_complication 
-  } else {
-    df_pre_filter <- unzipped_complication %>% 
-      mutate(cut_off = as.Date(time_zero) + min_days) %>% 
-      filter(diagnosis_date >= cut_off)
   }
   
-  
-  if(is.null(cutoff_days)){
-    df_pre_filter <- df_pre_filter 
-  } else {
-    df_pre_filter <- df_pre_filter %>% 
-      mutate(cut_off = as.Date(time_zero) + cutoff_days) %>% 
-      filter(diagnosis_date < cut_off)
-  }
-  
-  df_1 <-  df_pre_filter %>% 
-    mutate(severity = case_when(
-      severity %in% c('Mild', 'Moderate') ~ "Grade 2,1",
-      severity == "Severe and Undesirable" ~ "Grade 3",
-      severity == "Life-threatening or disabling" ~ "Grade 4",
-      severity == "Fatal" ~ "Unknown",
-      TRUE ~ NA_character_
-    )) %>% 
-    select(study_id, complication, severity) %>% 
-    group_by(study_id, severity,complication) %>%
-    summarise(Total = n()) %>%
-    ungroup() %>% 
-    mutate(complication = recode(complication, 
-                                 "other1" = "Other",  
-                                 "other2" = "Other",
-                                 "other3" = "Other",
-                                 "other4" = "Other")) 
-  
-  
-  unique_study_df <- df_1%>% 
-    mutate(severity = ifelse(is.na(severity), "Unknown", severity)) %>% 
-    group_by(complication, severity) %>%
-    summarize(
-      unique_ids = n_distinct(study_id)  
-    ) %>%
-    ungroup()
-  
-  new_df <- df_1 %>% select(-study_id) %>% 
-    mutate(severity = ifelse(is.na(severity), "Unknown", severity)) %>% 
-    group_by(complication, severity) %>% 
-    summarize(Total = sum(Total, na.rm = TRUE))
-  
-  
-  combined_df <- left_join(new_df, unique_study_df) %>% 
-    mutate(Total = paste0(Total, "[", unique_ids, "]")) %>% 
-    select(-unique_ids) %>% 
-    mutate(severity = ifelse(is.na(severity), "Unknown", severity))
-  
-  
-  severity_categories <- c('Grade 4', 'Grade 3', 'Grade 2,1', 'Unknown')
-  level_order <- c("Deep Surgical Site Infection", "Cellulitis/Skin Infection", "Pin tract infection - treated with antibiotics and/or pin removal", 
-                   "Nonunion", "Malunion", "Flap Failure", "Loss of limb / amputation", "Fixation failure", 
-                   "Peri-implant Fracture", "Wound dehiscence", "Wound Seroma/Hematoma", "Tendon Rupture", 
-                   "Symptomatic Hardware", "Reaction to Vancomycin", "Reaction to Tobramycin", "Renal Insufficiency", "Other")
-  
-  
-  df_template <- tibble(
-    severity = c(severity_categories),
-  ) %>% group_by(severity) %>% 
-    reframe(complication = level_order)
-  
-  output_complication <- left_join(df_template, combined_df) 
-  
-  df_table_raw <- reorder_rows(output_complication, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
-  df_table_raw
-  
- }
- 
- df_a <- analytic %>% 
+  df_a <- analytic %>% 
    filter(treatment_arm == 'Group A')
- 
- df_b <- analytic %>% 
+  
+  df_b <- analytic %>% 
    filter(treatment_arm == 'Group B')
- 
- analytic_final <- inner_complications_overall(analytic)
- a_final <- inner_complications_overall(df_a)
- b_final <- inner_complications_overall(df_b)
- 
- colnames(b_final) <- c('sevb', 'compb', 'countb')
- colnames(analytic_final) <- c('seva', 'compa', 'counta')
- 
- df_table_raw <- cbind(a_final, b_final, analytic_final) %>%
+  
+  analytic_final <- inner_complications_overall(analytic)
+  a_final <- inner_complications_overall(df_a)
+  b_final <- inner_complications_overall(df_b)
+  
+  colnames(b_final) <- c('sevb', 'compb', 'countb')
+  colnames(analytic_final) <- c('seva', 'compa', 'counta')
+  
+  df_table_raw <- cbind(a_final, b_final, analytic_final) %>%
    select(severity, complication, Total, countb, counta)
  
-    grade_4_all_na <- all(is.na(df_table_raw$Total[df_table_raw$severity == "Grade 4"]))
+  grade_4_all_na <- all(is.na(df_table_raw$Total[df_table_raw$severity == "Grade 4"]))
     
-    if (grade_4_all_na) {
-      df_table_raw <- df_table_raw %>%
-        filter(severity != "Grade 4") %>%
-        bind_rows(data.frame(complication = "None", severity = "Grade 4", Total = NA))
-      
-      df_table_raw <- reorder_rows(df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
-      
-      df_final <- df_table_raw %>% select(-severity) %>%  mutate_all(replace_na, "-")
-      
-      colnames(df_final) <- c('Complication', 'Group A', 'Group B', 'Overall')
-      
-      index_vec <- c("Grade 4" = 1, "Grade 3"= 17,"Grade 2,1"= 17, "Unknown"= 17)
-      subindex_vec <- c(" "= 1, "Infections" = 2, "Other Complications" = 15, "Infections" = 2, 
-                        "Other Complications" = 15,"Infections" = 2, "Other Complications" = 15)
-      
-      table_raw <- kable(df_final, format="html", align='l') %>%
-        pack_rows(index = index_vec, label_row_css = "text-align:left") %>%
-        pack_rows(index = subindex_vec, label_row_css = "text-align:left", bold = FALSE) %>%
-        kable_styling("striped", full_width = F, position='left') 
-      
-    } else {
-      
-      df_table_raw <- reorder_rows(df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
-      
-      df_final <- df_table_raw %>% select(-severity) %>%  mutate_all(replace_na, "-")
-      
-      colnames(df_final) <- c('Complication', 'Group A', 'Group B', 'Overall')
-      
-      index_vec <- c("Grade 4" = 17, "Grade 3"= 17,"Grade 2,1"= 17, "Unknown"= 17)
-      subindex_vec <- c("Infections" = 2, "Other Complications " = 15, "Infections" = 2, "Other Complications" = 15, "Infections" = 2, 
-                        "Other Complications" = 15,"Infections" = 2, "Other Complications" = 15)
-      
-      table_raw <- kable(df_final, format="html", align='l') %>%
-        pack_rows(index = index_vec, label_row_css = "text-align:left") %>%
-        pack_rows(index = subindex_vec, label_row_css = "text-align:left", bold = FALSE) %>%
-        kable_styling("striped", full_width = F, position='left') %>%
-        row_spec(c(0,5,8,13,18,23,36,41), extra_css = "border-bottom: 1px solid;")
-    }
+  if (grade_4_all_na) {
+    df_table_raw <- df_table_raw %>%
+      filter(severity != "Grade 4") %>%
+      bind_rows(data.frame(complication = "None", severity = "Grade 4", Total = NA))
+    
+    df_table_raw <- reorder_rows(df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
+    
+    df_final <- df_table_raw %>% select(-severity) %>%  mutate_all(replace_na, "-")
+    
+    colnames(df_final) <- c('Complication', 'Group A', 'Group B', 'Overall')
+    
+    index_vec <- c("Grade 4" = 1, "Grade 3"= 17,"Grade 2,1"= 17, "Unknown"= 17)
+    subindex_vec <- c(" "= 1, "Infections" = 2, "Other Complications" = 15, "Infections" = 2, 
+                      "Other Complications" = 15,"Infections" = 2, "Other Complications" = 15)
+    
+    table_raw <- kable(df_final, format="html", align='l') %>%
+      pack_rows(index = index_vec, label_row_css = "text-align:left") %>%
+      pack_rows(index = subindex_vec, label_row_css = "text-align:left", bold = FALSE) %>%
+      kable_styling("striped", full_width = F, position='left') 
+    
+  } else {
+    
+    df_table_raw <- reorder_rows(df_table_raw, list('severity'=c("Grade 4", "Grade 3", "Grade 2,1", "Unknown")))
+    
+    df_final <- df_table_raw %>% select(-severity) %>%  mutate_all(replace_na, "-")
+    
+    colnames(df_final) <- c('Complication', 'Group A', 'Group B', 'Overall')
+    
+    index_vec <- c("Grade 4" = 17, "Grade 3"= 17,"Grade 2,1"= 17, "Unknown"= 17)
+    subindex_vec <- c("Infections" = 2, "Other Complications " = 15, "Infections" = 2, "Other Complications" = 15, "Infections" = 2, 
+                      "Other Complications" = 15,"Infections" = 2, "Other Complications" = 15)
+    
+    table_raw <- kable(df_final, format="html", align='l') %>%
+      pack_rows(index = index_vec, label_row_css = "text-align:left") %>%
+      pack_rows(index = subindex_vec, label_row_css = "text-align:left", bold = FALSE) %>%
+      kable_styling("striped", full_width = F, position='left') %>%
+      row_spec(c(0,5,8,13,18,23,36,41), extra_css = "border-bottom: 1px solid;")
+  }
   
   return(table_raw)
 }
@@ -1965,11 +2004,12 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
 }
 
 
-#' closed characteristics_treatment
+#' Closed characteristics of treatment
 #'
-#' @description This function visualizes the treatment characteristics per protocol and assignment for tobra. 
+#' @description 
+#' Closed version of the characteristics_treatment function; see its documentation for details.
 #'
-#' @param analytic This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
+#' @param analytic analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
 #' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm
 #'
 #' @return An HTML table.
@@ -1983,8 +2023,7 @@ closed_characteristics_treatment <- function(analytic){
     analytic,
     example_constructs = c("treatment_arm", "enrolled", "df_date", "plat_df_surgical_incision",
                            "pil_df_surgical_incision", "df_number_procedures", "adherence_to_intervention"),
-    example_types = c("TreatmentArm", "Boolean", "Date", "Category",
-                      "Category", "Number", "Boolean")) 
+    example_types = c('Boolean', 'Boolean', 'Date', 'Category-NS', 'Category-NS', 'Number-U2', 'Boolean'))
   
   confirm_stability_of_related_visual('characteristics_treatment', 'f0557c2e652d0c58c5f6771b3dbdcd39')
   
@@ -2077,11 +2116,13 @@ closed_characteristics_treatment <- function(analytic){
 
 #' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled (Variable Discontinued)
 #'
-#' @description This function visualizes the enrollment totals for each site
+#' @description 
+#' Closed version of the enrollment_status_by_site_var_discontinued function; see its documentation for
+#' details.
 #'
-#' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode, treatment_arm
-#' @param discontinued meta construct for discontinued
+#' @param analytic This is the analytic data set that must include screened, eligible, refused, consented, 
+#' enrolled, not_consented, site_certified_days, facilitycode, treatment_arm
+#' @param discontinued name of the construct for discontinued status
 #' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
 #' @param only_total hide all the site specific rows
 #'
@@ -2090,8 +2131,11 @@ closed_characteristics_treatment <- function(analytic){
 #'
 #' @examples
 #' closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble")
+#' closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble", only_total = TRUE)
 #' 
-closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", discontinued_colname="Discontinued",only_total=FALSE, footnotes = NULL){
+closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", 
+                                                              discontinued_colname="Discontinued",
+                                                              only_total=FALSE, footnotes = NULL){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("screened", "eligible", "refused", "not_consented", "consented", 
@@ -2111,14 +2155,18 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
   
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, only_total=only_total),
+                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, 
+                                                             only_total=only_total),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, only_total=only_total))
+                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, 
+                                                             only_total=only_total))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% 
+                    add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% 
+                    add_footnote(footnotes, notation="number", escape = FALSE))
   }
   
   return(out)
@@ -2325,10 +2373,10 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
 
 #' Closed Fracture Characteristics
 #'
-#' @description This function visualizes fracture characteristics, broken down by tibial plateau or pilon,
-#' and then closed or open fracture with tscherne grades and gustilo types respectively by treatment arm
+#' @description 
+#' This is the closed version of the fracture_characteristics function; see its documentation for details.
 #'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
+#' @param analytic analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
 #' treatment_arm
 #'
 #' @return An HTML table.
@@ -2598,18 +2646,21 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 
 #' Closed Followup Data Single Form All Timepoints By Site
 #'
-#' @description Returns the designated followup form status by site, for all timepoints,
-#' separated by treatment_arm
+#' @description 
+#' Closed version of the followup_form_all_timepoints_by_site function, see its documentation for 
+#' details.
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data, treatment_arm
 #' @param form_selection the form to be considered in the visualization
 #' @param included_columns the statuses you want data for. Defaults to all statuses.
-#' @param footnotes optional argument for changing the names of the followup forms, for aesthetic use
+#' @param footnotes optional argument for adding footnote text
 #'
 #' @export
 #'
 #' @examples
-#' closed_followup_form_all_timepoints_by_site("Replace with Analytic Tibble")
+#' closed_followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 2")
+#' closed_followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 2", included_columns = c("Complete", "Incomplete"))
+#' closed_followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 2", footnotes = "Test footnote: lorem ipsum dolor")
 #' 
 closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', 
                                                         included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'),
@@ -2617,7 +2668,8 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
   confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', '8bd48058fce7d721f2d18b6e9308df50')
   analytic <- if_needed_generate_example_data(analytic, 
                                           example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
-                                          example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 'TreatmentArm'))
+                                          example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 
+                                                            'TreatmentArm'))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
@@ -2777,11 +2829,14 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' @export
 #'
 #' @examples
-#' \dontrun{
-#' closed_followup_forms_at_timepoint_by_site()
-#' }
+#' closed_followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", c("Form 2", "Form 4"))
+#' 
 closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
   confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '3b1ff938637e400445cd2f89a1ee6cdd')
+  analytic <- if_needed_generate_example_data(analytic, 
+                                              example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
+                                              example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 
+                                                                'TreatmentArm'))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
@@ -2918,8 +2973,8 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
 
 #' Closed Followup Data Multiple Forms and All Timepoints
 #'
-#' @description Returns the designated followup forms status at a specified range
-#' of timepoints, not specified by site, separated vertically by treatment_arm
+#' @description Returns the designated followup forms status at a specified range of timepoints, not 
+#' specified by site, separated vertically by treatment_arm
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data, treatment_arm
 #' @param forms followup forms to output, as found in the followup_data construct
@@ -2935,7 +2990,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
-    example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", "TreatmentArm"))
+    example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", "TreatmentArm"))
   
   confirm_stability_of_related_visual('followup_forms_all_timepoints', '1418b0b014673d1bd0dcc99f80bedee1')
   

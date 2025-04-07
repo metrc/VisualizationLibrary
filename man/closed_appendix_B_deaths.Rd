@@ -7,13 +7,15 @@
 closed_appendix_B_deaths(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, sae_data, death_date}
+\item{analytic}{analytic data set that must include constructs sae_data, death_date}
 }
 \value{
-An HTML table.
+HTML.
 }
 \description{
-This function visualizes any death occurred during the study time period.
+Returns text describing sae data of all cases where the outcome is death. Death is determined by there
+being a value for the death_date construct or the value Death in the sae_outcome column of the sae_data
+long file.
 }
 \examples{
 closed_appendix_B_deaths("Replace with Analytic Tibble")

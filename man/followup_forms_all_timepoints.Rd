@@ -12,20 +12,25 @@ followup_forms_all_timepoints(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, followup_data}
+\item{analytic}{analytic data set that must include study_id, followup_data, facilitycode}
 
 \item{forms}{followup forms to output, as found in the followup_data construct}
 
 \item{timepoints}{timepoints to output, as found in the followup_data construct}
+
+\item{vertical}{whether to arrange the output vertically by form or horizontally.}
 }
 \value{
 An HTML table.
 }
 \description{
-Returns the designated followup forms status at a specified range
-of timepoints, not specified by site
+Returns all of the statuses of the given follow-up forms at all timepoints by site. Not specifying forms results
+in all follow-up forms being in the visualization.
+
+NOTE: THIS VISUALIZATION CAN BE VERY LARGE!
 }
 \examples{
-followup_forms_all_timepoints("Replace with Analytic Tibble", c('Form 3', 'Form 2'), c('3 Month', '6 Month'))
+followup_forms_all_timepoints("Replace with Analytic Tibble", forms = c('Form 3', 'Form 2'), timepoints = c('3 Month', '6 Month'))
+followup_forms_all_timepoints("Replace with Analytic Tibble", vertical = FALSE)
 
 }

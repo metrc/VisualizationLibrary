@@ -7,17 +7,16 @@
 amputations_and_gustilo_injury_characteristics(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include enrolled, 
-injury_gustilo_type, injury_amputation_status}
+\item{analytic}{analytic data set that must include constructs enrolled, injury_gustilo_type, injury_amputation_status}
 }
 \value{
 html table
 }
 \description{
-Visualizes the injury characteristics for the amputation status (by category), 
-and the fracture type (by gustilo), for each in the given study.
-The returned table has two columns, one for the amputation status 
-and gustilo type, and one for their respective counts.
+Visualizes the injury characteristics for the amputation status (by category), and the fracture type 
+(by gustilo). In order for the indents to work properly, the injury_gustilo_type 
+construct must contain 7 unique values and the injury_amputation_status construct must contain 3 
+unique values.
 }
 \examples{
 amputations_and_gustilo_injury_characteristics("Replace with Analytic Tibble")
