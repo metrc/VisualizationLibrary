@@ -472,8 +472,9 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
 
 #' Injury characteristics for OTA classification and Schatzker Type injuries
 #'
-#' @description This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
-#' injuries
+#' @description 
+#' Counts the number of enrolled participants enrolled for each class of injury, seperated by Ankle 
+#' and Plateau injury types. If injury is not classified, it is marked as "Missed." 
 #'
 #' @param analytic analytic data set that must include injury_type, injury_classification_ankle_ota, 
 #' injury_classification_plat_schatzker, enrolled
@@ -513,9 +514,7 @@ injury_ankle_plateau_characteristics <- function(analytic){
                                                          injury_classification_plat_schatzker)) %>% 
     select(-injury_type) %>% 
     mutate(Name = ifelse(!is.na(injury_classification_ankle_ota), injury_classification_ankle_ota, injury_classification_plat_schatzker)) %>% 
-    mutate(Category = ifelse(!is.na(injury_classification_ankle_ota), 
-                             "O", 
-                             "T")) %>% 
+    mutate(Category = ifelse(!is.na(injury_classification_ankle_ota), "O", "T")) %>% 
     select(-injury_classification_ankle_ota, -injury_classification_plat_schatzker)
   
   injury_type_total <- df %>% 
@@ -523,9 +522,7 @@ injury_ankle_plateau_characteristics <- function(analytic){
     summarise(Total = n()) %>%
     ungroup() %>% 
     rename(Name = injury_type) %>% 
-    mutate(Category = ifelse(Name == "ankle", 
-                             "A", 
-                             "P")) 
+    mutate(Category = ifelse(Name == "ankle", "A", "P")) 
   
   total_sum <- sum(injury_type_total$Total)
   total_ank <- injury_type_total$Total[injury_type_total$Name=="ankle"]

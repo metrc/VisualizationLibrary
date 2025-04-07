@@ -25,8 +25,11 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 \description{
 Visualizes the counts of different study statuses, including prescreening statuses. The diagram works
 from the final_followup constructs rather than any df ones.
+
+See dsmb_consort_diagram and consort_diagram for similar options.
 }
 \examples{
 dsmb_consort_diagram_pre_no_def("Replace with Analytic Tibble")
+dsmb_consort_diagram_pre_no_def("Replace with Analytic Tibble", final_period = '3 Month', adjudicated = TRUE)
 
 }

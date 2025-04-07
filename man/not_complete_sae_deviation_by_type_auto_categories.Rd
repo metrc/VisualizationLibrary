@@ -21,7 +21,10 @@ An HTML table.
 Visualizes the number of non-completions, not expected, and SAEs for enrolled participants and Protocol 
 Deviations by type for consented participants. Amongst enrolled, counts instances of presence of the
 construct not_completed_reason for Not Completed count, not_expected_reason for Not expected count,
-sae_count not being 0 for SAE count.
+and sae_count not being 0 for SAE count. Protocol deviation counts are extracted from the protocol_deviation_full_data
+long file, where "Other. . ." values are truncated to "Other."
+
+Categories of protocol deviations are separated by indentation.
 }
 \examples{
 not_complete_sae_deviation_by_type_auto_categories("Replace with Analytic Tibble")

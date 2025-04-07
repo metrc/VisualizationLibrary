@@ -13,7 +13,7 @@ cumulative_enrolled_los(analytic)
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-Visualizes the distribution of the number of days recorded in the ih_los_days construct.
+Visualizes the distribution of the number of days recorded across the study in the ih_los_days construct.
 }
 \examples{
 cumulative_enrolled_los("Replace with Analytic Tibble")

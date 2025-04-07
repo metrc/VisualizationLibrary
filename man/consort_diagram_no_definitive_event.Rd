@@ -15,7 +15,7 @@ consort_diagram_no_definitive_event(
 refused, consented, randomized, enrolled, adjudicated_discontinued, completed, 
 safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
 
-\item{final_period}{text of the final follow-up period in the diagram}
+\item{final_period}{labels the final follow-up period}
 
 \item{not_expected_adjudicated}{whether to note that the Not Expected was adjudicated}
 }

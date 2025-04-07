@@ -25,10 +25,13 @@ consented, not_consented, randomized, enrolled, refused, completed, not_complete
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
+Visualizes all counts of study statuses.
+
 Very similar to dsmb_consort_diagram_pre_no_def except the consented group is before screened in the
 chain of study statuses.
 }
 \examples{
 dsmb_consort_diagram_pre_shifted_consent("Replace with Analytic Tibble")
+dsmb_consort_diagram_pre_shifted_consent("Replace with Analytic Tibble", definitive_event = 'TEST')
 
 }
