@@ -13,7 +13,7 @@ enrollment_by_injury_and_site(analytic)
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the enrollment by each site for each injury_type
+Visualizes the enrollment by each site for each injury_type, in bar chart, with bars including all injury types, colored to differentiate.
 }
 \examples{
 enrollment_by_injury_and_site("Replace with Analytic Tibble")

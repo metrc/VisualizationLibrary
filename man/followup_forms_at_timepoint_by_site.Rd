@@ -13,8 +13,10 @@ followup_forms_at_timepoint_by_site(analytic, timepoint, forms, names = NULL)
 An HTML table.
 }
 \description{
-Returns the designated followup forms status by site at a specifict
-period
+Visualizes the specified follow-up forms at a specific timeppoint, listed by site.
+
+#' For other manipulations of this file that may better fit your study, please see: followup_completion_time_stats, 
+followup_form_all_timepoints_by_site, followup_form_at_timepoint_by_site, followup_forms_all_timepoints, followup_forms_at_timepoint_by_site
 }
 \examples{
 followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", '3 Month', c('Form 3', 'Form 2'))

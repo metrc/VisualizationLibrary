@@ -21,13 +21,16 @@ closed_followup_forms_at_timepoint_by_site(
 \item{names}{This is the analytic data set that must include study_id, followup_data}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-Returns the designated followup form status by site
+Visualizes the designated followup form status by site.
+
+This is a closed version of followup_forms_at_timepoint_by_site, request if followup_forms_at_timepoint_by_site is present in your study. 
+See followup_forms_at_timepoint_by_site for more information.
 }
 \examples{
 \dontrun{
-closex_followup_forms_at_timepoint_by_site()
+closed_followup_forms_at_timepoint_by_site()
 }
 }

@@ -20,10 +20,14 @@ and enrolled}
 \item{form_selection}{the form to be considered in the visualization}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-Returns summary statistics on the number of days to complete various follow-up forms.
+Returns summary statistics on the number of days to complete various follow-up forms. Each study will have a 'unique' followup data long file, 
+this visualization manipulates a part of that file to return that info for the desired forms.
+
+For other manipulations of the followup_data long file that may better fit your study, please see: followup_completion_time_stats, 
+followup_form_all_timepoints_by_site, followup_form_at_timepoint_by_site, followup_forms_all_timepoints, followup_forms_at_timepoint_by_site
 }
 \examples{
 followup_completion_time_stats("Replace with Analytic Tibble")
