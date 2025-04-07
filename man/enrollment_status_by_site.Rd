@@ -15,7 +15,8 @@ facilitycode, late_ineligible}
 An HTML table.
 }
 \description{
-This function visualizes the enrollment totals for each site
+Visualizes the count of the study statuses for each site, as well as displaying the days the site 
+has been certified.
 }
 \examples{
 enrollment_status_by_site("Replace with Analytic Tibble")
