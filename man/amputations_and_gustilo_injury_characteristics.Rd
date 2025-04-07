@@ -2,7 +2,7 @@
 % Please edit documentation in R/standard_tables.R
 \name{amputations_and_gustilo_injury_characteristics}
 \alias{amputations_and_gustilo_injury_characteristics}
-\title{Amputations and Gustilo Injury Characteristics}
+\title{Amputations and gustilo injury characteristics}
 \usage{
 amputations_and_gustilo_injury_characteristics(analytic)
 }
@@ -11,11 +11,13 @@ amputations_and_gustilo_injury_characteristics(analytic)
 injury_gustilo_type, injury_amputation_status}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-This function visualizes the injury characteristics for amputations and Gustilo Injury types for 
-Sextant.
+Visualizes the injury characteristics for the amputation status (by category), 
+and the fracture type (by gustilo), for each in the given study.
+The returned table has two columns, one for the amputation status 
+and gustilo type, and one for their respective counts.
 }
 \examples{
 amputations_and_gustilo_injury_characteristics("Replace with Analytic Tibble")

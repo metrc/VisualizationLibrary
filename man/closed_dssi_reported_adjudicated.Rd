@@ -11,11 +11,14 @@ closed_dssi_reported_adjudicated(analytic, footnotes = NULL)
 dssi_reported_6mo, dssi_adjudicated_6mo, dssi_adjudication_pending_6mo, dssi_count}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-This function visualizes the treatment crossover or any nonadherence occured during the Tobra
+Visualizes the treatment crossover or any nonadherence occured during the Tobra
 study by treatment arm.
+
+This is a closed version of dssi_reported_adjudicated, request if dssi_reported_adjudicated is present in your study. 
+See dssi_reported_adjudicated for more information.
 }
 \examples{
 closed_dssi_reported_adjudicated("Replace with Analytic Tibble")

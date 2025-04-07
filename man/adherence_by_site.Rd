@@ -7,11 +7,11 @@
 adherence_by_site(analytic)
 }
 \arguments{
-\item{analytic}{analytic data set that must include fields facilitycode, df_date,
-enrolled, treatment_arm}
+\item{analytic}{analytic data set that must include constructs facilitycode, 
+df_date, enrolled, treatment_arm}
 }
 \value{
-visualization
+html table
 }
 \description{
 Visualizes the status of patient study completion, organized by site. The returned 
@@ -19,8 +19,10 @@ table has 4 columns: Site, Enrolled, DWC complete, and adherence. The DWC comple
 column is determined by the existence of a value for the df_date construct. Notably,
 this visualization determines adherence based on the existence of a value for 
 the treatment_arm construct.
+
+A similar visualization is adherence_sextant, which uses multiple constructs to determine 
+all types of adherence.
 }
 \examples{
 adherence_by_site("Replace with Analytic Tibble")
-
 }

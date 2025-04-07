@@ -23,6 +23,10 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 }
 \description{
 This function visualizes the categorical percentages of Study Status
+
+For other consort diagrams that may better fit your study, refer to: consort_diagram, consort_diagram_no_definitive_event, 
+dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
+dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram.
 }
 \examples{
 dsmb_consort_diagram_pre_no_def_shifted_consent("Replace with Analytic Tibble")

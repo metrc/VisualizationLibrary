@@ -14,7 +14,8 @@ injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classificati
 An HTML table.
 }
 \description{
-This function visualizes the certain injury characteristics for study participants study injuries
+This function visualizes the certain injury characteristics for study participants study injuries, 
+ross reference the potential usage of this visualization with injury_characteristics
 }
 \examples{
 injury_characteristics_by_alternate_constructs("Replace with Analytic Tibble")

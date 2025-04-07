@@ -13,7 +13,11 @@ closed_appendix_C_not_expected_not_completed(analytic)
 An HTML table.
 }
 \description{
-This function visualizes any not completedness and not expectedness occurred during the study time period.
+This function visualizes any not completeness and not expectedness occurred during the study time period.
+Uses the standard construct outputs for not_expected_data and not_complted data, 
+these constructs for your study must be prepared in the appropriate manner.
+
+This is an appendix visualization see the other available appendices to request as well for you closed report.
 }
 \examples{
 closed_appendix_C_not_expected_not_completed("Replace with Analytic Tibble")
