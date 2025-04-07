@@ -14,8 +14,8 @@ injury_classification_plat_schatzker, enrolled}
 An HTML table.
 }
 \description{
-This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
-injuries
+Counts the number of enrolled participants enrolled for each class of injury, seperated by Ankle 
+and Plateau injury types. If injury is not classified, it is marked as "Missed."
 }
 \examples{
 injury_ankle_plateau_characteristics("Replace with Analytic Tibble")
