@@ -1024,7 +1024,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, sae_data
 #'
-#' @return An HTML table.
+#' @return HTML.
 #' @export
 #'
 #' @examples
@@ -1077,11 +1077,14 @@ closed_appendix_A_SAEs <- function(analytic){
 
 #' Appendix B: Listing of any Death for closed report
 #'
-#' @description This function visualizes any death occurred during the study time period.
+#' @description 
+#' Returns text describing sae data of all cases where the outcome is death. Death is determined by there
+#' being a value for the death_date construct or the value Death in the sae_outcome column of the sae_data
+#' long file.
 #'
-#' @param analytic This is the analytic data set that must include study_id, sae_data, death_date
+#' @param analytic analytic data set that must include constructs sae_data, death_date
 #'
-#' @return An HTML table.
+#' @return HTML.
 #' @export
 #'
 #' @examples
@@ -1135,7 +1138,7 @@ closed_appendix_B_deaths <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include study_id, not_expected_data, not_completed_data
 #'
-#' @return An HTML table.
+#' @return HTML.
 #' @export
 #'
 #' @examples
@@ -1193,20 +1196,23 @@ closed_appendix_C_not_expected_not_completed <- function(analytic){
 
 #' Appendix D: Listing of any protocol deviations for closed report
 #'
-#' @description This function visualizes any protocol deviations occurred during the study time period.
+#' @description 
+#' Returns HTML describing the information found in the protocol_deviation_data or protocol_deviation_full_data
+#' long file.
 #'
-#' @param analytic This is the analytic data set that must include study_id, protocol_deviation_data
+#' @param analytic analytic data set that must include study_id, protocol_deviation_data or protocol_deviation_full_data
 #'
-#' @return An HTML table.
+#' @return HTML.
 #' @export
 #'
 #' @examples
 #' closed_appendix_D_protocol_deviation("Replace with Analytic Tibble")
 #' 
 closed_appendix_D_protocol_deviation <- function(analytic){
-  analytic <- if_needed_generate_example_data(analytic,
-                                              example_constructs = "protocol_deviation_data",
-                                              example_types = "(';new_row: ', '|')FacilityCode|Date|Date|Category|Character") 
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = "protocol_deviation_data",
+    example_types = "(';new_row: ', '|')FacilityCode|Date|Date|Category|Character") 
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-22)
   
@@ -1943,9 +1949,10 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
 
 #' Closed characteristics treatment
 #'
-#' @description This function visualizes the treatment characteristics per protocol and assignment for tobra. 
+#' @description 
+#' Closed version of the characteristics_treatment function; see its documentation for details.
 #'
-#' @param analytic This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
+#' @param analytic analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
 #' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm
 #'
 #' @return An HTML table.
@@ -1960,7 +1967,7 @@ closed_characteristics_treatment <- function(analytic){
     example_constructs = c("treatment_arm", "enrolled", "df_date", "plat_df_surgical_incision",
                            "pil_df_surgical_incision", "df_number_procedures", "adherence_to_intervention"),
     example_types = c("TreatmentArm", "Boolean", "Date", "Category",
-                      "Category", "Number", "Boolean")) 
+                      "Category", "Number-U5", "Boolean")) 
   
   confirm_stability_of_related_visual('characteristics_treatment', 'f0557c2e652d0c58c5f6771b3dbdcd39')
   

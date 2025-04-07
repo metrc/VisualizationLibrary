@@ -10,7 +10,7 @@ closed_appendix_C_not_expected_not_completed(analytic)
 \item{analytic}{This is the analytic data set that must include study_id, not_expected_data, not_completed_data}
 }
 \value{
-An HTML table.
+HTML.
 }
 \description{
 This function visualizes any not completedness and not expectedness occurred during the study time period.

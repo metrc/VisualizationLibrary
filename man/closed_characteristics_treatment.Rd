@@ -7,14 +7,14 @@
 closed_characteristics_treatment(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
+\item{analytic}{analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
 pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes the treatment characteristics per protocol and assignment for tobra.
+Closed version of the characteristics_treatment function; see its documentation for details.
 }
 \examples{
 closed_characteristics_treatment("Replace with Analytic Tibble")
