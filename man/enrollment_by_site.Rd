@@ -13,7 +13,7 @@ enrollment_by_site(analytic, number_order = FALSE)
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the enrollment by each site for each patient
+This function visualizes the count of enrollment for each site.
 }
 \examples{
 enrollment_by_site("Replace with Analytic Tibble")

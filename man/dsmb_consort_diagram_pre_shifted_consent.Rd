@@ -12,20 +12,21 @@ dsmb_consort_diagram_pre_shifted_consent(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
+\item{analytic}{analytic data set that must include pre_screened, pre_eligible, screened, eligible,
 consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
 
-\item{final_period}{Defaults to 12 Month}
+\item{final_period}{visual option to name the last followup period}
 
-\item{adjudicated}{whether to use adjudicated discontinued and not expected}
+\item{adjudicated}{visual option to show that discontinuation was adjudicated}
 
-\item{definitive_event}{the definitive event}
+\item{definitive_event}{label for the definitive event}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the categorical percentages of Study Status
+Very similar to dsmb_consort_diagram_pre_no_def except the consented group is before screened in the
+chain of study statuses.
 }
 \examples{
 dsmb_consort_diagram_pre_shifted_consent("Replace with Analytic Tibble")

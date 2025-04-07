@@ -12,19 +12,22 @@ followup_form_all_timepoints_by_site(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, followup_data}
+\item{analytic}{analytic data set that must include study_id, followup_data}
 
-\item{form_selection}{The form to base the table on}
+\item{form_selection}{form whose statuses are to be investigated}
 
-\item{included_colmns}{Defaults to c("Expected", "Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete')}
+\item{included_colmns}{statuses to include in the vis}
 }
 \value{
 An HTML table.
 }
 \description{
-Returns the designated followup form status by site, for all timepoints
+Returns the counts of the specified form statuses of a given form for all follow-up periods where that
+form is present, by site. Specifying "Overall" in the form_selection results in a slightly more streamlined
+look, without a header above the table.
 }
 \examples{
-followup_form_all_timepoints_by_site("Replace with Analytic Tibble", c('3 Month', '6 Month'), "Form 3")
+followup_form_all_timepoints_by_site("Replace with Analytic Tibble", "Form 3")
+followup_form_all_timepoints_by_site("Replace with Analytic Tibble", "Form 3", c("Expected", "Complete", "Incomplete"))
 
 }

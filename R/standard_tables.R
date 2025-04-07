@@ -1,6 +1,8 @@
 #' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled
 #'
-#' @description This function visualizes the enrollment totals for each site
+#' @description 
+#' Visualizes the count of the study statuses for each site, as well as displaying the days the site 
+#' has been certified.
 #'
 #' @param analytic This is the analytic data set that must include screened, 
 #' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
@@ -2211,7 +2213,8 @@ not_enrolled_for_other_reasons <- function(analytic){
 
 #' Fracture Characteristics
 #'
-#' @description This function visualizes fracture characteristics, broken down by tibial plateau or pilon, 
+#' @description 
+#' This function visualizes fracture characteristics, broken down by tibial plateau or pilon, 
 #' and then closed or open fracture with tscherne grades and gustilo types respectively
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
@@ -2930,9 +2933,9 @@ wbs_main_paper_patient_characteristics <- function(analytic){
 
 #' Expected visit status for Overall Followup
 #'
-#' @description This function only looks at the designated overall form(s) for a 
-#' given study, as designated in the respective followup_data long file 
-#' and organizes them by its detected levels of followup periods. 
+#' @description 
+#' Returns the counts of all the statuses of the Overall follow-up form at every follow-up periods. Notably,
+#' this function does not separate the counts by site.
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data
 #'
@@ -3163,19 +3166,26 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
 
 #' Followup Data Single Form All Timepoints By Site
 #'
-#' @description Returns the designated followup form status by site, for all timepoints
+#' @description 
+#' Returns the counts of the specified form statuses of a given form for all follow-up periods where that
+#' form is present, by site. Specifying "Overall" in the form_selection results in a slightly more streamlined
+#' look, without a header above the table.
 #'
-#' @param analytic This is the analytic data set that must include study_id, followup_data
-#' @param form_selection The form to base the table on
-#' @param included_colmns Defaults to c("Expected", "Complete", "Early", "Late", 'Missing', 'Not Started', 'Incomplete')
+#' @param analytic analytic data set that must include study_id, followup_data
+#' @param form_selection form whose statuses are to be investigated
+#' @param included_colmns statuses to include in the vis
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
-#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", c('3 Month', '6 Month'), "Form 3")
+#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", "Form 3")
+#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", "Form 3", c("Expected", "Complete", "Incomplete"))
 #' 
-followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete')){
+followup_form_all_timepoints_by_site <- function(
+    analytic, form_selection = 'Overall', included_columns=c("Not Expected", "Expected", "Complete", 
+                                                             "Early", "Late", 'Missed', 'Not Started', 
+                                                             'Incomplete')){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("facilitycode", "followup_data"), 
@@ -3447,18 +3457,23 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
 
 #' Followup Data Multiple Forms and All Timepoints
 #'
-#' @description Returns the designated followup forms status at a specified range
-#' of timepoints, not specified by site
+#' @description 
+#' Returns all of the statuses of the given follow-up forms at all timepoints by site. Not specifying forms results
+#' in all follow-up forms being in the visualization.
+#' 
+#' NOTE: THIS VISUALIZATION CAN BE VERY LARGE!
 #'
-#' @param analytic This is the analytic data set that must include study_id, followup_data
+#' @param analytic analytic data set that must include study_id, followup_data, facilitycode
 #' @param forms followup forms to output, as found in the followup_data construct
 #' @param timepoints timepoints to output, as found in the followup_data construct
+#' @param vertical whether to arrange the output vertically by form or horizontally.
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
-#' followup_forms_all_timepoints("Replace with Analytic Tibble", c('Form 3', 'Form 2'), c('3 Month', '6 Month'))
+#' followup_forms_all_timepoints("Replace with Analytic Tibble", forms = c('Form 3', 'Form 2'), timepoints = c('3 Month', '6 Month'))
+#' followup_forms_all_timepoints("Replace with Analytic Tibble", vertical = FALSE)
 #' 
 followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = NULL, vertical = TRUE){
   analytic <- if_needed_generate_example_data(
@@ -3631,7 +3646,10 @@ followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = N
 
 #' Overview of enrollment and follow-up activities
 #'
-#' @description Returns the screened, overall, and follow-up data, separated by sites
+#' @description 
+#' 
+#' 
+#' Returns the screened, overall, and follow-up data, separated by sites
 #'
 #' @param analytic This is the analytic data set that must include study_id, followup_data,
 #' facilitycode, screened, enrolled, eligible, screened_date
@@ -3646,6 +3664,11 @@ followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = N
 #' enrollment_and_followup_activities_overview()
 #' }
 enrollment_and_followup_activities_overview <- function(analytic, form_name = 'Overall'){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('facilitycode', "followup_data", "screened", "enrolled", "eligible", "screened_date"), 
+    example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date",
+                      "Boolean", "Boolean", "Boolean", "Date"))
   
    followups <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 

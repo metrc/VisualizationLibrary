@@ -2,7 +2,7 @@
 % Please edit documentation in R/standard_figures.R
 \name{cumulative_enrolled_los}
 \alias{cumulative_enrolled_los}
-\title{Cumulative enrollment for Length of Stay for NSAID}
+\title{Cumulative enrollment for Length of Stay}
 \usage{
 cumulative_enrolled_los(analytic)
 }
@@ -13,8 +13,7 @@ cumulative_enrolled_los(analytic)
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the Cumulative number of patients enrolled for each bucket of number
-of days stay during the admission
+Visualizes the distribution of the number of days recorded in the ih_los_days construct.
 }
 \examples{
 cumulative_enrolled_los("Replace with Analytic Tibble")
