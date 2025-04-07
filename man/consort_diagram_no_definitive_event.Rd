@@ -11,11 +11,11 @@ consort_diagram_no_definitive_event(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, screened, ineligible, eligible,
+\item{analytic}{analytic data set that must include study_id, screened, ineligible, eligible,
 refused, consented, randomized, enrolled, adjudicated_discontinued, completed, 
 safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
 
-\item{final_period}{Defaults to 12 Month}
+\item{final_period}{text of the final follow-up period in the diagram}
 
 \item{not_expected_adjudicated}{whether to note that the Not Expected was adjudicated}
 }
@@ -23,7 +23,10 @@ safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_fi
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the categorical percentages of study status as well as followup completions for studies that do not include a definitive event
+Visualizes study status data for studies without a definitive event. See functions consort_diagram,
+dsmb_consort_diagram (all types) for related functions. The constructs completed, not_completed, 
+missed_final_followup, and incomplete_final_followup are used in the last stage of the study, which
+can be specified by the final_period function parameter.
 }
 \examples{
 consort_diagram_no_definitive_event("Replace with Analytic Tibble")

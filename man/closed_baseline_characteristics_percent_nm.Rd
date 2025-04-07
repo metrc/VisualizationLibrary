@@ -36,9 +36,8 @@ the constructs specified in the following construct name parameters}
 An HTML table.
 }
 \description{
-This is the closed version of the baseline_characteristics_percent visualization, so its code is applied
-to Group A, Group B, and all participants (including theoretically those who do not have a treatment 
-assignment, so long as they are enrolled).
+This is the closed version of the baseline_characteristics_percent visualization; see its documentation
+for details.
 }
 \examples{
 closed_baseline_characteristics_percent_nm("Replace with Analytic Tibble")

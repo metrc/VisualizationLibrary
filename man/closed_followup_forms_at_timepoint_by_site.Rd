@@ -27,7 +27,6 @@ An HTML table.
 Returns the designated followup form status by site
 }
 \examples{
-\dontrun{
-closex_followup_forms_at_timepoint_by_site()
-}
+closex_followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", forms = c("Form 2", "Form 4"))
+
 }

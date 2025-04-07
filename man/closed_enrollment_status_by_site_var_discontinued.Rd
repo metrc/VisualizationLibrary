@@ -13,10 +13,10 @@ closed_enrollment_status_by_site_var_discontinued(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include screened, 
-eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode, treatment_arm}
+\item{analytic}{This is the analytic data set that must include screened, eligible, refused, consented, 
+enrolled, not_consented, site_certified_days, facilitycode, treatment_arm}
 
-\item{discontinued}{meta construct for discontinued}
+\item{discontinued}{name of the construct for discontinued status}
 
 \item{discontinued_colname}{column name for discontinued to appear in visualization like "Adjudicated Discontinued"}
 
@@ -26,9 +26,11 @@ eligible, refused, consented, enrolled, not_consented, site_certified_days, faci
 An HTML table.
 }
 \description{
-This function visualizes the enrollment totals for each site
+Closed version of the enrollment_status_by_site_var_discontinued function; see its documentation for
+details.
 }
 \examples{
 closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble")
+closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble", )
 
 }

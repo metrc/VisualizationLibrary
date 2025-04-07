@@ -2,7 +2,7 @@
 % Please edit documentation in R/closed_tables.R
 \name{closed_ih_and_dc_crossover_monitoring_by_site}
 \alias{closed_ih_and_dc_crossover_monitoring_by_site}
-\title{Crossover Monitoring by Site Closed}
+\title{Closed crossover monitoring by site}
 \usage{
 closed_ih_and_dc_crossover_monitoring_by_site(analytic, footnotes = NULL)
 }
@@ -14,7 +14,8 @@ ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_o
 An HTML table.
 }
 \description{
-This function visualizes the crossovers by site in hospital and at discharge
+This is the closed version of the ih_and_dc_crossover_monitoring_by_site function; see its documentation
+for details.
 }
 \examples{
 closed_ih_and_dc_crossover_monitoring_by_site("Replace with Analytic Tibble")
