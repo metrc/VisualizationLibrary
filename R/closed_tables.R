@@ -1508,7 +1508,6 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
 #' @export
 #'
 #' @examples
-#' \dontrun{
 #' closed_amputations_and_gustilo_injury_characteristics("Replace with Analytic Tibble")
 #' 
 closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
