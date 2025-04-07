@@ -41,7 +41,10 @@ closed_baseline_characteristics_percent(
 An HTML table.
 }
 \description{
-This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military
+This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military.
+
+NOTE: This is a closed version of baseline_characteristics_percent, request if baseline_characteristics_percent is present in your study. 
+See baseline_characteristics_percent for more information.
 }
 \examples{
 closed_baseline_characteristics_percent("Replace with Analytic Tibble")

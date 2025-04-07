@@ -11,10 +11,13 @@ closed_injury_characteristics_by_alternate_constructs(analytic)
 injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-This function visualizes the certain injury characteristics for study participants study injuries by treatment arm
+Visualizes the certain injury characteristics for study participants study injuries by treatment arm
+
+This is a closed version of injury_characteristics_by_alternate_constructs, request if injury_characteristics_by_alternate_constructs is present in your study. 
+See injury_characteristics_by_alternate_constructs for more information.
 }
 \examples{
 closed_injury_characteristics_by_alternate_constructs("Replace with Analytic Tibble")

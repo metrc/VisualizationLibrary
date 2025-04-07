@@ -2,7 +2,7 @@
 % Please edit documentation in R/closed_tables.R
 \name{closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date}
 \alias{closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date}
-\title{Crossover Monitoring by Site since 01/01/2024}
+\title{Crossover monitoring by site since 01/01/2024}
 \usage{
 closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date(
   analytic,
@@ -14,11 +14,14 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date(
 ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, treatment_arm}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-This function visualizes the crossovers by site in hospital and at discharge 
-after 01/01/2021
+Visualizes the crossovers by site in hospital and at discharge 
+after 01/01/2021, by site.
+
+This is a closed version of ih_and_dc_crossover_monitoring_by_site_cutoff_date, request if ih_and_dc_crossover_monitoring_by_site_cutoff_date is present in your study. 
+See ih_and_dc_crossover_monitoring_by_site_cutoff_date for more information.
 }
 \examples{
 closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date("Replace with Analytic Tibble")

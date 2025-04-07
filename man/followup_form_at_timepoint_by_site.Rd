@@ -25,7 +25,10 @@ An HTML table.
 }
 \description{
 Returns the designated followup form status across all sites, 
-for a single timepoint and separated by the treatment_arm variable
+for a single timepoint.
+
+#' For other manipulations of the followup_data long file that may better fit your study, please see: followup_completion_time_stats, 
+followup_form_all_timepoints_by_site, followup_form_at_timepoint_by_site, followup_forms_all_timepoints, followup_forms_at_timepoint_by_site
 }
 \examples{
 followup_form_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", "Form 3")

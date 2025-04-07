@@ -30,7 +30,10 @@ facilitycode, screened_date, consented, randomized, consent_date, discontinued}
 An HTML table.
 }
 \description{
-This function visualizes the number of subjects enrolled, not enrolled etc, with specs for last 14 days and average by week
+Visualizes the number of subjects enrolled, not enrolled etc, with parameter specifications to include more columns. 
+
+For other enrollment by site visualizations that may better fit your study, please look at: enrollment_by_site, 
+enrollment_by_site_last_days_var_disc, enrollment_status_by_site, enrollment_status_by_site_var_discontinued
 }
 \examples{
 enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble")

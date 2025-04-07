@@ -10,10 +10,13 @@ closed_appendix_A_SAEs(analytic)
 \item{analytic}{This is the analytic data set that must include study_id, sae_data}
 }
 \value{
-HTML.
+HTML
 }
 \description{
-Prints out formatted data for all the SAEs found in the sae_data long file.
+Visualizes appendix for all the serious adverse events noted for the patients.
+Uses only the standardized sae_data construct (this construct must be prepared correctly for your study)
+
+This is an appendix visualization see the other available appendices to request as well for you closed report.
 }
 \examples{
 closed_appendix_A_SAEs("Replace with Analytic Tibble")

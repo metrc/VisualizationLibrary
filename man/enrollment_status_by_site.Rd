@@ -11,7 +11,7 @@ enrollment_status_by_site(analytic)
 not_consented, discontinued_pre_randomization, site_certified_days, facilitycode, late_ineligible}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
 Visualizes the count of the study statuses for each site, as well as displaying the days the site 

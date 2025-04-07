@@ -2,7 +2,7 @@
 % Please edit documentation in R/standard_tables.R
 \name{certification_date_data}
 \alias{certification_date_data}
-\title{Status of IRB Approvals and Certification by Site}
+\title{Status of IRB approvals and certification by site}
 \usage{
 certification_date_data(analytic, exclude_local_irb = FALSE)
 }
@@ -12,11 +12,12 @@ certification_date_data(analytic, exclude_local_irb = FALSE)
 \item{exclude_local_irb}{defaults to False}
 }
 \value{
-An HTML table.
+html table
 }
 \description{
-This function returns a list of sites and their dates of 
-local, DOD, and METRC certifications.
+Visualizes the sites for a given study and their dates of 
+local, DOD, and METRC certifications. This function outputs 5 columns, Facility, Local or sIRB approval date, DoD approval date, 
+certified by MCC to start screening, Number of days certified. To run this visualization a study needs qa site_certified_date long file.
 }
 \examples{
 certification_date_data("Replace with Analytic Tibble")
