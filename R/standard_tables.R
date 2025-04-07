@@ -1486,9 +1486,16 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
 
 #' Complications by severity and relatedness
 #'
-#' @description This function visualizes the complications by severity and relatedness for dsmb report
+#' @description 
+#' Visualizes the complication_data long file. Data is shown for each grade and type of complication,
+#' as well as the number of study participants who experienced this complication (in brackets). IF a
+#' study is documenting unique or obscure complications that are not in the example table, then an update 
+#' to this function is necessary for the study. 
+#' 
+#' Grade is determined by the severity column, with 2,1 being Mild or Moderate and 3, 4 being Severe
+#' and Life-threatening, respectively. Notably, a fatal complication results in a grade Unknown.
 #'
-#' @param analytic This is the analytic data set that must include study_id, complication_data
+#' @param analytic analytic data set that must include complication_data
 #'
 #' @return An HTML table.
 #' @export
@@ -1503,7 +1510,6 @@ complications_by_severity_relatedness <- function(analytic){
   
   comp <- analytic %>%  select(study_id, complication_data) %>% 
     filter(!is.na(complication_data))
-  
   
   unzipped_comp <- comp %>%
     separate_rows(complication_data, sep = ";new_row: ") %>%

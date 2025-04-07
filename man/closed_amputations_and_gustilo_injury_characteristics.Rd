@@ -7,15 +7,15 @@
 closed_amputations_and_gustilo_injury_characteristics(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include enrolled, treatment_arm,
-injury_gustilo_type, injury_amputation_status}
+\item{analytic}{analytic data set that must include enrolled, treatment_arm, injury_gustilo_type, 
+injury_amputation_status}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes the injury characteristics for amputations and Gustilo 
-Injury types for Sextant study by treatment arm
+This is the closed version of amputations_and_gustilo_injury_characteristics; see its documentation
+for details.
 }
 \examples{
 closed_amputations_and_gustilo_injury_characteristics("Replace with Analytic Tibble")

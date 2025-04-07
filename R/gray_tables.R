@@ -231,11 +231,15 @@ adherence_sextant <- function(analytic){
 
 
 
-#' characteristics_treatment
+#' Characteristics of treatment
 #'
 #' @description 
-#' This function visualizes the treatment characteristics per protocol and assignment 
-#' for tobra. 
+#' Visualizes definitive fixation data and study protocol adherence. The function will be formatted 
+#' properly when analytic data includes at most two stages of definitive fixation.
+#' 
+#' Construct df_number_procedures determines the number of stages of definitive fixation. Constructs
+#' plat_df_surgical_incision and pil_df_surgical_incision use semicolon seperators to count the number 
+#' of incisions at the plateau and pilon sites.
 #'
 #' @param analytic analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
 #' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention
@@ -251,7 +255,7 @@ characteristics_treatment <- function(analytic){
     analytic, 
     example_constructs = c('enrolled', 'df_date', 'plat_df_surgical_incision', 'pil_df_surgical_incision', 
                            'df_number_procedures', 'adherence_to_intervention'), 
-    example_types = c('Boolean', 'Date', 'Category', 'Category', 'Number-U4', 'Boolean'))
+    example_types = c('Boolean', 'Date', 'Category-NS', 'Category-NS', 'Number-U2', 'Boolean'))
   
   df <- analytic %>% 
     select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, adherence_to_intervention) %>% 

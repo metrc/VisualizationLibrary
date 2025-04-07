@@ -2,7 +2,7 @@
 % Please edit documentation in R/gray_tables.R
 \name{characteristics_treatment}
 \alias{characteristics_treatment}
-\title{characteristics_treatment}
+\title{Characteristics of treatment}
 \usage{
 characteristics_treatment(analytic)
 }
@@ -14,8 +14,12 @@ pil_df_surgical_incision, df_number_procedures, adherence_to_intervention}
 nothing
 }
 \description{
-This function visualizes the treatment characteristics per protocol and assignment 
-for tobra.
+Visualizes definitive fixation data and study protocol adherence. The function will be formatted 
+properly when analytic data includes at most two stages of definitive fixation.
+
+Construct df_number_procedures determines the number of stages of definitive fixation. Constructs
+plat_df_surgical_incision and pil_df_surgical_incision use semicolon seperators to count the number 
+of incisions at the plateau and pilon sites.
 }
 \examples{
 characteristics_treatment("Replace with Analytic Tibble")
