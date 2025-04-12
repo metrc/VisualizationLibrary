@@ -17,7 +17,7 @@ not_completed, not_expected, active, missed_final_followup, incomplete_final_fol
 
 \item{final_period}{label of the final period}
 
-\item{adjudicated}{visual option to say that discontinuation was adjudicated}
+\item{adjudicated}{visual option to say that discontinuation was adjudicated, defaults to false}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.

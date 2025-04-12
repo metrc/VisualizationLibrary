@@ -6,12 +6,15 @@
 #' dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
 #' dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram. 
 #'
-#' @param analytic The analytic data set that must include the following columns: screened, eligible, consented, refused, discontinued_pre_randomization,
-#'  randomized, late_ineligible, enrolled, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
-#' @param not_enrolled_other A column in the dataset for cases that are eligible but not enrolled for reasons other than refusal (optional).
-#' @param completed_str A string specifying the label for the completion status box. Defaults to "Completed 12-month visit".
-#' @param late_inelgible defaults to late_ineligble but can be any construct like "adjudicated_discontinued"
-#' @param late_inelgible_str defaults to Late Ineligible but can be any construct like "Adjudicated Discontinued"
+#' @param analytic analytic data set that must include the following columns: screened, eligible, 
+#' consented, refused, discontinued_pre_randomization, randomized, late_ineligible, enrolled, completed, 
+#' not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
+#' @param not_enrolled_other a column in the dataset for cases that are eligible but not enrolled for 
+#' reasons other than refusal (optional, if not given is the number of eligible minus consented minus
+#' refused).
+#' @param final_period string specifying the label for the completion status box. Defaults to "12-month".
+#' @param late_inelgible construct used for the count in the late ineligible box
+#' @param late_inelgible_str label used for the late ineligible box
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
@@ -19,7 +22,8 @@
 #' @examples
 #' dsmb_consort_diagram("Replace with Analytic Tibble")
 #' 
-dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period = '12 Month', late_ineligible="late_ineligible", late_ineligible_str="Late Ineligible", not_expected_adjudicated=FALSE){
+dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period = '12 Month', late_ineligible="late_ineligible", 
+                                 late_ineligible_str="Late Ineligible", not_expected_adjudicated=FALSE){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c('screened', 'eligible', 'consented', 'refused', 'discontinued_pre_randomization', 
@@ -294,7 +298,7 @@ dsmb_nsaid_consort_diagram <- function(analytic, final_period="12 Month", not_ex
 #' screened, eligible, ineligible, consented, not_consented, randomized, enrolled, refused, completed, 
 #' not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
 #' @param final_period label of the final period
-#' @param adjudicated visual option to say that discontinuation was adjudicated
+#' @param adjudicated visual option to say that discontinuation was adjudicated, defaults to false
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
@@ -632,9 +636,9 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
     analytic,
     example_constructs = c('pre_screened', 'pre_eligible', 'screened', 'eligible', 'consented', 'not_consented', 
                            'randomized', 'enrolled', 'refused', 'completed', 'not_completed', 'not_expected', 
-                           'active', 'missed_final_followup', 'incomplete_final_followup'),
+                           'active', 'missed_final_followup', 'incomplete_final_followup', 'discontinued'),
     example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean',
-                      'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean'))
+                      'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean'))
 
   pre_analytic <- analytic %>% 
     filter(pre_screened == TRUE)
@@ -774,8 +778,8 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
 #' Cumulative percentage for ankle injuries
 #'
 #' @description 
-#' Visualizes the number of study participants over time, using the consent_date construct. Only ankle
-#' injuries are accounted for.
+#' Visualizes the percentage of study participant enrollment over time, using the consent_date construct. 
+#' Only ankle injuries are accounted for.
 #'
 #' @param analytic analytic data set that must include study_id, injury_type (with an ankle value), 
 #' enrolled
@@ -830,10 +834,12 @@ cumulative_percentage_ankle_injuries <- function(analytic){
 
 #' Cumulative percentage for Tibial Plateau injuries
 #'
-#' @description This function visualizes the Cumulative percentage for number of patients with Plateau injuries 
-#' over the period of Year-Months(YYYY-MM, consent_date) out of 100
+#' @description 
+#' Visualizes the percentage of study participant enrollment over time, using the consent_date construct. 
+#' Only plateau injuries are accounted for.
 #'
-#' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled
+#' @param analytic analytic data set that must include study_id, injury_type (with a plateau 
+#' value), enrolled
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
@@ -845,7 +851,7 @@ cumulative_percentage_plateau_injuries <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("injury_type", "enrolled", "consent_date"), 
-    example_types = c("NamedCategory['plateau' 'other']", "Boolean", "Date"))
+    example_types = c("NamedCategory[\'plateau\']", "Boolean", "Date"))
   
   df <- analytic %>%  select(study_id, injury_type, enrolled, consent_date) %>% 
     filter(enrolled = TRUE) %>% 
@@ -933,7 +939,8 @@ enrollment_by_injury_and_site <- function(analytic){
 #' @description 
 #' This function visualizes the count of enrollment for each site.
 #'
-#' @param analytic This is the analytic data set that must include study_id, enrolled, facilitycode, consent_date
+#' @param analytic analytic data set that must include study_id, enrolled, facilitycode, consent_date
+#' @param number_order arranges output by number of enrolled
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
@@ -1246,19 +1253,22 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #' @examples
 #' consort_diagram("Replace with Analytic Tibble")
 #' 
-consort_diagram <- function(analytic, final_period="12 Month", definitive_event = "Definitive Fixation Complete" , not_expected_adjudicated=TRUE){
+consort_diagram <- function(analytic, final_period="12 Month", definitive_event = "Definitive Fixation Complete" , 
+                            not_expected_adjudicated=TRUE){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
                            "randomized", "enrolled", "adjudicated_discontinued", 
                            "completed", "safety_set", "exclusive_safety_set", "not_completed", 
-                           "not_expected", "active", "missed_final_followup", "incomplete_final_followup", "time_zero"), 
+                           "not_expected", "active", "missed_final_followup", "incomplete_final_followup", 
+                           "time_zero"), 
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
                       "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
                       "Boolean", "Boolean", "Boolean", "Boolean", "Date"))
   df <- analytic %>% 
     select(study_id, screened, ineligible, eligible, refused, consented, randomized, enrolled, time_zero, 
-           adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup) %>% 
+           adjudicated_discontinued, completed, safety_set, exclusive_safety_set, not_completed, not_expected, 
+           active, missed_final_followup, incomplete_final_followup) %>% 
     mutate(time_zero = ifelse(!is.na(time_zero), TRUE, FALSE))
   
   screened <- sum(analytic$screened, na.rm = TRUE)
@@ -1590,7 +1600,7 @@ vislib_query_issues_per_site <- function(analytic) {
 #' Visualizes study status data for studies without a definitive event. See functions consort_diagram,
 #' dsmb_consort_diagram (all types) for related functions. The constructs completed, not_completed, 
 #' missed_final_followup, and incomplete_final_followup are used in the last stage of the study, which
-#' can be specified by the final_period function parameter.
+#' can be labelled by the final_period function parameter.
 #' 
 #' @param analytic analytic data set that must include study_id, screened, ineligible, eligible,
 #' refused, consented, randomized, enrolled, adjudicated_discontinued, completed, 
@@ -1729,12 +1739,14 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
 
 #' Visualize patient outcomes by ID over time
 #'
-#' @description This function creates a timeline visualization for each patient showing events relative to time zero for SINGLE event outcomes.
+#' @description 
+#' Creates a timeline visualization for each patient showing events relative to time zero for SINGLE event outcomes.
 #'
-#' @param analytic This is the analytic data set that must include study_id, facilitycode, events_data, outcome_data and time_zero
-#' @param event_name The specific event to track (will mark first occurrence specially)
-#' @param random_sample Optional integer to limit to a random sample of IDs
-#' @param facilitycodes Optional character vector to limit to a certain facilities
+#' @param analytic analytic data set that must include study_id, facilitycode, events_data, outcome_data 
+#' and time_zero
+#' @param event_name specific event to track (will mark first occurrence specially)
+#' @param random_sample optional integer to limit to a random sample of IDs
+#' @param facilitycodes optional character vector to limit to a certain facilities
 #'
 #' @return An HTML string containing an image tag with the base64-encoded timeline visualization in PNG format.
 #' @export

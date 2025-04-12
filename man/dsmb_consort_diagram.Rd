@@ -14,16 +14,19 @@ dsmb_consort_diagram(
 )
 }
 \arguments{
-\item{analytic}{The analytic data set that must include the following columns: screened, eligible, consented, refused, discontinued_pre_randomization,
-randomized, late_ineligible, enrolled, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
+\item{analytic}{analytic data set that must include the following columns: screened, eligible, 
+consented, refused, discontinued_pre_randomization, randomized, late_ineligible, enrolled, completed, 
+not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
 
-\item{not_enrolled_other}{A column in the dataset for cases that are eligible but not enrolled for reasons other than refusal (optional).}
+\item{not_enrolled_other}{a column in the dataset for cases that are eligible but not enrolled for 
+reasons other than refusal (optional, if not given is the number of eligible minus consented minus
+refused).}
 
-\item{completed_str}{A string specifying the label for the completion status box. Defaults to "Completed 12-month visit".}
+\item{final_period}{string specifying the label for the completion status box. Defaults to "12-month".}
 
-\item{late_inelgible}{defaults to late_ineligble but can be any construct like "adjudicated_discontinued"}
+\item{late_inelgible}{construct used for the count in the late ineligible box}
 
-\item{late_inelgible_str}{defaults to Late Ineligible but can be any construct like "Adjudicated Discontinued"}
+\item{late_inelgible_str}{label used for the late ineligible box}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.

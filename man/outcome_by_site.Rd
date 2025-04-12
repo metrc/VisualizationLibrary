@@ -7,15 +7,17 @@
 outcome_by_site(analytic, outcome_name)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, outcome_data, facilitycode, and enrolled}
+\item{analytic}{analytic data set that must include study_id, outcome_data, facilitycode, and enrolled}
 
-\item{outcome_name}{the name of the outcome to be considered in the visualization}
+\item{outcome_name}{name of the outcome to be considered in the visualization}
 }
 \value{
 An HTML table.
 }
 \description{
-Returns summary statistics on the number of days to complete various follow-up forms.
+Returns summary statistics on the number of the time to event data of each site for a specified outcome.
+Output column "Percent of Target" comes from dividing the average outcome_days with the average target_days,
+and "Percent of Expected" refers to dividing the average outcome_days with the average expected_days.
 }
 \examples{
 outcome_by_site("Replace with Analytic Tibble", 'test_outcome')

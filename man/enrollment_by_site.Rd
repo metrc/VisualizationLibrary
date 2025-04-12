@@ -7,7 +7,9 @@
 enrollment_by_site(analytic, number_order = FALSE)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, enrolled, facilitycode, consent_date}
+\item{analytic}{analytic data set that must include study_id, enrolled, facilitycode, consent_date}
+
+\item{number_order}{arranges output by number of enrolled}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
