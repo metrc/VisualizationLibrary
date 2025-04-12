@@ -15,27 +15,41 @@ enrollment_by_site_last_days_var_disc(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
-facilitycode, screened_date, consented, randomized, consent_date, discontinued}
+\item{analytic}{This is the analytic data set that must include screened, eligible, refused, not_consented, 
+not_randomized, consented_and_randomized, enrolled, site_certified_days, facilitycode, screened_date, 
+consented, randomized, consent_date, discontinued}
 
 \item{days}{the number of last days to include in the last days summary section of the table}
 
-\item{discontinued}{this is a meta construct where you can specify your discontinued construct like 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')}
+\item{discontinued}{this is a meta construct where you can specify your discontinued construct like 
+'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')}
 
-\item{discontinued_colname}{this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')}
+\item{discontinued_colname}{this determines the label applied to the discontinued column of your choosing 
+(defaults to 'Discontinued')}
 
-\item{include_exclusive_safety_set}{this is a toggle that will include a exclusive_safety_set construct if you want it included (defaults to FALSE)}
+\item{include_exclusive_safety_set}{this is a toggle that will include a exclusive_safety_set construct 
+if you want it included (defaults to FALSE)}
+
+\item{average}{if days argument is set to something other than 0, will return the average over the
+time period specified for the length of the study}
+
+\item{cumulative_data}{whether to include the final counts of the study statuses}
 }
 \value{
 An HTML table.
 }
 \description{
-Visualizes the number of subjects enrolled, not enrolled etc, with parameter specifications to include more columns. 
+Visualizes the number of subjects enrolled, not enrolled etc, with parameter specifications to include 
+more columns. 
 
 For other enrollment by site visualizations that may better fit your study, please look at: enrollment_by_site, 
 enrollment_by_site_last_days_var_disc, enrollment_status_by_site, enrollment_status_by_site_var_discontinued
 }
 \examples{
 enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble")
-
+enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", days = 20, average = TRUE)
+enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", days = 20, average = FALSE)
+enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", discontinued_colname = 'HERE!')
+enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", average = TRUE)
+enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", cumulative_data = FALSE, average = TRUE)
 }

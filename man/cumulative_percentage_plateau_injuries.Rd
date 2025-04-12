@@ -7,12 +7,13 @@
 cumulative_percentage_plateau_injuries(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, injury_type, enrolled}
+\item{analytic}{analytic data set that must include study_id, injury_type (with a plateau 
+value), enrolled}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the Cumulative percentage for number of patients with Plateau injuries 
-over the period of Year-Months(YYYY-MM, consent_date) out of 100
+Visualizes the percentage of study participant enrollment over time, using the consent_date construct. 
+Only plateau injuries are accounted for.
 }

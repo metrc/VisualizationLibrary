@@ -13,8 +13,9 @@ not_enrolled_reason(analytic)
 An HTML table.
 }
 \description{
-This function visualizes list of study_ids who were are not enrolled, the reasons, and the screening notes
-reasons
+Visualizes list of study_ids who were are not enrolled, the reasons, and the screening notes reasons.
+
+See also: not_enrolled_for_other_reasons, which examines the reasons categorized as 'other'
 }
 \examples{
                     

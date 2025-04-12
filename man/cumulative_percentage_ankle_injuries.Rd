@@ -14,8 +14,8 @@ enrolled}
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-Visualizes the number of study participants over time, using the consent_date construct. Only ankle
-injuries are accounted for.
+Visualizes the percentage of study participant enrollment over time, using the consent_date construct. 
+Only ankle injuries are accounted for.
 }
 \examples{
 cumulative_percentage_ankle_injuries("Replace with Analytic Tibble")
