@@ -26,7 +26,7 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 Visualizes study status data for studies without a definitive event. See functions consort_diagram,
 dsmb_consort_diagram (all types) for related functions. The constructs completed, not_completed, 
 missed_final_followup, and incomplete_final_followup are used in the last stage of the study, which
-can be specified by the final_period function parameter.
+can be labelled by the final_period function parameter.
 }
 \examples{
 consort_diagram_no_definitive_event("Replace with Analytic Tibble")

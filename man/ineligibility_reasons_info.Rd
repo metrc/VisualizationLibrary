@@ -20,6 +20,8 @@ reasons specified in the ineligibility_reasons construct. The output visualizati
 is split up by site, with a total row. Note that the counts are for specific
 reasons, not people, and so will not total the number of participants considered
 ineligible.
+
+Compare with ineligibility_by_reasons.
 }
 \examples{
 ineligibility_reasons_info("Replace with Analytic Tibble")

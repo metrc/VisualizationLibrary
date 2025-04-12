@@ -16,6 +16,9 @@ html table
 \description{
 Visualizes the count of the study statuses for each site, as well as displaying the days the site 
 has been certified.
+
+For other enrollment by site visualizations that may better fit your study, please look at: enrollment_status_by_site_var_discontinued, 
+enrollment_by_site_last_days_var_disc, enrollment_status_by_site
 }
 \examples{
 enrollment_status_by_site("Replace with Analytic Tibble")

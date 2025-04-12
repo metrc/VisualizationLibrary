@@ -14,9 +14,10 @@ An HTML table.
 }
 \description{
 Visualizes the complication_data long file. Data is shown for each grade and type of complication,
-as well as the number of study participants who experienced this complication (in brackets). IF a
+as well as the number of study participants who experienced this complication (in brackets). If a
 study is documenting unique or obscure complications that are not in the example table, then an update 
-to this function is necessary for the study. 
+to this function is necessary for the study. The complications shown in the example table will always
+be present, even if the proposed study is not tracking them.
 
 Grade is determined by the severity column, with 2,1 being Mild or Moderate and 3, 4 being Severe
 and Life-threatening, respectively. Notably, a fatal complication results in a grade Unknown.

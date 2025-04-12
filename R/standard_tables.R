@@ -3,6 +3,9 @@
 #' @description 
 #' Visualizes the count of the study statuses for each site, as well as displaying the days the site 
 #' has been certified.
+#' 
+#' For other enrollment by site visualizations that may better fit your study, please look at: enrollment_status_by_site_var_discontinued, 
+#' enrollment_by_site_last_days_var_disc, enrollment_status_by_site
 #'
 #' @param analytic analytic data set that must include screened, eligible, refused, consented, enrolled, 
 #' not_consented, discontinued_pre_randomization, site_certified_days, facilitycode, late_ineligible
@@ -76,9 +79,10 @@ enrollment_status_by_site <- function(analytic){
 
 #' Number of Subjects Screened, Eligible, Enrolled and Not Enrolled (Variable Discontinued)
 #'
-#' @description This function visualizes the totals of each include construct by site, split into among eligible and among consented.
+#' @description 
+#' Visualizes the totals of each include construct by site, split into among eligible and among consented.
 #' 
-#' #' For other enrollment by site visualizations that may better fit your study, please look at: enrollment_by_site, 
+#' For other enrollment by site visualizations that may better fit your study, refer to: enrollment_by_site, 
 #' enrollment_by_site_last_days_var_disc, enrollment_status_by_site, enrollment_status_by_site_var_discontinued
 #'
 #' @param analytic This is the analytic data set that must include screened, 
@@ -1002,14 +1006,16 @@ not_complete_sae_deviation_by_type <- function(analytic){
 }
 
 
-#' Number of Non-Completing Participants, SAEs, and Protocol Deviations by type with AUTO Protocol Deviation Categorization
+#' Number of Non-Completing Participants, SAEs, and Protocol Deviations by type with AUTO Protocol Deviation 
+#' Categorization
 #'
 #' @description 
-#' Visualizes the number of non-completions, not expected, and SAEs for enrolled participants and Protocol 
-#' Deviations by type for consented participants. Amongst enrolled, counts instances of presence of the
-#' construct not_completed_reason for Not Completed count, not_expected_reason for Not expected count,
-#' and sae_count not being 0 for SAE count. Protocol deviation counts are extracted from the protocol_deviation_full_data
-#' long file, where "Other. . ." values are truncated to "Other."
+#' Visualizes the number of non-completions, not expected, and SAE presences (multiple SAES add only 
+#' one) for enrolled participants and Protocol Deviations by type for consented participants. Amongst 
+#' enrolled, counts instances of presence of the construct not_completed_reason for Not Completed count, 
+#' not_expected_reason for Not expected count, and sae_count not being 0 for SAE count. Protocol deviation 
+#' counts are extracted from the protocol_deviation_full_data long file, where "Other. . ." values are 
+#' truncated to "Other."
 #' 
 #' Categories of protocol deviations are separated by indentation.
 #'
@@ -1342,6 +1348,8 @@ adjudications_and_discontinuations_by_type <- function(analytic){
 #' function will display a user-specified number of reasons broken down, and then collate the rest into
 #' an "Other Reasons" column. Included are two columns depicting numbers of screened and ineligible
 #' study participants.
+#' 
+#' Compare with ineligibility_reasons_info.
 #'
 #' @param analytic analytic data set that must include facilitycode, screened, ineligible, ineligibility_reasons
 #' @param pre_screened when pre_screened is TRUE then uses pre-screening constructs
@@ -1523,9 +1531,10 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
 #'
 #' @description 
 #' Visualizes the complication_data long file. Data is shown for each grade and type of complication,
-#' as well as the number of study participants who experienced this complication (in brackets). IF a
+#' as well as the number of study participants who experienced this complication (in brackets). If a
 #' study is documenting unique or obscure complications that are not in the example table, then an update 
-#' to this function is necessary for the study. 
+#' to this function is necessary for the study. The complications shown in the example table will always
+#' be present, even if the proposed study is not tracking them.
 #' 
 #' Grade is determined by the severity column, with 2,1 being Mild or Moderate and 3, 4 being Severe
 #' and Life-threatening, respectively. Notably, a fatal complication results in a grade Unknown.
@@ -1539,9 +1548,10 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
 #' complications_by_severity_relatedness("Replace with Analytic Tibble")
 #' 
 complications_by_severity_relatedness <- function(analytic){
-  analytic <- if_needed_generate_example_data("Replace with Analytic Tibble",
-                                              example_constructs = "complication_data",
-                                              example_types = "(';new_row: ', '|')FollowupPeriod|Date|NamedCategory['Superficial-infection' 'Deep-Infection' 'Deep-Infection, Not Involving Bone' 'Deep-Infection, Septic Joint' 'Non-Union' 'Malunion' 'Loss of limb/amputation' 'Fixation failure' 'Peri-implant Fracture' 'Reaction to Hardware' 'Wound Dehiscence' 'Wound Seroma/Hematoma' 'Flap failure' 'Tendon Injury' 'Delayed Wound Healing' 'Cellulitis' 'DVT/PE' 'Joint Arthritis' 'Other' 'Other' 'Other' 'Other' 'Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|Character|Character|Date|NamedCategory['Definitely related' 'Probably related' 'Possibly related' 'Unlikely related' 'Unrelated' 'Don't know']|NamedCategory['Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|NamedCategory['Operative' 'Non-operative' 'No treatment']|NamedCategory['New' 'Previous']|Character") 
+  analytic <- if_needed_generate_example_data(
+    "Replace with Analytic Tibble",
+    example_constructs = "complication_data",
+    example_types = "(';new_row: ', '|')FollowupPeriod|Date|NamedCategory['Superficial-infection' 'Deep-Infection' 'Deep-Infection, Not Involving Bone' 'Deep-Infection, Septic Joint' 'Non-Union' 'Malunion' 'Loss of limb/amputation' 'Fixation failure' 'Peri-implant Fracture' 'Reaction to Hardware' 'Wound Dehiscence' 'Wound Seroma/Hematoma' 'Flap failure' 'Tendon Injury' 'Delayed Wound Healing' 'Cellulitis' 'DVT/PE' 'Joint Arthritis' 'Other' 'Other' 'Other' 'Other' 'Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|Character|Character|Date|NamedCategory['Definitely related' 'Probably related' 'Possibly related' 'Unlikely related' 'Unrelated' 'Don't know']|NamedCategory['Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|NamedCategory['Operative' 'Non-operative' 'No treatment']|NamedCategory['New' 'Previous']|Character") 
   
   comp <- analytic %>%  select(study_id, complication_data) %>% 
     filter(!is.na(complication_data))
@@ -1620,8 +1630,6 @@ complications_by_severity_relatedness <- function(analytic){
            Total = paste0(Total_c, "[", Total_id, "]")) %>% 
     select(-ends_with("_id"), -ends_with("_c")) %>% 
     mutate_all(str_replace_all, "0\\[0\\]", "-")
-  
-  
   
   output_overall <- cross_join(summary_comp_sums, summary_id_sums) %>% 
     mutate(Definitely = paste0(Definitely_c, "[", Definitely_id, "]"),
@@ -2344,24 +2352,37 @@ fracture_characteristics <- function(analytic){
 
 #' enrollment_by_site tobra and sextant (var discontinued)
 #'
-#' @description Visualizes the number of subjects enrolled, not enrolled etc, with parameter specifications to include more columns. 
+#' @description 
+#' Visualizes the number of subjects enrolled, not enrolled etc, with parameter specifications to include 
+#' more columns. 
 #' 
 #' For other enrollment by site visualizations that may better fit your study, please look at: enrollment_by_site, 
 #' enrollment_by_site_last_days_var_disc, enrollment_status_by_site, enrollment_status_by_site_var_discontinued
 #'
-#' @param analytic This is the analytic data set that must include screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
-#' facilitycode, screened_date, consented, randomized, consent_date, discontinued
+#' @param analytic This is the analytic data set that must include screened, eligible, refused, not_consented, 
+#' not_randomized, consented_and_randomized, enrolled, site_certified_days, facilitycode, screened_date, 
+#' consented, randomized, consent_date, discontinued
 #' @param days the number of last days to include in the last days summary section of the table
-#' @param discontinued this is a meta construct where you can specify your discontinued construct like 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
-#' @param discontinued_colname this determines the label applied to the discontinued column of your choosing (defaults to 'Discontinued')
-#' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct if you want it included (defaults to FALSE)
+#' @param discontinued this is a meta construct where you can specify your discontinued construct like 
+#' 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
+#' @param discontinued_colname this determines the label applied to the discontinued column of your choosing 
+#' (defaults to 'Discontinued')
+#' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct 
+#' if you want it included (defaults to FALSE)
+#' @param average if days argument is set to something other than 0, will return the average over the
+#' time period specified for the length of the study
+#' @param cumulative_data whether to include the final counts of the study statuses
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble")
-#' 
+#' enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", days = 20, average = TRUE)
+#' enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", days = 20, average = FALSE)
+#' enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", discontinued_colname = 'HERE!')
+#' enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", average = TRUE)
+#' enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", cumulative_data = FALSE, average = TRUE)
 enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, 
                                                   discontinued="discontinued", 
                                                   discontinued_colname="Discontinued", 
@@ -2530,13 +2551,13 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
         last <- last[, c(1, seq(from=4, to=ncol(last)))]
         header_num <- header_num[c(1, 4)]
       }
-    }else{
+    } else {
       if(average == FALSE){
         last <- last[, c(1, 2, 3, 4, seq(from=7, to=ncol(last)))]
         header_num <- header_num[c(1, 2, 4)]
       }
     }
-  }else{
+  } else {
     if(average == FALSE){
       last <- last[, c(seq(from = 1, to = 3*length(days)+1), seq(3*length(days)+4, to=ncol(last)))]
       header_num <- header_num[c(seq(from=1, to=length(days)+1), length(header_num))]
@@ -3230,13 +3251,15 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
 #' @export
 #'
 #' @examples
-#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", "Form 3")
-#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", "Form 3", c("Expected", "Complete", "Incomplete"))
+#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 3")
+#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 3", 
+#'   included_columns = c("Expected", "Complete", "Incomplete"))
 #' 
 followup_form_all_timepoints_by_site <- function(
-    analytic, form_selection = 'Overall', included_columns=c("Not Expected", "Expected", "Complete", 
-                                                             "Early", "Late", 'Missed', 'Not Started', 
-                                                             'Incomplete')){
+    analytic, form_selection = 'Overall', 
+    included_columns=c("Not Expected", "Expected", "Complete", 
+                       "Early", "Late", 'Missed', 'Not Started', 
+                       'Incomplete')){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("facilitycode", "followup_data"), 
@@ -3827,6 +3850,8 @@ enrollment_and_followup_activities_overview <- function(analytic, form_name = 'O
 #' is split up by site, with a total row. Note that the counts are for specific
 #' reasons, not people, and so will not total the number of participants considered
 #' ineligible.
+#' 
+#' Compare with ineligibility_by_reasons.
 #'
 #' @param analytic This is the analytic data set that must include study_id,
 #' facilitycode, screened, ineligible, and ineligibility_reasons
@@ -3841,7 +3866,7 @@ ineligibility_reasons_info <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("facilitycode", "screened", "ineligible", "ineligibility_reasons"), 
-    example_types = c("FacilityCode", "Boolean", "Boolean", "Category-N"))
+    example_types = c("FacilityCode", "Boolean", "Boolean", "Category-NS"))
   
   raw <- analytic %>%
     select(study_id, facilitycode, ineligibility_reasons, screened, ineligible)
@@ -3958,9 +3983,10 @@ ineligibility_reasons_info <- function(analytic){
 #' followup_completion_time_stats("Replace with Analytic Tibble")
 #' 
 followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo'), ortho_timepoints = NULL, form_selection = 'Overall'){
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('time_zero', "followup_data", "enrolled", 'followup_expected_12mo', 'followup_expected_6mo'), 
-                                              example_types = c('Date', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 'Boolean', 'Boolean', 'Boolean'))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('time_zero', "followup_data", "enrolled", 'followup_expected_12mo', 'followup_expected_6mo'), 
+    example_types = c('Date', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 'Boolean', 'Boolean', 'Boolean'))
   
   if (is.null(ortho_timepoints)) {
     ortho_timepoints <- timepoints
@@ -4085,8 +4111,10 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
 
 #' Not enrolled reason
 #'
-#' @description This function visualizes list of study_ids who were are not enrolled, the reasons, and the screening notes
-#' reasons
+#' @description 
+#' Visualizes list of study_ids who were are not enrolled, the reasons, and the screening notes reasons.
+#' 
+#' See also: not_enrolled_for_other_reasons, which examines the reasons categorized as 'other'
 #'
 #' @param analytic This is the analytic data set that must include study_id, facilitycode, study_id, not_enrolled_reason, pre_screened_notes
 #'
@@ -4122,10 +4150,12 @@ not_enrolled_reason <- function(analytic){
 #' Outcome by Site
 #'
 #' @description 
-#' Returns summary statistics on the number of days to complete various follow-up forms.
+#' Returns summary statistics on the number of the time to event data of each site for a specified outcome.
+#' Output column "Percent of Target" comes from dividing the average outcome_days with the average target_days,
+#' and "Percent of Expected" refers to dividing the average outcome_days with the average expected_days.
 #'
-#' @param analytic This is the analytic data set that must include study_id, outcome_data, facilitycode, and enrolled
-#' @param outcome_name the name of the outcome to be considered in the visualization
+#' @param analytic analytic data set that must include study_id, outcome_data, facilitycode, and enrolled
+#' @param outcome_name name of the outcome to be considered in the visualization
 #'
 #' @return An HTML table.
 #' @export
@@ -4134,9 +4164,11 @@ not_enrolled_reason <- function(analytic){
 #' outcome_by_site("Replace with Analytic Tibble", 'test_outcome')
 #' 
 outcome_by_site <- function(analytic, outcome_name) {
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('outcome_data', 'facilitycode', 'enrolled'), 
-                                              example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'FacilityCode', 'Boolean'))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('outcome_data', 'facilitycode', 'enrolled'), 
+    example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'FacilityCode', 'Boolean'))
+  
   # Extract the relevant outcome data
   outcome_data <- analytic %>%
     select(study_id, outcome_data, facilitycode, enrolled) %>%
