@@ -29,6 +29,8 @@ Visualizes the counts of ineligibility reasons (NOT NUMBER OF INELIGIBLE PARTICI
 function will display a user-specified number of reasons broken down, and then collate the rest into
 an "Other Reasons" column. Included are two columns depicting numbers of screened and ineligible
 study participants.
+
+Compare with ineligibility_reasons_info.
 }
 \examples{
 ineligibility_by_reasons("Replace with Analytic Tibble")
