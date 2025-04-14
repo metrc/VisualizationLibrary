@@ -9,7 +9,7 @@ certification_date_data(analytic, exclude_local_irb = FALSE)
 \arguments{
 \item{analytic}{This is the analytic data set that must include site_certified_date}
 
-\item{exclude_local_irb}{defaults to False}
+\item{exclude_local_irb}{whether Local (or iSRB) column is in output, defaults to false}
 }
 \value{
 html table

@@ -17,3 +17,7 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 Visualizes the percentage of study participant enrollment over time, using the consent_date construct. 
 Only plateau injuries are accounted for.
 }
+\examples{
+cumulative_percentage_plateau_injuries("Replace with Analytic Tibble")
+
+}

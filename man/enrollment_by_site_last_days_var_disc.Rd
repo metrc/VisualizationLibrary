@@ -51,5 +51,6 @@ enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", days = 20,
 enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", days = 20, average = FALSE)
 enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", discontinued_colname = 'HERE!')
 enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", average = TRUE)
-enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", cumulative_data = FALSE, average = TRUE)
+print("Note this call does not work, as average is set to true and no days are specified")
+
 }
