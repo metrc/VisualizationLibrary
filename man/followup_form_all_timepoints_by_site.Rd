@@ -28,7 +28,6 @@ look, without a header above the table.
 }
 \examples{
 followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 3")
-followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 3", 
-  included_columns = c("Expected", "Complete", "Incomplete"))
+followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 3", included_columns = c("Expected", "Complete", "Incomplete"))
 
 }

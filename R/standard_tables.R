@@ -3253,8 +3253,7 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
 #'
 #' @examples
 #' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 3")
-#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 3", 
-#'   included_columns = c("Expected", "Complete", "Incomplete"))
+#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 3", included_columns = c("Expected", "Complete", "Incomplete"))
 #' 
 followup_form_all_timepoints_by_site <- function(
     analytic, form_selection = 'Overall', 
@@ -3556,7 +3555,7 @@ followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = N
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', "followup_data"), 
-    example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
+    example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
