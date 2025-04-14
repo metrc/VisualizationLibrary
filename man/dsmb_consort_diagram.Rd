@@ -26,7 +26,7 @@ refused).}
 
 \item{late_inelgible}{construct used for the count in the late ineligible box}
 
-\item{late_inelgible_str}{label used for the late ineligible box}
+\item{late_inelgible_str}{labels the not expected box as adjudicated}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
@@ -40,5 +40,7 @@ dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram.
 }
 \examples{
 dsmb_consort_diagram("Replace with Analytic Tibble")
+dsmb_consort_diagram("Replace with Analytic Tibble", late_ineligible = 'test', late_ineligible_str = "Test Column", 
+  not_expected_adjudicated = TRUE)
 
 }
