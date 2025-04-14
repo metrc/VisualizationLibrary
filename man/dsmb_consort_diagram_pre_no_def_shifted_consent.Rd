@@ -11,12 +11,13 @@ dsmb_consort_diagram_pre_no_def_shifted_consent(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
+\item{analytic}{analytic data set that must include pre_screened, pre_eligible, screened, eligible,
 consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
 
-\item{final_period}{Defaults to 12 Month}
+\item{final_period}{labels the final follow-up period box, defaults to "12 Month"}
 
-\item{adjudicated}{whether to use adjudicated discontinued and not expected}
+\item{adjudicated}{whether to use construct adjudicated_discontinued instead of discontinued and 
+labels it as such}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.

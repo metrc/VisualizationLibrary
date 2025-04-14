@@ -19,5 +19,6 @@ This function visualizes the count of enrollment for each site.
 }
 \examples{
 enrollment_by_site("Replace with Analytic Tibble")
+enrollment_by_site("Replace with Analytic Tibble", number_order = TRUE)
 
 }
