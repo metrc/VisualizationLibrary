@@ -14,13 +14,15 @@
 #' refused).
 #' @param final_period string specifying the label for the completion status box. Defaults to "12-month".
 #' @param late_inelgible construct used for the count in the late ineligible box
-#' @param late_inelgible_str label used for the late ineligible box
+#' @param late_inelgible_str labels the not expected box as adjudicated
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
 #'
 #' @examples
 #' dsmb_consort_diagram("Replace with Analytic Tibble")
+#' dsmb_consort_diagram("Replace with Analytic Tibble", late_ineligible = 'test', late_ineligible_str = "Test Column", 
+#'   not_expected_adjudicated = TRUE)
 #' 
 dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period = '12 Month', late_ineligible="late_ineligible", 
                                  late_ineligible_str="Late Ineligible", not_expected_adjudicated=FALSE){
@@ -29,10 +31,10 @@ dsmb_consort_diagram <- function(analytic, not_enrolled_other=NULL, final_period
     example_constructs = c('screened', 'eligible', 'consented', 'refused', 'discontinued_pre_randomization', 
                            'randomized', 'late_ineligible',
                            'enrolled', 'completed', 'not_completed', 'not_expected', 
-                           'active', 'missed_final_followup', 'incomplete_final_followup'),
+                           'active', 'missed_final_followup', 'incomplete_final_followup', 'test'),
     example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 
                       'Boolean', 'Boolean',
-                      'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean'))
+                      'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean'))
 
   analytic <- analytic %>% 
   filter(screened == TRUE) 
@@ -457,10 +459,11 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
 #' dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
 #' dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram. 
 #'
-#' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, screened, eligible,
+#' @param analytic analytic data set that must include pre_screened, pre_eligible, screened, eligible,
 #' consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
-#' @param final_period Defaults to 12 Month
-#' @param adjudicated whether to use adjudicated discontinued and not expected
+#' @param final_period labels the final follow-up period box, defaults to "12 Month"
+#' @param adjudicated whether to use construct adjudicated_discontinued instead of discontinued and 
+#' labels it as such
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
@@ -636,9 +639,11 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
     analytic,
     example_constructs = c('pre_screened', 'pre_eligible', 'screened', 'eligible', 'consented', 'not_consented', 
                            'randomized', 'enrolled', 'refused', 'completed', 'not_completed', 'not_expected', 
-                           'active', 'missed_final_followup', 'incomplete_final_followup', 'discontinued'),
+                           'active', 'missed_final_followup', 'incomplete_final_followup', 'discontinued',
+                           'time_zero', 'incomplete'),
     example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean',
-                      'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean'))
+                      'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean',
+                      'Date', 'Boolean'))
 
   pre_analytic <- analytic %>% 
     filter(pre_screened == TRUE)
@@ -845,7 +850,7 @@ cumulative_percentage_ankle_injuries <- function(analytic){
 #' @export
 #'
 #' @examples
-#' cumulative_percentage_plateau_injuries("Replace with Analytic Tibble)
+#' cumulative_percentage_plateau_injuries("Replace with Analytic Tibble")
 #' 
 cumulative_percentage_plateau_injuries <- function(analytic){
   analytic <- if_needed_generate_example_data(
@@ -892,7 +897,11 @@ cumulative_percentage_plateau_injuries <- function(analytic){
 
 #' Enrollment of subjects for ankle and plateau injuries by each site
 #'
-#' @description Visualizes the enrollment by each site for each injury_type, in bar chart, with bars including all injury types, colored to differentiate.
+#' @description 
+#' Visualizes the enrollment by each site for each injury_type, in split bar chart with
+#' each section of the bar indicating injury type.
+#' 
+#' NOTE: Currently, this function only works if injury_type only includes plateau and ankle injuries
 #'
 #' @param analytic This is the analytic data set that must include study_id, injury_type, enrolled, facilitycode
 #'
@@ -947,6 +956,7 @@ enrollment_by_injury_and_site <- function(analytic){
 #'
 #' @examples
 #' enrollment_by_site("Replace with Analytic Tibble")
+#' enrollment_by_site("Replace with Analytic Tibble", number_order = TRUE)
 #' 
 enrollment_by_site <- function(analytic, number_order = FALSE){
   analytic <- if_needed_generate_example_data(
@@ -988,9 +998,10 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #' @description This function visualizes the cumulative number of patients enrolled, by month.
 #'
 #' @param analytic This is the analytic data set that must include study_id, enrolled, consent_date
-#' @param bar_mode set to TRUE to remove the line
-#' @param goal sets the y axis
-#' @param goal_percent if goal is supplied then sets the bar height to percent
+#' @param bar_mode if false, uses a line to indicate total enrollment, and bars to indicate enrollment
+#' change
+#' @param goal number, the goal of enrollment
+#' @param goal_percent if goal is supplied then sets the y axis label to percent
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
@@ -998,6 +1009,8 @@ enrollment_by_site <- function(analytic, number_order = FALSE){
 #' @examples
 #' cumulative_enrolled("Replace with Analytic Tibble")
 #' cumulative_enrolled("Replace with Analytic Tibble", bar_mode=TRUE)
+#' cumulative_enrolled("Replace with Analytic Tibble", goal = 1000)
+#' cumulative_enrolled("Replace with Analytic Tibble", goal = 1000, goal_percent = TRUE)
 #' 
 cumulative_enrolled <- function(analytic, bar_mode=FALSE, goal=NULL, goal_percent=FALSE){
   analytic <- if_needed_generate_example_data(analytic, 
@@ -1121,7 +1134,7 @@ discrete_enrolled <- function(analytic){
 #' @description 
 #' Visualizes the distribution of the number of days recorded across the study in the ih_los_days construct.
 #'
-#' @param analytic This is the analytic data set that must include study_id, ih_los_days
+#' @param analytic analytic data set that must include study_id, ih_los_days
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
@@ -1182,7 +1195,8 @@ cumulative_enrolled_los <- function(analytic){
 #' @export
 #'
 #' @examples
-#' cumulative_enrollment_goals("Replace with Analytic Tibble", "01-01-2025", "12-31-2026", 500)
+#' cumulative_enrollment_goals("Replace with Analytic Tibble", start_date = "01-01-2025", end_date = "12-31-2026", 
+#'   participant_goal = 500)
 #' 
 cumulative_enrollment_goals <- function(analytic, start_date, end_date, participant_goal){
   analytic <- if_needed_generate_example_data(analytic, 
@@ -1233,19 +1247,22 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 
 #' Consort Diagram
 #'
-#' @description This function visualizes the categorical percentages of study status as well as followup completions. 
+#' @description 
+#' Visualizes the categorical percentages of study status as well as followup completions. 
 #' Consort diagrams are almost fully customizable in their implementation. 
 #' 
-#' For other consort diagrams that may better fit your study, refer to: consort_diagram, consort_diagram_no_definitive_event, 
+#' For other consort diagrams that may better fit your study, refer to: consort_diagram_no_definitive_event, 
 #' dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
 #' dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram. 
 #'
-#' @param analytic This is the analytic data set that must include study_id, screened, ineligible, eligible,
+#' @param analytic analytic data set that must include study_id, screened, ineligible, eligible,
 #' refused, consented, randomized, enrolled, time_zero, adjudicated_discontinued, completed, 
 #' safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
-#' @param final_period Defaults to 12 Month
-#' @param definitive_event Event either DF or DWC
-#' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated
+#' @param final_period visual label of period of study completion, defaults to "12 Month"
+#' @param definitive_event visual label of definitive event, defaults to "Definitive Fixation Complete" 
+#' (attached to the count of the df_complete field)
+#' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated, purely visual
+#' change
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export

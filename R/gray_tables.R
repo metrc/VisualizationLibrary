@@ -7,7 +7,7 @@
 #' @param analytic analytic data set that must include enrolled, df_surg_completed, ih_discharge_date, 
 #' crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
 #'
-#' @return nothing
+#' @return HTML table
 #' @export
 #'
 #' @examples

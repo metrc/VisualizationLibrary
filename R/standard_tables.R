@@ -1480,7 +1480,7 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
 #' certified by MCC to start screening, Number of days certified. To run this visualization a study needs qa site_certified_date long file.
 #'
 #' @param analytic This is the analytic data set that must include site_certified_date
-#' @param exclude_local_irb defaults to False
+#' @param exclude_local_irb whether Local (or iSRB) column is in output, defaults to false
 #'
 #' @return html table
 #' @export
@@ -2382,7 +2382,8 @@ fracture_characteristics <- function(analytic){
 #' enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", days = 20, average = FALSE)
 #' enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", discontinued_colname = 'HERE!')
 #' enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", average = TRUE)
-#' enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", cumulative_data = FALSE, average = TRUE)
+#' print("Note this call does not work, as average is set to true and no days are specified")
+#' 
 enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, 
                                                   discontinued="discontinued", 
                                                   discontinued_colname="Discontinued", 
@@ -3252,8 +3253,7 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
 #'
 #' @examples
 #' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 3")
-#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 3", 
-#'   included_columns = c("Expected", "Complete", "Incomplete"))
+#' followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 3", included_columns = c("Expected", "Complete", "Incomplete"))
 #' 
 followup_form_all_timepoints_by_site <- function(
     analytic, form_selection = 'Overall', 
@@ -3555,7 +3555,7 @@ followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = N
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', "followup_data"), 
-    example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
+    example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"))
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 

@@ -7,7 +7,7 @@
 cumulative_enrolled_los(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, ih_los_days}
+\item{analytic}{analytic data set that must include study_id, ih_los_days}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
