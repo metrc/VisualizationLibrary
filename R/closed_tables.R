@@ -1340,8 +1340,8 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
 #'
 #' @description This function returns a list of sites and their dates of
 #' local, DOD, and METRC certifications by treatment arm
-#' 
-#' NOTE: This is a closed version of certification_date_data, request if certification_date_data is present in your study. 
+#'
+#' NOTE: This is a closed version of certification_date_data, request if certification_date_data is present in your study.
 #' See certification_date_data for more information.
 #'
 #' @param analytic This is the analytic data set that must include site_certified_date
@@ -1351,7 +1351,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
 #'
 #' @examples
 #' closed_certification_date_data("Replace with Analytic Tibble")
-#' 
+#'
 closed_certification_date_data <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 

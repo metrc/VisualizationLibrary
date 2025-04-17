@@ -168,8 +168,11 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #'
 #' @description 
 #' This function visualizes Ankle and Plateau X-Ray and Measurement Status.
+#' 
+#' NOTE: this function is very unlikely to work with your study, check the construct requirements in
+#' the analytic parameter.
 #'
-#' @param analytic This is the analytic data set that must include followup_expected_6wk,followup_expected_3mo,followup_expected_6mo, 
+#' @param analytic analytic data set that must include followup_expected_6wk,followup_expected_3mo,followup_expected_6mo, 
 #' followup_expected_12mo,injury_type,followup_data,radiographs_taken_6wk, 
 #' radiographs_taken_3mo,radiographs_taken_6mo,plat_tib_fib_overlap_6mo, 
 #' plat_sagittal_pl_alignment_6mo, plat_patella_centered_6mo, plat_medial_prox_tibia_deg_6mo, 
@@ -573,7 +576,8 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #' analysis outputs. You may also specify the levels that these outputs have in the function call. 
 #' Outputs two columns: type (sex, age, race, education, military), and their respective counts and percentages.
 #'
-#' @param analytic This is the analytic data set that must include enrolled, age, age_group
+#' @param analytic analytic data set that must include enrolled, age, age_group, and the constructs specified
+#' in the following parameters.
 #' @param sex is a meta construct that is required that defaults to "sex"
 #' @param race is a meta construct that is required that defaults to "ethnicity_race"
 #' @param education is a meta construct that is required that defaults to "education_level"
@@ -588,12 +592,15 @@ injury_ankle_plateau_characteristics <- function(analytic){
 #'
 #' @examples
 #' baseline_characteristics_percent("Replace with Analytic Tibble")
+#' baseline_characteristics_percent_nm("Replace with Analytic Tibble", race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Asian / Pacific Islander", "Other", "Missing"))
+#' baseline_characteristics_percent_nm("Replace with Analytic Tibble", sex_levels=c("Male", "Female", "Missing"))
 #' 
-baseline_characteristics_percent <- function(analytic, sex="sex", race="ethnicity_race", education="education_level", military="military_status",
-                                             sex_levels=c("Female","Male", "Missing"), 
-                                             race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
-                                             education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
-                                             military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
+baseline_characteristics_percent <- function(
+    analytic, sex="sex", race="ethnicity_race", education="education_level", military="military_status",
+    sex_levels=c("Female","Male", "Missing"), 
+    race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"), 
+    education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"), 
+    military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing")){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("sex", "ethnicity_race", "education_level", 'military_status', "age", "age_group", 
@@ -1551,7 +1558,11 @@ complications_by_severity_relatedness <- function(analytic){
   analytic <- if_needed_generate_example_data(
     "Replace with Analytic Tibble",
     example_constructs = "complication_data",
-    example_types = "(';new_row: ', '|')FollowupPeriod|Date|NamedCategory['Superficial-infection' 'Deep-Infection' 'Deep-Infection, Not Involving Bone' 'Deep-Infection, Septic Joint' 'Non-Union' 'Malunion' 'Loss of limb/amputation' 'Fixation failure' 'Peri-implant Fracture' 'Reaction to Hardware' 'Wound Dehiscence' 'Wound Seroma/Hematoma' 'Flap failure' 'Tendon Injury' 'Delayed Wound Healing' 'Cellulitis' 'DVT/PE' 'Joint Arthritis' 'Other' 'Other' 'Other' 'Other' 'Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|Character|Character|Date|NamedCategory['Definitely related' 'Probably related' 'Possibly related' 'Unlikely related' 'Unrelated' 'Don't know']|NamedCategory['Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|NamedCategory['Operative' 'Non-operative' 'No treatment']|NamedCategory['New' 'Previous']|Character") 
+    example_types = "(';new_row: ', '|')FollowupPeriod|Date|
+      NamedCategory['Superficial-infection' 'Deep-Infection' 'Deep-Infection, Not Involving Bone' 'Deep-Infection, Septic Joint' 'Non-Union' 'Malunion' 'Loss of limb/amputation' 'Fixation failure' 'Peri-implant Fracture' 'Reaction to Hardware' 'Wound Dehiscence' 'Wound Seroma/Hematoma' 'Flap failure' 'Tendon Injury' 'Delayed Wound Healing' 'Cellulitis' 'DVT/PE' 'Joint Arthritis' 'Other' 'Other' 'Other' 'Other' 'Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|
+      Character|Character|Date|
+      NamedCategory['Definitely related' 'Probably related' 'Possibly related' 'Unlikely related' 'Unrelated' 'Don't know']|NamedCategory['Moderate' 'Mild' 'Life-threatening or disabling' 'Severe and Undesirable' 'Fatal']|NamedCategory['Operative' 'Non-operative' 'No treatment']|
+      NamedCategory['New' 'Previous']|Character") 
   
   comp <- analytic %>%  select(study_id, complication_data) %>% 
     filter(!is.na(complication_data))
@@ -1596,7 +1607,7 @@ complications_by_severity_relatedness <- function(analytic){
     group_by(severity, complications) %>% 
     summarise(Definitely_c = sum(Definitely, na.rm = T), Possibly_c = sum(Possibly, na.rm = T), 
               Probably_c = sum(Probably, na.rm = T), Unlikely_c = sum(Unlikely, na.rm = T), 
-              Unrelated_c = sum(Unrelated, na.rm = T), Unknown_c = sum(Unknown, na.rm = T), 
+              Unrelated_c = sum(Unrelated, na.rm = T), Unknown_c = sum(Unknown, na.rm = T), #TODO: Pretty sure this should be `Don't Know`, not Unknown
               Total_c = n()) %>% 
     ungroup() 
   
