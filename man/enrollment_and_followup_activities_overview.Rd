@@ -7,7 +7,7 @@
 enrollment_and_followup_activities_overview(analytic, form_name = "Overall")
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, followup_data,
+\item{analytic}{analytic data set that must include study_id, followup_data,
 facilitycode, screened, enrolled, eligible, screened_date}
 
 \item{form_name}{The exact name (specified in followup_data) that you want
@@ -20,7 +20,6 @@ An HTML table.
 Returns the screened, overall, and follow-up data, separated by sites
 }
 \examples{
-\dontrun{
-enrollment_and_followup_activities_overview()
-}
+enrollment_and_followup_activities_overview("Replace with Analytic Tibble")
+
 }
