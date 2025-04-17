@@ -1770,15 +1770,15 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
 #'
 #' @examples
 #' outcome_by_id("Replace with Analytic Tibble", "test_outcome")
+#' outcome_by_id("Replace with Analytic Tibble", "test_outcome", random_sample = TRUE, facilitycodes = c('AAA', 'AAB'))
 #' 
 outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilitycodes = NULL) {
-  analytic <- if_needed_generate_example_data(analytic, 
-                                              example_constructs = c('outcome_data', 'enrolled', 'time_zero', 'facilitycode', 'events_data'), 
-                                              example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date",
-                                                                'Boolean',
-                                                                'Date',
-                                                                'FacilityCode',
-                                                                "(';', ',')Period|NamedCategory['test_outcome']|Form|NamedCategory['check' 'event']|Date"))
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('outcome_data', 'enrolled', 'time_zero', 'facilitycode', 'events_data'), 
+    example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date",
+                      'Boolean','Date','FacilityCode',
+                      "(';', ',')Period|NamedCategory['test_outcome']|Form|NamedCategory['check' 'event']|Date"))
   
   
   # Check if required columns exist
