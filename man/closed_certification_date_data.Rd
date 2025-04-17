@@ -16,7 +16,7 @@ An HTML table.
 This function returns a list of sites and their dates of
 local, DOD, and METRC certifications by treatment arm
 
-NOTE: This is a closed version of certification_date_data, request if certification_date_data is present in your study. 
+NOTE: This is a closed version of certification_date_data, request if certification_date_data is present in your study.
 See certification_date_data for more information.
 }
 \examples{
