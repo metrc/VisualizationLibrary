@@ -19,7 +19,8 @@ baseline_characteristics_percent(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include enrolled, age, age_group}
+\item{analytic}{analytic data set that must include enrolled, age, age_group, and the constructs specified
+in the following parameters.}
 
 \item{sex}{is a meta construct that is required that defaults to "sex"}
 
@@ -48,5 +49,7 @@ Outputs two columns: type (sex, age, race, education, military), and their respe
 }
 \examples{
 baseline_characteristics_percent("Replace with Analytic Tibble")
+baseline_characteristics_percent_nm("Replace with Analytic Tibble", race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Asian / Pacific Islander", "Other", "Missing"))
+baseline_characteristics_percent_nm("Replace with Analytic Tibble", sex_levels=c("Male", "Female", "Missing"))
 
 }

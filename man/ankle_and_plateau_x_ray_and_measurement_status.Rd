@@ -7,7 +7,7 @@
 ankle_and_plateau_x_ray_and_measurement_status(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include followup_expected_6wk,followup_expected_3mo,followup_expected_6mo, 
+\item{analytic}{analytic data set that must include followup_expected_6wk,followup_expected_3mo,followup_expected_6mo, 
 followup_expected_12mo,injury_type,followup_data,radiographs_taken_6wk, 
 radiographs_taken_3mo,radiographs_taken_6mo,plat_tib_fib_overlap_6mo, 
 plat_sagittal_pl_alignment_6mo, plat_patella_centered_6mo, plat_medial_prox_tibia_deg_6mo, 
@@ -28,6 +28,9 @@ An HTML table.
 }
 \description{
 This function visualizes Ankle and Plateau X-Ray and Measurement Status.
+
+NOTE: this function is very unlikely to work with your study, check the construct requirements in
+the analytic parameter.
 }
 \examples{
 \dontrun{

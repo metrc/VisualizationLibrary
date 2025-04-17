@@ -117,6 +117,159 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
   return(table_raw)
 }
 
+#' Closed Injury Characteristics
+#'
+#' @description Visualizes the certain injury characteristics for study participants study injuries by treatment arm
+#' 
+#' This is a closed version of injury_characteristics_by_alternate_constructs, request if injury_characteristics_by_alternate_constructs is present in your study. 
+#' See injury_characteristics_by_alternate_constructs for more information.
+#'
+#' @param analytic This is the analytic data set that must include enrolled, treatment_arm, injury_classification_ankle_ao, injury_at_work, injury_in_battle,
+#' injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type
+
+#' @return html table
+#' @export
+#'
+#' @examples
+#' closed_injury_characteristics_by_alternate_constructs("Replace with Analytic Tibble")
+#' 
+closed_injury_characteristics_by_alternate_constructs <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('enrolled', 'treatment_arm', 'injury_classification_ankle_ao', 
+                           'injury_at_work', 'injury_in_battle', 
+                           'injury_in_blast', 'injury_date', 'injury_mechanism', 
+                           'injury_side', 'injury_classification_tscherne', 'injury_type'), 
+    example_types = c('Boolean', 'TreatmentArm', 'Category', 'Boolean', 'Boolean', 
+                      "NamedCategory['Yes' 'No' 'Missing']", 'Date', 'Category', 
+                      "NamedCategory['Left' 'Right' 'Missing']", 'Category', 
+                      "NamedCategory['Blunt' 'Penetrating' 'Missing']"))
+  
+  inner_injury_characteristics_by_alternate_constructs <- function(df) {
+    total <- sum(df$enrolled)
+    type_df <- df %>% 
+      mutate(injury_type = replace_na(injury_type, "Missing")) %>% 
+      group_by(injury_type) %>% 
+      count(injury_type) %>% 
+      mutate(percentage = format_count_percent(n, total)) %>% 
+      rename(type = injury_type) %>% 
+      select(-n) %>% 
+      arrange(factor(type, levels = c('Blunt', 'Penetrating', 'Missing')))
+    
+    work_df <- df %>% 
+      mutate(injury_at_work = as.character(injury_at_work)) %>% 
+      mutate(injury_at_work = replace_na(injury_at_work, "Missing")) %>% 
+      count(injury_at_work) %>% 
+      mutate(percentage = format_count_percent(n, total)) %>% 
+      rename(type = injury_at_work) %>% 
+      select(-n) %>% 
+      mutate(type = case_when(
+        type == TRUE  ~ "Yes",
+        type == FALSE ~ "No",
+        type == 'Missing' ~ 'Missing')) %>%  
+      arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
+    
+    battle_df <- df %>% 
+      mutate(injury_in_battle = as.character(injury_in_battle)) %>% 
+      mutate(injury_in_battle = replace_na(injury_in_battle, "Missing")) %>% 
+      group_by(injury_in_battle) %>% 
+      count(injury_in_battle) %>% 
+      mutate(percentage = format_count_percent(n, total)) %>% 
+      rename(type = injury_in_battle) %>% 
+      select(-n) %>% 
+      mutate(type = case_when(
+        type == TRUE  ~ "Yes",
+        type == FALSE ~ "No",
+        type == 'Missing' ~ 'Missing')) %>% 
+      arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
+    
+    blast_df <- df %>% 
+      mutate(injury_in_blast = as.character(injury_in_blast)) %>% 
+      mutate(injury_in_blast = replace_na(injury_in_blast, "Missing")) %>% 
+      group_by(injury_in_blast) %>% 
+      count(injury_in_blast) %>% 
+      mutate(percentage = format_count_percent(n, total)) %>% 
+      rename(type = injury_in_blast) %>% 
+      select(-n) %>% 
+      arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
+    
+    side_df <- df %>% 
+      mutate(injury_side = as.character(injury_side)) %>% 
+      mutate(injury_side = replace_na(injury_side, "Missing")) %>% 
+      group_by(injury_side) %>% 
+      count(injury_side) %>% 
+      mutate(percentage = format_count_percent(n, total)) %>% 
+      rename(type = injury_side) %>% 
+      select(-n) %>% 
+      arrange(factor(type, levels = c('Left', 'Right', 'Missing')))
+    
+    tscherne_df <- df %>% 
+      mutate(injury_classification_tscherne = as.character(injury_classification_tscherne)) %>% 
+      mutate(injury_classification_tscherne = replace_na(injury_classification_tscherne, "Missing")) %>% 
+      group_by(injury_classification_tscherne) %>% 
+      count(injury_classification_tscherne) %>% 
+      mutate(percentage = format_count_percent(n, total)) %>% 
+      rename(type = injury_classification_tscherne) %>% 
+      select(-n)
+    
+    ao_df <- df %>% 
+      mutate(injury_classification_ankle_ao = as.character(injury_classification_ankle_ao)) %>% 
+      mutate(injury_classification_ankle_ao = replace_na(injury_classification_ankle_ao, "Missing")) %>% 
+      group_by(injury_classification_ankle_ao) %>% 
+      count(injury_classification_ankle_ao) %>% 
+      mutate(percentage = format_count_percent(n, total)) %>% 
+      rename(type = injury_classification_ankle_ao) %>% 
+      select(-n)
+    
+    df_final <- rbind(type_df, work_df, battle_df, blast_df, side_df, tscherne_df, ao_df) %>% 
+      mutate_all(replace_na, "0 (0%)")
+    
+    df_final
+  }
+  
+  df <- analytic %>%
+    filter(enrolled) %>%
+    select(enrolled, treatment_arm, injury_classification_ankle_ao, injury_at_work, injury_in_battle,
+           injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type)
+  
+  total <- sum(df$enrolled)
+  
+  df_a <- df %>% filter(treatment_arm == "Group A")
+  df_b <- df %>% filter(treatment_arm == "Group B")
+  
+  df_final_a <- inner_injury_characteristics_by_alternate_constructs(df_a)
+  df_final_b <- inner_injury_characteristics_by_alternate_constructs(df_b)
+  df_final_full <- inner_injury_characteristics_by_alternate_constructs(df)
+  
+  df_table <- cbind(df_final_a, df_final_b, df_final_full) %>%
+    select(type...1, percentage...2, percentage...4, percentage...6) %>% 
+    rename(type = type...1,
+           "percentage (Group A)" = percentage...2, 
+           "percentage (Group B)" = percentage...4,
+           "percentage" = percentage...6)
+  
+  cnames <- c(' ', paste('Group A (n=', sum(df_a$enrolled), ')'),
+              paste('Group B (n=', sum(df_b$enrolled), ')'),
+              paste('Overall (n=', total, ')'))
+  header <- c(1,1)
+  names(header) <- cnames
+  
+  vis <- kable(df_table, format="html", align='l',  col.names = cnames) %>%
+    pack_rows(index = c('Type of Injury' = nrow(df_table %>% filter(str_detect(type, "Blunt|Penetrating|Missing"))),
+                        'Work Related Injury' = nrow(df_table %>% filter(str_detect(type, "Yes|No"))),
+                        'Battlefield Injury' = nrow(df_table %>% filter(str_detect(type, "Yes|No"))),
+                        'Blast Injury' = nrow(df_table %>% filter(str_detect(type, "Yes|No"))),
+                        
+                        'Side of Study Injury' = nrow(df_table %>% filter(str_detect(type, "Left|Right|Missing"))),
+                        'Tscherne Classification' = nrow(df_table %>% filter(str_detect(type, "Tscherne|N/A"))),
+                        'AO Classification' = nrow(df_table %>% filter(str_detect(type, "44|43")))),
+              label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = F, position="left")
+  
+  return(vis)
+}
+
+
 #' Closed Baseline Characteristics Percent 
 #'
 #' @description This function visualizes the categorical percentages of baseline characteristics sex, age, race, education, and military.
@@ -1340,8 +1493,8 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
 #'
 #' @description This function returns a list of sites and their dates of
 #' local, DOD, and METRC certifications by treatment arm
-#' 
-#' NOTE: This is a closed version of certification_date_data, request if certification_date_data is present in your study. 
+#'
+#' NOTE: This is a closed version of certification_date_data, request if certification_date_data is present in your study.
 #' See certification_date_data for more information.
 #'
 #' @param analytic This is the analytic data set that must include site_certified_date
@@ -1351,7 +1504,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
 #'
 #' @examples
 #' closed_certification_date_data("Replace with Analytic Tibble")
-#' 
+#'
 closed_certification_date_data <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -1379,158 +1532,6 @@ closed_certification_date_data <- function(analytic){
   vis <- bind_rows(df_a, df_b) %>%
     kable(align='l') %>%
     add_header_above(c(" " = 1, format="html", "Group A" = 4, "Group B" = 4)) %>%
-    kable_styling("striped", full_width = F, position="left")
-  
-  return(vis)
-}
-
-#' Closed Injury Characteristics
-#'
-#' @description Visualizes the certain injury characteristics for study participants study injuries by treatment arm
-#' 
-#' This is a closed version of injury_characteristics_by_alternate_constructs, request if injury_characteristics_by_alternate_constructs is present in your study. 
-#' See injury_characteristics_by_alternate_constructs for more information.
-#'
-#' @param analytic This is the analytic data set that must include enrolled, treatment_arm, injury_classification_ankle_ao, injury_at_work, injury_in_battle,
-#' injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type
-
-#' @return html table
-#' @export
-#'
-#' @examples
-#' closed_injury_characteristics_by_alternate_constructs("Replace with Analytic Tibble")
-#' 
-closed_injury_characteristics_by_alternate_constructs <- function(analytic){
-  analytic <- if_needed_generate_example_data(
-    analytic, 
-    example_constructs = c('enrolled', 'treatment_arm', 'injury_classification_ankle_ao', 
-                           'injury_at_work', 'injury_in_battle', 
-                           'injury_in_blast', 'injury_date', 'injury_mechanism', 
-                           'injury_side', 'injury_classification_tscherne', 'injury_type'), 
-    example_types = c('Boolean', 'TreatmentArm', 'Category', 'Boolean', 'Boolean', 
-                      "NamedCategory['Yes' 'No' 'Missing']", 'Date', 'Category', 
-                      "NamedCategory['Left' 'Right' 'Missing']", 'Category', 
-                      "NamedCategory['Blunt' 'Penetrating' 'Missing']"))
-
-  inner_injury_characteristics_by_alternate_constructs <- function(df) {
-    total <- sum(df$enrolled)
-    type_df <- df %>% 
-      mutate(injury_type = replace_na(injury_type, "Missing")) %>% 
-      group_by(injury_type) %>% 
-      count(injury_type) %>% 
-      mutate(percentage = format_count_percent(n, total)) %>% 
-      rename(type = injury_type) %>% 
-      select(-n) %>% 
-      arrange(factor(type, levels = c('Blunt', 'Penetrating', 'Missing')))
-    
-    work_df <- df %>% 
-      mutate(injury_at_work = as.character(injury_at_work)) %>% 
-      mutate(injury_at_work = replace_na(injury_at_work, "Missing")) %>% 
-      count(injury_at_work) %>% 
-      mutate(percentage = format_count_percent(n, total)) %>% 
-      rename(type = injury_at_work) %>% 
-      select(-n) %>% 
-      mutate(type = case_when(
-        type == TRUE  ~ "Yes",
-        type == FALSE ~ "No",
-        type == 'Missing' ~ 'Missing')) %>%  
-      arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
-    
-    battle_df <- df %>% 
-      mutate(injury_in_battle = as.character(injury_in_battle)) %>% 
-      mutate(injury_in_battle = replace_na(injury_in_battle, "Missing")) %>% 
-      group_by(injury_in_battle) %>% 
-      count(injury_in_battle) %>% 
-      mutate(percentage = format_count_percent(n, total)) %>% 
-      rename(type = injury_in_battle) %>% 
-      select(-n) %>% 
-      mutate(type = case_when(
-        type == TRUE  ~ "Yes",
-        type == FALSE ~ "No",
-        type == 'Missing' ~ 'Missing')) %>% 
-      arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
-    
-    blast_df <- df %>% 
-      mutate(injury_in_blast = as.character(injury_in_blast)) %>% 
-      mutate(injury_in_blast = replace_na(injury_in_blast, "Missing")) %>% 
-      group_by(injury_in_blast) %>% 
-      count(injury_in_blast) %>% 
-      mutate(percentage = format_count_percent(n, total)) %>% 
-      rename(type = injury_in_blast) %>% 
-      select(-n) %>% 
-      arrange(factor(type, levels = c('Yes', 'No', 'Missing')))
-    
-    side_df <- df %>% 
-      mutate(injury_side = as.character(injury_side)) %>% 
-      mutate(injury_side = replace_na(injury_side, "Missing")) %>% 
-      group_by(injury_side) %>% 
-      count(injury_side) %>% 
-      mutate(percentage = format_count_percent(n, total)) %>% 
-      rename(type = injury_side) %>% 
-      select(-n) %>% 
-      arrange(factor(type, levels = c('Left', 'Right', 'Missing')))
-    
-    tscherne_df <- df %>% 
-      mutate(injury_classification_tscherne = as.character(injury_classification_tscherne)) %>% 
-      mutate(injury_classification_tscherne = replace_na(injury_classification_tscherne, "Missing")) %>% 
-      group_by(injury_classification_tscherne) %>% 
-      count(injury_classification_tscherne) %>% 
-      mutate(percentage = format_count_percent(n, total)) %>% 
-      rename(type = injury_classification_tscherne) %>% 
-      select(-n)
-    
-    ao_df <- df %>% 
-      mutate(injury_classification_ankle_ao = as.character(injury_classification_ankle_ao)) %>% 
-      mutate(injury_classification_ankle_ao = replace_na(injury_classification_ankle_ao, "Missing")) %>% 
-      group_by(injury_classification_ankle_ao) %>% 
-      count(injury_classification_ankle_ao) %>% 
-      mutate(percentage = format_count_percent(n, total)) %>% 
-      rename(type = injury_classification_ankle_ao) %>% 
-      select(-n)
-    
-    df_final <- rbind(type_df, work_df, battle_df, blast_df, side_df, tscherne_df, ao_df) %>% 
-      mutate_all(replace_na, "0 (0%)")
-    
-    df_final
-  }
-  
-  df <- analytic %>%
-    filter(enrolled) %>%
-    select(enrolled, treatment_arm, injury_classification_ankle_ao, injury_at_work, injury_in_battle,
-           injury_in_blast, injury_date, injury_mechanism, injury_side, injury_classification_tscherne, injury_type)
-  
-  total <- sum(df$enrolled)
-  
-  df_a <- df %>% filter(treatment_arm == "Group A")
-  df_b <- df %>% filter(treatment_arm == "Group B")
-  
-  df_final_a <- inner_injury_characteristics_by_alternate_constructs(df_a)
-  df_final_b <- inner_injury_characteristics_by_alternate_constructs(df_b)
-  df_final_full <- inner_injury_characteristics_by_alternate_constructs(df)
-  
-  df_table <- cbind(df_final_a, df_final_b, df_final_full) %>%
-    select(type...1, percentage...2, percentage...4, percentage...6) %>% 
-    rename(type = type...1,
-           "percentage (Group A)" = percentage...2, 
-           "percentage (Group B)" = percentage...4,
-           "percentage" = percentage...6)
-  
-  cnames <- c(' ', paste('Group A (n=', sum(df_a$enrolled), ')'),
-              paste('Group B (n=', sum(df_b$enrolled), ')'),
-              paste('Overall (n=', total, ')'))
-  header <- c(1,1)
-  names(header) <- cnames
-  
-  vis <- kable(df_table, format="html", align='l',  col.names = cnames) %>%
-    pack_rows(index = c('Type of Injury' = nrow(df_table %>% filter(str_detect(type, "Blunt|Penetrating|Missing"))),
-                        'Work Related Injury' = nrow(df_table %>% filter(str_detect(type, "Yes|No"))),
-                        'Battlefield Injury' = nrow(df_table %>% filter(str_detect(type, "Yes|No"))),
-                        'Blast Injury' = nrow(df_table %>% filter(str_detect(type, "Yes|No"))),
-                        
-                        'Side of Study Injury' = nrow(df_table %>% filter(str_detect(type, "Left|Right|Missing"))),
-                        'Tscherne Classification' = nrow(df_table %>% filter(str_detect(type, "Tscherne|N/A"))),
-                        'AO Classification' = nrow(df_table %>% filter(str_detect(type, "44|43")))),
-              label_row_css = "text-align:left") %>%
     kable_styling("striped", full_width = F, position="left")
   
   return(vis)
