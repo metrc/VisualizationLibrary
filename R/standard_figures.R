@@ -2012,12 +2012,10 @@ adherence_by_id <- function(analytic, random_sample = NULL, facilitycodes = NULL
       plot.margin = margin(t = 40, r = 20, b = 20, l = 20) 
     )
   
-  
-  # Save and convert to base64 image
   temp_png_path <- tempfile(fileext = ".png")
   ggsave(temp_png_path, plot = g, width = 10, height = max(8, nrow(adherence_df %>% select(patient_label) %>% unique()) * 0.2), units = 'in', dpi = 200, limitsize = FALSE)
   image_data <- base64enc::base64encode(temp_png_path)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Patient outcomes timeline" style="max-width: 100%%; width: 100%%;">', image_data)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Patient adherence timeline" style="max-width: 100%%; width: 100%%;">', image_data)
   file.remove(temp_png_path)
   
   return(img_tag)
