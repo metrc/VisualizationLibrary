@@ -14,7 +14,7 @@ followup_expected_3mo, followup_expected_12mo, nonunion_90days,  nonunion_1yr}
 An HTML table.
 }
 \description{
-This function visualizes the Nonunion surgery outcome
+Visualizes the checks at 3 Months and 12 Months across the count of Non-Union at those timepoints.
 }
 \examples{
 nonunion_surgery_outcome("Replace with Analytic Tibble")

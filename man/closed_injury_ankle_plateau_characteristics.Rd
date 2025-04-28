@@ -7,14 +7,15 @@
 closed_injury_ankle_plateau_characteristics(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include treatment_arm injury_type, injury_classification_ankle_ota, injury_classification_plat_schatzker, enrolled}
+\item{analytic}{analytic data set that must include treatment_arm, injury_type, injury_classification_ankle_ota, 
+injury_classification_plat_schatzker, enrolled}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes the Injury characteristics for OTA classification and Schatzker Types for Ankle and Plateau
-injuries
+This is the closed version of the injury_ankle_plateau_characteristics function; see its documentation
+for details
 }
 \examples{
 \dontrun{

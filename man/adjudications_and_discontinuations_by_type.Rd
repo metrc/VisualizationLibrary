@@ -7,9 +7,10 @@
 adjudications_and_discontinuations_by_type(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include screened; inappropriate_enrollment; 
-late_ineligible; late_refusal; withdrawn_patient; withdrawn_physician; adjudication_pending; 
-dead; sae_count; protocol_deviation_screen_consent; protocol_deviation_procedural; protocol_deviation_administrative}
+\item{analytic}{This is the analytic data set that must include screened, inappropriate_enrollment, 
+late_ineligible, late_refusal, withdrawn_patient, withdrawn_physician, adjudication_pending, 
+dead, sae_count, protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative,
+study_discontinuation}
 }
 \value{
 An HTML table.

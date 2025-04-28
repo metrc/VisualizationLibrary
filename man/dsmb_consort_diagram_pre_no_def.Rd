@@ -2,7 +2,7 @@
 % Please edit documentation in R/standard_figures.R
 \name{dsmb_consort_diagram_pre_no_def}
 \alias{dsmb_consort_diagram_pre_no_def}
-\title{DSMB Consort Diagram With Pre Screened and No Definitive Event}
+\title{DSMB consort diagram with pre-screening and no definitive event}
 \usage{
 dsmb_consort_diagram_pre_no_def(
   analytic,
@@ -11,21 +11,25 @@ dsmb_consort_diagram_pre_no_def(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include pre_screened, pre_eligible, pre_ineligible, screened, eligible, ineligible,
-consented, not_consented, randomized, enrolled, refused, completed, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
+\item{analytic}{This is the analytic data set that must include pre_screened, pre_eligible, pre_ineligible, 
+screened, eligible, ineligible, consented, not_consented, randomized, enrolled, refused, completed, 
+not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
 
-\item{final_period}{Defaults to 12 Month}
+\item{final_period}{label of the final period}
 
-\item{adjudicated}{whether to use adjudicated discontinued and not expected}
+\item{adjudicated}{visual option to say that discontinuation was adjudicated, defaults to false}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the categorical percentages of Study Status
-for the NSAID study
+Visualizes the counts of different study statuses, including prescreening statuses. The diagram works
+from the final_followup constructs rather than any df ones.
+
+See dsmb_consort_diagram and consort_diagram for similar options.
 }
 \examples{
 dsmb_consort_diagram_pre_no_def("Replace with Analytic Tibble")
+dsmb_consort_diagram_pre_no_def("Replace with Analytic Tibble", final_period = '3 Month', adjudicated = TRUE)
 
 }

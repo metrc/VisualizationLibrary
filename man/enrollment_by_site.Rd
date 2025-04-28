@@ -7,15 +7,18 @@
 enrollment_by_site(analytic, number_order = FALSE)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, enrolled, facilitycode, consent_date}
+\item{analytic}{analytic data set that must include study_id, enrolled, facilitycode, consent_date}
+
+\item{number_order}{arranges output by number of enrolled}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the enrollment by each site for each patient
+This function visualizes the count of enrollment for each site.
 }
 \examples{
 enrollment_by_site("Replace with Analytic Tibble")
+enrollment_by_site("Replace with Analytic Tibble", number_order = TRUE)
 
 }

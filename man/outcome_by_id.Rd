@@ -7,21 +7,23 @@
 outcome_by_id(analytic, event_name, random_sample = NULL, facilitycodes = NULL)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, facilitycode, events_data, outcome_data and time_zero}
+\item{analytic}{analytic data set that must include study_id, facilitycode, events_data, outcome_data 
+and time_zero}
 
-\item{event_name}{The specific event to track (will mark first occurrence specially)}
+\item{event_name}{specific event to track (will mark first occurrence specially)}
 
-\item{random_sample}{Optional integer to limit to a random sample of IDs}
+\item{random_sample}{optional integer to limit to a random sample of IDs}
 
-\item{facilitycodes}{Optional character vector to limit to a certain facilities}
+\item{facilitycodes}{optional character vector to limit to a certain facilities}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded timeline visualization in PNG format.
 }
 \description{
-This function creates a timeline visualization for each patient showing events relative to time zero for SINGLE event outcomes.
+Creates a timeline visualization for each patient showing events relative to time zero for SINGLE event outcomes.
 }
 \examples{
 outcome_by_id("Replace with Analytic Tibble", "test_outcome")
+outcome_by_id("Replace with Analytic Tibble", "test_outcome", random_sample = TRUE, facilitycodes = c('AAA', 'AAB'))
 
 }

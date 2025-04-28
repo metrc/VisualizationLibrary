@@ -7,15 +7,14 @@
 closed_fracture_characteristics(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
+\item{analytic}{analytic data set that must include study_id, enrolled, fracture_type, injury_gustilo,
 treatment_arm}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes fracture characteristics, broken down by tibial plateau or pilon,
-and then closed or open fracture with tscherne grades and gustilo types respectively by treatment arm
+This is the closed version of the fracture_characteristics function; see its documentation for details.
 }
 \examples{
 closed_fracture_characteristics("Replace with Analytic Tibble")

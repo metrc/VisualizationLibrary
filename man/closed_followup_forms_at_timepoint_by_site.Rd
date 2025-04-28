@@ -30,7 +30,6 @@ This is a closed version of followup_forms_at_timepoint_by_site, request if foll
 See followup_forms_at_timepoint_by_site for more information.
 }
 \examples{
-\dontrun{
-closed_followup_forms_at_timepoint_by_site()
-}
+closed_followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", c("Form 2", "Form 4"))
+
 }
