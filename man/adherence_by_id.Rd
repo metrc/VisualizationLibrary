@@ -23,7 +23,7 @@ Will most likely work only for Weight Bearing, but potential changes to the adhe
 this work for your study, so please contact an ADS member if you're interested in this visualization.
 }
 \examples{
-outcome_by_id("Replace with Analytic Tibble")
-outcome_by_id("Replace with Analytic Tibble", random_sample = 10, facilitycodes = c('AAA', 'AAB'))
+adherence_by_id("Replace with Analytic Tibble")
+adherence_by_id("Replace with Analytic Tibble", random_sample = 10, facilitycodes = c('AAA', 'AAB'))
 
 }
