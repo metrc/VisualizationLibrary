@@ -1986,7 +1986,7 @@ closed_characteristics_treatment <- function(analytic){
     example_types = c("TreatmentArm", "Boolean", "Date", "Category",
                       "Category", "Number", "Boolean")) 
   
-  confirm_stability_of_related_visual('characteristics_treatment', 'f0557c2e652d0c58c5f6771b3dbdcd39')
+  confirm_stability_of_related_visual('characteristics_treatment', 'f2624d670cf94115f31e4dcf6dea5266')
   
   inner_characteristics_treatment <- function(df){
     total <- sum(df$enrolled, na.rm=T)
@@ -2059,7 +2059,7 @@ closed_characteristics_treatment <- function(analytic){
   
   n <- nrow(df_table)
   
-  cnames <- c(' ', paste0('Group A (n = ', atot, ')'), paste0('Group A (n = ', btot, ')'), paste0('Overall (n = ', total, ')'))
+  cnames <- c(' ', paste0('Group A (n = ', atot, ')'), paste0('Group B (n = ', btot, ')'), paste0('Overall (n = ', total, ')'))
   header <- c(1,1,1,1)
   names(header)<-cnames
   
