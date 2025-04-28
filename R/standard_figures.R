@@ -1973,12 +1973,12 @@ adherence_by_id <- function(analytic, random_sample = NULL, facilitycodes = NULL
   first_nonadherent_or_last_adherent <- adherence_df %>%
     group_by(patient_label) %>%
     summarize(first_false_week = case_when(
-      first(na.omit(combined_status)) == "TRUE" & any(combined_status == "FALSE", na.rm = TRUE) ~ 
-        min(week[combined_status == "FALSE"], na.rm = TRUE),
+        first(na.omit(combined_status)) == "TRUE" & any(combined_status == "FALSE", na.rm = TRUE) ~ 
+          min(week[combined_status == "FALSE"], na.rm = TRUE),
         first(na.omit(combined_status)) == "TRUE" ~ max(week[combined_status == "TRUE"], na.rm = TRUE),
-        TRUE ~ 0),
-        .groups = "drop"
-    )
+        TRUE ~ 0)
+      ) %>%
+    ungroup()
         
   g <- ggplot(adherence_df, aes(x = week, y = patient_label)) +
     geom_segment(
