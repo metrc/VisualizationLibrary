@@ -94,7 +94,8 @@ enrollment_status_by_site <- function(analytic){
 #' enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble")
 #' 
 enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", 
-                                                       discontinued_colname="Discontinued", only_total=FALSE){
+                                                       discontinued_colname="Discontinued", pre_screened = NULL,
+                                                       pre_screened_eligible = NULL, only_total=FALSE){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("screened", "eligible", "refused", "consented", "enrolled", "randomized",
@@ -103,11 +104,18 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Date", "FacilityCode", "Date", "Boolean", "Boolean"))
   
-  df <- analytic %>% 
-    select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled, site_certified_days, 
-           facilitycode, all_of(discontinued))
+  df <- analytic %>%
+    select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled,
+      site_certified_days, facilitycode, any_of(c(discontinued, pre_screened, pre_screened_eligible)))
   
-  colnames(df)[11] <- "discontinued"
+  colnames(df)[which(names(df) == discontinued)] <- "discontinued"
+
+  if (!is.null(pre_screened)) {
+    colnames(df)[which(names(df) == pre_screened)] <- "pre_screened"
+  }
+  if (!is.null(pre_screened_eligible)) {
+    colnames(df)[which(names(df) == pre_screened_eligible)] <- "pre_screened_eligible"
+  }
   
   df <- df %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
@@ -115,9 +123,39 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
     rename(Facility = facilitycode) %>% 
     filter(!is.na(Facility))
   
-  df_1st <- df %>% 
-    group_by(Facility) %>% 
-    summarize('Days Certified' = site_certified_days[1], Screened = sum(screened), Eligible = sum(eligible))
+  if (!is.null(pre_screened) && !is.null(pre_screened_eligible)) {
+    df_1st <- df %>%
+      group_by(Facility) %>%
+      summarize(
+        `Days Certified` = site_certified_days[1],
+        `Pre-screened` = sum(pre_screened),
+        `Pre-screened Eligible` = sum(pre_screened_eligible),
+        Screened = sum(screened),
+        Eligible = sum(eligible))
+  } else if (!is.null(pre_screened)) {
+    df_1st <- df %>%
+      group_by(Facility) %>%
+      summarize(
+        `Days Certified` = site_certified_days[1],
+        `Pre-screened` = sum(pre_screened),
+        Screened = sum(screened),
+        Eligible = sum(eligible))
+  } else if (!is.null(pre_screened_eligible)) {
+    df_1st <- df %>%
+      group_by(Facility) %>%
+      summarize(
+        `Days Certified` = site_certified_days[1],
+        `Pre-screened Eligible` = sum(pre_screened_eligible),
+        Screened = sum(screened),
+        Eligible = sum(eligible))
+  } else {
+    df_1st <- df %>%
+      group_by(Facility) %>%
+      summarize(
+        `Days Certified` = site_certified_days[1],
+        Screened = sum(screened),
+        Eligible = sum(eligible))
+  }
   
   df_2nd <- df %>% 
     filter(eligible == TRUE) %>% 
@@ -151,8 +189,14 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
     table_raw <- table_raw %>% filter(Facility=="Total")
   }
   
+  n_pre   <- !is.null(pre_screened)
+  n_pre_el<- !is.null(pre_screened_eligible)
+  no_header <- sum(c(n_pre, n_pre_el)) + 4
+  
+  header <- c(" " = no_header, "Among Eligible" = 3, "Among Consented" = 3)
+  
   table<- kable(table_raw, format="html", align='l') %>%
-    add_header_above(c(" " = 4, "Among Eligible" = 3, "Among Consented" = 3)) %>%
+    add_header_above(header) %>%
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
@@ -4016,6 +4060,7 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
 #' reasons
 #'
 #' @param analytic This is the analytic data set that must include study_id, facilitycode, study_id, not_enrolled_reason, pre_screened_notes
+#' @param last_days This filters for ids who have been not_enrolled in the last x many days.
 #'
 #' @return An HTML table.
 #' @export
@@ -4023,7 +4068,7 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
 #' @examples                     
 #' not_enrolled_reason("Replace with Analytic Tibble")
 #' 
-not_enrolled_reason <- function(analytic){
+not_enrolled_reason <- function(analytic, last_days = NULL){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("facilitycode", "study_id", "not_enrolled_reason", 
@@ -4031,13 +4076,21 @@ not_enrolled_reason <- function(analytic){
     example_types = c("FacilityCode", "Number", "Character", 
                       "Character"))
   
-  df <- analytic %>% select(facilitycode, study_id, not_enrolled_reason, pre_screened_notes) %>% 
-    filter(!is.na(not_enrolled_reason)) %>% 
-    rename(`Site` = facilitycode,
-           `ID` = study_id,
-           `Reason for Not Enrolling` = not_enrolled_reason,
-           `Screening Notes` = pre_screened_notes)
+  df <- analytic %>%
+    select(facilitycode, study_id, not_enrolled_reason, pre_screened_notes, not_enrolled_date) %>%
+    filter(!is.na(not_enrolled_reason))
   
+  if (!is.null(last_days)){
+    df <- df %>%
+      filter(not_enrolled_date >= Sys.Date() - last_days)
+  }
+  
+  df %>%
+    rename(Site = facilitycode,
+           ID = study_id,
+           `Reason for Not Enrolling` = not_enrolled_reason,
+           `Screening Notes` = pre_screened_notes) %>% 
+    select(-not_enrolled_date)
   
   output <- kable(df, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position="left") 
