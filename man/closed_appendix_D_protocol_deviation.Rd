@@ -7,13 +7,14 @@
 closed_appendix_D_protocol_deviation(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, protocol_deviation_data}
+\item{analytic}{analytic data set that must include study_id, protocol_deviation_data or protocol_deviation_full_data}
 }
 \value{
-An HTML table.
+HTML.
 }
 \description{
-This function visualizes any protocol deviations occurred during the study time period.
+Returns HTML describing the information found in the protocol_deviation_data or protocol_deviation_full_data
+long file.
 }
 \examples{
 closed_appendix_D_protocol_deviation("Replace with Analytic Tibble")

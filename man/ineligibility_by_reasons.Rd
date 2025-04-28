@@ -12,24 +12,28 @@ ineligibility_by_reasons(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include facilitycode,  screened, ineligible, ineligibility_reasons,}
+\item{analytic}{analytic data set that must include facilitycode, screened, ineligible, ineligibility_reasons}
 
-\item{pre_screened}{When pre_screened is TRUE then we will be using pre_ineligibility_reasons and pre_screened itself
-to list ineligibility reasons.}
+\item{pre_screened}{when pre_screened is TRUE then uses pre-screening constructs}
 
-\item{n_top_reasons}{is by default set to 5 but in case there are less than 5 reasons then as many columns would be 
-reflected in the ineligibility table as reasons exist.}
+\item{n_top_reasons}{is by default set to 5 but in case there are less than 5 reasons then as many 
+columns would be reflected in the ineligibility table as reasons exist.}
 
-\item{only_total}{hides non-total rows}
+\item{only_total}{hides site specific rows}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes the number of patients deemed ineligible by the top N reasons 
-for exclusion criteria.
+Visualizes the counts of ineligibility reasons (NOT NUMBER OF INELIGIBLE PARTICIPANTS) by site. The 
+function will display a user-specified number of reasons broken down, and then collate the rest into
+an "Other Reasons" column. Included are two columns depicting numbers of screened and ineligible
+study participants.
+
+Compare with ineligibility_reasons_info.
 }
 \examples{
 ineligibility_by_reasons("Replace with Analytic Tibble")
+ineligibility_by_reasons("Replace with Analytic Tibble", n_top_reasons = 3, only_total = TRUE)
 
 }

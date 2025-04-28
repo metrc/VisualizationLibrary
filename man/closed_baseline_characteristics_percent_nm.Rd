@@ -2,7 +2,7 @@
 % Please edit documentation in R/closed_tables.R
 \name{closed_baseline_characteristics_percent_nm}
 \alias{closed_baseline_characteristics_percent_nm}
-\title{Closed Baseline Characteristics Percent (No Military Status)}
+\title{Closed baseline characteristics percent (no military status)}
 \usage{
 closed_baseline_characteristics_percent_nm(
   analytic,
@@ -17,28 +17,33 @@ closed_baseline_characteristics_percent_nm(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include treatment_arm enrolled, age, age_group}
+\item{analytic}{analytic dataset that must include enrolled, age, age_group, treatment_arm and all 
+the constructs specified in the following construct name parameters}
 
-\item{sex}{is a meta construct that is required that defaults to "sex"}
+\item{sex}{name of the construct of the sex characteristic, defaults to "sex"}
 
-\item{race}{is a meta construct that is required that defaults to "race_ethnicity"}
+\item{race}{name of the construct of the race characteristic, defaults to "ethnicity_race"}
 
-\item{education}{is a meta construct that is required that defaults to "education_level"}
+\item{education}{name of the construct of the education characteristic, defaults to "education_level"}
 
-\item{sex_levels}{sets default values and orders for sex meta construct}
+\item{sex_levels}{default values and orders for sex characteristic}
 
-\item{race_levels}{sets default values and orders for race meta construct}
+\item{race_levels}{default values and orders for race characteristic}
 
-\item{education_levels}{sets default values and orders for education meta construct}
+\item{education_levels}{default values and orders for education characteristic}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes the categorical percentages of baseline characteristics sex, age, race, and education
+This is the closed version of the baseline_characteristics_percent visualization; see its documentation
+for details.
 }
 \examples{
-\dontrun{
-closed_baseline_characteristics_percent_nm()
-}
+closed_baseline_characteristics_percent_nm("Replace with Analytic Tibble")
+closed_baseline_characteristics_percent_nm("Replace with Analytic Tibble", 
+  race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Asian / Pacific Islander", "Other", "Missing"))
+closed_baseline_characteristics_percent_nm("Replace with Analytic Tibble", 
+  sex_levels=c("Male","Female", "Missing"))
+
 }

@@ -24,6 +24,7 @@ a participant goal curve which demonstrates the goal relative to the actual cumu
 and a second curve which demonstrates the necessary growth in order to meet that goal, all within a specified start and end date.
 }
 \examples{
-cumulative_enrollment_goals("Replace with Analytic Tibble", "01-01-2025", "12-31-2026", 500)
+cumulative_enrollment_goals("Replace with Analytic Tibble", start_date = "01-01-2025", end_date = "12-31-2026", 
+  participant_goal = 500)
 
 }

@@ -13,9 +13,8 @@ expected_and_followup_visit_overall(analytic)
 An HTML table.
 }
 \description{
-This function only looks at the designated overall form(s) for a 
-given study, as designated in the respective followup_data long file 
-and organizes them by its detected levels of followup periods.
+Returns the counts of all the statuses of the Overall follow-up form at every follow-up periods. Notably,
+this function does not separate the counts by site.
 }
 \examples{
 expected_and_followup_visit_overall("Replace with Analytic Tibble")

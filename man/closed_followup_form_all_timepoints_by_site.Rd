@@ -19,13 +19,15 @@ closed_followup_form_all_timepoints_by_site(
 
 \item{included_columns}{the statuses you want data for. Defaults to all statuses.}
 
-\item{footnotes}{optional argument for changing the names of the followup forms, for aesthetic use}
+\item{footnotes}{optional argument for adding footnote text}
 }
 \description{
-Returns the designated followup form status by site, for all timepoints,
-separated by treatment_arm
+Closed version of the followup_form_all_timepoints_by_site function, see its documentation for 
+details.
 }
 \examples{
-closed_followup_form_all_timepoints_by_site("Replace with Analytic Tibble")
+closed_followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 2")
+closed_followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 2", included_columns = c("Complete", "Incomplete"))
+closed_followup_form_all_timepoints_by_site("Replace with Analytic Tibble", form_selection = "Form 2", footnotes = "Test footnote: lorem ipsum dolor")
 
 }

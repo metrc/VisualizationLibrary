@@ -7,18 +7,24 @@
 closed_complications_overall(analytic, min_days = NULL, cutoff_days = NULL)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, complication_data, treatment_arm}
+\item{analytic}{analytic data set that must include study_id, complication_data, treatment_arm}
 
-\item{days}{it is a keyword argument to pass in the number of days to get cut off date for complications}
+\item{min_days}{keyword argument to pass in the number of days to get cut off date for complications}
+
+\item{cutoff_days}{keyword argument to pass in the number of days to get cut off date for complications}
 }
 \value{
 An HTML table.
 }
 \description{
-This function visualizes the number of complications(number of subjects) reported at all time points(Overall) 
-from time_zero overall, and by each treatment arm.
+Visualizes complication data and organizes it by treatment arm. Complications can be filtered to be
+within a certain window using the min_days and cutoff_days parameters. See attached example table 
+to see the format of the counts of complications. 
+
+This function automatically truncates Grade 4 data if there are no Grade 4 complications.
 }
 \examples{
 closed_complications_overall("Replace with Analytic Tibble")
+closed_complications_overall("Replace with Analytic Tibble", min_days = 365, cutoff_days = 730)
 
 }

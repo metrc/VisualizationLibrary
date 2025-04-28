@@ -12,24 +12,26 @@ consort_diagram(
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include study_id, screened, ineligible, eligible,
+\item{analytic}{analytic data set that must include study_id, screened, ineligible, eligible,
 refused, consented, randomized, enrolled, time_zero, adjudicated_discontinued, completed, 
 safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
 
-\item{final_period}{Defaults to 12 Month}
+\item{final_period}{visual label of period of study completion, defaults to "12 Month"}
 
-\item{definitive_event}{Event either DF or DWC}
+\item{definitive_event}{visual label of definitive event, defaults to "Definitive Fixation Complete" 
+(attached to the count of the df_complete field)}
 
-\item{not_expected_adjudicated}{whether to note that the Not Expected was adjudicated}
+\item{not_expected_adjudicated}{whether to note that the Not Expected was adjudicated, purely visual
+change}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 }
 \description{
-This function visualizes the categorical percentages of study status as well as followup completions. 
+Visualizes the categorical percentages of study status as well as followup completions. 
 Consort diagrams are almost fully customizable in their implementation. 
 
-For other consort diagrams that may better fit your study, refer to: consort_diagram, consort_diagram_no_definitive_event, 
+For other consort diagrams that may better fit your study, refer to: consort_diagram_no_definitive_event, 
 dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
 dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram.
 }
