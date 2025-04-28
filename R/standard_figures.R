@@ -1960,12 +1960,13 @@ adherence_by_id <- function(analytic, random_sample = NULL, facilitycodes = NULL
     arrange(patient_label) %>% 
     select(-study_id, -facilitycode) 
   
-  if (cached_arg == 'Replace with Analytic Tibble') {
+  if(all(cached_arg == 'Replace with Analytic Tibble')) {
     adherence_df <- adherence_df %>%
       group_by(patient_label, week) %>%
       slice(1) %>%
       ungroup()
   }
+  
   
   adherence_df <- adherence_df %>%
     mutate(combined_status = factor(combined_status, levels = c("TRUE", "FALSE")))
