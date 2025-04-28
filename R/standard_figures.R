@@ -1930,8 +1930,8 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
 #' @export
 #'
 #' @examples
-#' outcome_by_id("Replace with Analytic Tibble")
-#' outcome_by_id("Replace with Analytic Tibble", random_sample = 10, facilitycodes = c('AAA', 'AAB'))
+#' adherence_by_id("Replace with Analytic Tibble")
+#' adherence_by_id("Replace with Analytic Tibble", random_sample = 10, facilitycodes = c('AAA', 'AAB'))
 #' 
 adherence_by_id <- function(analytic, random_sample = NULL, facilitycodes = NULL) {
   cached_arg <- analytic
@@ -1995,7 +1995,7 @@ adherence_by_id <- function(analytic, random_sample = NULL, facilitycodes = NULL
       labels = c("Adherent", "Non-Adherent")
     ) +
     labs(
-      title = "Patient Adherence Over Time",
+      title = "Patient Adherence by Week",
       x = "Week",
       y = "Patient",
       color = "Status"
@@ -2004,7 +2004,12 @@ adherence_by_id <- function(analytic, random_sample = NULL, facilitycodes = NULL
     theme(
       text = element_text(family = "serif"),
       plot.title = element_text(size = 16, face = "bold"),
-      axis.text.y = element_text(size = 6) 
+      axis.title.x = element_text(vjust = -1),
+      axis.title.y = element_text(vjust = 1), 
+      axis.text.y = element_text(size = 6),
+      legend.position = "top", 
+      legend.box = "horizontal",
+      plot.margin = margin(t = 40, r = 20, b = 20, l = 20) 
     )
   
   
