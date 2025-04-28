@@ -4,10 +4,12 @@
 \alias{not_enrolled_reason}
 \title{Not enrolled reason}
 \usage{
-not_enrolled_reason(analytic)
+not_enrolled_reason(analytic, last_days = NULL)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, facilitycode, study_id, not_enrolled_reason, pre_screened_notes}
+
+\item{last_days}{This filters for ids who have been not_enrolled in the last x many days.}
 }
 \value{
 An HTML table.
