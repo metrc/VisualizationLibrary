@@ -1912,3 +1912,109 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
   
   return(img_tag)
 }
+
+
+#' Weight Dearing adherence by ID
+#'
+#' @description 
+#' Creates a timeline visualization for each patient showing adherence recording in text and call logs.
+#' Will most likely work only for Weight Bearing, but potential changes to the adherence_data could make
+#' this work for your study, so please contact an ADS member if you're interested in this visualization.
+#'
+#' @param analytic analytic data set that must include study_id, facilitycode, adherence_data (adherence_data must
+#' be a long file with four columns: week, redcap_pt_call_status, text_logs_status, combined_status)
+#' @param random_sample optional integer to limit to a random sample of IDs
+#' @param facilitycodes optional character vector to limit to a certain facilities
+#'
+#' @return An HTML string containing an image tag with the base64-encoded timeline visualization in PNG format.
+#' @export
+#'
+#' @examples
+#' outcome_by_id("Replace with Analytic Tibble")
+#' outcome_by_id("Replace with Analytic Tibble", random_sample = 10, facilitycodes = c('AAA', 'AAB'))
+#' 
+adherence_by_id <- function(analytic, random_sample = NULL, facilitycodes = NULL) {
+  cached_arg <- analytic
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('adherence_data', 'facilitycode'), 
+    example_types = c("(';', ',')Number-U4|Boolean|Boolean|Boolean", 'FacilityCode'))
+  
+  if (!is.null(random_sample)) {
+    sample_ids <- sample(unique(analytic$study_id), random_sample)
+    analytic <- analytic %>% filter(study_id %in% sample_ids)
+  }
+  
+  if (!is.null(facilitycodes)) {
+    analytic <- analytic %>% filter(facilitycode %in% facilitycodes)
+  }
+  
+  adherence_df <- analytic %>%
+    select(study_id, facilitycode, adherence_data) %>%
+    separate_rows(adherence_data, sep = ";") %>%
+    separate(adherence_data, into = c("week", "redcap_pt_call_status", "text_logs_status", "combined_status"), sep = ",") %>%
+    mutate(week = as.numeric(week))
+  
+  adherence_df <- adherence_df %>%
+    mutate(patient_label = paste(facilitycode, study_id, sep = "-")) %>%
+    arrange(patient_label) %>% 
+    select(-study_id, -facilitycode) 
+  
+  if (cached_arg == 'Replace with Analytic Tibble') {
+    adherence_df <- adherence_df %>%
+      group_by(patient_label, week) %>%
+      slice(1) %>%
+      ungroup()
+  }
+  
+  adherence_df <- adherence_df %>%
+    mutate(combined_status = factor(combined_status, levels = c("TRUE", "FALSE")))
+  
+  first_nonadherent_or_last_adherent <- adherence_df %>%
+    group_by(patient_label) %>%
+    summarize(first_false_week = case_when(
+      first(na.omit(combined_status)) == "TRUE" & any(combined_status == "FALSE", na.rm = TRUE) ~ 
+        min(week[combined_status == "FALSE"], na.rm = TRUE),
+        first(na.omit(combined_status)) == "TRUE" ~ max(week[combined_status == "TRUE"], na.rm = TRUE),
+        TRUE ~ 0),
+        .groups = "drop"
+    )
+        
+  g <- ggplot(adherence_df, aes(x = week, y = patient_label)) +
+    geom_segment(
+      data = first_nonadherent_or_last_adherent,
+      aes(x = 0, y = patient_label, xend = first_false_week, yend = patient_label),
+      inherit.aes = FALSE,
+      color = "black",
+      size = 1
+    ) +
+    geom_point(aes(color = combined_status), size = 3) +
+    scale_color_manual(
+      values = c("TRUE" = "forestgreen", "FALSE" = "firebrick"),
+      name = "Adherence Status",
+      labels = c("Adherent", "Non-Adherent")
+    ) +
+    labs(
+      title = "Patient Adherence Over Time",
+      x = "Week",
+      y = "Patient",
+      color = "Status"
+    ) +
+    theme_minimal() +
+    theme(
+      text = element_text(family = "serif"),
+      plot.title = element_text(size = 16, face = "bold"),
+      axis.text.y = element_text(size = 6) 
+    )
+  
+  
+  # Save and convert to base64 image
+  temp_png_path <- tempfile(fileext = ".png")
+  ggsave(temp_png_path, plot = g, width = 10, height = max(8, nrow(adherence_df %>% select(patient_label) %>% unique()) * 0.2), units = 'in', dpi = 200, limitsize = FALSE)
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Patient outcomes timeline" style="max-width: 100%%; width: 100%%;">', image_data)
+  file.remove(temp_png_path)
+  
+  return(img_tag)
+}
+
