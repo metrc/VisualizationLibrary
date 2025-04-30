@@ -1920,6 +1920,8 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
 #' Creates a timeline visualization for each patient showing adherence recording in text and call logs.
 #' Will most likely work only for Weight Bearing, but potential changes to the adherence_data could make
 #' this work for your study, so please contact an ADS member if you're interested in this visualization.
+#' 
+#' Data is filtered for enrolled participants.
 #'
 #' @param analytic analytic data set that must include study_id, facilitycode, adherence_data (adherence_data must
 #' be a long file with four columns: week, redcap_pt_call_status, text_logs_status, combined_status)
@@ -1937,8 +1939,11 @@ adherence_by_id <- function(analytic, random_sample = NULL, facilitycodes = NULL
   cached_arg <- analytic
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c('adherence_data', 'facilitycode'), 
-    example_types = c("(';', ',')Number-U4|Boolean|Boolean|Boolean", 'FacilityCode'))
+    example_constructs = c('adherence_data', 'facilitycode', 'enrolled'), 
+    example_types = c("(';', ',')Number-U4|Boolean|Boolean|Boolean", 'FacilityCode', 'Boolean'))
+  
+  analytic <- analytic %>%
+    filter(enrolled)
   
   if (!is.null(random_sample)) {
     sample_ids <- sample(unique(analytic$study_id), random_sample)
@@ -1960,11 +1965,13 @@ adherence_by_id <- function(analytic, random_sample = NULL, facilitycodes = NULL
     arrange(patient_label) %>% 
     select(-study_id, -facilitycode) 
   
-  if (cached_arg == 'Replace with Analytic Tibble') {
-    adherence_df <- adherence_df %>%
-      group_by(patient_label, week) %>%
-      slice(1) %>%
-      ungroup()
+  if(length(cached_arg) == 1) {
+    if (cached_arg == 'Replace with Analytic Tibble') {
+      adherence_df <- adherence_df %>%
+        group_by(patient_label, week) %>%
+        slice(1) %>%
+        ungroup()
+      }
   }
   
   adherence_df <- adherence_df %>%
