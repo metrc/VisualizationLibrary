@@ -8,6 +8,8 @@ enrollment_status_by_site_var_discontinued(
   analytic,
   discontinued = "discontinued",
   discontinued_colname = "Discontinued",
+  pre_screened = NULL,
+  pre_screened_eligible = NULL,
   only_total = FALSE
 )
 }
