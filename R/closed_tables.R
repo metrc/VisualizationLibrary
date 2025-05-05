@@ -18,7 +18,7 @@
 #' }
 closed_injury_ankle_plateau_characteristics <- function(analytic){
    
-  confirm_stability_of_related_visual('injury_ankle_plateau_characteristics', 'f8abb9ea7ed258855162e2a98d3218a3')
+  confirm_stability_of_related_visual('injury_ankle_plateau_characteristics', '68edc8ea493959cf7857b150f5b2c075')
   
   analytic <- if_needed_generate_example_data(
     analytic,
