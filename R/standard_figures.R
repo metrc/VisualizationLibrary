@@ -1432,11 +1432,11 @@ consort_diagram_wb_publication <- function(analytic){
   
   analytic <- if_needed_generate_example_data(
     analytic,
-    example_constructs = c("screened", "ineligible", "ineligibility_reasons", "refused", 
+    example_constructs = c("screened", "ineligible", "ineligibility_reasons", "refused", "constraint_unavailable",
                            "constraint_other", "constraint_other_txt", "consented", "discontinued_pre_randomization", 
                            "injury_type", "randomized", "late_ineligible", "per_protocol_sample", "enrolled", 
                            "consent_date", "death_date", "withdraw_date", "preinjury_work_status"),
-    example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean", "Character",
+    example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean", "Boolean", "Character",
                       "Boolean", "Boolean", "NamedCategory['ankle' 'plateau']", "Boolean", "Boolean", 
                       "Boolean", "Boolean", "Date", "Date", "Date", "Boolean"))
   
@@ -1464,6 +1464,7 @@ consort_diagram_wb_publication <- function(analytic){
   
   refused <- sum(df$refused, na.rm = TRUE)
   constraint <- sum(df$constraint_other, na.rm = TRUE)
+  constraint_unavailable <- sum(analytic$constraint_unavailable, na.rm = TRUE)
   
   late_discontinuation <- sum(df$discontinued_pre_randomization & 
                                 df$consented, na.rm = TRUE)
@@ -1505,6 +1506,7 @@ consort_diagram_wb_publication <- function(analytic){
           <TR><TD ALIGN="LEFT">- ', ir_count$n[6], ' - ', ir_count$ineligibility_reasons[6], '</TD></TR>
           <TR><TD ALIGN="LEFT">- ', multi_reason, ' - Had multiple ineligibility reasons</TD></TR>
           <TR><TD ALIGN="LEFT">', refused, ' - Declined consent</TD></TR>
+          <TR><TD ALIGN="LEFT">', constraint_unavailable, ' - Patient not available for consent</TD></TR>          
           <TR><TD ALIGN="LEFT">', constraint, ' - Had other reasons not enrolled</TD></TR>
           <TR><TD ALIGN="LEFT">', late_discontinuation, ' - Discontinued after consent, prior to randomization</TD></TR>
           <TR><TD ALIGN="LEFT">', plateau_injuries, ' - Enrolled patients with tibial plateau fractures</TD></TR>
