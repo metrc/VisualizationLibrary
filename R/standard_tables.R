@@ -4245,3 +4245,94 @@ outcome_by_name_overall <- function(analytic) {
   
   return(vis)
 }
+
+
+#' Number of Subjects Screened, Eligible, and Enrolled, by Consented and with Pre-Screening (Variable Discontinued)
+#'
+#' @description 
+#' Visualizes the totals of each include construct by site, split into among eligible and among consented,
+#' with consented between the pre screening and the screening stage
+#' 
+#' For other enrollment by site visualizations that may better fit your study, refer to: enrollment_by_site, 
+#' enrollment_by_site_last_days_var_disc, enrollment_status_by_site, enrollment_status_by_site_var_discontinued
+#'
+#' @param analytic This is the analytic data set that must include screened, 
+#' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode,
+#' consent_date, not_randomized
+#' @param discontinued meta construct for discontinued
+#' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
+#' @param only_total hide all the site specific rows
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' enrollment_status_by_site_consent_pre_screening("Replace with Analytic Tibble")
+#' 
+enrollment_status_by_site_consent_pre_screening <- function(analytic, discontinued="discontinued", 
+                                                       discontinued_colname="Discontinued", only_total=FALSE){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "eligible", "ineligible", "consented", "enrolled", "randomized",
+                          "site_certified_days", "facilitycode", 'pre_screened', 'pre_screened_eligible', "discontinued"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
+                      "Boolean", "Date", "FacilityCode", "Date", "Boolean", "Boolean"))
+  
+  df <- analytic %>%
+    select(screened, eligible, ineligible, consented, randomized, enrolled,
+           site_certified_days, facilitycode, pre_screened, pre_screened_eligible, any_of(discontinued))
+  
+  colnames(df)[which(names(df) == discontinued)] <- "discontinued"
+  
+  df <- df %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certified_days))) %>% 
+    rename(Facility = facilitycode) %>% 
+    filter(!is.na(Facility))
+  
+  df_1st <- df %>%
+    group_by(Facility) %>%
+    summarize(
+      `Days Certified` = site_certified_days[1],
+      `Pre-Operative Screened` = sum(pre_screened),
+      `Pre-Operative Screened Eligible` = sum(pre_screened_eligible),
+      Consented = sum(consented))
+  
+  df_2nd <- df %>% 
+    filter(consented == TRUE) %>% 
+    group_by(Facility) %>% 
+    summarize(`Intra-Operative Screened` = sum(screened), Ineligible = sum(ineligible), Eligible = sum(eligible))
+  
+  df_3rd <- df %>% 
+    filter(eligible == TRUE & consented == TRUE) %>% 
+    group_by(Facility) %>% 
+    summarize(Randomized = sum(randomized),
+              !!discontinued_colname := sum(discontinued),
+              Enrolled = sum(enrolled)) 
+  
+  table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
+    left_join(df_3rd, by = 'Facility') %>% 
+    mutate_all(~ifelse(is.na(.), 0, .)) %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    mutate(`Days Certified`=ifelse(is_total,"-",`Days Certified`)) %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total) %>% 
+    mutate(!!discontinued_colname := format_count_percent(!!sym(discontinued_colname), Eligible)) %>% 
+    mutate(Randomized = format_count_percent(Randomized, Eligible)) %>% 
+    mutate(Enrolled = format_count_percent(Enrolled, Eligible)) %>% 
+    mutate(`Intra-Operative Screened` = format_count_percent(`Intra-Operative Screened`, Consented)) %>% 
+    mutate(Ineligible = format_count_percent(Ineligible, Consented)) %>% 
+    mutate(Eligible = format_count_percent(Eligible, Consented))
+  
+  if(only_total){
+    table_raw <- table_raw %>% filter(Facility=="Total")
+  }
+  
+  header <- c(" " = 5, "Among Consented" = 3, "Among Eligible" = 3)
+  
+  table<- kable(table_raw, format="html", align='l') %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = F, position="left")
+  return(table)
+}
