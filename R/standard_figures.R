@@ -626,6 +626,8 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
 #' @param final_period visual option to name the last followup period
 #' @param adjudicated visual option to show that discontinuation was adjudicated
 #' @param definitive_event label for the definitive event
+#' @param pre_screened_name label for pre-screened
+#' @param screened_name label for screened
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
@@ -634,7 +636,7 @@ dsmb_consort_diagram_pre_no_def_shifted_consent <- function(analytic, final_peri
 #' dsmb_consort_diagram_pre_shifted_consent("Replace with Analytic Tibble")
 #' dsmb_consort_diagram_pre_shifted_consent("Replace with Analytic Tibble", definitive_event = 'TEST')
 #' 
-dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 Month", adjudicated=FALSE, definitive_event = "Nerve Surgery"){
+dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 Month", adjudicated=FALSE, definitive_event = "Nerve Surgery", pre_screened_name = NULL, screened_name = NULL){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c('pre_screened', 'pre_eligible', 'screened', 'eligible', 'consented', 'not_consented', 
@@ -727,7 +729,7 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
     digraph g {
       graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
       
-      pre_screened [style="rounded,filled", fillcolor="#ccccff", pos="5,16!", shape = box, width=2.4, height=1, label = "Pre-Screened (n=',pre_Screened,')"];
+      pre_screened [style="rounded,filled", fillcolor="#ccccff", pos="5,16!", shape = box, width=2.4, height=1, label = "',pre_screened_name,' (n=',pre_Screened,')"];
       pre_ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,16!", shape = box, width=2.4, height=1, label = "Pre-Ineligible (n=',pre_Ineligible,')"];
       pre_eligible [style="rounded,filled", fillcolor="#ccccff", pos="5,14!", shape = box, width=2.4, height=1, label = "Pre-Eligible (n=',pre_Eligible,')"];
       
@@ -735,7 +737,7 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
       
       refused [style="rounded,filled", fillcolor="#ccccff", pos="10,14!", shape = box, width=2.4, height=1, label = "Not Consented (n=',Not_Consented,')\nRefused (n=',Refused,')"];
       
-      screened [style="rounded,filled", fillcolor="#ccccff", pos="5,10!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
+      screened [style="rounded,filled", fillcolor="#ccccff", pos="5,10!", shape = box, width=2.4, height=1, label = "',screened_name,' (n=',Screened,')"];
       ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
       eligible [style="rounded,filled", fillcolor="#ccccff", pos="5,8!", shape = box, width=2.4, height=1, label = "Eligible (n=',Eligible,')"];
 
