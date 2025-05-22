@@ -21,6 +21,8 @@ An HTML string containing an image tag with the base64-encoded timeline visualiz
 Creates a timeline visualization for each patient showing adherence recording in text and call logs.
 Will most likely work only for Weight Bearing, but potential changes to the adherence_data could make
 this work for your study, so please contact an ADS member if you're interested in this visualization.
+
+Data is filtered for enrolled participants.
 }
 \examples{
 adherence_by_id("Replace with Analytic Tibble")
