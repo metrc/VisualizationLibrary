@@ -1478,31 +1478,39 @@ consort_diagram_wb_publication <- function(analytic){
       title [style="rounded,filled", fillcolor="#a4d3ee", pos="2,5!", shape = box, width=2.4, height=.5, 
         label = "', screened, ' - Patients screened for eligibility"];
         
-      box1 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,3!", shape = box, width=2.4, height=.5, labeljust=l,
-        label = "', 
-        ineligible, ' - Did not meet eligibility criteria\n    ',
-        ir_count$n[1], ' - ', ir_count$ineligibility_reasons[1], '\n    ', 
-        ir_count$n[2], ' - ', ir_count$ineligibility_reasons[2], '\n    ', 
-        ir_count$n[3], ' - ', ir_count$ineligibility_reasons[3], '\n    ', 
-        ir_count$n[4], ' - ', ir_count$ineligibility_reasons[4], '\n    ', 
-        ir_count$n[5], ' - ', ir_count$ineligibility_reasons[5], '\n    ',
-        ir_count$n[6], ' - ', ir_count$ineligibility_reasons[6], '\n    ',
-        multi_reason, ' - Had multiple ineligiblity reasons\n    ',
-        constraint, ' - Had surgeon not willing to randomize\n    ',
-        late_discontinuation, ' - Discontinued after consent, prior to randomization\n    ',
-        plateau_injuries, ' - Enrolled patients with tibial plateau fractures','"];
+      box1 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,3!", shape = box, width=2.4, height=.5, 
+      labeljust=l,
+      label = <
+        <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+          <TR><TD ALIGN="LEFT">', ineligible, ' - Did not meet eligibility criteria</TD></TR>
+          <TR><TD ALIGN="LEFT">     ', ir_count$n[1], ' - ', ir_count$ineligibility_reasons[1], '</TD></TR>
+          <TR><TD ALIGN="LEFT">     ', ir_count$n[2], ' - ', ir_count$ineligibility_reasons[2], '</TD></TR>
+          <TR><TD ALIGN="LEFT">     ', ir_count$n[3], ' - ', ir_count$ineligibility_reasons[3], '</TD></TR>
+          <TR><TD ALIGN="LEFT">     ', ir_count$n[4], ' - ', ir_count$ineligibility_reasons[4], '</TD></TR>
+          <TR><TD ALIGN="LEFT">     ', ir_count$n[5], ' - ', ir_count$ineligibility_reasons[5], '</TD></TR>
+          <TR><TD ALIGN="LEFT">     ', ir_count$n[6], ' - ', ir_count$ineligibility_reasons[6], '</TD></TR>
+          <TR><TD ALIGN="LEFT">     ', multi_reason, ' - Had multiple ineligibility reasons</TD></TR>
+          <TR><TD ALIGN="LEFT">', constraint, ' - Had surgeon not willing to randomize</TD></TR>
+          <TR><TD ALIGN="LEFT">', late_discontinuation, ' - Discontinued after consent, prior to randomization</TD></TR>
+          <TR><TD ALIGN="LEFT">', plateau_injuries, ' - Enrolled patients with tibial plateau fractures</TD></TR>
+        </TABLE>
+      >];
         
       title2 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,1!", shape = box, width=2.4, height=.5, 
         label = "', randomized, ' - Underwent randomization"];
         
       box2 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,-0.5!", shape = box, width=2.4, height=.5, labeljust=l,
-        label = "', 
-        late_ineligible, ' - Late ineligible\n    ',
-        diverging_review, ' - Weight bearing instructions review diverged from protocol\n    ',
-        died, ' - Died prior to 365 days\n    ',
-        withdrew, ' - Withdrew prior to 365 days\n    ', 
-        percent_expected, ' - 12 Month follow-up expected\n    ',
-        working_percent_expected, ' - Pre-injury working patients with \nexpected 12 Month Follow-up"]
+        label = <
+          <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+            <TR><TD ALIGN="LEFT">', late_ineligible, ' - Late ineligible</TD></TR>
+            <TR><TD ALIGN="LEFT">', diverging_review, ' - Weight bearing instructions review diverged from protocol</TD></TR>
+            <TR><TD ALIGN="LEFT">', randomized-late_ineligible-diverging_review, ' - Included in primary analysis</TD></TR>
+            <TR><TD ALIGN="LEFT">     ', died, ' - Died prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">     ', withdrew, ' - Withdrew prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">', percent_expected, ' - 12 Month follow-up expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', working_percent_expected, ' - Pre-injury working patients with expected 12 Month Follow-up</TD></TR>
+          </TABLE>
+        >]
     }
   '))
   svg_content <- DiagrammeRsvg::export_svg(consort_diagram)
