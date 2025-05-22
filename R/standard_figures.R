@@ -1479,7 +1479,7 @@ consort_diagram_wb_publication <- function(analytic){
   percent_expected <- format_count_percent(sum(today-as.Date(df$consent_date)>365, na.rm = TRUE),
                                            sum(!is.na(df$consent_date), na.rm = TRUE), decimals = 2)
   
-  working_df <- df %>% filter(preinjury_work_status)
+  working_df <- df %>% filter(preinjury_work_status&injury_type=='ankle')
   working_percent_expected <- format_count_percent(sum(today-as.Date(working_df$consent_date)>365, na.rm = TRUE),
                                            sum(!is.na(working_df$consent_date), na.rm = TRUE), decimals = 2)
   
