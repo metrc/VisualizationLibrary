@@ -7,9 +7,11 @@
 closed_consort_diagram_wb_publication(analytic)
 }
 \arguments{
-\item{analytic}{analytic data set that must include study_id, screened, ineligible, eligible,
-refused, consented, randomized, enrolled, time_zero, adjudicated_discontinued, completed, 
-safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_final_followup, incomplete_final_followup}
+\item{analytic}{analytic data set that must include 
+study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_other_txt, consented, 
+discontinued_pre_randomization, injury_type, randomized, 
+late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, withdraw_date,
+preinjury_work_status, treatment_arm}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
@@ -18,8 +20,4 @@ An HTML string containing an image tag with the base64-encoded consort diagram i
 The closed version of consort_diagram_wb_publication, breaking down study cancellations by treatment_arm.
 
 This consort diagram was made for the Weight Bearing study, and so is unlikely to work for yours.
-
-For other consort diagrams that may better fit your study, refer to: consort_diagram_no_definitive_event, 
-dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
-dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram.
 }
