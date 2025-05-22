@@ -126,7 +126,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
       title2 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,1!", shape = box, width=2.4, height=.5, 
         label = "', randomized, ' - Underwent randomization"];
         
-      box2 [style="rounded,filled", fillcolor="#a4d3ee", pos="-0.25,-0.75!", shape = box, width=2.4, height=.5, labeljust=l,
+      box2 [style="rounded,filled", fillcolor="#a4d3ee", pos="-0.25,-1!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', randomized_a, ' - Assigned to early weight bearing</TD></TR>
@@ -136,13 +136,14 @@ closed_consort_diagram_wb_publication <- function(analytic){
             <TR><TD ALIGN="LEFT">', randomized_a-late_ineligible_a-diverging_review_a, ' - Included in primary analysis</TD></TR>
             <TR><TD ALIGN="LEFT">- ', died_a, ' - Died prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">- ', withdrew_a, ' - Withdrew prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">', percent_expected_a, ' - 12 Month follow-up complete out of expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', percent_expected_a, ' - 12 Month follow-up complete</TD></TR>
+            <TR><TD ALIGN="LEFT">(out of expected)</TD></TR>
             <TR><TD ALIGN="LEFT">', working_percent_expected_a, ' - Pre-injury working patients with</TD></TR>
             <TR><TD ALIGN="LEFT">expected 12 Month Follow-up</TD></TR>
           </TABLE>
         >];
           
-      box3 [style="rounded,filled", fillcolor="#a4d3ee", pos="4.25,-0.75!", shape = box, width=2.4, height=.5, labeljust=l,
+      box3 [style="rounded,filled", fillcolor="#a4d3ee", pos="4.25,-1!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', randomized_b, ' - Assigned to delayed weight bearing</TD></TR>
@@ -152,7 +153,8 @@ closed_consort_diagram_wb_publication <- function(analytic){
             <TR><TD ALIGN="LEFT">', randomized_b-late_ineligible_b-diverging_review_b, ' - Included in primary analysis</TD></TR>
             <TR><TD ALIGN="LEFT">- ', died_b, ' - Died prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">- ', withdrew_b, ' - Withdrew prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">', percent_expected_b, ' - 12 Month follow-up complete out of expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', percent_expected_b, ' - 12 Month follow-up complete</TD></TR>
+            <TR><TD ALIGN="LEFT">(out of expected)</TD></TR>
             <TR><TD ALIGN="LEFT">', working_percent_expected_b, ' - Pre-injury working patients with</TD></TR>
             <TR><TD ALIGN="LEFT">expected 12 Month Follow-up</TD></TR>
           </TABLE>
