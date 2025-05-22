@@ -1490,10 +1490,10 @@ consort_diagram_wb_publication <- function(analytic){
     digraph g {
       graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
       
-      title [style="rounded,filled", fillcolor="#a4d3ee", pos="2,5!", shape = box, width=2.4, height=.5, 
+      title [style="rounded,filled", fillcolor="#a4d3ee", pos="2,5.5!", shape = box, width=2.4, height=.5, 
         label = "', screened, ' - Patients screened for eligibility"];
         
-      box1 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,3!", shape = box, width=2.4, height=.5, 
+      box1 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,3.25!", shape = box, width=2.4, height=.5, 
       labeljust=l,
       label = <
         <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
