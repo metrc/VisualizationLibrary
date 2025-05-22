@@ -52,10 +52,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
   randomized <- sum(df$injury_type=='ankle', na.rm = TRUE)
   
   randomized_a <- sum(df$treatment_arm == 'Group A' & df$injury_type=='ankle', na.rm = TRUE)
-  randomized_b <- sum(df$treatment_arm == 'Group A' & df$injury_type=='ankle', na.rm = TRUE)
-  
-  early_number <- sum(df$treatment_arm=='Group A', na.rm = TRUE)
-  delayed_number <- sum(df$treatment_arm=='Group B', na.rm = TRUE)
+  randomized_b <- sum(df$treatment_arm == 'Group B' & df$injury_type=='ankle', na.rm = TRUE)
   
   df_a <- df %>% filter(treatment_arm == 'Group A')
   df_b <- df %>% filter(treatment_arm == 'Group B')
@@ -118,7 +115,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
       box2 [style="rounded,filled", fillcolor="#a4d3ee", pos="-0.25,-0.75!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
-            <TR><TD ALIGN="LEFT">', early_number, ' - Assigned to early weight bearing</TD></TR>
+            <TR><TD ALIGN="LEFT">', randomized_a, ' - Assigned to early weight bearing</TD></TR>
             <TR><TD ALIGN="LEFT">     ', late_ineligible_a, ' - Late ineligible</TD></TR>
             <TR><TD ALIGN="LEFT">     ', diverging_review_a, ' - Weight bearing instructions review diverged</TD></TR>
             <TR><TD ALIGN="LEFT">     from protocol</TD></TR>
@@ -134,7 +131,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
       box3 [style="rounded,filled", fillcolor="#a4d3ee", pos="4.25,-0.75!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
-            <TR><TD ALIGN="LEFT">', delayed_number, ' - Assigned to delayed weight bearing</TD></TR>
+            <TR><TD ALIGN="LEFT">', randomized_b, ' - Assigned to delayed weight bearing</TD></TR>
             <TR><TD ALIGN="LEFT">     ', late_ineligible_b, ' - Late ineligible</TD></TR>
             <TR><TD ALIGN="LEFT">     ', diverging_review_b, ' - Weight bearing instructions review diverged</TD></TR>
             <TR><TD ALIGN="LEFT">     from protocol</TD></TR>
