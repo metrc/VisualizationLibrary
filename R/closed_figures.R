@@ -106,13 +106,13 @@ closed_consort_diagram_wb_publication <- function(analytic){
       label = <
         <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
           <TR><TD ALIGN="LEFT">', ineligible, ' - Did not meet eligibility criteria</TD></TR>
-          <TR><TD ALIGN="LEFT">     ', ir_count$n[1], ' - ', ir_count$ineligibility_reasons[1], '</TD></TR>
-          <TR><TD ALIGN="LEFT">     ', ir_count$n[2], ' - ', ir_count$ineligibility_reasons[2], '</TD></TR>
-          <TR><TD ALIGN="LEFT">     ', ir_count$n[3], ' - ', ir_count$ineligibility_reasons[3], '</TD></TR>
-          <TR><TD ALIGN="LEFT">     ', ir_count$n[4], ' - ', ir_count$ineligibility_reasons[4], '</TD></TR>
-          <TR><TD ALIGN="LEFT">     ', ir_count$n[5], ' - ', ir_count$ineligibility_reasons[5], '</TD></TR>
-          <TR><TD ALIGN="LEFT">     ', ir_count$n[6], ' - ', ir_count$ineligibility_reasons[6], '</TD></TR>
-          <TR><TD ALIGN="LEFT">     ', multi_reason, ' - Had multiple ineligibility reasons</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', ir_count$n[1], ' - ', ir_count$ineligibility_reasons[1], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', ir_count$n[2], ' - ', ir_count$ineligibility_reasons[2], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', ir_count$n[3], ' - ', ir_count$ineligibility_reasons[3], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', ir_count$n[4], ' - ', ir_count$ineligibility_reasons[4], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', ir_count$n[5], ' - ', ir_count$ineligibility_reasons[5], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', ir_count$n[6], ' - ', ir_count$ineligibility_reasons[6], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', multi_reason, ' - Had multiple ineligibility reasons</TD></TR>
           <TR><TD ALIGN="LEFT">', constraint, ' - Had surgeon not willing to randomize</TD></TR>
           <TR><TD ALIGN="LEFT">', late_discontinuation, ' - Discontinued after consent, prior to randomization</TD></TR>
           <TR><TD ALIGN="LEFT">', plateau_injuries, ' - Enrolled patients with tibial plateau fractures</TD></TR>
@@ -126,12 +126,12 @@ closed_consort_diagram_wb_publication <- function(analytic){
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', randomized_a, ' - Assigned to early weight bearing</TD></TR>
-            <TR><TD ALIGN="LEFT">     ', late_ineligible_a, ' - Late ineligible</TD></TR>
-            <TR><TD ALIGN="LEFT">     ', diverging_review_a, ' - Weight bearing instructions review diverged</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', late_ineligible_a, ' - Late ineligible</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', diverging_review_a, ' - Weight bearing instructions review diverged</TD></TR>
             <TR><TD ALIGN="LEFT">     from protocol</TD></TR>
             <TR><TD ALIGN="LEFT">', randomized_a-late_ineligible_a-diverging_review_a, ' - Included in primary analysis</TD></TR>
-            <TR><TD ALIGN="LEFT">     ', died_a, ' - Died prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">     ', withdrew_a, ' - Withdrew prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', died_a, ' - Died prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', withdrew_a, ' - Withdrew prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">', percent_expected_a, ' - 12 Month follow-up expected</TD></TR>
             <TR><TD ALIGN="LEFT">', working_percent_expected_a, ' - Pre-injury working patients with</TD></TR>
             <TR><TD ALIGN="LEFT">expected 12 Month Follow-up</TD></TR>
@@ -142,12 +142,12 @@ closed_consort_diagram_wb_publication <- function(analytic){
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', randomized_b, ' - Assigned to delayed weight bearing</TD></TR>
-            <TR><TD ALIGN="LEFT">     ', late_ineligible_b, ' - Late ineligible</TD></TR>
-            <TR><TD ALIGN="LEFT">     ', diverging_review_b, ' - Weight bearing instructions review diverged</TD></TR>
-            <TR><TD ALIGN="LEFT">     from protocol</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', late_ineligible_b, ' - Late ineligible</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', diverging_review_b, ' - Weight bearing instructions review diverged</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;from protocol</TD></TR>
             <TR><TD ALIGN="LEFT">', randomized_b-late_ineligible_b-diverging_review_b, ' - Included in primary analysis</TD></TR>
-            <TR><TD ALIGN="LEFT">     ', died_b, ' - Died prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">     ', withdrew_b, ' - Withdrew prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', died_b, ' - Died prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;', withdrew_b, ' - Withdrew prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">', percent_expected_b, ' - 12 Month follow-up expected</TD></TR>
             <TR><TD ALIGN="LEFT">', working_percent_expected_b, ' - Pre-injury working patients with</TD></TR>
             <TR><TD ALIGN="LEFT">expected 12 Month Follow-up</TD></TR>
