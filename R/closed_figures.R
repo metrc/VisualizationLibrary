@@ -18,7 +18,7 @@
 #' 
 closed_consort_diagram_wb_publication <- function(analytic){
   
-  confirm_stability_of_related_visual('consort_diagram_wb_publication', '147a0a8a08d06a51c6225edf234a67b2')
+  confirm_stability_of_related_visual('consort_diagram_wb_publication', '9266d3c7968c4f39aa76d22cd4f8c063')
   
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -83,13 +83,13 @@ closed_consort_diagram_wb_publication <- function(analytic){
   
   percent_expected_a <- format_count_percent(sum(today-as.Date(df_a$consent_date)>365, na.rm = TRUE),
                                            sum(!is.na(df_a$consent_date), na.rm = TRUE), decimals = 2)
-  working_df_a <- df_a %>% filter(preinjury_work_status)
+  working_df_a <- df_a %>% filter(preinjury_work_status&injury_type=='ankle')
   working_percent_expected_a <- format_count_percent(sum(today-as.Date(working_df_a$consent_date)>365, na.rm = TRUE),
                                                    sum(!is.na(working_df_a$consent_date), na.rm = TRUE), decimals = 2)
   
   percent_expected_b <- format_count_percent(sum(today-as.Date(df_b$consent_date)>365, na.rm = TRUE),
                                              sum(!is.na(df_b$consent_date), na.rm = TRUE), decimals = 2)
-  working_df_b <- df_b %>% filter(preinjury_work_status)
+  working_df_b <- df_b %>% filter(preinjury_work_status&injury_type=='ankle')
   working_percent_expected_b <- format_count_percent(sum(today-as.Date(working_df_b$consent_date)>365, na.rm = TRUE),
                                                      sum(!is.na(working_df_b$consent_date), na.rm = TRUE), decimals = 2)
   
