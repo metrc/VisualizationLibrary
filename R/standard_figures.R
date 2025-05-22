@@ -1525,7 +1525,7 @@ consort_diagram_wb_publication <- function(analytic){
             <TR><TD ALIGN="LEFT">', randomized-late_ineligible-diverging_review, ' - Included in primary analysis</TD></TR>
             <TR><TD ALIGN="LEFT">- ', died, ' - Died prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">- ', withdrew, ' - Withdrew prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">', percent_expected, ' - 12 Month follow-up expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', percent_expected, ' - 12 Month follow-up complete out of expected</TD></TR>
             <TR><TD ALIGN="LEFT">', working_percent_expected, ' - Pre-injury working patients with expected 12 Month Follow-up</TD></TR>
           </TABLE>
         >]
