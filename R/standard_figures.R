@@ -1435,16 +1435,17 @@ consort_diagram_wb_publication <- function(analytic){
     example_constructs = c("screened", "ineligible", "ineligibility_reasons", "refused", "constraint_unavailable",
                            "constraint_other", "constraint_other_txt", "consented", "discontinued_pre_randomization", 
                            "injury_type", "randomized", "late_ineligible", "per_protocol_sample", "enrolled", 
-                           "consent_date", "death_date", "withdraw_date", "preinjury_work_status"),
+                           "consent_date", "death_date", "withdraw_date", "preinjury_work_status", "followup_expected_12mo",
+                           "completed"),
     example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean", "Boolean", "Character",
                       "Boolean", "Boolean", "NamedCategory['ankle' 'plateau']", "Boolean", "Boolean", 
-                      "Boolean", "Boolean", "Date", "Date", "Date", "Boolean"))
+                      "Boolean", "Boolean", "Date", "Date", "Date", "Boolean", "Boolean", "Boolean"))
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_other_txt, consented, 
            discontinued_pre_randomization, injury_type, randomized, 
            late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, withdraw_date,
-           preinjury_work_status)
+           preinjury_work_status, followup_expected_12mo, completed)
   
   ir_count <- df %>%
     select(study_id, ineligibility_reasons) %>%
@@ -1479,8 +1480,8 @@ consort_diagram_wb_publication <- function(analytic){
   withdrew <- sum(as.Date(df$withdraw_date)-as.Date(df$consent_date)<365, na.rm = TRUE)
   
   today <- Sys.Date()
-  percent_expected <- format_count_percent(sum(today-as.Date(df$consent_date)>365, na.rm = TRUE),
-                                           sum(!is.na(df$consent_date), na.rm = TRUE), decimals = 2)
+  percent_expected <- format_count_percent(sum(df$completed, na.rm = TRUE),
+                                           sum(df$followup_expected_12mo, na.rm = TRUE), decimals = 2)
   
   working_df <- df %>% filter(preinjury_work_status&injury_type=='ankle')
   working_percent_expected <- format_count_percent(sum(today-as.Date(working_df$consent_date)>365, na.rm = TRUE),

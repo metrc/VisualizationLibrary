@@ -18,23 +18,24 @@
 #' 
 closed_consort_diagram_wb_publication <- function(analytic){
   
-  confirm_stability_of_related_visual('consort_diagram_wb_publication', 'e7469b6550ac116ad4139bc6208f111c')
+  confirm_stability_of_related_visual('consort_diagram_wb_publication', 'f684a8bd5617124cc082d219724cfe4a')
   
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("screened", "ineligible", "ineligibility_reasons", "refused", "constraint_unavailable",
                            "constraint_other", "constraint_other_txt", "consented", "discontinued_pre_randomization", 
                            "injury_type", "randomized", "late_ineligible", "per_protocol_sample", "enrolled", 
-                           "consent_date", "death_date", "withdraw_date", "preinjury_work_status", "treatment_arm"),
+                           "consent_date", "death_date", "withdraw_date", "preinjury_work_status", "followup_expected_12mo", 
+                           "completed", "treatment_arm"),
     example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean", "Boolean", "Character",
                       "Boolean", "Boolean", "NamedCategory['ankle' 'plateau']", "Boolean", "Boolean", 
-                      "Boolean", "Boolean", "Date", "Date", "Date", "Boolean", "TreatmentArm"))
+                      "Boolean", "Boolean", "Date", "Date", "Date", "Boolean", "Boolean", "Boolean", "TreatmentArm"))
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_other_txt, consented, 
            discontinued_pre_randomization, injury_type, randomized, constraint_unavailable,
            late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, withdraw_date,
-           preinjury_work_status, treatment_arm)
+           preinjury_work_status, followup_expected_12mo, completed, treatment_arm)
   
   ir_count <- df %>%
     select(study_id, ineligibility_reasons) %>%
@@ -82,14 +83,14 @@ closed_consort_diagram_wb_publication <- function(analytic){
   
   today <- Sys.Date()
   
-  percent_expected_a <- format_count_percent(sum(today-as.Date(df_a$consent_date)>365, na.rm = TRUE),
-                                           sum(!is.na(df_a$consent_date), na.rm = TRUE), decimals = 2)
+  percent_expected_a <- format_count_percent(sum(df_a$completed, na.rm = TRUE),
+                                           sum(df_a$followup_expected_12mo, na.rm = TRUE), decimals = 2)
   working_df_a <- df_a %>% filter(preinjury_work_status&injury_type=='ankle')
   working_percent_expected_a <- format_count_percent(sum(today-as.Date(working_df_a$consent_date)>365, na.rm = TRUE),
                                                    sum(!is.na(working_df_a$consent_date), na.rm = TRUE), decimals = 2)
   
-  percent_expected_b <- format_count_percent(sum(today-as.Date(df_b$consent_date)>365, na.rm = TRUE),
-                                             sum(!is.na(df_b$consent_date), na.rm = TRUE), decimals = 2)
+  percent_expected_b <- format_count_percent(sum(df_b$completed, na.rm = TRUE),
+                                             sum(df_b$followup_expected_12mo, na.rm = TRUE), decimals = 2)
   working_df_b <- df_b %>% filter(preinjury_work_status&injury_type=='ankle')
   working_percent_expected_b <- format_count_percent(sum(today-as.Date(working_df_b$consent_date)>365, na.rm = TRUE),
                                                      sum(!is.na(working_df_b$consent_date), na.rm = TRUE), decimals = 2)
