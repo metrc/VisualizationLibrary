@@ -1502,7 +1502,8 @@ consort_diagram_wb_publication <- function(analytic){
           <TR><TD ALIGN="LEFT">- ', ir_count$n[5], ' - ', ir_count$ineligibility_reasons[5], '</TD></TR>
           <TR><TD ALIGN="LEFT">- ', ir_count$n[6], ' - ', ir_count$ineligibility_reasons[6], '</TD></TR>
           <TR><TD ALIGN="LEFT">- ', multi_reason, ' - Had multiple ineligibility reasons</TD></TR>
-          <TR><TD ALIGN="LEFT">', constraint, ' - Had surgeon not willing to randomize</TD></TR>
+          <TR><TD ALIGN="LEFT">', refused, ' - Declined consent</TD></TR>
+          <TR><TD ALIGN="LEFT">', constraint, ' - Had other reasons not enrolled</TD></TR>
           <TR><TD ALIGN="LEFT">', late_discontinuation, ' - Discontinued after consent, prior to randomization</TD></TR>
           <TR><TD ALIGN="LEFT">', plateau_injuries, ' - Enrolled patients with tibial plateau fractures</TD></TR>
         </TABLE>
