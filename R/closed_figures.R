@@ -18,7 +18,7 @@
 #' 
 closed_consort_diagram_wb_publication <- function(analytic){
   
-  confirm_stability_of_related_visual('consort_diagram_wb_publication', 'f684a8bd5617124cc082d219724cfe4a')
+  confirm_stability_of_related_visual('consort_diagram_wb_publication', '9c41ab8e7b3d9d9729ca5e39306c08e0')
   
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -136,7 +136,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
             <TR><TD ALIGN="LEFT">', randomized_a-late_ineligible_a-diverging_review_a, ' - Included in primary analysis</TD></TR>
             <TR><TD ALIGN="LEFT">- ', died_a, ' - Died prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">- ', withdrew_a, ' - Withdrew prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">', percent_expected_a, ' - 12 Month follow-up expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', percent_expected_a, ' - 12 Month follow-up complete out of expected</TD></TR>
             <TR><TD ALIGN="LEFT">', working_percent_expected_a, ' - Pre-injury working patients with</TD></TR>
             <TR><TD ALIGN="LEFT">expected 12 Month Follow-up</TD></TR>
           </TABLE>
@@ -152,7 +152,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
             <TR><TD ALIGN="LEFT">', randomized_b-late_ineligible_b-diverging_review_b, ' - Included in primary analysis</TD></TR>
             <TR><TD ALIGN="LEFT">- ', died_b, ' - Died prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">- ', withdrew_b, ' - Withdrew prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">', percent_expected_b, ' - 12 Month follow-up expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', percent_expected_b, ' - 12 Month follow-up complete out of expected</TD></TR>
             <TR><TD ALIGN="LEFT">', working_percent_expected_b, ' - Pre-injury working patients with</TD></TR>
             <TR><TD ALIGN="LEFT">expected 12 Month Follow-up</TD></TR>
           </TABLE>
