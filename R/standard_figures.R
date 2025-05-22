@@ -1405,6 +1405,144 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
 }
 
 
+#' Consort Diagram: Weight Bearing publication
+#'
+#' @description 
+#' Visualizes the categorical percentages of study status as well as followup completions. 
+#' Consort diagrams are almost fully customizable in their implementation. 
+#' 
+#' This consort diagram was made for the Weight Bearing study, and so is unlikely to work for yours.
+#' 
+#' For other consort diagrams that may better fit your study, refer to: consort_diagram_no_definitive_event, 
+#' dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
+#' dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram. 
+#'
+#' @param analytic analytic data set that must include 
+#' study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_other_txt, consented, 
+#' discontinued_pre_randomization, injury_type, randomized, 
+#' late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, withdraw_date,
+#' preinjury_work_status, treatment_arm
+#'
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
+#' @export
+#'
+#' @examples
+#' 
+consort_diagram_wb_publication <- function(analytic){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("screened", "ineligible", "ineligibility_reasons", "refused", "constraint_unavailable",
+                           "constraint_other", "constraint_other_txt", "consented", "discontinued_pre_randomization", 
+                           "injury_type", "randomized", "late_ineligible", "per_protocol_sample", "enrolled", 
+                           "consent_date", "death_date", "withdraw_date", "preinjury_work_status", "followup_expected_12mo",
+                           "completed"),
+    example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean", "Boolean", "Character",
+                      "Boolean", "Boolean", "NamedCategory['ankle' 'plateau']", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Date", "Date", "Date", "Boolean", "Boolean", "Boolean"))
+  
+  df <- analytic %>% 
+    select(study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_other_txt, consented, 
+           discontinued_pre_randomization, injury_type, randomized, 
+           late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, withdraw_date,
+           preinjury_work_status, followup_expected_12mo, completed)
+  
+  ir_count <- df %>%
+    select(study_id, ineligibility_reasons) %>%
+    separate_rows(ineligibility_reasons, sep = '; ') %>%
+    count(ineligibility_reasons) %>%
+    arrange(desc(n)) %>%
+    filter(!is.na(ineligibility_reasons)) %>%
+    mutate(ineligibility_reasons = if_else(row_number() >= 7, "Other reason", ineligibility_reasons)) %>%
+    group_by(ineligibility_reasons) %>%
+    summarise(n = sum(n), .groups = "drop") %>%
+    arrange(if_else(ineligibility_reasons == "Other reason", Inf, -n))
+  
+  screened <- sum(df$screened, na.rm = TRUE)
+  ineligible <- sum(df$ineligible, na.rm = TRUE)
+  
+  multi_reason <- sum(str_detect(df$ineligibility_reasons, ';'), na.rm = TRUE)
+  
+  refused <- sum(df$refused, na.rm = TRUE)
+  constraint <- sum(df$constraint_other, na.rm = TRUE)
+  constraint_unavailable <- sum(analytic$constraint_unavailable, na.rm = TRUE)
+  
+  late_discontinuation <- sum(df$discontinued_pre_randomization & 
+                                df$consented, na.rm = TRUE)
+  
+  plateau_injuries <- sum(df$injury_type=='plateau', na.rm = TRUE)
+  randomized <- sum(df$injury_type=='ankle', na.rm = TRUE)
+  
+  late_ineligible <- sum(df$late_ineligible, na.rm = TRUE)
+  diverging_review <- sum(!df$per_protocol_sample, na.rm = TRUE)
+  
+  died <- sum(as.Date(df$death_date)-as.Date(df$consent_date)<365, na.rm = TRUE)
+  withdrew <- sum(as.Date(df$withdraw_date)-as.Date(df$consent_date)<365, na.rm = TRUE)
+  
+  today <- Sys.Date()
+  percent_expected <- format_count_percent(sum(df$completed, na.rm = TRUE),
+                                           sum(df$followup_expected_12mo, na.rm = TRUE), decimals = 2)
+  
+  working_df <- df %>% filter(preinjury_work_status&injury_type=='ankle')
+  working_percent_expected <- format_count_percent(sum(today-as.Date(working_df$consent_date)>365, na.rm = TRUE),
+                                           sum(!is.na(working_df$consent_date), na.rm = TRUE), decimals = 2)
+  
+  consort_diagram <- grViz(paste0('
+    digraph g {
+      graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
+      
+      title [style="rounded,filled", fillcolor="#a4d3ee", pos="2,5.5!", shape = box, width=2.4, height=.5, 
+        label = "', screened, ' - Patients screened for eligibility"];
+        
+      box1 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,3.25!", shape = box, width=2.4, height=.5, 
+      labeljust=l,
+      label = <
+        <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+          <TR><TD ALIGN="LEFT">', ineligible, ' - Did not meet eligibility criteria</TD></TR>
+          <TR><TD ALIGN="LEFT">- ', ir_count$n[1], ' - ', ir_count$ineligibility_reasons[1], '</TD></TR>
+          <TR><TD ALIGN="LEFT">- ', ir_count$n[2], ' - ', ir_count$ineligibility_reasons[2], '</TD></TR>
+          <TR><TD ALIGN="LEFT">- ', ir_count$n[3], ' - ', ir_count$ineligibility_reasons[3], '</TD></TR>
+          <TR><TD ALIGN="LEFT">- ', ir_count$n[4], ' - ', ir_count$ineligibility_reasons[4], '</TD></TR>
+          <TR><TD ALIGN="LEFT">- ', ir_count$n[5], ' - ', ir_count$ineligibility_reasons[5], '</TD></TR>
+          <TR><TD ALIGN="LEFT">- ', ir_count$n[6], ' - ', ir_count$ineligibility_reasons[6], '</TD></TR>
+          <TR><TD ALIGN="LEFT">- ', multi_reason, ' - Had multiple ineligibility reasons</TD></TR>
+          <TR><TD ALIGN="LEFT">', refused, ' - Declined consent</TD></TR>
+          <TR><TD ALIGN="LEFT">', constraint_unavailable, ' - Patient not available for consent</TD></TR>          
+          <TR><TD ALIGN="LEFT">', constraint, ' - Had other reasons not enrolled</TD></TR>
+          <TR><TD ALIGN="LEFT">', late_discontinuation, ' - Discontinued after consent, prior to randomization</TD></TR>
+          <TR><TD ALIGN="LEFT">', plateau_injuries, ' - Enrolled patients with tibial plateau fractures</TD></TR>
+        </TABLE>
+      >];
+        
+      title2 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,1!", shape = box, width=2.4, height=.5, 
+        label = "', randomized, ' - Underwent randomization"];
+        
+      box2 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,-0.5!", shape = box, width=2.4, height=.5, labeljust=l,
+        label = <
+          <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+            <TR><TD ALIGN="LEFT">', late_ineligible, ' - Late ineligible</TD></TR>
+            <TR><TD ALIGN="LEFT">', diverging_review, ' - Weight bearing instructions review diverged from protocol</TD></TR>
+            <TR><TD ALIGN="LEFT">', randomized-late_ineligible-diverging_review, ' - Included in primary analysis</TD></TR>
+            <TR><TD ALIGN="LEFT">- ', died, ' - Died prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">- ', withdrew, ' - Withdrew prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">', percent_expected, ' - 12 Month follow-up complete out of expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', working_percent_expected, ' - Pre-injury working patients with expected 12 Month Follow-up</TD></TR>
+          </TABLE>
+        >]
+    }
+  '))
+  svg_content <- DiagrammeRsvg::export_svg(consort_diagram)
+  temp_svg_path <- tempfile(fileext = ".svg")
+  writeLines(svg_content, temp_svg_path)
+  temp_png_path <- tempfile(fileext = ".png")
+  rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 1200, height = 1200)
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 1200px;">', image_data)
+  file.remove(c(temp_svg_path, temp_png_path))
+  return(img_tag)
+}
+
+
 
 #' Visualization Library: Issues per site (Basic)
 #'
