@@ -23,39 +23,61 @@ closed_consort_diagram_wb_publication <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("screened", "ineligible", "ineligibility_reasons", "refused", "constraint_unavailable",
-                           "constraint_other", "constraint_other_txt", "consented", "discontinued_pre_randomization", 
+                           "constraint_other", "constraint_other_txt", "constraint_unavailable", "constraint_surgeon_unwilling",
+                           "consented", "discontinued_pre_randomization", 
                            "injury_type", "randomized", "late_ineligible", "per_protocol_sample", "enrolled", 
-                           "consent_date", "death_date", "withdraw_date", "preinjury_work_status", "followup_expected_12mo", 
-                           "completed", "treatment_arm"),
+                           "consent_date", "death_date", "withdraw_date", "preinjury_work_status", "followup_expected_12mo",
+                           "completed", "outcome_data", "treatment_arm"),
     example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean", "Boolean", "Character",
                       "Boolean", "Boolean", "NamedCategory['ankle' 'plateau']", "Boolean", "Boolean", 
-                      "Boolean", "Boolean", "Date", "Date", "Date", "Boolean", "Boolean", "Boolean", "TreatmentArm"))
+                      "Boolean", "Boolean", "Date", "Date", "Date", "Boolean", "Boolean", "Boolean",
+                      "(';', ',')NamedCategory['returned_to_work' 'admission_for_complication']|Number|Number|Date|NamedCategory['event' 'check']|Number|Number|Date",
+                      "TreatmentArm"))
   
   df <- analytic %>% 
-    select(study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_other_txt, consented, 
-           discontinued_pre_randomization, injury_type, randomized, constraint_unavailable,
-           late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, withdraw_date,
-           preinjury_work_status, followup_expected_12mo, completed, treatment_arm)
+    select(study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_other_txt, 
+           constraint_unavailable, constraint_surgeon_unwilling, consented, discontinued_pre_randomization, 
+           injury_type, randomized, late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, 
+           withdraw_date, preinjury_work_status, followup_expected_12mo, completed, outcome_data, treatment_arm)
+  
   
   ir_count <- df %>%
     select(study_id, ineligibility_reasons) %>%
+    filter(!is.na(ineligibility_reasons)) %>%
     separate_rows(ineligibility_reasons, sep = '; ') %>%
     count(ineligibility_reasons) %>%
-    arrange(desc(n)) %>%
+    arrange(desc(n))
+  
+  top_reasons <- ir_count %>%
+    pull(ineligibility_reasons)
+  top_reasons <- top_reasons[1:6]
+  
+  ir_count_raw <- df %>%
+    select(study_id, ineligibility_reasons) %>%
     filter(!is.na(ineligibility_reasons)) %>%
-    mutate(ineligibility_reasons = if_else(row_number() >= 7, "Other reason", ineligibility_reasons)) %>%
-    group_by(ineligibility_reasons) %>%
-    summarise(n = sum(n), .groups = "drop") %>%
-    arrange(if_else(ineligibility_reasons == "Other reason", Inf, -n))
+    count(ineligibility_reasons)
   
-  screened <- sum(analytic$screened, na.rm = TRUE)
-  ineligible <- sum(analytic$ineligible, na.rm = TRUE)
+  top_reasons_count <- ir_count_raw %>%
+    filter(ineligibility_reasons %in% top_reasons) %>%
+    arrange(desc(n))
   
-  multi_reason <- sum(str_detect(analytic$ineligibility_reasons, ';'), na.rm = TRUE)
+  total_count <- sum(ir_count_raw$n)
+  other_count <- sum(ir_count_raw$n) - sum(top_reasons_count$n)
   
-  refused <- sum(analytic$refused, na.rm = TRUE)
-  constraint <- sum(analytic$constraint_other, na.rm = TRUE)
+  other_row <- tibble(
+    ineligibility_reasons = 'Other reason/Multiple reasons',
+    n = other_count
+  )
+  
+  top_reasons_count <- rbind(top_reasons_count, other_row)
+  
+  screened <- sum(df$screened, na.rm = TRUE)
+  ineligible <- sum(df$ineligible, na.rm = TRUE)
+  
+  refused <- sum(df$refused, na.rm = TRUE)
+  constraint <- sum(df$constraint_other, na.rm = TRUE)
   constraint_unavailable <- sum(analytic$constraint_unavailable, na.rm = TRUE)
+  constraint_surgeon_unwilling <- sum(analytic$constraint_unavailable, na.rm = TRUE)
   
   late_discontinuation <- sum(df$discontinued_pre_randomization & 
                                 df$consented, na.rm = TRUE)
@@ -81,19 +103,35 @@ closed_consort_diagram_wb_publication <- function(analytic){
   withdrew_a <- sum(as.Date(df_a$withdraw_date)-as.Date(df_a$consent_date)<365, na.rm = TRUE)
   withdrew_b <- sum(as.Date(df_b$withdraw_date)-as.Date(df_b$consent_date)<365, na.rm = TRUE)
   
-  today <- Sys.Date()
+  extract_outcome_expected <- function(inner_df) {
+    long_outcomes <- inner_df %>%
+      select(outcome_data) %>%
+      separate_rows(outcome_data, sep = ';') %>%
+      separate(outcome_data, into = c("outcome_name", "target_days", "expected_days",
+                                      "time_zero", "outcome_date_extended", "outcome_type",
+                                      "outcome_days_extended", "outcome_days", "outcome_date"), sep = ',') %>%
+      filter((as.Date(time_zero)+365)<Sys.Date()) %>% 
+      mutate(
+        target_days = as.numeric(target_days),
+        expected_days = as.numeric(expected_days),
+        outcome_days_extended = as.numeric(outcome_days_extended),
+        outcome_days = as.numeric(outcome_days)
+      ) %>%
+      group_by(outcome_name) %>%
+      summarise(
+        pct_expected = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%")
+      )
+    long_outcomes
+  }
   
-  percent_expected_a <- format_count_percent(sum(df_a$completed, na.rm = TRUE),
-                                           sum(df_a$followup_expected_12mo, na.rm = TRUE), decimals = 2)
-  working_df_a <- df_a %>% filter(preinjury_work_status&injury_type=='ankle')
-  working_percent_expected_a <- format_count_percent(sum(today-as.Date(working_df_a$consent_date)>365, na.rm = TRUE),
-                                                   sum(!is.na(working_df_a$consent_date), na.rm = TRUE), decimals = 2)
+  outcome_extracted_a <- extract_outcome_expected(df_a)
+  outcome_extracted_b <- extract_outcome_expected(df_b)
   
-  percent_expected_b <- format_count_percent(sum(df_b$completed, na.rm = TRUE),
-                                             sum(df_b$followup_expected_12mo, na.rm = TRUE), decimals = 2)
-  working_df_b <- df_b %>% filter(preinjury_work_status&injury_type=='ankle')
-  working_percent_expected_b <- format_count_percent(sum(today-as.Date(working_df_b$consent_date)>365, na.rm = TRUE),
-                                                     sum(!is.na(working_df_b$consent_date), na.rm = TRUE), decimals = 2)
+  afc_expected_a <- outcome_extracted_a %>% filter(outcome_name == 'admission_for_complication') %>% pull(pct_expected)
+  rtw_expected_a <- outcome_extracted_a %>% filter(outcome_name == 'returned_to_work') %>% pull(pct_expected)
+  
+  afc_expected_b <- outcome_extracted_b %>% filter(outcome_name == 'admission_for_complication') %>% pull(pct_expected)
+  rtw_expected_b <- outcome_extracted_b %>% filter(outcome_name == 'returned_to_work') %>% pull(pct_expected)
   
   
   consort_diagram <- grViz(paste0('
@@ -108,15 +146,16 @@ closed_consort_diagram_wb_publication <- function(analytic){
       label = <
         <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
           <TR><TD ALIGN="LEFT">', ineligible, ' - Did not meet eligibility criteria</TD></TR>
-          <TR><TD ALIGN="LEFT">- ', ir_count$n[1], ' - ', ir_count$ineligibility_reasons[1], '</TD></TR>
-          <TR><TD ALIGN="LEFT">- ', ir_count$n[2], ' - ', ir_count$ineligibility_reasons[2], '</TD></TR>
-          <TR><TD ALIGN="LEFT">- ', ir_count$n[3], ' - ', ir_count$ineligibility_reasons[3], '</TD></TR>
-          <TR><TD ALIGN="LEFT">- ', ir_count$n[4], ' - ', ir_count$ineligibility_reasons[4], '</TD></TR>
-          <TR><TD ALIGN="LEFT">- ', ir_count$n[5], ' - ', ir_count$ineligibility_reasons[5], '</TD></TR>
-          <TR><TD ALIGN="LEFT">- ', ir_count$n[6], ' - ', ir_count$ineligibility_reasons[6], '</TD></TR>
-          <TR><TD ALIGN="LEFT">- ', multi_reason, ' - Had multiple ineligibility reasons</TD></TR>
+          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[1], ' - ', top_reasons_count$ineligibility_reasons[1], '</TD></TR>
+          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[2], ' - ', top_reasons_count$ineligibility_reasons[2], '</TD></TR>
+          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[3], ' - ', top_reasons_count$ineligibility_reasons[3], '</TD></TR>
+          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[4], ' - ', top_reasons_count$ineligibility_reasons[4], '</TD></TR>
+          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[5], ' - ', top_reasons_count$ineligibility_reasons[5], '</TD></TR>
+          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[6], ' - ', top_reasons_count$ineligibility_reasons[6], '</TD></TR>
+          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[7], ' - ', top_reasons_count$ineligibility_reasons[7], '</TD></TR>          
           <TR><TD ALIGN="LEFT">', refused, ' - Declined consent</TD></TR>
           <TR><TD ALIGN="LEFT">', constraint_unavailable, ' - Patient not available for consent</TD></TR>
+          <TR><TD ALIGN="LEFT">', constraint_surgeon_unwilling, ' - Had surgeon unwilling to randomize</TD></TR>          
           <TR><TD ALIGN="LEFT">', constraint, ' - Had other reasons not enrolled</TD></TR>
           <TR><TD ALIGN="LEFT">', late_discontinuation, ' - Discontinued after consent, prior to randomization</TD></TR>
           <TR><TD ALIGN="LEFT">', plateau_injuries, ' - Enrolled patients with tibial plateau fractures</TD></TR>
@@ -126,7 +165,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
       title2 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,1!", shape = box, width=2.4, height=.5, 
         label = "', randomized, ' - Underwent randomization"];
         
-      box2 [style="rounded,filled", fillcolor="#a4d3ee", pos="-0.25,-1!", shape = box, width=2.4, height=.5, labeljust=l,
+      box2 [style="rounded,filled", fillcolor="#a4d3ee", pos="-0.25,-0.625!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', randomized_a, ' - Assigned to early weight bearing</TD></TR>
@@ -136,14 +175,12 @@ closed_consort_diagram_wb_publication <- function(analytic){
             <TR><TD ALIGN="LEFT">', randomized_a-late_ineligible_a-diverging_review_a, ' - Included in primary analysis</TD></TR>
             <TR><TD ALIGN="LEFT">- ', died_a, ' - Died prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">- ', withdrew_a, ' - Withdrew prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">', percent_expected_a, ' - 12 Month follow-up complete</TD></TR>
-            <TR><TD ALIGN="LEFT">(out of expected)</TD></TR>
-            <TR><TD ALIGN="LEFT">', working_percent_expected_a, ' - Pre-injury working patients with</TD></TR>
-            <TR><TD ALIGN="LEFT">expected 12 Month Follow-up</TD></TR>
+            <TR><TD ALIGN="LEFT">', afc_expected_a, ' - Admitted for complication out of expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', rtw_expected_a, ' - Returned to work out of expected</TD></TR>
           </TABLE>
         >];
           
-      box3 [style="rounded,filled", fillcolor="#a4d3ee", pos="4.25,-1!", shape = box, width=2.4, height=.5, labeljust=l,
+      box3 [style="rounded,filled", fillcolor="#a4d3ee", pos="4.25,-0.625!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', randomized_b, ' - Assigned to delayed weight bearing</TD></TR>
@@ -153,10 +190,8 @@ closed_consort_diagram_wb_publication <- function(analytic){
             <TR><TD ALIGN="LEFT">', randomized_b-late_ineligible_b-diverging_review_b, ' - Included in primary analysis</TD></TR>
             <TR><TD ALIGN="LEFT">- ', died_b, ' - Died prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">- ', withdrew_b, ' - Withdrew prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">', percent_expected_b, ' - 12 Month follow-up complete</TD></TR>
-            <TR><TD ALIGN="LEFT">(out of expected)</TD></TR>
-            <TR><TD ALIGN="LEFT">', working_percent_expected_b, ' - Pre-injury working patients with</TD></TR>
-            <TR><TD ALIGN="LEFT">expected 12 Month Follow-up</TD></TR>
+            <TR><TD ALIGN="LEFT">', afc_expected_b, ' - Admitted for complication out of expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', rtw_expected_b, ' - Returned to work out of expected</TD></TR>
           </TABLE>
         >]
     }
