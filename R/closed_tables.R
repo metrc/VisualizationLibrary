@@ -3461,6 +3461,7 @@ closed_enrollment_status_by_site <- function(analytic){
 #' closed_wbs_main_paper_all_characteristics("Replace with Analytic Tibble")
 #' 
 closed_wbs_main_paper_all_characteristics <- function(analytic){
+  confirm_stability_of_related_visual('wbs_main_paper_all_characteristics', 'a7f286fa9bef48407d4c0dd6be03d99b')
   inner_wbs_characteristics <- function(df){
     total <- nrow(df)
     
@@ -3708,8 +3709,9 @@ closed_wbs_main_paper_all_characteristics <- function(analytic){
 #' @examples
 #' closed_wbs_main_paper_bpi("Replace with Analytic Tibble")
 #' 
-closed_wbs_main_paper_bpi <- function(analytic) {
-  inner_bpi <- function(df) {
+closed_wbs_main_paper_bpi <- function(analytic){
+  confirm_stability_of_related_visual('wbs_main_paper_bpi', '626df079eec0adf354b321724317884a')
+  inner_bpi <- function(df){
     sev <- df %>%
       select(starts_with("bpi_severity_score")) %>%
       pivot_longer(everything(), names_to = "timepoint", values_to = "score") %>%
