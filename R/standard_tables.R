@@ -4336,3 +4336,343 @@ enrollment_status_by_site_consent_pre_screening <- function(analytic, discontinu
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
+
+
+#' Weight Bearing ALL characteristics for Main paper
+#'
+#' @description This function outputs a table with the specified injury characteristics and patient characteristics
+#' for enrolled patients with "Ankle" injuries. This table is produced for Weight bearing main paper. 
+#'
+#' @param analytic This is the analytic dataset that must include enrolled, injury_type,
+#' sex, age, ethnicity_race, education_level,
+#' preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
+#' tobacco_use, bmi, preinjury_health, insurance_type,
+#' injury_gustilo, injury_classification_ankle_ota, soft_tissue_closure,
+#' injury_mechanism, injury_randomization_days, pre_randomization_mobilization
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' wbs_main_paper_all_characteristics("Replace with Analytic Tibble")
+#' 
+wbs_main_paper_all_characteristics <- function(analytic){
+  df <- analytic %>%
+    select(enrolled, injury_type,
+      sex, age, ethnicity_race, education_level,
+      preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
+      tobacco_use, bmi, preinjury_health, insurance_type,
+      injury_gustilo, injury_classification_ankle_ota, soft_tissue_closure,
+      injury_mechanism, injury_randomization_days, pre_randomization_immobilization) %>%
+    filter(enrolled) %>% 
+    filter(injury_type == 'ankle')
+  
+  total <- nrow(df)
+
+  df_age_missing <- df %>%
+    select(age) %>%
+    mutate(age = ifelse(is.na(age), "Missing", age)) %>%
+    filter(age == "Missing") %>%
+    count(age) %>%
+    rename(heading = age) %>%
+    mutate(Category = "Age",
+           n = format_count_percent(n, total))
+  
+  df_age_stats <- df %>%
+    select(age) %>%
+    filter(!is.na(age)) %>%
+    mutate(age = as.numeric(age)) %>%
+    summarise(n = format_mean_sd(age)) %>%
+    mutate(Category = "Age",
+           heading  = "Mean (SD)")
+  
+  df_age_final <- rbind(df_age_stats, df_age_missing)
+  
+  df_sex <- df %>%
+    count(sex) %>%
+    rename(heading = sex) %>%
+    mutate(Category = "Sex",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_race_ethnicity <- df %>%
+    count(ethnicity_race) %>%
+    rename(heading = ethnicity_race) %>%
+    mutate(Category = "Race Ethnicity",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_education <- df %>%
+    count(education_level) %>%
+    rename(heading = education_level) %>%
+    mutate(Category = "Education Level",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_usual_major_activity <- df %>%
+    count(preinjury_productive_activity) %>%
+    rename(heading = preinjury_productive_activity) %>%
+    mutate(Category = "Major Activity",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_physical_demand <- df %>%
+    count(preinjury_work_demand) %>%
+    rename(heading = preinjury_work_demand) %>%
+    mutate(Category = "Work Demand",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_work_hours_missing <- df %>%
+    select(preinjury_work_hours) %>%
+    mutate(preinjury_work_hours = ifelse(is.na(preinjury_work_hours), "Missing", preinjury_work_hours)) %>%
+    filter(preinjury_work_hours == "Missing") %>%
+    count(preinjury_work_hours) %>%
+    rename(heading = preinjury_work_hours) %>%
+    mutate(Category = "Work Hours",
+           n = format_count_percent(n, total))
+  
+  df_work_hours <- df %>%
+    select(preinjury_work_hours) %>%
+    filter(!is.na(preinjury_work_hours)) %>%
+    mutate(preinjury_work_hours = as.numeric(preinjury_work_hours)) %>%
+    summarise(n = format_mean_sd(preinjury_work_hours)) %>%
+    mutate(Category = "Work Hours",
+           heading = "Mean (SD)")
+  
+  df_work_hours_final <- rbind(df_work_hours, df_work_hours_missing)
+  
+  df_tobacco <- df %>%
+    count(tobacco_use) %>%
+    rename(heading = tobacco_use) %>%
+    mutate(Category = "Tobacco Use",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_bmi_missing <- df %>%
+    select(bmi) %>%
+    mutate(bmi = ifelse(is.na(bmi), "Missing", bmi)) %>%
+    filter(bmi == "Missing") %>%
+    count(bmi) %>%
+    rename(heading = bmi) %>%
+    mutate(Category = "BMI",
+           n = format_count_percent(n, total))
+  
+  df_bmi <- df %>%
+    select(bmi) %>%
+    filter(!is.na(bmi)) %>%
+    summarise(n = format_mean_sd(bmi)) %>%
+    mutate(Category = "BMI",
+           heading = "Mean (SD)")
+  
+  df_bmi_final <- rbind(df_bmi, df_bmi_missing)
+  
+  df_preinjury_health <- df %>%
+    count(preinjury_health) %>%
+    rename(heading = preinjury_health) %>%
+    mutate(Category = "Health",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_insurance <- df %>%
+    mutate(insurance_type = ifelse(str_detect(insurance_type, "Medicaid"), "Medicaid",
+                                   ifelse(!is.na(insurance_type), "Other Insurance", NA))) %>%
+    mutate(insurance_type = ifelse(!is.na(insurance_type), insurance_type, "Missing")) %>%
+    count(insurance_type) %>%
+    rename(heading = insurance_type) %>%
+    mutate(Category = "Insurance",
+           n = format_count_percent(n, total))
+  
+  df_injury_ota <- df %>%
+    mutate(ota_class = ifelse(injury_classification_ankle_ota %in% c('44A2','44A3'), "44 A2/A3",
+                              ifelse(injury_classification_ankle_ota %in% c('44B2','44B3'), "44 B2/B3",
+                                     ifelse(injury_classification_ankle_ota %in% c('44C1','44C2','44C3'), "44 C1/C2/C3",
+                                            injury_classification_ankle_ota)))) %>%
+    count(ota_class) %>%
+    rename(heading = ota_class) %>%
+    mutate(Category = "OTA Classification",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_gustilo <- df %>%
+    count(injury_gustilo) %>%
+    rename(heading = injury_gustilo) %>%
+    mutate(Category = "Gustilo Type",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_soft_tissue <- df %>%
+    separate_rows(soft_tissue_closure, sep = ";") %>%
+    mutate(soft_tissue_closure = recode(soft_tissue_closure, "Primary" = "Primary closure")) %>%
+    count(soft_tissue_closure) %>%
+    rename(heading = soft_tissue_closure) %>%
+    mutate(Category = "Tissue Closure",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_mechanism_raw <- df %>%
+    mutate(injury_mechanism = ifelse(
+      str_starts(injury_mechanism, "Other"), "Other", injury_mechanism)) %>%
+    count(injury_mechanism) %>%
+    rename(heading = injury_mechanism) %>%
+    mutate(Category = "Mechanism",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_mechanism_rest  <- df_mechanism_raw %>% filter(heading != "Other")
+  df_mechanism_other <- df_mechanism_raw %>% filter(heading == "Other")
+  df_mechanism <- rbind(df_mechanism_rest, df_mechanism_other)
+  
+  df_days_missing <- df %>%
+    mutate(injury_randomization_days = ifelse(is.na(injury_randomization_days), "Missing", injury_randomization_days)) %>%
+    filter(injury_randomization_days == "Missing") %>%
+    count(injury_randomization_days) %>%
+    rename(heading = injury_randomization_days) %>%
+    mutate(Category = "Days",
+           n = format_count_percent(n, total))
+  
+  df_days_stats <- df %>%
+    filter(!is.na(injury_randomization_days)) %>%
+    summarise(n = format_mean_sd(injury_randomization_days)) %>%
+    mutate(Category = "Days",
+           heading = "Mean (SD)")
+  
+  df_days_final <- rbind(df_days_stats, df_days_missing)
+  
+  df_immobilization <- df %>%
+    count(pre_randomization_immobilization) %>%
+    rename(heading = pre_randomization_immobilization) %>%
+    mutate(Category = "Immobilization",
+           heading = ifelse(is.na(heading), "Missing", heading),
+           n = format_count_percent(n, total))
+  
+  df_final <- rbind(
+    df_age_final, df_sex, df_race_ethnicity, df_education,
+    df_usual_major_activity, df_physical_demand, df_work_hours_final,
+    df_tobacco, df_bmi_final, df_preinjury_health, df_insurance,
+    df_injury_ota, df_gustilo, df_soft_tissue,
+    df_mechanism, df_days_final, df_immobilization)
+  
+  index_vec_a <- c(
+    "Age" = nrow(df_age_final),
+    "Sex" = nrow(df_sex),
+    "Race Ethnicity" = nrow(df_race_ethnicity),
+    "Education Level" = nrow(df_education),
+    "Major Activity" = nrow(df_usual_major_activity),
+    "Work Demand" = nrow(df_physical_demand),
+    "Work Hours" = nrow(df_work_hours_final),
+    "Tobacco Use" = nrow(df_tobacco),
+    "BMI" = nrow(df_bmi_final),
+    "Health" = nrow(df_preinjury_health),
+    "Insurance" = nrow(df_insurance),
+    "OTA Classification" = nrow(df_injury_ota),
+    "Gustilo Type" = nrow(df_gustilo),
+    "Tissue Closure" = nrow(df_soft_tissue),
+    "Mechanism of Injury" = nrow(df_mechanism),
+    "Days to Randomization" = nrow(df_days_final),
+    "Pre-Randomization Immobilization" = nrow(df_immobilization))
+  
+  border_rows <- c(0, cumsum(index_vec_a))
+  
+  title <- paste("Total =", total)
+  df_for_table <- df_final %>%
+    select(heading, n) %>%
+    rename("Characteristic" = heading) %>%
+    rename(!!title := n)
+  
+  table_raw <- kable(df_for_table, format="html", align='l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+  
+  return(table_raw)
+}
+
+#' Weight Bearing BPI for Main Paper
+#'
+#' @description This function outputs a table with the Brief Pain Inventory scores for enrolled patients. This table is produced for Weight bearing main paper. 
+#'
+#' @param analytic enrolled, 
+#' bpi_severity_score_6wk, bpi_severity_score_3mo, bpi_severity_score_6mo, bpi_severity_score_12mo, 
+#' bpi_interference_score_6wk, bpi_interference_score_3mo, bpi_interference_score_6mo, bpi_interference_score_12mo
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' wbs_main_paper_bpi("Replace with Analytic Tibble")
+#' 
+wbs_main_paper_bpi <- function(analytic){
+  df <- analytic %>%
+    select(enrolled, 
+           bpi_severity_score_6wk, bpi_severity_score_3mo, bpi_severity_score_6mo, bpi_severity_score_12mo, 
+           bpi_interference_score_6wk, bpi_interference_score_3mo, bpi_interference_score_6mo, bpi_interference_score_12mo) %>%
+    filter(enrolled)
+  
+  severity <- df %>% 
+    select(bpi_severity_score_6wk, bpi_severity_score_3mo, bpi_severity_score_6mo, bpi_severity_score_12mo) %>% 
+    pivot_longer(cols = starts_with("bpi_severity_score"),
+      names_to = "timepoint",
+      values_to = "score") %>%
+    mutate(timepoint = recode(timepoint,
+      bpi_severity_score_6wk  = "6 Weeks",
+      bpi_severity_score_3mo  = "3 Months",
+      bpi_severity_score_6mo  = "6 Months",
+      bpi_severity_score_12mo = "12 Months"))
+  
+  severity_mean_sd <- severity %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>%
+    summarise(n = format_mean_sd(score))
+    
+  severity_counts <- severity %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>% 
+    count(timepoint)
+  
+  severity_final <- left_join(severity_counts, severity_mean_sd, by = 'timepoint') %>% 
+    mutate(timepoint = factor(timepoint, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    arrange(timepoint)
+  
+  interference <- df %>% 
+    select(bpi_interference_score_6wk, bpi_interference_score_3mo, bpi_interference_score_6mo, bpi_interference_score_12mo) %>% 
+    pivot_longer(cols = starts_with("bpi_interference_score"),
+                 names_to = "timepoint",
+                 values_to = "score") %>%
+    mutate(timepoint = recode(timepoint,
+                              bpi_interference_score_6wk  = "6 Weeks",
+                              bpi_interference_score_3mo  = "3 Months",
+                              bpi_interference_score_6mo  = "6 Months",
+                              bpi_interference_score_12mo = "12 Months"))
+  
+  interference_mean_sd <- interference %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>%
+    summarise(n = format_mean_sd(score))
+  
+  interference_counts <- interference %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>% 
+    count(timepoint)
+  
+  interference_final <- left_join(interference_counts, interference_mean_sd, by = 'timepoint') %>% 
+    mutate(timepoint = factor(timepoint, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    arrange(timepoint)
+  
+  final <- rbind(severity_final, interference_final)
+  
+  colnames(final) <- c('', 'n', 'Overall Scores, Mean (SD)')
+  
+  index_vec_a <- c(
+    "Pain Severity" = nrow(severity_final),
+    "Pain Interference" = nrow(interference_final))
+  
+  border_rows <- c(0, cumsum(index_vec_a))
+  
+  table_raw <- kable(final, format="html", align='l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+  
+  return(table_raw)
+}
