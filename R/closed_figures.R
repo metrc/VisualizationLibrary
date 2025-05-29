@@ -18,7 +18,7 @@
 #' 
 closed_consort_diagram_wb_publication <- function(analytic){
   
-  confirm_stability_of_related_visual('consort_diagram_wb_publication', '9c41ab8e7b3d9d9729ca5e39306c08e0')
+  confirm_stability_of_related_visual('consort_diagram_wb_publication', 'd40f4e214e5f42c226597a3df0ea02f1')
   
   analytic <- if_needed_generate_example_data(
     analytic,
