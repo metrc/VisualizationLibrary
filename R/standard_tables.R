@@ -4410,6 +4410,7 @@ wbs_main_paper_all_characteristics <- function(analytic){
            n = format_count_percent(n, total))
   
   df_usual_major_activity <- df %>%
+    mutate(preinjury_productive_activity = ifelse(is.na(preinjury_productive_activity), "Missing", preinjury_productive_activity)) %>% 
     count(preinjury_productive_activity) %>%
     rename(heading = preinjury_productive_activity) %>%
     mutate(Category = "Major Activity",
