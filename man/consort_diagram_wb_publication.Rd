@@ -9,9 +9,9 @@ consort_diagram_wb_publication(analytic)
 \arguments{
 \item{analytic}{analytic data set that must include 
 study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_other_txt, consented, 
-discontinued_pre_randomization, injury_type, randomized, 
+discontinued_pre_randomization, injury_type (must have ankle and plateau values), randomized, 
 late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, withdraw_date,
-preinjury_work_status, treatment_arm}
+preinjury_work_status, followup_expected_12mo, completed, outcome_data}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
