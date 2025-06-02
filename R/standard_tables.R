@@ -4274,13 +4274,13 @@ enrollment_status_by_site_consent_pre_screening <- function(analytic, discontinu
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("screened", "eligible", "ineligible", "consented", "enrolled", "randomized",
-                          "site_certified_days", "facilitycode", 'pre_screened', 'pre_screened_eligible', "discontinued"), 
+                          "site_certified_days", "facilitycode", 'pre_screened', 'pre_eligible', "discontinued"), 
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Date", "FacilityCode", "Date", "Boolean", "Boolean"))
   
   df <- analytic %>%
     select(screened, eligible, ineligible, consented, randomized, enrolled,
-           site_certified_days, facilitycode, pre_screened, pre_screened_eligible, any_of(discontinued))
+           site_certified_days, facilitycode, pre_screened, pre_eligible, any_of(discontinued))
   
   colnames(df)[which(names(df) == discontinued)] <- "discontinued"
   
@@ -4295,7 +4295,7 @@ enrollment_status_by_site_consent_pre_screening <- function(analytic, discontinu
     summarize(
       `Days Certified` = site_certified_days[1],
       `Pre-Operative Screened` = sum(pre_screened),
-      `Pre-Operative Screened Eligible` = sum(pre_screened_eligible),
+      `Pre-Operative Screened Eligible` = sum(pre_eligible),
       Consented = sum(consented))
   
   df_2nd <- df %>% 
