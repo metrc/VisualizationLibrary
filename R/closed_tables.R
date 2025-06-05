@@ -3934,3 +3934,98 @@ closed_wbs_main_paper_aos <- function(analytic){
 }
 
 
+#' closed PROMIS stats by time
+#'
+#' @description 
+#' Returns stat data on promis scores, including sample size, mean, and standard deviation. This is the
+#' closed_version of promis_stats_by_time
+#' 
+#' @param analytic enrolled, promis_pf 6wk - 12mo constructs, promis_pain_interference 6wk - 12mo constructs
+#' 
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' wbs_main_paper_aos("Replace with Analytic Tibble")
+#' 
+closed_promis_stats_by_time <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('enrolled', 'treatment_arm',
+                           'promis_pf_6wk', 'promis_pf_3mo', 'promis_pf_6mo', 'promis_pf_12mo', 
+                           'promis_pain_interference_6wk', 'promis_pain_interference_3mo', 'promis_pain_interference_6mo', 
+                           'promis_pain_interference_12mo'), 
+    example_types = c("Boolean", "TreatmentArm", "Number","Number","Number","Number","Number","Number","Number","Number"))
+  
+  df <- analytic %>%
+    select(enrolled, treatment_arm,
+           promis_pf_6wk, promis_pf_3mo, promis_pf_6mo, promis_pf_12mo, 
+           promis_pain_interference_6wk, promis_pain_interference_3mo, promis_pain_interference_6mo, 
+           promis_pain_interference_12mo) %>%
+    filter(enrolled)
+  
+  df_a <- df %>% filter(treatment_arm == 'Group A') 
+  df_b <- df %>% filter(treatment_arm == 'Group B')
+  
+  inner_data_extractor <- function(prefix, inner_df) {
+    recode_map <- setNames(
+      c("6 Weeks", "3 Months", "6 Months", "12 Months"),
+      paste0(prefix, c("6wk", "3mo", "6mo", "12mo"))
+    )
+    
+    long <- inner_df %>% 
+      select(paste0(prefix, c("6wk", "3mo", "6mo", "12mo"))) %>% 
+      pivot_longer(cols = everything(),
+                   names_to = "timepoint",
+                   values_to = "score") %>%
+      mutate(timepoint = recode(timepoint, !!!recode_map))
+    
+    mean_sd <- long %>% 
+      group_by(timepoint) %>% 
+      filter(!is.na(score)) %>%
+      summarise(n = format_mean_sd(score))
+    
+    counts <- long %>% 
+      group_by(timepoint) %>% 
+      filter(!is.na(score)) %>% 
+      count(timepoint)
+    
+    final <- left_join(counts, mean_sd, by = 'timepoint') %>% 
+      mutate(timepoint = factor(timepoint, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+      arrange(timepoint)
+    
+    final
+  }
+  
+  pf_a <- inner_data_extractor('promis_pf_', df_a)
+  pf_b <- inner_data_extractor('promis_pf_', df_b)[,2:3]
+  pf_tot <- inner_data_extractor('promis_pf_', df)[,2:3]
+  
+  pf_final <- cbind(pf_a, pf_b, pf_tot)
+  
+  pi_a <- inner_data_extractor('promis_pain_interference_', df_a)
+  pi_b <- inner_data_extractor('promis_pain_interference_', df_b)[,2:3]
+  pi_tot <- inner_data_extractor('promis_pain_interference_', df)[,2:3]
+  
+  pi_final <- cbind(pi_a, pi_b, pi_tot)
+  
+  final <- rbind(pf_final, pi_final)
+  
+  colnames(final) <- c('', 'n (Group A)', 'Overall Scores, Mean (SD) (Group A)', 'n (Group B)', 
+                       'Overall Scores, Mean (SD) (Group B)', 'n ', 'Overall Scores, Mean (SD)')
+  
+  index_vec_a <- c(
+    "PROMIS Physical Function" = nrow(pf_final),
+    "PROMIS Pain Interference" = nrow(pi_final))
+  
+  border_rows <- c(0, cumsum(index_vec_a))
+  
+  table_raw <- kable(final, format="html", align='l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+  
+  return(table_raw)
+}
+
+
