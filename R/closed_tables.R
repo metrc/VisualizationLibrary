@@ -3955,7 +3955,7 @@ closed_promis_stats_by_time <- function(analytic){
                            'promis_pf_6wk', 'promis_pf_3mo', 'promis_pf_6mo', 'promis_pf_12mo', 
                            'promis_pain_interference_6wk', 'promis_pain_interference_3mo', 'promis_pain_interference_6mo', 
                            'promis_pain_interference_12mo'), 
-    example_types = c("Boolean", "Number","Number","Number","Number","Number","Number","Number","Number"))
+    example_types = c("Boolean", "TreatmentArm", "Number","Number","Number","Number","Number","Number","Number","Number"))
   
   df <- analytic %>%
     select(enrolled, treatment_arm,
