@@ -4762,3 +4762,120 @@ wbs_main_paper_bpi <- function(analytic){
   
   return(table_raw)
 }
+
+#' Weight Bearing AOS for Main Paper
+#'
+#' @description This function outputs a table with the AOS scores for enrolled patients. This table is produced for Weight bearing main paper. 
+#'
+#' @param analytic enrolled, 
+#' aos_disability_score_injured_leg_12mo, aos_disability_score_injured_leg_3mo, aos_disability_score_injured_leg_6mo, aos_disability_score_injured_leg_6wk, 
+#' aos_pain_score_injured_leg_12mo, aos_pain_score_injured_leg_3mo, aos_pain_score_injured_leg_6mo, aos_pain_score_injured_leg_6wk, 
+#' aos_score_injured_leg_12mo, aos_score_injured_leg_3mo, aos_score_injured_leg_6mo, aos_score_injured_leg_6wk
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' wbs_main_paper_aos("Replace with Analytic Tibble")
+#' 
+wbs_main_paper_aos <- function(analytic){
+  df <- analytic %>%
+    select(enrolled, 
+           aos_disability_score_injured_leg_12mo, aos_disability_score_injured_leg_3mo, aos_disability_score_injured_leg_6mo, aos_disability_score_injured_leg_6wk, 
+           aos_pain_score_injured_leg_12mo, aos_pain_score_injured_leg_3mo, aos_pain_score_injured_leg_6mo, aos_pain_score_injured_leg_6wk, 
+           aos_score_injured_leg_12mo, aos_score_injured_leg_3mo, aos_score_injured_leg_6mo, aos_score_injured_leg_6wk) %>%
+    filter(enrolled)
+  
+  overall <- df %>% 
+    select(aos_score_injured_leg_12mo, aos_score_injured_leg_3mo, aos_score_injured_leg_6mo, aos_score_injured_leg_6wk) %>% 
+    pivot_longer(cols = starts_with("aos_score"),
+                 names_to = "timepoint",
+                 values_to = "score") %>%
+    mutate(timepoint = recode(timepoint,
+                              aos_score_injured_leg_6wk  = "6 Weeks",
+                              aos_score_injured_leg_3mo  = "3 Months",
+                              aos_score_injured_leg_6mo  = "6 Months",
+                              aos_score_injured_leg_12mo = "12 Months"))
+  
+  overall_mean_sd <- overall %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>%
+    summarise(n = format_mean_sd(score))
+  
+  overall_counts <- overall %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>% 
+    count(timepoint)
+  
+  overall_final <- left_join(overall_counts, overall_mean_sd, by = 'timepoint') %>% 
+    mutate(timepoint = factor(timepoint, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    arrange(timepoint)
+  
+  disability <- df %>% 
+    select(aos_disability_score_injured_leg_12mo, aos_disability_score_injured_leg_3mo, aos_disability_score_injured_leg_6mo, aos_disability_score_injured_leg_6wk) %>% 
+    pivot_longer(cols = starts_with("aos_disability"),
+                 names_to = "timepoint",
+                 values_to = "score") %>%
+    mutate(timepoint = recode(timepoint,
+                              aos_disability_score_injured_leg_6wk  = "6 Weeks",
+                              aos_disability_score_injured_leg_3mo  = "3 Months",
+                              aos_disability_score_injured_leg_6mo  = "6 Months",
+                              aos_disability_score_injured_leg_12mo = "12 Months"))
+  
+  disability_mean_sd <- disability %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>%
+    summarise(n = format_mean_sd(score))
+  
+  disability_counts <- disability %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>% 
+    count(timepoint)
+  
+  disability_final <- left_join(disability_counts, disability_mean_sd, by = 'timepoint') %>% 
+    mutate(timepoint = factor(timepoint, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    arrange(timepoint)
+  
+  pain <- df %>% 
+    select(aos_pain_score_injured_leg_12mo, aos_pain_score_injured_leg_3mo, aos_pain_score_injured_leg_6mo, aos_pain_score_injured_leg_6wk) %>% 
+    pivot_longer(cols = starts_with("aos_pain"),
+                 names_to = "timepoint",
+                 values_to = "score") %>%
+    mutate(timepoint = recode(timepoint,
+                              aos_pain_score_injured_leg_6wk  = "6 Weeks",
+                              aos_pain_score_injured_leg_3mo  = "3 Months",
+                              aos_pain_score_injured_leg_6mo  = "6 Months",
+                              aos_pain_score_injured_leg_12mo = "12 Months"))
+  
+  pain_mean_sd <- pain %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>%
+    summarise(n = format_mean_sd(score))
+  
+  pain_counts <- pain %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>% 
+    count(timepoint)
+  
+  pain_final <- left_join(pain_counts, pain_mean_sd, by = 'timepoint') %>% 
+    mutate(timepoint = factor(timepoint, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    arrange(timepoint)
+  
+  final <- rbind(overall_final, disability_final, pain_final)
+  
+  colnames(final) <- c('', 'n', 'Overall Scores, Mean (SD)')
+  
+  index_vec_a <- c(
+    "Overall Score" = nrow(overall_final),
+    "Disability Score" = nrow(disability_final),
+    "Pain Score"= nrow(pain_final))
+  
+  border_rows <- c(0, cumsum(index_vec_a))
+  
+  table_raw <- kable(final, format="html", align='l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+  
+  return(table_raw)
+}

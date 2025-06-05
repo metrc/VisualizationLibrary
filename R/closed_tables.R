@@ -3803,5 +3803,134 @@ closed_wbs_main_paper_bpi <- function(analytic){
   return(vis)
 }
 
+#' Closed Weight Bearing AOS for Main Paper
+#'
+#' @description Closed version of wbs_main_paper_aos; see it's documentation for details. 
+#'
+#' @param analytic enrolled, 
+#' aos_disability_score_injured_leg_12mo, aos_disability_score_injured_leg_3mo, aos_disability_score_injured_leg_6mo, aos_disability_score_injured_leg_6wk, 
+#' aos_pain_score_injured_leg_12mo, aos_pain_score_injured_leg_3mo, aos_pain_score_injured_leg_6mo, aos_pain_score_injured_leg_6wk, 
+#' aos_score_injured_leg_12mo, aos_score_injured_leg_3mo, aos_score_injured_leg_6mo, aos_score_injured_leg_6wk,
+#' treatment_arm
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_wbs_main_paper_aos("Replace with Analytic Tibble")
+#' 
+closed_wbs_main_paper_aos <- function(analytic){
+  confirm_stability_of_related_visual('wbs_main_paper_aos', 'bf41138721701da69e701770ecf89c77')
+  inner_bpi <- function(df){
+    overall <- df %>%
+      select(starts_with("aos_score")) %>%
+      pivot_longer(everything(), names_to = "timepoint", values_to = "score") %>%
+      mutate(timepoint = recode(timepoint,
+                                aos_score_injured_leg_6wk  = "6 Weeks",
+                                aos_score_injured_leg_3mo  = "3 Months",
+                                aos_score_injured_leg_6mo  = "6 Months",
+                                aos_score_injured_leg_12mo = "12 Months")) %>%
+      filter(!is.na(score))
+    
+    overall_stats <- overall %>%
+      group_by(timepoint) %>%
+      summarise(n = n(),
+                mean_sd = format_mean_sd(score)) %>%
+      ungroup() %>%
+      mutate(Category = "Overall Score",
+             heading = timepoint) %>%
+      select(Category, heading, n, mean_sd)
+    
+    disability <- df %>%
+      select(starts_with("aos_disability")) %>%
+      pivot_longer(cols = starts_with("aos_disability"), names_to = "timepoint", values_to = "score") %>%
+      mutate(timepoint = recode(timepoint,
+                                aos_disability_score_injured_leg_6wk  = "6 Weeks",
+                                aos_disability_score_injured_leg_3mo  = "3 Months",
+                                aos_disability_score_injured_leg_6mo  = "6 Months",
+                                aos_disability_score_injured_leg_12mo = "12 Months")) %>%
+      filter(!is.na(score))
+    
+    disability_stats <- disability %>%
+      group_by(timepoint) %>%
+      summarise(n = n(),
+                mean_sd = format_mean_sd(score)) %>%
+      ungroup() %>%
+      mutate(Category = "Disability Score",
+             heading  = timepoint) %>%
+      select(Category, heading, n, mean_sd)
+    
+    pain <- df %>%
+      select(starts_with("aos_pain")) %>%
+      pivot_longer(cols = starts_with("aos_pain"), names_to = "timepoint", values_to = "score") %>%
+      mutate(timepoint = recode(timepoint,
+                                aos_pain_score_injured_leg_6wk  = "6 Weeks",
+                                aos_pain_score_injured_leg_3mo  = "3 Months",
+                                aos_pain_score_injured_leg_6mo  = "6 Months",
+                                aos_pain_score_injured_leg_12mo = "12 Months")) %>%
+      filter(!is.na(score))
+    
+    pain_stats <- pain %>%
+      group_by(timepoint) %>%
+      summarise(n = n(),
+                mean_sd = format_mean_sd(score)) %>%
+      ungroup() %>%
+      mutate(Category = "Pain Score",
+             heading  = timepoint) %>%
+      select(Category, heading, n, mean_sd)
+    
+    bind_rows(overall_stats, disability_stats, pain_stats)
+  }
+  
+  df_all <- analytic %>%
+    select(enrolled,
+           aos_disability_score_injured_leg_12mo, aos_disability_score_injured_leg_3mo, aos_disability_score_injured_leg_6mo, aos_disability_score_injured_leg_6wk, 
+           aos_pain_score_injured_leg_12mo, aos_pain_score_injured_leg_3mo, aos_pain_score_injured_leg_6mo, aos_pain_score_injured_leg_6wk, 
+           aos_score_injured_leg_12mo, aos_score_injured_leg_3mo, aos_score_injured_leg_6mo, aos_score_injured_leg_6wk,
+           treatment_arm) %>%
+    filter(enrolled)
+  df_a <- df_all %>% filter(treatment_arm == "Group A")
+  df_b <- df_all %>% filter(treatment_arm == "Group B")
+  
+  sum_all <- inner_bpi(df_all) %>% rename(pall_n = n, pall_mean = mean_sd)
+  sum_a <- inner_bpi(df_a) %>% rename(pa_n = n, pa_mean = mean_sd)
+  sum_b <- inner_bpi(df_b) %>% rename(pb_n = n, pb_mean = mean_sd)
+  
+  total <- nrow(df_all)
+  atot <- nrow(df_a)
+  btot <- nrow(df_b)
+  
+  df_table <- sum_all %>%
+    left_join(sum_a, by = c("Category","heading")) %>%
+    left_join(sum_b, by = c("Category","heading")) %>%
+    mutate(
+      pa_n = replace_na(pa_n, 0),
+      pa_mean = replace_na(pa_mean, "NA"),
+      pb_n = replace_na(pb_n, 0),
+      pb_mean = replace_na(pb_mean, "NA"))
+  
+  df_for_table <- df_table %>%
+    select(heading, pa_n, pa_mean, pb_n, pb_mean, pall_n, pall_mean)
+  
+  second_names <- c(" ",
+                    rep(c("n", "Overall Scores, Mean (SD)"), times = 3))
+  
+  cnames <- c(1, 2, 2, 2)
+  names(cnames) <- c(" ",
+                     paste0("Group A (n = ", atot, ")"),
+                     paste0("Group B (n = ", btot, ")"),
+                     paste0("Overall (n = ", total, ")"))
+  
+  rec <- rle(df_table$Category)
+  index_vec <- setNames(rec$lengths, rec$values)
+  
+  vis <- kable(df_for_table, format = "html", align = rep('l', ncol(df_for_table)), col.names = second_names) %>%
+    add_header_above(cnames) %>%
+    pack_rows(index = index_vec, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(cumsum(c(0, rec$lengths)), extra_css = "border-bottom: 1px solid;")
+  
+  return(vis)
+}
 
 
