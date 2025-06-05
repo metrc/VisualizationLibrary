@@ -4348,7 +4348,7 @@ enrollment_status_by_site_consent_pre_screening <- function(analytic, discontinu
 #' preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
 #' tobacco_use, bmi, preinjury_health, insurance,
 #' injury_gustilo, injury_classification_ankle_ota, soft_tissue_closure,
-#' injury_mechanism, injury_randomization_days, pre_randomization_mobilization
+#' injury_mechanism, injury_randomization_days, pre_randomization_immobilization_type
 #'
 #' @return An HTML table.
 #' @export
@@ -4539,8 +4539,8 @@ wbs_main_paper_all_characteristics <- function(analytic){
   df_days_final <- rbind(df_days_stats, df_days_missing)
   
   df_immobilization <- df %>%
-    count(pre_randomization_immobilization) %>%
-    rename(heading = pre_randomization_immobilization) %>%
+    count(pre_randomization_immobilization_type) %>%
+    rename(heading = pre_randomization_immobilization_type) %>%
     mutate(Category = "Immobilization",
            heading = ifelse(is.na(heading), "Missing", heading),
            n = format_count_percent(n, total))

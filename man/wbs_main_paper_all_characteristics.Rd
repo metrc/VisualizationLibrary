@@ -12,7 +12,7 @@ sex, age, ethnicity_race, education_level,
 preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
 tobacco_use, bmi, preinjury_health, insurance,
 injury_gustilo, injury_classification_ankle_ota, soft_tissue_closure,
-injury_mechanism, injury_randomization_days, pre_randomization_mobilization}
+injury_mechanism, injury_randomization_days, pre_randomization_immobilization_type}
 }
 \value{
 An HTML table.
