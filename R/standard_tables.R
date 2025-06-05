@@ -4431,9 +4431,9 @@ enrollment_status_by_site_consent_pre_screening <- function(analytic, discontinu
 #' @param analytic This is the analytic dataset that must include enrolled, injury_type,
 #' sex, age, ethnicity_race, education_level,
 #' preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
-#' tobacco_use, bmi, preinjury_health, insurance_type,
+#' tobacco_use, bmi, preinjury_health, insurance,
 #' injury_gustilo, injury_classification_ankle_ota, soft_tissue_closure,
-#' injury_mechanism, injury_randomization_days, pre_randomization_mobilization
+#' injury_mechanism, injury_randomization_days, pre_randomization_immobilization_type
 #'
 #' @return An HTML table.
 #' @export
@@ -4446,7 +4446,7 @@ wbs_main_paper_all_characteristics <- function(analytic){
     select(enrolled, injury_type,
       sex, age, ethnicity_race, education_level,
       preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
-      tobacco_use, bmi, preinjury_health, insurance_type,
+      tobacco_use, bmi, preinjury_health, insurance,
       injury_gustilo, injury_classification_ankle_ota, soft_tissue_closure,
       injury_mechanism, injury_randomization_days, pre_randomization_immobilization) %>%
     filter(enrolled) %>% 
@@ -4561,11 +4561,9 @@ wbs_main_paper_all_characteristics <- function(analytic){
            n = format_count_percent(n, total))
   
   df_insurance <- df %>%
-    mutate(insurance_type = ifelse(str_detect(insurance_type, "Medicaid"), "Medicaid",
-                                   ifelse(!is.na(insurance_type), "Other Insurance", NA))) %>%
-    mutate(insurance_type = ifelse(!is.na(insurance_type), insurance_type, "Missing")) %>%
-    count(insurance_type) %>%
-    rename(heading = insurance_type) %>%
+    mutate(insurance = ifelse(insurance == TRUE, 'Yes', 'No')) %>% 
+    count(insurance) %>%
+    rename(heading = insurance) %>%
     mutate(Category = "Insurance",
            n = format_count_percent(n, total))
   
@@ -4626,8 +4624,8 @@ wbs_main_paper_all_characteristics <- function(analytic){
   df_days_final <- rbind(df_days_stats, df_days_missing)
   
   df_immobilization <- df %>%
-    count(pre_randomization_immobilization) %>%
-    rename(heading = pre_randomization_immobilization) %>%
+    count(pre_randomization_immobilization_type) %>%
+    rename(heading = pre_randomization_immobilization_type) %>%
     mutate(Category = "Immobilization",
            heading = ifelse(is.na(heading), "Missing", heading),
            n = format_count_percent(n, total))
@@ -4655,7 +4653,7 @@ wbs_main_paper_all_characteristics <- function(analytic){
     "Gustilo Type" = nrow(df_gustilo),
     "Tissue Closure" = nrow(df_soft_tissue),
     "Mechanism of Injury" = nrow(df_mechanism),
-    "Days to Randomization" = nrow(df_days_final),
+    "Days from Injury to Randomization" = nrow(df_days_final),
     "Pre-Randomization Immobilization" = nrow(df_immobilization))
   
   border_rows <- c(0, cumsum(index_vec_a))
