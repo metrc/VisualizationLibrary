@@ -4763,6 +4763,7 @@ wbs_main_paper_bpi <- function(analytic){
   return(table_raw)
 }
 
+
 #' Weight Bearing AOS for Main Paper
 #'
 #' @description This function outputs a table with the AOS scores for enrolled patients. This table is produced for Weight bearing main paper. 
@@ -4869,6 +4870,97 @@ wbs_main_paper_aos <- function(analytic){
     "Overall Score" = nrow(overall_final),
     "Disability Score" = nrow(disability_final),
     "Pain Score"= nrow(pain_final))
+  
+  border_rows <- c(0, cumsum(index_vec_a))
+  
+  table_raw <- kable(final, format="html", align='l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+  
+  return(table_raw)
+}
+
+
+
+#' PROMIS stats by time
+#'
+#' @description 
+#' Returns stat data on promis scores, including sample size, mean, and standard deviation
+#' 
+#' @param analytic enrolled, promis_pf 6wk - 12mo constructs, promis_pain_interference 6wk - 12mo constructs
+#' 
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' wbs_main_paper_aos("Replace with Analytic Tibble")
+#' 
+promis_stats_by_time <- function(analytic){
+  df <- analytic %>%
+    select(enrolled, 
+           promis_pf_6wk, promis_pf_3mo, promis_pf_6mo, promis_pf_12mo, 
+           promis_pain_interference_6wk, promis_pain_interference_3mo, promis_pain_interference_6mo, 
+           promis_pain_interference_12mo) %>%
+    filter(enrolled)
+  
+  pf <- df %>% 
+    select(promis_pf_6wk, promis_pf_3mo, promis_pf_6mo, promis_pf_12mo) %>% 
+    pivot_longer(cols = everything(),
+                 names_to = "timepoint",
+                 values_to = "score") %>%
+    mutate(timepoint = recode(timepoint,
+                              promis_pf_6wk  = "6 Weeks",
+                              promis_pf_3mo  = "3 Months",
+                              promis_pf_6mo  = "6 Months",
+                              promis_pf_12mo = "12 Months"))
+  
+  pf_mean_sd <- pf %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>%
+    summarise(n = format_mean_sd(score))
+  
+  pf_counts <- pf %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>% 
+    count(timepoint)
+  
+  pf_final <- left_join(pf_counts, pf_mean_sd, by = 'timepoint') %>% 
+    mutate(timepoint = factor(timepoint, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    arrange(timepoint)
+  
+  pi <- df %>% 
+    select(promis_pain_interference_6wk, promis_pain_interference_3mo, promis_pain_interference_6mo, promis_pain_interference_12mo) %>% 
+    pivot_longer(cols = everything(),
+                 names_to = "timepoint",
+                 values_to = "score") %>%
+    mutate(timepoint = recode(timepoint,
+                              promis_pain_interference_6wk  = "6 Weeks",
+                              promis_pain_interference_3mo  = "3 Months",
+                              promis_pain_interference_6mo  = "6 Months",
+                              promis_pain_interference_12mo = "12 Months"))
+  
+  pi_mean_sd <- pi %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>%
+    summarise(n = format_mean_sd(score))
+  
+  pi_counts <- pi %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>% 
+    count(timepoint)
+  
+  pi_final <- left_join(pi_counts, pi_mean_sd, by = 'timepoint') %>% 
+    mutate(timepoint = factor(timepoint, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    arrange(timepoint)
+  
+  final <- rbind(pf_final, pi_final)
+  
+  colnames(final) <- c('', 'n', 'Overall Scores, Mean (SD)')
+  
+  index_vec_a <- c(
+    "PROMIS Physical Function" = nrow(pf_final),
+    "PROMIS Pain Interference" = nrow(pi_final))
   
   border_rows <- c(0, cumsum(index_vec_a))
   
