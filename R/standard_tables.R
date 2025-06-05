@@ -4897,6 +4897,14 @@ wbs_main_paper_aos <- function(analytic){
 #' wbs_main_paper_aos("Replace with Analytic Tibble")
 #' 
 promis_stats_by_time <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('enrolled', 
+                           'promis_pf_6wk', 'promis_pf_3mo', 'promis_pf_6mo', 'promis_pf_12mo', 
+                           'promis_pain_interference_6wk', 'promis_pain_interference_3mo', 'promis_pain_interference_6mo', 
+                           'promis_pain_interference_12mo'), 
+    example_types = c("Boolean", "Number","Number","Number","Number","Number","Number","Number","Number"))
+  
   df <- analytic %>%
     select(enrolled, 
            promis_pf_6wk, promis_pf_3mo, promis_pf_6mo, promis_pf_12mo, 
