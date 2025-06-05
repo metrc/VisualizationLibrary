@@ -16,7 +16,7 @@ An HTML table.
 }
 \description{
 Returns summary statistics on the number of the time to event data of each site for a specified outcome.
-Output column "Percent of Target" comes from dividing the average outcome_days with the average target_days,
+Output column "Percent of Expected (excluding events)" comes from excluding events from the days sum calculation,
 and "Percent of Expected" refers to dividing the average outcome_days with the average expected_days.
 }
 \examples{
