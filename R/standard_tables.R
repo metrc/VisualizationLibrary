@@ -207,6 +207,65 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 }
 
 
+#' Monitoring required
+#'
+#' @description 
+#' Simple function that returns whether a site has reached the number of enrolled required for monitoring
+#' to be required.
+#'
+#' @param analytic analytic data set that must include enrolled, facilitycode, consent_date
+#' @param large_sites sites which use the upper designation of minimum participants required
+#' @param min_pts a numeric vector of length 2 which contains the lower and upper throshold for monitoring 
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' monitoring_required("Replace with Analytic Tibble", large_sites = c('AAA', 'AAB'))
+#' 
+monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,25)) {
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('facilitycode', 'enrolled', 'consent_date'), 
+    example_types = c("FacilityCode", 'Boolean', 'Date'))
+  
+  sum_enrolled <- analytic %>%
+    filter(enrolled) %>%
+    group_by(facilitycode) %>%
+    summarize(enrolled_count = n(), .groups = 'drop')
+  
+  
+  mon_req <- sum_enrolled %>%
+    mutate(`Monitoring Required` = ifelse(
+      facilitycode %in% large_sites,
+      enrolled_count >= min_pts[2],
+      enrolled_count >= min_pts[1]
+    ))
+  
+  dates <- analytic %>%
+    filter(enrolled) %>%
+    group_by(facilitycode) %>%
+    summarize(consent_dates = list(sort(consent_date)), .groups = 'drop')
+  
+  combined <- mon_req %>% 
+    left_join(dates, by = "facilitycode") %>%
+    mutate(`Date Monitoring Required` = ifelse(
+      `Monitoring Required`,
+      ifelse(facilitycode %in% large_sites,
+             as.character(map_chr(consent_dates, ~ .x[min_pts[2]])),
+             as.character(map_chr(consent_dates, ~ .x[min_pts[1]]))),
+      NA_character_
+    )) %>%
+    select(-consent_dates, -`Monitoring Required`) 
+  
+  vis <- kable(combined, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
+
+
+
 
 #' Ankle and Plateau X-Ray and Measurement Status
 #'
@@ -4092,7 +4151,7 @@ not_enrolled_reason <- function(analytic, last_days = NULL){
 #'
 #' @description 
 #' Returns summary statistics on the number of the time to event data of each site for a specified outcome.
-#' Output column "Percent of Target" comes from dividing the average outcome_days with the average target_days,
+#' Output column "Percent of Expected (excluding events)" comes from excluding events from the days sum calculation,
 #' and "Percent of Expected" refers to dividing the average outcome_days with the average expected_days.
 #'
 #' @param analytic analytic data set that must include study_id, outcome_data, facilitycode, and enrolled
@@ -4143,10 +4202,16 @@ outcome_by_site <- function(analytic, outcome_name) {
       min_days = min(outcome_days, na.rm = TRUE),
       max_days = max(outcome_days, na.rm = TRUE),
       avg_days = format_mean_sd(outcome_days, decimals = 0),
-      pct_target = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(target_days, na.rm = TRUE) *100, 0), "%"),
       pct_expected = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%")
     ) %>%
     mutate(facilitycode = "Overall")
+  
+  overall_expected_non_event <- outcome_data %>%
+    filter(outcome_type != 'event') %>%
+    summarise(pct_expected_excluding_events = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%"))
+  
+  overall_stats <- overall_stats %>%
+    cbind(overall_expected_non_event)
   
   # Calculate site-specific statistics
   site_stats <- outcome_data %>%
@@ -4157,13 +4222,21 @@ outcome_by_site <- function(analytic, outcome_name) {
       min_days = min(outcome_days, na.rm = TRUE),
       max_days = max(outcome_days, na.rm = TRUE),
       avg_days = format_mean_sd(outcome_days, decimals = 0),
-      pct_target = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(target_days, na.rm = TRUE) *100, 0), "%"),
       pct_expected = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%")
     ) %>%
     ungroup() %>%
     mutate(order_col = as.numeric(str_remove(pct_expected,"%"))) %>% 
     arrange(desc(order_col)) %>% 
     select(-order_col)
+  
+  site_expected_non_event <- outcome_data %>%
+    group_by(facilitycode) %>%
+    filter(outcome_type != 'event') %>%
+    summarise(pct_expected_excluding_events = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%"))
+  
+  site_stats <- site_stats %>%
+    left_join(site_expected_non_event)
+  
   
   # Combine overall and site-specific statistics
   results <- bind_rows(overall_stats, site_stats)
@@ -4174,10 +4247,11 @@ outcome_by_site <- function(analytic, outcome_name) {
            `Minimum (Days)` = min_days,
            `Maximum (Days)` = max_days,
            `Mean (Standard Deviation)` = avg_days,
-           `Percent of Target` = pct_target,
+           `Percent of Expected (excluding events)` = pct_expected_excluding_events,
            `Percent of Expected` = pct_expected,
            `Site` = facilitycode) %>%
-    select(`Site`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Target`, `Percent of Expected`)
+    select(`Site`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, `Maximum (Days)`, 
+           `Mean (Standard Deviation)`, `Percent of Expected (excluding events)`, `Percent of Expected`)
   
   vis <- kable(results, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
@@ -4221,20 +4295,31 @@ outcome_by_name_overall <- function(analytic) {
       min_days = min(outcome_days, na.rm = TRUE),
       max_days = max(outcome_days, na.rm = TRUE),
       avg_days = format_mean_sd(outcome_days, decimals = 0),
-      pct_target = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(target_days, na.rm = TRUE) *100, 0), "%"),
       pct_expected = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%")
     )
-
+  
+  expected_non_event <- outcome_data %>%
+    filter(outcome_type != 'event') %>%
+    group_by(outcome_name) %>%
+    mutate(expected_days = as.numeric(expected_days)) %>%
+    mutate(outcome_days = as.numeric(outcome_days)) %>%
+    summarise(pct_expected_excluding_events = paste0(round(sum(outcome_days, na.rm = TRUE)/ sum(expected_days, na.rm = TRUE) *100, 0), "%"))
+  
+  stats <- stats %>%
+    left_join(expected_non_event)
+  
   results <- stats %>%
     rename(`N (Participants)` = n_total,
            `Missing Time to Event (Participants)` = n_missing,
            `Minimum (Days)` = min_days,
            `Maximum (Days)` = max_days,
            `Mean (Standard Deviation)` = avg_days,
-           `Percent of Target` = pct_target,
+           `Percent of Expected (excluding events)` = pct_expected_excluding_events,
            `Percent of Expected` = pct_expected,
            `Outcome` = outcome_name) %>%
-    select(`Outcome`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Target`, `Percent of Expected`)
+    select(`Outcome`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, 
+           `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Expected (excluding events)`, 
+           `Percent of Expected`)
 
   # cleanup the names of the outcomes by replacing the underscores with spaces and capitalizing the first letter
   results <- results %>%
