@@ -207,6 +207,65 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 }
 
 
+#' Monitoring required
+#'
+#' @description 
+#' Simple function that returns whether a site has reached the number of enrolled required for monitoring
+#' to be required.
+#'
+#' @param analytic analytic data set that must include enrolled, facilitycode, consent_date
+#' @param large_sites sites which use the upper designation of minimum participants required
+#' @param min_pts a numeric vector of length 2 which contains the lower and upper throshold for monitoring 
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' monitoring_required("Replace with Analytic Tibble", large_sites = c('AAA', 'AAB'))
+#' 
+monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,25)) {
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('facilitycode', 'enrolled', 'consent_date'), 
+    example_types = c("FacilityCode", 'Boolean', 'Date'))
+  
+  sum_enrolled <- analytic %>%
+    filter(enrolled) %>%
+    group_by(facilitycode) %>%
+    summarize(enrolled_count = n(), .groups = 'drop')
+  
+  
+  mon_req <- sum_enrolled %>%
+    mutate(`Monitoring Required` = ifelse(
+      facilitycode %in% large_sites,
+      enrolled_count >= min_pts[2],
+      enrolled_count >= min_pts[1]
+    ))
+  
+  dates <- analytic %>%
+    filter(enrolled) %>%
+    group_by(facilitycode) %>%
+    summarize(consent_dates = list(sort(consent_date)), .groups = 'drop')
+  
+  combined <- mon_req %>% 
+    left_join(dates, by = "facilitycode") %>%
+    mutate(`Date Monitoring Required` = ifelse(
+      `Monitoring Required`,
+      ifelse(facilitycode %in% large_sites,
+             as.character(map_chr(consent_dates, ~ .x[min_pts[2]])),
+             as.character(map_chr(consent_dates, ~ .x[min_pts[1]]))),
+      NA_character_
+    )) %>%
+    select(-consent_dates, -`Monitoring Required`) 
+  
+  vis <- kable(combined, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
+
+
+
 
 #' Ankle and Plateau X-Ray and Measurement Status
 #'
