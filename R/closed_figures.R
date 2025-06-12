@@ -18,13 +18,13 @@
 #' 
 closed_consort_diagram_wb_publication <- function(analytic){
   
-  confirm_stability_of_related_visual('consort_diagram_wb_publication', 'd40f4e214e5f42c226597a3df0ea02f1')
+  confirm_stability_of_related_visual('consort_diagram_wb_publication', 'f634e258c030b7dcf6bf40bc98470b5d')
   
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("screened", "ineligible", "ineligibility_reasons", "refused", "constraint_unavailable",
                            "constraint_other", "constraint_other_txt", "constraint_unavailable", "constraint_surgeon_unwilling",
-                           "consented", "discontinued_pre_randomization", 
+                           "consented", "discontinued_pre_randomization", "received_treatment",
                            "injury_type", "randomized", "late_ineligible", "per_protocol_sample", "enrolled", 
                            "consent_date", "death_date", "withdraw_date", "preinjury_work_status", "followup_expected_12mo",
                            "completed", "outcome_data", "treatment_arm"),
@@ -36,7 +36,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_other_txt, 
-           constraint_unavailable, constraint_surgeon_unwilling, consented, discontinued_pre_randomization, 
+           constraint_unavailable, constraint_surgeon_unwilling, consented, discontinued_pre_randomization, received_treatment,
            injury_type, randomized, late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, 
            withdraw_date, preinjury_work_status, followup_expected_12mo, completed, outcome_data, treatment_arm)
   
@@ -91,6 +91,11 @@ closed_consort_diagram_wb_publication <- function(analytic){
   df_a <- df %>% filter(treatment_arm == 'Group A')
   df_b <- df %>% filter(treatment_arm == 'Group B')
   
+  dnr_treatment_df_a <- df_a %>% filter(injury_type == 'ankle')
+  dnr_treatment_a <- sum(!dnr_treatment_df_a$received_treatment, na.rm = TRUE)
+  dnr_treatment_df_b <- df_b %>% filter(injury_type == 'ankle')
+  dnr_treatment_b <- sum(!dnr_treatment_df_b$received_treatment, na.rm = TRUE)
+  
   late_ineligible_a <- sum(df_a$late_ineligible, na.rm = TRUE)
   late_ineligible_b <- sum(df_b$late_ineligible, na.rm = TRUE)
   
@@ -139,61 +144,71 @@ closed_consort_diagram_wb_publication <- function(analytic){
       graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
       
       title [style="rounded,filled", fillcolor="#a4d3ee", pos="2,5.5!", shape = box, width=2.4, height=.5, 
-        label = "', screened, ' - Patients screened for eligibility"];
+        label = "', screened, ' Patients screened for eligibility"];
         
-      box1 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,3.25!", shape = box, width=2.4, height=.5, 
+      box1 [style="rounded,filled", fillcolor="#a4d3ee", pos="4.5,3.25!", shape = box, width=2.4, height=.5, 
       labeljust=l,
       label = <
         <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
-          <TR><TD ALIGN="LEFT">', ineligible, ' - Did not meet eligibility criteria</TD></TR>
-          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[1], ' - ', top_reasons_count$ineligibility_reasons[1], '</TD></TR>
-          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[2], ' - ', top_reasons_count$ineligibility_reasons[2], '</TD></TR>
-          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[3], ' - ', top_reasons_count$ineligibility_reasons[3], '</TD></TR>
-          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[4], ' - ', top_reasons_count$ineligibility_reasons[4], '</TD></TR>
-          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[5], ' - ', top_reasons_count$ineligibility_reasons[5], '</TD></TR>
-          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[6], ' - ', top_reasons_count$ineligibility_reasons[6], '</TD></TR>
-          <TR><TD ALIGN="LEFT">.  ', top_reasons_count$n[7], ' - ', top_reasons_count$ineligibility_reasons[7], '</TD></TR>          
-          <TR><TD ALIGN="LEFT">', refused, ' - Declined consent</TD></TR>
-          <TR><TD ALIGN="LEFT">', constraint_unavailable, ' - Patient not available for consent</TD></TR>
-          <TR><TD ALIGN="LEFT">', constraint_surgeon_unwilling, ' - Had surgeon unwilling to randomize</TD></TR>          
-          <TR><TD ALIGN="LEFT">', constraint, ' - Had other reasons not enrolled</TD></TR>
-          <TR><TD ALIGN="LEFT">', late_discontinuation, ' - Discontinued after consent, prior to randomization</TD></TR>
-          <TR><TD ALIGN="LEFT">', plateau_injuries, ' - Enrolled patients with tibial plateau fractures</TD></TR>
+          <TR><TD ALIGN="LEFT">', ineligible, ' Did not meet eligibility criteria</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', top_reasons_count$n[1], ' ', top_reasons_count$ineligibility_reasons[1], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', top_reasons_count$n[2], ' ', top_reasons_count$ineligibility_reasons[2], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', top_reasons_count$n[3], ' ', top_reasons_count$ineligibility_reasons[3], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', top_reasons_count$n[4], ' ', top_reasons_count$ineligibility_reasons[4], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', top_reasons_count$n[5], ' ', top_reasons_count$ineligibility_reasons[5], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', top_reasons_count$n[6], ' ', top_reasons_count$ineligibility_reasons[6], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', top_reasons_count$n[7], ' ', top_reasons_count$ineligibility_reasons[7], '</TD></TR>          
+          <TR><TD ALIGN="LEFT">', refused, ' Declined consent</TD></TR>
+          <TR><TD ALIGN="LEFT">', constraint_unavailable, ' Patient not available for consent</TD></TR>
+          <TR><TD ALIGN="LEFT">', constraint_surgeon_unwilling, ' Had surgeon unwilling to randomize</TD></TR>          
+          <TR><TD ALIGN="LEFT">', constraint, ' Had other reasons not enrolled</TD></TR>
+          <TR><TD ALIGN="LEFT">', late_discontinuation, ' Discontinued after consent, prior to randomization</TD></TR>
+          <TR><TD ALIGN="LEFT">', plateau_injuries, ' Enrolled patients with tibial plateau fractures</TD></TR>
         </TABLE>
       >];
         
       title2 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,1!", shape = box, width=2.4, height=.5, 
-        label = "', randomized, ' - Underwent randomization"];
+        label = "', randomized, ' Underwent randomization"];
         
-      box2 [style="rounded,filled", fillcolor="#a4d3ee", pos="-0.25,-0.625!", shape = box, width=2.4, height=.5, labeljust=l,
+      box2 [style="rounded,filled", fillcolor="#a4d3ee", pos="-0.25,-0.75!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
-            <TR><TD ALIGN="LEFT">', randomized_a, ' - Assigned to early weight bearing</TD></TR>
-            <TR><TD ALIGN="LEFT">- ', late_ineligible_a, ' - Late ineligible</TD></TR>
-            <TR><TD ALIGN="LEFT">- ', diverging_review_a, ' - Weight bearing instructions review diverged</TD></TR>
+            <TR><TD ALIGN="LEFT">', randomized_a, ' Assigned to early weight bearing</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', late_ineligible_a, ' Late ineligible</TD></TR>
+            <TR><TD ALIGN="LEFT">', dnr_treatment_a, ' Randomized, did not receive treatment</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', diverging_review_a, ' Weight bearing instructions review diverged</TD></TR>
             <TR><TD ALIGN="LEFT">     from protocol</TD></TR>
-            <TR><TD ALIGN="LEFT">', randomized_a-late_ineligible_a-diverging_review_a, ' - Included in primary analysis</TD></TR>
-            <TR><TD ALIGN="LEFT">- ', died_a, ' - Died prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">- ', withdrew_a, ' - Withdrew prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">', afc_expected_a, ' - Admitted for complication out of expected</TD></TR>
-            <TR><TD ALIGN="LEFT">', rtw_expected_a, ' - Returned to work out of expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', randomized_a-late_ineligible_a-diverging_review_a, ' Included in primary analysis</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', died_a, ' Died prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', withdrew_a, ' Withdrew prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">', afc_expected_a, ' Admitted for complication out of expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', rtw_expected_a, ' Returned to work out of expected</TD></TR>
           </TABLE>
         >];
           
-      box3 [style="rounded,filled", fillcolor="#a4d3ee", pos="4.25,-0.625!", shape = box, width=2.4, height=.5, labeljust=l,
+      box3 [style="rounded,filled", fillcolor="#a4d3ee", pos="4.25,-0.75!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
-            <TR><TD ALIGN="LEFT">', randomized_b, ' - Assigned to delayed weight bearing</TD></TR>
-            <TR><TD ALIGN="LEFT">- ', late_ineligible_b, ' - Late ineligible</TD></TR>
-            <TR><TD ALIGN="LEFT">- ', diverging_review_b, ' - Weight bearing instructions review diverged</TD></TR>
+            <TR><TD ALIGN="LEFT">', randomized_b, ' Assigned to delayed weight bearing</TD></TR>
+            <TR><TD ALIGN="LEFT">', dnr_treatment_b, ' Randomized, did not receive treatment</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', late_ineligible_b, ' Late ineligible</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', diverging_review_b, ' Weight bearing instructions review diverged</TD></TR>
             <TR><TD ALIGN="LEFT">from protocol</TD></TR>
-            <TR><TD ALIGN="LEFT">', randomized_b-late_ineligible_b-diverging_review_b, ' - Included in primary analysis</TD></TR>
-            <TR><TD ALIGN="LEFT">- ', died_b, ' - Died prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">- ', withdrew_b, ' - Withdrew prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">', afc_expected_b, ' - Admitted for complication out of expected</TD></TR>
-            <TR><TD ALIGN="LEFT">', rtw_expected_b, ' - Returned to work out of expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', randomized_b-late_ineligible_b-diverging_review_b, ' Included in primary analysis</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', died_b, ' Died prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', withdrew_b, ' Withdrew prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">', afc_expected_b, ' Admitted for complication out of expected</TD></TR>
+            <TR><TD ALIGN="LEFT">', rtw_expected_b, ' Returned to work out of expected</TD></TR>
           </TABLE>
         >]
+        
+      midpoint [style=invis, pos="1.35,3.125!, width=0, height=0"]
+      
+      # Relationships
+      title -> title2
+      midpoint -> box1
+      title2 -> box2
+      title2 -> box3
     }
   '))
   svg_content <- DiagrammeRsvg::export_svg(consort_diagram)
