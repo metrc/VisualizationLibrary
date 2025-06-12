@@ -18,7 +18,7 @@
 #' 
 closed_consort_diagram_wb_publication <- function(analytic){
   
-  confirm_stability_of_related_visual('consort_diagram_wb_publication', '07feb27a1eabe28061fe1fd13839eb34')
+  confirm_stability_of_related_visual('consort_diagram_wb_publication', '93bd45f86181f8f3c18967dac324b6fd')
   
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -137,7 +137,23 @@ closed_consort_diagram_wb_publication <- function(analytic){
   
   afc_expected_b <- outcome_extracted_b %>% filter(outcome_name == 'admission_for_complication') %>% pull(pct_expected)
   rtw_expected_b <- outcome_extracted_b %>% filter(outcome_name == 'returned_to_work') %>% pull(pct_expected)
+
+  #adding spaces to variables themselves
+  top_reasons_count <- top_reasons_count %>%
+    mutate(n = as.character(n)) %>%
+    mutate(n = paste0('   ', n))
+  died_a <- paste0('   ', as.character(died_a))
+  withdrew_a <- paste0('   ', as.character(withdrew_a))  
+  died_b <- paste0('   ', as.character(died_b))
+  withdrew_b <- paste0('   ', as.character(withdrew_b))  
   
+  dnr_treatment_a_chr <- paste0('   ', as.character(dnr_treatment_a))
+  late_ineligible_a_chr <- paste0('   ', as.character(late_ineligible_a))  
+  diverging_review_a_chr <- paste0('   ', as.character(diverging_review_a))
+  
+  dnr_treatment_b_chr <- paste0('   ', as.character(dnr_treatment_b))
+  late_ineligible_b_chr <- paste0('   ', as.character(late_ineligible_b))  
+  diverging_review_b_chr <- paste0('   ', as.character(diverging_review_b))
   
   consort_diagram <- grViz(paste0('
     digraph g {
@@ -151,13 +167,13 @@ closed_consort_diagram_wb_publication <- function(analytic){
       label = <
         <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
           <TR><TD ALIGN="LEFT">', ineligible, ' Did not meet eligibility criteria</TD></TR>
-          <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', top_reasons_count$n[1], ' ', top_reasons_count$ineligibility_reasons[1], '</TD></TR>
-          <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', top_reasons_count$n[2], ' ', top_reasons_count$ineligibility_reasons[2], '</TD></TR>
-          <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', top_reasons_count$n[3], ' ', top_reasons_count$ineligibility_reasons[3], '</TD></TR>
-          <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', top_reasons_count$n[4], ' ', top_reasons_count$ineligibility_reasons[4], '</TD></TR>
-          <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', top_reasons_count$n[5], ' ', top_reasons_count$ineligibility_reasons[5], '</TD></TR>
-          <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', top_reasons_count$n[6], ' ', top_reasons_count$ineligibility_reasons[6], '</TD></TR>
-          <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', top_reasons_count$n[7], ' ', top_reasons_count$ineligibility_reasons[7], '</TD></TR>          
+          <TR><TD ALIGN="LEFT">', top_reasons_count$n[1], ' ', top_reasons_count$ineligibility_reasons[1], '</TD></TR>
+          <TR><TD ALIGN="LEFT">', top_reasons_count$n[2], ' ', top_reasons_count$ineligibility_reasons[2], '</TD></TR>
+          <TR><TD ALIGN="LEFT">', top_reasons_count$n[3], ' ', top_reasons_count$ineligibility_reasons[3], '</TD></TR>
+          <TR><TD ALIGN="LEFT">', top_reasons_count$n[4], ' ', top_reasons_count$ineligibility_reasons[4], '</TD></TR>
+          <TR><TD ALIGN="LEFT">', top_reasons_count$n[5], ' ', top_reasons_count$ineligibility_reasons[5], '</TD></TR>
+          <TR><TD ALIGN="LEFT">', top_reasons_count$n[6], ' ', top_reasons_count$ineligibility_reasons[6], '</TD></TR>
+          <TR><TD ALIGN="LEFT">', top_reasons_count$n[7], ' ', top_reasons_count$ineligibility_reasons[7], '</TD></TR>          
           <TR><TD ALIGN="LEFT">', refused, ' Declined consent</TD></TR>
           <TR><TD ALIGN="LEFT">', constraint_unavailable, ' Patient not available for consent</TD></TR>
           <TR><TD ALIGN="LEFT">', constraint_surgeon_unwilling, ' Had surgeon unwilling to randomize</TD></TR>          
@@ -174,13 +190,13 @@ closed_consort_diagram_wb_publication <- function(analytic){
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', randomized_a, ' Assigned to early weight bearing</TD></TR>
-            <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', dnr_treatment_a, ' Did not receive treatment</TD></TR>
-            <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', late_ineligible_a, ' Late ineligible</TD></TR>
-            <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', diverging_review_a, ' Weight bearing instructions review diverged</TD></TR>
+            <TR><TD ALIGN="LEFT">', dnr_treatment_a_chr, ' Randomized, did not receive treatment</TD></TR>
+            <TR><TD ALIGN="LEFT">', late_ineligible_a_chr, ' Late ineligible</TD></TR>
+            <TR><TD ALIGN="LEFT">', diverging_review_a_chr, ' Weight bearing instructions review diverged</TD></TR>
             <TR><TD ALIGN="LEFT">from protocol</TD></TR>
-            <TR><TD ALIGN="LEFT">', randomized_a-late_ineligible_a-diverging_review_a, ' Included in primary analysis</TD></TR>
-            <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', died_a, ' Died prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', withdrew_a, ' Withdrew prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">', randomized_a-dnr_treatment_a-late_ineligible_a-diverging_review_a, ' Included in primary analysis</TD></TR>
+            <TR><TD ALIGN="LEFT">', died_a, ' Died prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">', withdrew_a, ' Withdrew prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">', afc_expected_a, ' Admitted for complication out of expected</TD></TR>
             <TR><TD ALIGN="LEFT">', rtw_expected_a, ' Returned to work out of expected</TD></TR>
           </TABLE>
@@ -190,13 +206,13 @@ closed_consort_diagram_wb_publication <- function(analytic){
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', randomized_b, ' Assigned to delayed weight bearing</TD></TR>
-            <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', dnr_treatment_b, ' Did not receive treatment</TD></TR>
-            <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', late_ineligible_b, ' Late ineligible</TD></TR>
-            <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', diverging_review_b, ' Weight bearing instructions review diverged</TD></TR>
+            <TR><TD ALIGN="LEFT">', dnr_treatment_b_chr, ' Randomized, did not receive treatment</TD></TR>
+            <TR><TD ALIGN="LEFT">', late_ineligible_b_chr, ' Late ineligible</TD></TR>
+            <TR><TD ALIGN="LEFT">', diverging_review_b_chr, ' Weight bearing instructions review diverged</TD></TR>
             <TR><TD ALIGN="LEFT">from protocol</TD></TR>
-            <TR><TD ALIGN="LEFT">', randomized_b-late_ineligible_b-diverging_review_b, ' Included in primary analysis</TD></TR>
-            <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', died_b, ' Died prior to 365 days</TD></TR>
-            <TR><TD ALIGN="LEFT">\u00A0\u00A0\u00A0', withdrew_b, ' Withdrew prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">', randomized_b-dnr_treatment_b-late_ineligible_b-diverging_review_b, ' Included in primary analysis</TD></TR>
+            <TR><TD ALIGN="LEFT">', died_b, ' Died prior to 365 days</TD></TR>
+            <TR><TD ALIGN="LEFT">', withdrew_b, ' Withdrew prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">', afc_expected_b, ' Admitted for complication out of expected</TD></TR>
             <TR><TD ALIGN="LEFT">', rtw_expected_b, ' Returned to work out of expected</TD></TR>
           </TABLE>
