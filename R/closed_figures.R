@@ -174,10 +174,10 @@ closed_consort_diagram_wb_publication <- function(analytic){
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', randomized_a, ' Assigned to early weight bearing</TD></TR>
-            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', late_ineligible_a, ' Late ineligible</TD></TR>
             <TR><TD ALIGN="LEFT">', dnr_treatment_a, ' Randomized, did not receive treatment</TD></TR>
+            <TR><TD ALIGN="LEFT">', late_ineligible_a, ' Late ineligible</TD></TR>
             <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', diverging_review_a, ' Weight bearing instructions review diverged</TD></TR>
-            <TR><TD ALIGN="LEFT">     from protocol</TD></TR>
+            <TR><TD ALIGN="LEFT">from protocol</TD></TR>
             <TR><TD ALIGN="LEFT">', randomized_a-late_ineligible_a-diverging_review_a, ' Included in primary analysis</TD></TR>
             <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', died_a, ' Died prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', withdrew_a, ' Withdrew prior to 365 days</TD></TR>
@@ -191,7 +191,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', randomized_b, ' Assigned to delayed weight bearing</TD></TR>
             <TR><TD ALIGN="LEFT">', dnr_treatment_b, ' Randomized, did not receive treatment</TD></TR>
-            <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', late_ineligible_b, ' Late ineligible</TD></TR>
+            <TR><TD ALIGN="LEFT">', late_ineligible_b, ' Late ineligible</TD></TR>
             <TR><TD ALIGN="LEFT">&nbsp;&nbsp;&nbsp;', diverging_review_b, ' Weight bearing instructions review diverged</TD></TR>
             <TR><TD ALIGN="LEFT">from protocol</TD></TR>
             <TR><TD ALIGN="LEFT">', randomized_b-late_ineligible_b-diverging_review_b, ' Included in primary analysis</TD></TR>
