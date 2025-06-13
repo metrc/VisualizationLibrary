@@ -1581,7 +1581,7 @@ consort_diagram_wb_publication <- function(analytic){
   '))
   svg_content <- DiagrammeRsvg::export_svg(consort_diagram)
   temp_svg_path <- tempfile(fileext = ".svg")
-  writeLines(svg_content, 'temp.svg')
+  writeLines(svg_content, temp_svg_path)
   temp_png_path <- tempfile(fileext = ".png")
   rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 1200, height = 1200)
   image_data <- base64enc::base64encode(temp_png_path)
