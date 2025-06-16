@@ -1436,18 +1436,19 @@ consort_diagram_wb_publication <- function(analytic){
                            "constraint_other", "constraint_other_txt", "constraint_unavailable", "constraint_surgeon_unwilling",
                            "consented", "discontinued_pre_randomization", "received_treatment",
                            "injury_type", "randomized", "late_ineligible", "per_protocol_sample", "enrolled", 
-                           "consent_date", "death_date", "withdraw_date", "preinjury_work_status", "followup_expected_12mo",
+                           "consent_date", "death_date", "not_consented", "withdraw_date", "preinjury_work_status", "followup_expected_12mo",
                            "completed", "outcome_data"),
     example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean", "Boolean", "Character",
                       "Boolean", "Boolean", "Boolean", "NamedCategory['ankle' 'plateau']", "Boolean", "Boolean", 
-                      "Boolean", "Boolean", "Date", "Date", "Date", "Boolean", "Boolean", "Boolean",
+                      "Boolean", "Boolean", "Date", "Date", "Date", "Boolean","Boolean", "Boolean", "Boolean",
                       "(';', ',')NamedCategory['returned_to_work' 'admission_for_complication']|Number|Number|Date|NamedCategory['event' 'check']|Number|Number|Date"))
   
   df <- analytic %>% 
     select(study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_other_txt, 
            constraint_unavailable, constraint_surgeon_unwilling, consented, discontinued_pre_randomization, received_treatment,
-           injury_type, randomized, late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, 
-           withdraw_date, preinjury_work_status, followup_expected_12mo, completed, outcome_data)
+           injury_type, randomized, late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, not_consented,
+           withdraw_date, preinjury_work_status, followup_expected_12mo, completed, outcome_data) %>% 
+    filter(screened)
   
   ir_count <- df %>%
     select(study_id, ineligibility_reasons) %>%
@@ -1484,16 +1485,21 @@ consort_diagram_wb_publication <- function(analytic){
   
   refused <- sum(df$refused, na.rm = TRUE)
   constraint <- sum(df$constraint_other, na.rm = TRUE)
-  constraint_unavailable <- sum(analytic$constraint_unavailable, na.rm = TRUE)
-  constraint_surgeon_unwilling <- sum(analytic$constraint_unavailable, na.rm = TRUE)
+  constraint_unavailable <- sum(df$constraint_unavailable & (is.na(df$constraint_other)|!df$constraint_other), na.rm = TRUE)
+  constraint_surgeon_unwilling <- sum(df$constraint_surgeon_unwilling & (is.na(df$constraint_other)|!df$constraint_other)& (is.na(df$constraint_unavailable)|!df$constraint_unavailable), na.rm = TRUE)
   
   late_discontinuation <- sum(df$discontinued_pre_randomization & 
                                 df$consented, na.rm = TRUE)
   
   plateau_injuries <- sum(df$injury_type=='plateau', na.rm = TRUE)
-  randomized <- sum(df$injury_type=='ankle', na.rm = TRUE)
   
-  dnr_treatment_df <- df %>% filter(injury_type == 'ankle')
+  accounted_ids <- df %>% filter(ineligible|refused|constraint_other|constraint_unavailable|constraint_surgeon_unwilling|(discontinued_pre_randomization & consented)|injury_type=='plateau'|(injury_type=='ankle' & randomized)) %>% pull(study_id)
+  
+  not_consented <- sum(df %>% filter(!study_id %in% accounted_ids) %>% pull(not_consented), na.rm = TRUE)
+  
+  randomized <- sum((df$injury_type=='ankle'|is.na(df$injury_type)) & df$randomized, na.rm = TRUE)
+  
+  dnr_treatment_df <- df %>% filter(injury_type == 'ankle'|is.na(injury_type)) %>% filter(randomized)
   dnr_treatment <- sum(!dnr_treatment_df$received_treatment, na.rm = TRUE)
   late_ineligible <- sum(df$late_ineligible, na.rm = TRUE)
   diverging_review <- sum(!df$per_protocol_sample, na.rm = TRUE)
@@ -1549,6 +1555,7 @@ consort_diagram_wb_publication <- function(analytic){
           <TR><TD ALIGN="LEFT">', constraint_unavailable, ' Patient not available for consent</TD></TR>            
           <TR><TD ALIGN="LEFT">', constraint_surgeon_unwilling, ' Had surgeon unwilling to randomize</TD></TR>            
           <TR><TD ALIGN="LEFT">', constraint, ' Had other reasons not enrolled</TD></TR>
+          <TR><TD ALIGN="LEFT">', not_consented, ' Not Consented</TD></TR>
           <TR><TD ALIGN="LEFT">', late_discontinuation, ' Discontinued after consent, prior to randomization</TD></TR>
           <TR><TD ALIGN="LEFT">', plateau_injuries, ' Enrolled patients with tibial plateau fractures</TD></TR>
         </TABLE>
