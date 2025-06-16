@@ -4247,11 +4247,11 @@ outcome_by_site <- function(analytic, outcome_name) {
            `Minimum (Days)` = min_days,
            `Maximum (Days)` = max_days,
            `Mean (Standard Deviation)` = avg_days,
-           `Percent of Expected (excluding events)` = pct_expected_excluding_events,
+           `Percent of Expected (non-event participants)` = pct_expected_excluding_events,
            `Percent of Expected` = pct_expected,
            `Site` = facilitycode) %>%
     select(`Site`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, `Maximum (Days)`, 
-           `Mean (Standard Deviation)`, `Percent of Expected (excluding events)`, `Percent of Expected`)
+           `Mean (Standard Deviation)`, `Percent of Expected (non-event participants)`, `Percent of Expected`)
   
   vis <- kable(results, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
@@ -4314,11 +4314,11 @@ outcome_by_name_overall <- function(analytic) {
            `Minimum (Days)` = min_days,
            `Maximum (Days)` = max_days,
            `Mean (Standard Deviation)` = avg_days,
-           `Percent of Expected (excluding events)` = pct_expected_excluding_events,
+           `Percent of Expected (non-event participants)` = pct_expected_excluding_events,
            `Percent of Expected` = pct_expected,
            `Outcome` = outcome_name) %>%
     select(`Outcome`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, 
-           `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Expected (excluding events)`, 
+           `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Expected (non-event participants)`, 
            `Percent of Expected`)
 
   # cleanup the names of the outcomes by replacing the underscores with spaces and capitalizing the first letter
