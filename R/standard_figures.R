@@ -1566,7 +1566,7 @@ consort_diagram_wb_publication <- function(analytic){
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', late_ineligible, ' Late ineligible</TD></TR>
             <TR><TD ALIGN="LEFT">', diverging_review, ' Weight bearing instructions review diverged from protocol</TD></TR>
-            <TR><TD ALIGN="LEFT">', randomized-dnr_treatment-late_ineligible-diverging_review, ' Included in primary analysis</TD></TR>
+            <TR><TD ALIGN="LEFT">', randomized-late_ineligible-diverging_review, ' Included in primary analysis</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', died, ' Died prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', withdrew, ' Withdrew prior to 365 days</TD></TR>
             <TR><TD ALIGN="LEFT">', afc_expected, ' Admitted for complication out of expected</TD></TR>
