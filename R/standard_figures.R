@@ -1484,7 +1484,7 @@ consort_diagram_wb_publication <- function(analytic){
   ineligible <- sum(df$ineligible, na.rm = TRUE)
   
   refused <- sum(df$refused, na.rm = TRUE)
-  constraint <- sum(df$constraint_other, na.rm = TRUE)
+  constraint <- sum(df$constraint_other, na.rm = TRUE) + sum(df$constraint_issue, na.rm = TRUE)
   constraint_unavailable <- sum(df$constraint_unavailable & (is.na(df$constraint_other)|!df$constraint_other), na.rm = TRUE)
   constraint_surgeon_unwilling <- sum(df$constraint_surgeon_unwilling & (is.na(df$constraint_other)|!df$constraint_other)& (is.na(df$constraint_unavailable)|!df$constraint_unavailable), na.rm = TRUE)
   
