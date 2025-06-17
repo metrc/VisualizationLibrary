@@ -1444,7 +1444,7 @@ consort_diagram_wb_publication <- function(analytic){
                       "(';', ',')NamedCategory['returned_to_work' 'admission_for_complication']|Number|Number|Date|NamedCategory['event' 'check']|Number|Number|Date"))
   
   df <- analytic %>% 
-    select(study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_other_txt, 
+    select(study_id, screened, ineligible, ineligibility_reasons, refused, constraint_other, constraint_issue, constraint_other_txt, 
            constraint_unavailable, constraint_surgeon_unwilling, consented, discontinued_pre_randomization, received_treatment,
            injury_type, randomized, late_ineligible, per_protocol_sample, enrolled, consent_date, death_date, not_consented,
            withdraw_date, preinjury_work_status, followup_expected_12mo, completed, outcome_data) %>% 
