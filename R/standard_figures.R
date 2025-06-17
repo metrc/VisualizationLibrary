@@ -1499,8 +1499,6 @@ consort_diagram_wb_publication <- function(analytic){
   
   randomized <- sum((df$injury_type=='ankle'|is.na(df$injury_type)) & df$randomized, na.rm = TRUE)
   
-  dnr_treatment_df <- df %>% filter(injury_type == 'ankle'|is.na(injury_type)) %>% filter(randomized)
-  dnr_treatment <- sum(!dnr_treatment_df$received_treatment, na.rm = TRUE)
   late_ineligible <- sum(df$late_ineligible, na.rm = TRUE)
   diverging_review <- sum(!df$per_protocol_sample, na.rm = TRUE)
   
@@ -1555,7 +1553,6 @@ consort_diagram_wb_publication <- function(analytic){
           <TR><TD ALIGN="LEFT">', constraint_unavailable, ' Patient not available for consent</TD></TR>            
           <TR><TD ALIGN="LEFT">', constraint_surgeon_unwilling, ' Had surgeon unwilling to randomize</TD></TR>            
           <TR><TD ALIGN="LEFT">', constraint, ' Had other reasons not enrolled</TD></TR>
-          <TR><TD ALIGN="LEFT">', not_consented, ' Not Consented</TD></TR>
           <TR><TD ALIGN="LEFT">', late_discontinuation, ' Discontinued after consent, prior to randomization</TD></TR>
           <TR><TD ALIGN="LEFT">', plateau_injuries, ' Enrolled patients with tibial plateau fractures</TD></TR>
         </TABLE>
@@ -1567,7 +1564,6 @@ consort_diagram_wb_publication <- function(analytic){
       box2 [style="rounded,filled", fillcolor="#a4d3ee", pos="2,-0.5!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
-            <TR><TD ALIGN="LEFT">', dnr_treatment, ' Randomized, did not receive treatment</TD></TR>
             <TR><TD ALIGN="LEFT">', late_ineligible, ' Late ineligible</TD></TR>
             <TR><TD ALIGN="LEFT">', diverging_review, ' Weight bearing instructions review diverged from protocol</TD></TR>
             <TR><TD ALIGN="LEFT">', randomized-dnr_treatment-late_ineligible-diverging_review, ' Included in primary analysis</TD></TR>
