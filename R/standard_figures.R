@@ -1433,12 +1433,12 @@ consort_diagram_wb_publication <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("screened", "ineligible", "ineligibility_reasons", "refused", "constraint_unavailable",
-                           "constraint_other", "constraint_other_txt", "constraint_unavailable", "constraint_surgeon_unwilling",
+                           "constraint_other", "constraint_issue", "constraint_other_txt", "constraint_unavailable", "constraint_surgeon_unwilling",
                            "consented", "discontinued_pre_randomization", "received_treatment",
                            "injury_type", "randomized", "late_ineligible", "per_protocol_sample", "enrolled", 
                            "consent_date", "death_date", "not_consented", "withdraw_date", "preinjury_work_status", "followup_expected_12mo",
                            "completed", "outcome_data"),
-    example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean", "Boolean", "Character",
+    example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean", "Boolean", "Boolean", "Character",
                       "Boolean", "Boolean", "Boolean", "NamedCategory['ankle' 'plateau']", "Boolean", "Boolean", 
                       "Boolean", "Boolean", "Date", "Date", "Date", "Boolean","Boolean", "Boolean", "Boolean",
                       "(';', ',')NamedCategory['returned_to_work' 'admission_for_complication']|Number|Number|Date|NamedCategory['event' 'check']|Number|Number|Date"))
@@ -1493,7 +1493,7 @@ consort_diagram_wb_publication <- function(analytic){
   
   plateau_injuries <- sum(df$injury_type=='plateau', na.rm = TRUE)
   
-  accounted_ids <- df %>% filter(ineligible|refused|constraint_other|constraint_unavailable|constraint_surgeon_unwilling|(discontinued_pre_randomization & consented)|injury_type=='plateau'|(injury_type=='ankle' & randomized)) %>% pull(study_id)
+  accounted_ids <- df %>% filter(ineligible|refused|constraint_other|constraint_issue|constraint_unavailable|constraint_surgeon_unwilling|(discontinued_pre_randomization & consented)|injury_type=='plateau'|(injury_type=='ankle' & randomized)) %>% pull(study_id)
   
   not_consented <- sum(df %>% filter(!study_id %in% accounted_ids) %>% pull(not_consented), na.rm = TRUE)
   
