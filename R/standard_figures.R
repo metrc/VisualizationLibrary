@@ -1499,8 +1499,8 @@ consort_diagram_wb_publication <- function(analytic){
   
   randomized <- sum((df$injury_type=='ankle'|is.na(df$injury_type)) & df$randomized, na.rm = TRUE)
   
-  late_ineligible <- sum(df$late_ineligible, na.rm = TRUE)
-  diverging_review <- sum(!df$per_protocol_sample, na.rm = TRUE)
+  late_ineligible <- sum((df$injury_type=='ankle'|is.na(df$injury_type)) & df$randomized & df$late_ineligible, na.rm = TRUE)
+  diverging_review <- sum((df$injury_type=='ankle'|is.na(df$injury_type)) & df$randomized & (!df$late_ineligible|is.na(df$late_ineligible))&!df$per_protocol_sample, na.rm = TRUE)
   
   died <- sum(as.Date(df$death_date)-as.Date(df$consent_date)<365, na.rm = TRUE)
   withdrew <- sum(as.Date(df$withdraw_date)-as.Date(df$consent_date)<365, na.rm = TRUE)
