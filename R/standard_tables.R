@@ -234,7 +234,6 @@ monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,25))
     group_by(facilitycode) %>%
     summarize(enrolled_count = n(), .groups = 'drop')
   
-  
   mon_req <- sum_enrolled %>%
     mutate(`Monitoring Required` = ifelse(
       facilitycode %in% large_sites,
@@ -256,7 +255,8 @@ monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,25))
              as.character(map_chr(consent_dates, ~ .x[min_pts[1]]))),
       NA_character_
     )) %>%
-    select(-consent_dates, -`Monitoring Required`) 
+    select(-consent_dates, -`Monitoring Required`)  %>%
+    rename(`Enrolled Count` = enrolled_count)
   
   vis <- kable(combined, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
