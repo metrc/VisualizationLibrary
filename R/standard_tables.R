@@ -256,7 +256,8 @@ monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,25))
              as.character(map_chr(consent_dates, ~ .x[min_pts[1]]))),
       NA_character_
     )) %>%
-    select(-consent_dates, -`Monitoring Required`) 
+    select(-consent_dates, -`Monitoring Required`)  %>%
+    rename(`Enrolled Count` = enrolled_count)
   
   vis <- kable(combined, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
