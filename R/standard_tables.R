@@ -234,7 +234,6 @@ monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,25))
     group_by(facilitycode) %>%
     summarize(enrolled_count = n(), .groups = 'drop')
   
-  
   mon_req <- sum_enrolled %>%
     mutate(`Monitoring Required` = ifelse(
       facilitycode %in% large_sites,
