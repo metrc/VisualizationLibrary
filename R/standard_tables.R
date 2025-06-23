@@ -223,7 +223,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #' @examples
 #' monitoring_required("Replace with Analytic Tibble", large_sites = c('AAA', 'AAB'))
 #' 
-monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,25)) {
+monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,10)) {
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', 'enrolled', 'consent_date'), 
@@ -233,7 +233,6 @@ monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,25))
     filter(enrolled) %>%
     group_by(facilitycode) %>%
     summarize(enrolled_count = n(), .groups = 'drop')
-  
   
   mon_req <- sum_enrolled %>%
     mutate(`Monitoring Required` = ifelse(
@@ -254,9 +253,10 @@ monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,25))
       ifelse(facilitycode %in% large_sites,
              as.character(map_chr(consent_dates, ~ .x[min_pts[2]])),
              as.character(map_chr(consent_dates, ~ .x[min_pts[1]]))),
-      NA_character_
+      "Monitoring Not Required"
     )) %>%
-    select(-consent_dates, -`Monitoring Required`) 
+    select(-consent_dates, -`Monitoring Required`)  %>%
+    rename(`Enrolled Count` = enrolled_count)
   
   vis <- kable(combined, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
@@ -4247,11 +4247,11 @@ outcome_by_site <- function(analytic, outcome_name) {
            `Minimum (Days)` = min_days,
            `Maximum (Days)` = max_days,
            `Mean (Standard Deviation)` = avg_days,
-           `Percent of Expected (excluding events)` = pct_expected_excluding_events,
+           `Percent of Expected (non-event participants)` = pct_expected_excluding_events,
            `Percent of Expected` = pct_expected,
            `Site` = facilitycode) %>%
     select(`Site`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, `Maximum (Days)`, 
-           `Mean (Standard Deviation)`, `Percent of Expected (excluding events)`, `Percent of Expected`)
+           `Mean (Standard Deviation)`, `Percent of Expected (non-event participants)`, `Percent of Expected`)
   
   vis <- kable(results, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
@@ -4314,11 +4314,11 @@ outcome_by_name_overall <- function(analytic) {
            `Minimum (Days)` = min_days,
            `Maximum (Days)` = max_days,
            `Mean (Standard Deviation)` = avg_days,
-           `Percent of Expected (excluding events)` = pct_expected_excluding_events,
+           `Percent of Expected (non-event participants)` = pct_expected_excluding_events,
            `Percent of Expected` = pct_expected,
            `Outcome` = outcome_name) %>%
     select(`Outcome`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, 
-           `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Expected (excluding events)`, 
+           `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Expected (non-event participants)`, 
            `Percent of Expected`)
 
   # cleanup the names of the outcomes by replacing the underscores with spaces and capitalizing the first letter
@@ -4448,7 +4448,8 @@ wbs_main_paper_all_characteristics <- function(analytic){
       preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
       tobacco_use, bmi, preinjury_health, insurance,
       injury_gustilo, injury_classification_ankle_ota, soft_tissue_closure,
-      injury_mechanism, injury_randomization_days, pre_randomization_immobilization) %>%
+      injury_mechanism, injury_randomization_days, pre_randomization_immobilization,
+      pre_randomization_immobilization_type) %>%
     filter(enrolled) %>% 
     filter(injury_type == 'ankle')
   
@@ -4761,6 +4762,7 @@ wbs_main_paper_bpi <- function(analytic){
   return(table_raw)
 }
 
+
 #' Weight Bearing AOS for Main Paper
 #'
 #' @description This function outputs a table with the AOS scores for enrolled patients. This table is produced for Weight bearing main paper. 
@@ -4867,6 +4869,105 @@ wbs_main_paper_aos <- function(analytic){
     "Overall Score" = nrow(overall_final),
     "Disability Score" = nrow(disability_final),
     "Pain Score"= nrow(pain_final))
+  
+  border_rows <- c(0, cumsum(index_vec_a))
+  
+  table_raw <- kable(final, format="html", align='l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+  
+  return(table_raw)
+}
+
+
+
+#' PROMIS stats by time
+#'
+#' @description 
+#' Returns stat data on promis scores, including sample size, mean, and standard deviation
+#' 
+#' @param analytic enrolled, promis_pf 6wk - 12mo constructs, promis_pain_interference 6wk - 12mo constructs
+#' 
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' wbs_main_paper_aos("Replace with Analytic Tibble")
+#' 
+promis_stats_by_time <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c('enrolled', 
+                           'promis_pf_6wk', 'promis_pf_3mo', 'promis_pf_6mo', 'promis_pf_12mo', 
+                           'promis_pain_interference_6wk', 'promis_pain_interference_3mo', 'promis_pain_interference_6mo', 
+                           'promis_pain_interference_12mo'), 
+    example_types = c("Boolean", "Number","Number","Number","Number","Number","Number","Number","Number"))
+  
+  df <- analytic %>%
+    select(enrolled, 
+           promis_pf_6wk, promis_pf_3mo, promis_pf_6mo, promis_pf_12mo, 
+           promis_pain_interference_6wk, promis_pain_interference_3mo, promis_pain_interference_6mo, 
+           promis_pain_interference_12mo) %>%
+    filter(enrolled)
+  
+  pf <- df %>% 
+    select(promis_pf_6wk, promis_pf_3mo, promis_pf_6mo, promis_pf_12mo) %>% 
+    pivot_longer(cols = everything(),
+                 names_to = "timepoint",
+                 values_to = "score") %>%
+    mutate(timepoint = recode(timepoint,
+                              promis_pf_6wk  = "6 Weeks",
+                              promis_pf_3mo  = "3 Months",
+                              promis_pf_6mo  = "6 Months",
+                              promis_pf_12mo = "12 Months"))
+  
+  pf_mean_sd <- pf %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>%
+    summarise(n = format_mean_sd(score))
+  
+  pf_counts <- pf %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>% 
+    count(timepoint)
+  
+  pf_final <- left_join(pf_counts, pf_mean_sd, by = 'timepoint') %>% 
+    mutate(timepoint = factor(timepoint, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    arrange(timepoint)
+  
+  pi <- df %>% 
+    select(promis_pain_interference_6wk, promis_pain_interference_3mo, promis_pain_interference_6mo, promis_pain_interference_12mo) %>% 
+    pivot_longer(cols = everything(),
+                 names_to = "timepoint",
+                 values_to = "score") %>%
+    mutate(timepoint = recode(timepoint,
+                              promis_pain_interference_6wk  = "6 Weeks",
+                              promis_pain_interference_3mo  = "3 Months",
+                              promis_pain_interference_6mo  = "6 Months",
+                              promis_pain_interference_12mo = "12 Months"))
+  
+  pi_mean_sd <- pi %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>%
+    summarise(n = format_mean_sd(score))
+  
+  pi_counts <- pi %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>% 
+    count(timepoint)
+  
+  pi_final <- left_join(pi_counts, pi_mean_sd, by = 'timepoint') %>% 
+    mutate(timepoint = factor(timepoint, c("6 Weeks", "3 Months", "6 Months", "12 Months"))) %>% 
+    arrange(timepoint)
+  
+  final <- rbind(pf_final, pi_final)
+  
+  colnames(final) <- c('', 'n', 'Overall Scores, Mean (SD)')
+  
+  index_vec_a <- c(
+    "PROMIS Physical Function" = nrow(pf_final),
+    "PROMIS Pain Interference" = nrow(pi_final))
   
   border_rows <- c(0, cumsum(index_vec_a))
   
