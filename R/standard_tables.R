@@ -223,7 +223,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #' @examples
 #' monitoring_required("Replace with Analytic Tibble", large_sites = c('AAA', 'AAB'))
 #' 
-monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,25)) {
+monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,10)) {
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', 'enrolled', 'consent_date'), 
@@ -253,7 +253,7 @@ monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,25))
       ifelse(facilitycode %in% large_sites,
              as.character(map_chr(consent_dates, ~ .x[min_pts[2]])),
              as.character(map_chr(consent_dates, ~ .x[min_pts[1]]))),
-      NA_character_
+      "Monitoring Not Required"
     )) %>%
     select(-consent_dates, -`Monitoring Required`)  %>%
     rename(`Enrolled Count` = enrolled_count)
