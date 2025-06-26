@@ -222,7 +222,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #' @export
 #'
 #' @examples
-#' monitoring_required("Replace with Analytic Tibble", spec_threshold = list('AAA' = 50), standard_threshold = 25)
+#' monitoring_required("Replace with Analytic Tibble", standard_threshold = 25, spec_threshold = list('AAA' = 50))
 #' 
 monitoring_required <- function(analytic, standard_threshold = 10, spec_threshold = list()) {
   analytic <- if_needed_generate_example_data(

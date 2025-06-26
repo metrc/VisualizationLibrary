@@ -22,6 +22,6 @@ Simple function that returns whether a site has reached the number of enrolled r
 to be required.
 }
 \examples{
-monitoring_required("Replace with Analytic Tibble", spec_threshold = list('AAA' = 50), standard_threshold = 25)
+monitoring_required("Replace with Analytic Tibble", standard_threshold = 25, spec_threshold = list('AAA' = 50))
 
 }
