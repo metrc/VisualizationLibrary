@@ -1741,6 +1741,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
   df_1 <- df %>%
     filter(enrolled) %>%
     select(-enrolled, -study_id) %>%
+    mutate(dssi_count = as.numeric(dssi_count)) %>% 
     summarize(
       `Number of participants with visits expected at 6 months` = paste(sum(followup_expected_6mo, na.rm = TRUE)), 
       `Deep surgical site infections reported within 6 months (# of patients with infections)` = paste0(sum(dssi_count, na.rm = TRUE), " (", total_ids_dssi, ")"),
