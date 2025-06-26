@@ -4,14 +4,15 @@
 \alias{monitoring_required}
 \title{Monitoring required}
 \usage{
-monitoring_required(analytic, large_sites = c(), min_pts = c(10, 25))
+monitoring_required(analytic, standard_threshold = 10, spec_threshold = list())
 }
 \arguments{
 \item{analytic}{analytic data set that must include enrolled, facilitycode, consent_date}
 
-\item{large_sites}{sites which use the upper designation of minimum participants required}
+\item{standard_threshold}{number to use as baseline threshold for monitoring requirement}
 
-\item{min_pts}{a numeric vector of length 2 which contains the lower and upper throshold for monitoring}
+\item{spec_threshold}{optional kwarg that allows you to specify sites that have different monitoring
+thresholds}
 }
 \value{
 An HTML table.
@@ -21,6 +22,6 @@ Simple function that returns whether a site has reached the number of enrolled r
 to be required.
 }
 \examples{
-monitoring_required("Replace with Analytic Tibble", large_sites = c('AAA', 'AAB'))
+monitoring_required("Replace with Analytic Tibble", spec_threshold = list('AAA' = 50), standard_threshold = 25)
 
 }
