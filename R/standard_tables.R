@@ -214,16 +214,17 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #' to be required.
 #'
 #' @param analytic analytic data set that must include enrolled, facilitycode, consent_date
-#' @param large_sites sites which use the upper designation of minimum participants required
-#' @param min_pts a numeric vector of length 2 which contains the lower and upper throshold for monitoring 
+#' @param standard_threshold number to use as baseline threshold for monitoring requirement
+#' @param spec_threshold optional kwarg that allows you to specify sites that have different monitoring
+#' thresholds
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
-#' monitoring_required("Replace with Analytic Tibble", large_sites = c('AAA', 'AAB'))
+#' monitoring_required("Replace with Analytic Tibble", standard_threshold = 25, spec_threshold = list('AAA' = 50))
 #' 
-monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,10)) {
+monitoring_required <- function(analytic, standard_threshold = 10, spec_threshold = list()) {
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', 'enrolled', 'consent_date'), 
@@ -234,12 +235,16 @@ monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,10))
     group_by(facilitycode) %>%
     summarize(enrolled_count = n(), .groups = 'drop')
   
+  spec_sites <- names(spec_threshold)
+  
   mon_req <- sum_enrolled %>%
+    rowwise() %>%
     mutate(`Monitoring Required` = ifelse(
-      facilitycode %in% large_sites,
-      enrolled_count >= min_pts[2],
-      enrolled_count >= min_pts[1]
-    ))
+      facilitycode %in% spec_sites,
+      enrolled_count >= spec_threshold[[facilitycode]],
+      enrolled_count >= standard_threshold
+    )) %>%
+    ungroup()
   
   dates <- analytic %>%
     filter(enrolled) %>%
@@ -248,15 +253,16 @@ monitoring_required <- function(analytic, large_sites = c(), min_pts = c(10,10))
   
   combined <- mon_req %>% 
     left_join(dates, by = "facilitycode") %>%
-    mutate(`Date Monitoring Required` = ifelse(
-      `Monitoring Required`,
-      ifelse(facilitycode %in% large_sites,
-             as.character(map_chr(consent_dates, ~ .x[min_pts[2]])),
-             as.character(map_chr(consent_dates, ~ .x[min_pts[1]]))),
-      "Monitoring Not Required"
-    )) %>%
-    select(-consent_dates, -`Monitoring Required`)  %>%
-    rename(`Enrolled Count` = enrolled_count)
+    rowwise() %>%
+    mutate(`Date Monitoring Required` = 
+             ifelse(`Monitoring Required`, 
+                    ifelse(facilitycode %in% spec_sites,
+                           as.character(consent_dates[[spec_threshold[[facilitycode]]]]),
+                           as.character(consent_dates[[standard_threshold]])),
+                    'Monitoring Not Required')) %>%
+    select(-consent_dates, -`Monitoring Required`) %>%
+    rename(`Enrolled Count` = enrolled_count) %>%
+    ungroup()
   
   vis <- kable(combined, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
@@ -4119,9 +4125,9 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
 not_enrolled_reason <- function(analytic, last_days = NULL){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c("facilitycode", "study_id", "not_enrolled_reason", 
+    example_constructs = c("facilitycode", "not_enrolled_reason", "not_enrolled_date",
                            "pre_screened_notes"), 
-    example_types = c("FacilityCode", "Number", "Character", 
+    example_types = c("FacilityCode", "Character", "Date",
                       "Character"))
   
   df <- analytic %>%
