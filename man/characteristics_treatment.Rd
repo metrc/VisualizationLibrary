@@ -7,8 +7,8 @@
 characteristics_treatment(analytic)
 }
 \arguments{
-\item{analytic}{analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
-pil_df_surgical_incision, df_number_procedures, adherence_to_intervention}
+\item{analytic}{analytic data set that must study_id, enrolled, df_date, df_plat_surgical_incision, 
+df_pil_surgical_incision, df_number_procedures, adherence_to_intervention}
 }
 \value{
 nothing
@@ -18,7 +18,7 @@ Visualizes definitive fixation data and study protocol adherence. The function w
 properly when analytic data includes at most two stages of definitive fixation.
 
 Construct df_number_procedures determines the number of stages of definitive fixation. Constructs
-plat_df_surgical_incision and pil_df_surgical_incision use semicolon seperators to count the number 
+df_plat_surgical_incision and df_pil_surgical_incision use semicolon seperators to count the number 
 of incisions at the plateau and pilon sites.
 }
 \examples{
