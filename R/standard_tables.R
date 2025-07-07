@@ -4125,9 +4125,9 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
 not_enrolled_reason <- function(analytic, last_days = NULL){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c("facilitycode", "study_id", "not_enrolled_reason", 
+    example_constructs = c("facilitycode", "not_enrolled_reason", "not_enrolled_date",
                            "pre_screened_notes"), 
-    example_types = c("FacilityCode", "Number", "Character", 
+    example_types = c("FacilityCode", "Character", "Date",
                       "Character"))
   
   df <- analytic %>%
