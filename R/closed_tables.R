@@ -2011,8 +2011,8 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
 #' @description 
 #' Closed version of the characteristics_treatment function; see its documentation for details.
 #'
-#' @param analytic analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
-#' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm
+#' @param analytic analytic data set that must study_id, enrolled, df_date, df_plat_surgical_incision, 
+#' df_pil_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm
 #'
 #' @return An HTML table.
 #' @export
@@ -2023,11 +2023,11 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
 closed_characteristics_treatment <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,
-    example_constructs = c("treatment_arm", "enrolled", "df_date", "plat_df_surgical_incision",
-                           "pil_df_surgical_incision", "df_number_procedures", "adherence_to_intervention"),
+    example_constructs = c("treatment_arm", "enrolled", "df_date", "df_plat_surgical_incision",
+                           "df_pil_surgical_incision", "df_number_procedures", "adherence_to_intervention"),
     example_types = c('Boolean', 'Boolean', 'Date', 'Category-NS', 'Category-NS', 'Number-U2', 'Boolean'))
   
-  confirm_stability_of_related_visual('characteristics_treatment', 'f2624d670cf94115f31e4dcf6dea5266')
+  confirm_stability_of_related_visual('characteristics_treatment', '44d22be0a10be43b14ce93202f4f13ae')
   
   inner_characteristics_treatment <- function(df){
     total <- sum(df$enrolled, na.rm=T)
@@ -2035,8 +2035,8 @@ closed_characteristics_treatment <- function(analytic){
     
     df_complete <- data.frame(type = 'Patients with Definitive Fixation Data Complete', percentage = format_count_percent(df_total, total))
     
-    plat <- sum(!is.na(df$plat_df_surgical_incision))
-    pil <- sum(!is.na(df$pil_df_surgical_incision))
+    plat <- sum(!is.na(df$df_plat_surgical_incision))
+    pil <- sum(!is.na(df$df_pil_surgical_incision))
     
     avg_stages <- df %>% 
       filter(!is.na(df_date)) %>% 
@@ -2052,12 +2052,12 @@ closed_characteristics_treatment <- function(analytic){
     
     plat_incisions <- df %>%
       filter(!is.na(df_date)) %>% 
-      mutate(plat_incisions = str_count(plat_df_surgical_incision, ";") + 1) %>% 
+      mutate(plat_incisions = str_count(df_plat_surgical_incision, ";") + 1) %>% 
       summarize(type = paste0('Plateau Fractures (n = ', plat, ")"), percentage = format_mean_sd(plat_incisions))
     
     pil_incisions <- df %>%
       filter(!is.na(df_date)) %>% 
-      mutate(pil_incisions = str_count(pil_df_surgical_incision, ";") + 1) %>% 
+      mutate(pil_incisions = str_count(df_pil_surgical_incision, ";") + 1) %>% 
       summarize(type = paste0('Pilon Fractures (n = ', pil, ")"), percentage = format_mean_sd(pil_incisions))
     
     adherence <- df %>% 
@@ -2078,7 +2078,7 @@ closed_characteristics_treatment <- function(analytic){
   }
   
   df_all <- analytic %>% 
-    select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm) %>% 
+    select(study_id, enrolled, df_date, df_plat_surgical_incision, df_pil_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm) %>% 
     filter(enrolled)
   
   df_a <- df_all %>% filter(treatment_arm == 'Group A')

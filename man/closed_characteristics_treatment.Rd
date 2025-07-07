@@ -7,8 +7,8 @@
 closed_characteristics_treatment(analytic)
 }
 \arguments{
-\item{analytic}{analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
-pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm}
+\item{analytic}{analytic data set that must study_id, enrolled, df_date, df_plat_surgical_incision, 
+df_pil_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm}
 }
 \value{
 An HTML table.
