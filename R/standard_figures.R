@@ -1265,6 +1265,7 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #' (attached to the count of the df_complete field)
 #' @param not_expected_adjudicated whether to note that the Not Expected was adjudicated, purely visual
 #' change
+#' @param not_enrolled_missing_df_reason adds reasons for not enrollment beyond adjudication to consort
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
@@ -1273,7 +1274,7 @@ cumulative_enrollment_goals <- function(analytic, start_date, end_date, particip
 #' consort_diagram("Replace with Analytic Tibble")
 #' 
 consort_diagram <- function(analytic, final_period="12 Month", definitive_event = "Definitive Fixation Complete" , 
-                            not_expected_adjudicated=TRUE){
+                            not_expected_adjudicated=TRUE, not_enrolled_missing_df_reason=FALSE){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
@@ -1351,6 +1352,15 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
     not_expected_str= "Not Expected"
   }
   
+  if(not_enrolled_missing_df_reason){
+    reasons <- analytic %>% filter(!is.na(not_enrolled_missing_df_reason)) %>% pull(not_enrolled_missing_df_reason)
+    reasons <- c(reasons[reasons!="Missing Definitive Fixation"], reasons[reasons=="Missing Definitive Fixation"])
+    missing_not_enrolled_str <- ""
+    for(reason in reasons){
+      missing_not_enrolled_str <- paste0(missing_not_enrolled_str, "\n",reason," (n=",length(reasons[reasons==reason]),")")
+    }
+  }
+  
   consort_diagram <- grViz(paste0('
     digraph g {
       graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
@@ -1367,7 +1377,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
 
       ed_consented [style="rounded,filled", fillcolor="#a4d3ee", pos="10,8!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (Consented) (n=',ed_consented,')"];
       
-      ed_randomized [style="rounded,filled", fillcolor="#a4d3ee", pos="10,6!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (Randomized) (n=',ed_randomized,')"];
+      ed_randomized [style="rounded,filled", fillcolor="#a4d3ee", pos="10,6!", shape = box, width=2.4, height=1, label = "Adjudicated Discontinued (Randomized) (n=',ed_randomized,')', missing_not_enrolled_str,'"];
       
       safety [style="rounded,filled", fillcolor="#a4d3ee", pos="2,6!", shape = box, width=2.4, height=1, label = "Full Safety Set (n=',safety,')\nSafety Set & Not Enrolled (n=',ex_safety,')"];
       
