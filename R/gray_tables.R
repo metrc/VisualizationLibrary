@@ -240,11 +240,11 @@ adherence_sextant <- function(analytic){
 #' properly when analytic data includes at most two stages of definitive fixation.
 #' 
 #' Construct df_number_procedures determines the number of stages of definitive fixation. Constructs
-#' plat_df_surgical_incision and pil_df_surgical_incision use semicolon seperators to count the number 
+#' df_plat_surgical_incision and df_pil_surgical_incision use semicolon seperators to count the number 
 #' of incisions at the plateau and pilon sites.
 #'
-#' @param analytic analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
-#' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention
+#' @param analytic analytic data set that must study_id, enrolled, df_date, df_plat_surgical_incision, 
+#' df_pil_surgical_incision, df_number_procedures, adherence_to_intervention
 #'
 #' @return nothing
 #' @export
@@ -255,12 +255,12 @@ adherence_sextant <- function(analytic){
 characteristics_treatment <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c('enrolled', 'df_date', 'plat_df_surgical_incision', 'pil_df_surgical_incision', 
+    example_constructs = c('enrolled', 'df_date', 'df_plat_surgical_incision', 'df_pil_surgical_incision', 
                            'df_number_procedures', 'adherence_to_intervention'), 
     example_types = c('Boolean', 'Date', 'Category-NS', 'Category-NS', 'Number-U2', 'Boolean'))
   
   df <- analytic %>% 
-    select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, adherence_to_intervention) %>% 
+    select(study_id, enrolled, df_date, df_plat_surgical_incision, df_pil_surgical_incision, df_number_procedures, adherence_to_intervention) %>% 
     filter(enrolled)
   
   total <- sum(df$enrolled, na.rm=T)
@@ -268,8 +268,8 @@ characteristics_treatment <- function(analytic){
   
   df_complete <- data.frame(type = 'Patients with Definitive Fixation Data Complete', percentage = format_count_percent(df_total, total))
   
-  plat <- sum(!is.na(df$plat_df_surgical_incision))
-  pil <- sum(!is.na(df$pil_df_surgical_incision))
+  plat <- sum(!is.na(df$df_plat_surgical_incision))
+  pil <- sum(!is.na(df$df_pil_surgical_incision))
   
   avg_stages <- df %>% 
     filter(!is.na(df_date)) %>% 
@@ -285,12 +285,12 @@ characteristics_treatment <- function(analytic){
   
   plat_incisions <- df %>%
     filter(!is.na(df_date)) %>% 
-    mutate(plat_incisions = str_count(plat_df_surgical_incision, ";") + 1) %>% 
+    mutate(plat_incisions = str_count(df_plat_surgical_incision, ";") + 1) %>% 
     summarize(type = paste0('Plateau Fractures (n = ', plat, ")"), percentage = format_mean_sd(plat_incisions))
   
   pil_incisions <- df %>%
     filter(!is.na(df_date)) %>% 
-    mutate(pil_incisions = str_count(pil_df_surgical_incision, ";") + 1) %>% 
+    mutate(pil_incisions = str_count(df_pil_surgical_incision, ";") + 1) %>% 
     summarize(type = paste0('Pilon Fractures (n = ', pil, ")"), percentage = format_mean_sd(pil_incisions))
   
   adherence <- df %>% 
