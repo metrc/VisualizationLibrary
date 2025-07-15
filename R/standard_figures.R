@@ -1354,11 +1354,13 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
   
   if(not_enrolled_missing_df_reason){
     reasons <- analytic %>% filter(!is.na(not_enrolled_missing_df_reason)) %>% pull(not_enrolled_missing_df_reason)
-    reasons <- c(reasons[reasons!="Missing Definitive Fixation"], reasons[reasons=="Missing Definitive Fixation"])
+    reasons <- c(sort(reasons[reasons!="Missing Definitive Fixation"]), reasons[reasons=="Missing Definitive Fixation"])
     missing_not_enrolled_str <- ""
-    for(reason in reasons){
-      missing_not_enrolled_str <- paste0(missing_not_enrolled_str, "\n",reason," (n=",length(reasons[reasons==reason]),")")
+    for(reason in unique(reasons)){
+      missing_not_enrolled_str <- paste0(missing_not_enrolled_str, "\n", ifelse(reason=="Missing Definitive Fixation","","Missing Definitive Fixation: "), reason," (n=",length(reasons[reasons==reason]),")")
     }
+  } else{
+    missing_not_enrolled_str <- ""
   }
   
   consort_diagram <- grViz(paste0('
