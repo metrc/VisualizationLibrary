@@ -1027,7 +1027,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
 closed_complications_by_severity_relatedness <- function(analytic){
   analytic <- if_needed_generate_example_data(analytic,
                                               example_constructs = c("complication_data", "treatment_arm"),
-                                              example_types = c("(';new_row: ', '|')FollowupPeriod|Form|Category|Category|Character|Date|Category|Category|Character", "TreatmentArm"))
+                                              example_types = c("(';new_row: ', '|')FollowupPeriod|Date|Category|Date|Category|Category|Boolean|Category|Character|Character", "TreatmentArm"))
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-23)
   
@@ -1040,9 +1040,9 @@ closed_complications_by_severity_relatedness <- function(analytic){
     unzipped_comp <- comp %>%
       separate_rows(complication_data, sep = ";new_row: ") %>%
       separate(complication_data, into = c("redcap_event_name", "visit_date", "complications", 
-                                           "first_complication_note", "another_complication_note", "diagnosis_date", 
+                                           "diagnosis_date", 
                                            "relatedness", "severity", "treatment_related", "new_or_previous_diagnosis",
-                                           "form_notes"), sep = '\\|')  %>% 
+                                           "form_notes","other_info"), sep = '\\|')  %>% 
       select(study_id, severity, relatedness, complications) %>% 
       mutate(severity = case_when(
         severity %in% c('Mild', 'Moderate') ~ "Grade 2,1",
