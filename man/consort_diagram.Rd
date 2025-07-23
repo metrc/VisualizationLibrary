@@ -8,7 +8,8 @@ consort_diagram(
   analytic,
   final_period = "12 Month",
   definitive_event = "Definitive Fixation Complete",
-  not_expected_adjudicated = TRUE
+  not_expected_adjudicated = TRUE,
+  not_enrolled_missing_df_reason = FALSE
 )
 }
 \arguments{
@@ -23,6 +24,8 @@ safety_set, exclusive_safety_set, not_completed, not_expected, active, missed_fi
 
 \item{not_expected_adjudicated}{whether to note that the Not Expected was adjudicated, purely visual
 change}
+
+\item{not_enrolled_missing_df_reason}{adds reasons for not enrollment beyond adjudication to consort}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.

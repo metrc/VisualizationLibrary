@@ -4030,3 +4030,114 @@ closed_promis_stats_by_time <- function(analytic){
 }
 
 
+
+#' Closed Survival Analysis Kaplan-Meier
+#'
+#' @description This function outputs a table with the specified injury characteristics and patient characteristics
+#' for enrolled patients with "Ankle" injuries. This table is produced for Weight bearing main paper. 
+#'
+#' @param analytic This is the analytic dataset that must include enrolled, treatment_arm
+#' @param type_construct the name of the column of the analytic dataset that must include whether the outcome for that participant was a check or event
+#' @param days_construct the name of the column of the analytic dataset that must include the number of days till check or event
+#' @param outcome_length number of days for this outcome
+#' @param pre_filter_construct defaults to NULL but can be used to filter the participants using the name or names of other columns of the analytic dataset
+#' @param remove_zero_day_events defaults to TRUE removes zero day events to match STATA behavior
+#' @param arm_labels named chr vec, c("0" = "Early Weight bearing","1" = "Restricted Weight bearing")
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_survival_analysis_kaplan_meier("Replace with Analytic Tibble")
+#' 
+closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days_construct, outcome_length, pre_filter_constructs=NULL, remove_zero_day_events=TRUE, arm_labels = c(`0` = "Control", `1` = "Treatment"), outcome_label="Outcome"){
+  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', 'bac7274ff6b4342b88af39966188be52')
+  
+  # ── Prep data ───────────────────────────────────────────────────────────
+  df <- analytic %>%
+    filter(enrolled == 1) %>%
+    rename(type = !!sym(type_construct),
+           days = !!sym(days_construct)) %>%
+    mutate(
+      outcome = case_when(
+        type == "event"  ~ 1,
+        type == "check"  ~ 0,
+        TRUE             ~ NA_real_
+      ),
+      days   = as.numeric(days),
+      trt    = case_when(
+        treatment_arm == "Group A"  ~ 1,
+        treatment_arm == "Group B"  ~ 0,
+        TRUE             ~ NA_real_
+      )
+    )
+  
+  # optional additional filters
+  if (!is.null(pre_filter_constructs)) {
+    for (pre_filter_col in pre_filter_constructs) {
+      df <- df %>% filter(!!sym(pre_filter_col)==TRUE)
+    }
+  }
+  
+  if (remove_zero_day_events) {
+    df <- df %>% filter(!(outcome == 1 & days == 0))
+  }
+  
+  # ── Kaplan–Meier fit ────────────────────────────────────────────────────
+  fit <- survfit(Surv(days, outcome) ~ trt, data = df)
+  # ── Extract per-arm KM estimates & n ─────────────────────────────────────
+  summary_fit <- summary(fit, times = outcome_length, extend = TRUE)
+  
+  # Pull out the stratum label (e.g. "trt=0") and keep only the number after "="
+  arm_code <- as.integer(sub(".*=", "", summary_fit$strata))
+  
+  # Sample size straight from the data
+  n_counts <- df %>% count(trt)         # tibble: trt | n
+  
+  est <- tibble(
+    trt      = arm_code,
+    surv     = summary_fit$surv,
+    std.err  = summary_fit$std.err
+  ) %>%
+    left_join(n_counts, by = "trt") %>%     # add n
+    arrange(trt)       
+  
+  # difference & 90 % CI
+  surv_diff  <- est$surv[2] - est$surv[1]             
+  se_diff    <- sqrt(summary_fit$std.err[2]^2 + summary_fit$std.err[1]^2)
+  z90        <- qnorm(0.95)
+  z95        <- qnorm(0.975)
+  lower95    <- est$surv - z95 * est$std.err
+  upper95    <- est$surv + z95 * est$std.err
+  diff_low   <- surv_diff - z90 * se_diff
+  diff_high  <- surv_diff + z90 * se_diff
+  
+  # ── Build table ─────────────────────────────────────────────────────────
+  make_cell <- function(p, lo, hi) {
+    sprintf("%.1f (%.1f, %.1f)", 100 * p, 100 * lo, 100 * hi)
+  }
+  
+  zero_col <- make_cell(est$surv[1], lower95[1], upper95[1])
+  one_col  <- make_cell(est$surv[2], lower95[2], upper95[2])
+  diff_col  <- sprintf("%.1f (%.1f, %.1f)",
+                       100 * surv_diff, 100 * diff_low, 100 * diff_high)
+  
+  hdr_zero <- sprintf("%s (n=%d) (%%)", arm_labels["0"], est$n[1])
+  hdr_one  <- sprintf("%s (n=%d) (%%)", arm_labels["1"], est$n[2])
+  
+  out_tbl <- tibble(
+    " " = outcome_label,
+    !!hdr_one    := one_col,
+    !!hdr_zero   := zero_col,
+    `Difference (two-sided 90% CI)` = diff_col
+  )
+  
+  header <- c(" " = 1, "Kaplan-Meier Estimate (95% CI)" = 2, "Treatment effect" = 1)
+  
+  table <- kable(out_tbl, format = "html", align = "l") %>%
+    add_header_above(header) %>% 
+    kable_styling("striped", full_width = FALSE, position = "left")
+  
+  return(table)
+}
+
