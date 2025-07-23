@@ -15,7 +15,8 @@ Depends:
   rsvg,
   base64enc,
   VisualizationTools,
-  plotly
+  plotly,
+  survival
 Suggests:
   ggplot2,
   scales
