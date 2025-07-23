@@ -16,7 +16,8 @@ Depends:
   base64enc,
   VisualizationTools,
   plotly,
-  survival
+  survival,
+  km.ci
 Suggests:
   ggplot2,
   scales
