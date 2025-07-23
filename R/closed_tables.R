@@ -4051,7 +4051,7 @@ closed_promis_stats_by_time <- function(analytic){
 #' closed_survival_analysis_kaplan_meier("Replace with Analytic Tibble")
 #' 
 closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days_construct, outcome_length, pre_filter_constructs=NULL, remove_zero_day_events=TRUE, arm_labels = c(`0` = "Control", `1` = "Treatment"), outcome_label="Outcome"){
-  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', 'bac7274ff6b4342b88af39966188be52')
+  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', 'c798c93238db2f2350624e715d177876')
   
   # ── Prep data ───────────────────────────────────────────────────────────
   df <- analytic %>%
@@ -4086,44 +4086,46 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
   # ── Kaplan–Meier fit ────────────────────────────────────────────────────
   fit <- survfit(Surv(days, outcome) ~ trt, data = df)
   # ── Extract per-arm KM estimates & n ─────────────────────────────────────
-  summary_fit <- summary(fit, times = outcome_length, extend = TRUE)
+  km_fit <- km.ci(fit, conf.level = 0.95, method = "loglog")
+  
+  strata_names <- names(km_fit$strata)        # "trt=0" "trt=1"
+  outcome_time <- 365                      # or whatever you need
+  
+  ## ── Pull out survival & CI at that time for each arm ────────────────
+  arm_stats <- lapply(seq_along(strata_names), function(i) {
+    s <- summary(km_fit[i], times = outcome_time, extend = TRUE)
+    tibble(trt       = sub(".*=", "", strata_names[i]) |> as.integer(),
+           surv      = s$surv,
+           lower95   = s$lower,
+           upper95   = s$upper,
+           std.err   = s$std.err,
+           n         = s$n)
+  }) |>
+    bind_rows() |>
+    arrange(trt)
+  
+  ## ── Difference & 90 % CI (2-sided) ───────────────────────────────────
+  surv_diff <- arm_stats$surv[2] - arm_stats$surv[1]
+  se_diff   <- sqrt(arm_stats$std.err[1]^2 + arm_stats$std.err[2]^2)
+  z90       <- qnorm(0.95)        # 1.645
+  diff_low  <- surv_diff - z90 * se_diff
+  diff_high <- surv_diff + z90 * se_diff
   
   # Pull out the stratum label (e.g. "trt=0") and keep only the number after "="
-  arm_code <- as.integer(sub(".*=", "", summary_fit$strata))
-  
-  # Sample size straight from the data
-  n_counts <- df %>% count(trt)         # tibble: trt | n
-  
-  est <- tibble(
-    trt      = arm_code,
-    surv     = summary_fit$surv,
-    std.err  = summary_fit$std.err
-  ) %>%
-    left_join(n_counts, by = "trt") %>%     # add n
-    arrange(trt)       
-  
-  # difference & 90 % CI
-  surv_diff  <- est$surv[2] - est$surv[1]             
-  se_diff    <- sqrt(summary_fit$std.err[2]^2 + summary_fit$std.err[1]^2)
-  z90        <- qnorm(0.95)
-  z95        <- qnorm(0.975)
-  lower95    <- est$surv - z95 * est$std.err
-  upper95    <- est$surv + z95 * est$std.err
-  diff_low   <- surv_diff - z90 * se_diff
-  diff_high  <- surv_diff + z90 * se_diff
+  arm_code <- arm_stats$trt
   
   # ── Build table ─────────────────────────────────────────────────────────
   make_cell <- function(p, lo, hi) {
     sprintf("%.1f (%.1f, %.1f)", 100 * p, 100 * lo, 100 * hi)
   }
   
-  zero_col <- make_cell(est$surv[1], lower95[1], upper95[1])
-  one_col  <- make_cell(est$surv[2], lower95[2], upper95[2])
+  zero_col <- make_cell(arm_stats$surv[1], arm_stats$lower95[1], arm_stats$upper95[1])
+  one_col  <- make_cell(arm_stats$surv[2], arm_stats$lower95[2], arm_stats$upper95[2])
   diff_col  <- sprintf("%.1f (%.1f, %.1f)",
                        100 * surv_diff, 100 * diff_low, 100 * diff_high)
   
-  hdr_zero <- sprintf("%s (n=%d) (%%)", arm_labels["0"], est$n[1])
-  hdr_one  <- sprintf("%s (n=%d) (%%)", arm_labels["1"], est$n[2])
+  hdr_zero <- sprintf("%s (n=%d) (%%)", arm_labels["0"], arm_stats$n[1])
+  hdr_one  <- sprintf("%s (n=%d) (%%)", arm_labels["1"], arm_stats$n[2])
   
   out_tbl <- tibble(
     " " = outcome_label,
