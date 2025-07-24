@@ -15,6 +15,7 @@
 #' @export
 #'
 #' @examples
+#' closed_consort_diagram_wb_publication("Replace with Analytic Tibble")
 #' 
 closed_consort_diagram_wb_publication <- function(analytic){
   

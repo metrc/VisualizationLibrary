@@ -21,3 +21,7 @@ The closed version of consort_diagram_wb_publication, breaking down study cancel
 
 This consort diagram was made for the Weight Bearing study, and so is unlikely to work for yours.
 }
+\examples{
+closed_consort_diagram_wb_publication("Replace with Analytic Tibble")
+
+}
