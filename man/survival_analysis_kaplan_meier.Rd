@@ -11,6 +11,8 @@ survival_analysis_kaplan_meier(
   outcome_length,
   pre_filter_constructs = NULL,
   remove_zero_day_events = TRUE,
+  non_inferiority = FALSE,
+  hazard_ratio = FALSE,
   arm_labels = c(`0` = "Control", `1` = "Treatment"),
   outcome_label = "Outcome"
 )
@@ -25,6 +27,10 @@ survival_analysis_kaplan_meier(
 \item{outcome_length}{number of days for this outcome}
 
 \item{remove_zero_day_events}{defaults to TRUE removes zero day events to match STATA behavior}
+
+\item{non_inferiority}{defaults to FALSE lowers confidence interval on difference to 90%}
+
+\item{hazard_ratio}{adds a coxph hazard ratio and p value}
 
 \item{arm_labels}{named chr vec, c("0" = "Early Weight bearing","1" = "Restricted Weight bearing")}
 
