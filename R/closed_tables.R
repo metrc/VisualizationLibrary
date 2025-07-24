@@ -3451,9 +3451,9 @@ closed_enrollment_status_by_site <- function(analytic){
 #' @param analytic This is the analytic dataset that must include enrolled, injury_type,
 #' sex, age, ethnicity_race, education_level,
 #' preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
-#' tobacco_use, bmi, preinjury_health, insurance_type,
+#' tobacco_use, bmi, preinjury_health, insurance,
 #' injury_gustilo, injury_classification_ankle_ota, soft_tissue_closure,
-#' injury_mechanism, injury_randomization_days, pre_randomization_mobilization, treatment_arm
+#' injury_mechanism, injury_randomization_days, pre_randomization_mobilization_type, treatment_arm
 #'
 #' @return An HTML table.
 #' @export
@@ -3462,7 +3462,7 @@ closed_enrollment_status_by_site <- function(analytic){
 #' closed_wbs_main_paper_all_characteristics("Replace with Analytic Tibble")
 #' 
 closed_wbs_main_paper_all_characteristics <- function(analytic){
-  confirm_stability_of_related_visual('wbs_main_paper_all_characteristics', 'a7f286fa9bef48407d4c0dd6be03d99b')
+  confirm_stability_of_related_visual('wbs_main_paper_all_characteristics', 'b054ff90ca69827f4eead5402bef667b')
   inner_wbs_characteristics <- function(df){
     total <- nrow(df)
     
@@ -3566,11 +3566,9 @@ closed_wbs_main_paper_all_characteristics <- function(analytic){
              n = format_count_percent(n, total))
     
     df_insurance <- df %>%
-      mutate(insurance_type = ifelse(str_detect(insurance_type, "Medicaid"), "Medicaid",
-                                     ifelse(!is.na(insurance_type), "Other Insurance", NA))) %>%
-      mutate(insurance_type = ifelse(!is.na(insurance_type), insurance_type, "Missing")) %>%
-      count(insurance_type) %>%
-      rename(heading = insurance_type) %>%
+      mutate(insurance = ifelse(insurance == TRUE, 'Yes', 'No')) %>% 
+      count(insurance) %>%
+      rename(heading = insurance) %>%
       mutate(Category = "Insurance",
              n = format_count_percent(n, total))
     
@@ -3631,8 +3629,8 @@ closed_wbs_main_paper_all_characteristics <- function(analytic){
     df_days_final <- rbind(df_days_stats, df_days_missing)
     
     df_immobilization <- df %>%
-      count(pre_randomization_immobilization) %>%
-      rename(heading = pre_randomization_immobilization) %>%
+      count(pre_randomization_immobilization_type) %>%
+      rename(heading = pre_randomization_immobilization_type) %>%
       mutate(Category = "Immobilization",
              heading = ifelse(is.na(heading), "Missing", heading),
              n = format_count_percent(n, total))
@@ -3650,9 +3648,9 @@ closed_wbs_main_paper_all_characteristics <- function(analytic){
   df_all <- analytic %>%
     select(enrolled, injury_type, sex, age, ethnicity_race, education_level,
            preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
-           tobacco_use, bmi, preinjury_health, insurance_type,
+           tobacco_use, bmi, preinjury_health, insurance,
            injury_gustilo, injury_classification_ankle_ota, soft_tissue_closure,
-           injury_mechanism, injury_randomization_days, pre_randomization_immobilization,
+           injury_mechanism, injury_randomization_days, pre_randomization_immobilization_type,
            treatment_arm) %>%
     filter(enrolled, injury_type == 'ankle')
   
