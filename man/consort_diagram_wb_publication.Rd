@@ -26,3 +26,7 @@ For other consort diagrams that may better fit your study, refer to: consort_dia
 dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent, 
 dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram.
 }
+\examples{
+consort_diagram_wb_publication("Replace with Analytic Tibble")
+
+}

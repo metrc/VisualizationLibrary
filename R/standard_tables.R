@@ -4999,7 +4999,7 @@ promis_stats_by_time <- function(analytic){
 #' @param outcome_length number of days for this outcome
 #' @param pre_filter_construct defaults to NULL but can be used to filter the participants using the name or names of other columns of the analytic dataset
 #' @param remove_zero_day_events defaults to TRUE removes zero day events to match STATA behavior
-#' @param non_inferiority defaults to FALSE lowers confidence interval on difference to 90%
+#' @param non_inferiority defaults to FALSE lowers confidence interval on difference to 90 percent
 #' @param hazard_ratio adds a coxph hazard ratio and p value
 #' @param arm_labels named chr vec, c("0" = "Early Weight bearing","1" = "Restricted Weight bearing")
 #'

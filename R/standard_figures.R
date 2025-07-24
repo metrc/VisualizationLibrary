@@ -1439,6 +1439,7 @@ consort_diagram <- function(analytic, final_period="12 Month", definitive_event 
 #' @export
 #'
 #' @examples
+#' consort_diagram_wb_publication("Replace with Analytic Tibble")
 #' 
 consort_diagram_wb_publication <- function(analytic){
   
