@@ -28,7 +28,7 @@ closed_survival_analysis_kaplan_meier(
 
 \item{remove_zero_day_events}{defaults to TRUE removes zero day events to match STATA behavior}
 
-\item{non_inferiority}{defaults to FALSE lowers confidence interval on difference to 90%}
+\item{non_inferiority}{defaults to FALSE lowers confidence interval on difference to 90 percent}
 
 \item{hazard_ratio}{adds a coxph hazard ratio and p value}
 
