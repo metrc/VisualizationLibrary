@@ -4454,8 +4454,7 @@ wbs_main_paper_all_characteristics <- function(analytic){
       preinjury_productive_activity, preinjury_work_demand, preinjury_work_hours,
       tobacco_use, bmi, preinjury_health, insurance,
       injury_gustilo, injury_classification_ankle_ota, soft_tissue_closure,
-      injury_mechanism, injury_randomization_days, pre_randomization_immobilization,
-      pre_randomization_immobilization_type) %>%
+      injury_mechanism, injury_randomization_days, pre_randomization_immobilization_type) %>%
     filter(enrolled) %>% 
     filter(injury_type == 'ankle')
   
