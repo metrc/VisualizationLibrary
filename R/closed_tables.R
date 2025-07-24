@@ -3462,7 +3462,7 @@ closed_enrollment_status_by_site <- function(analytic){
 #' closed_wbs_main_paper_all_characteristics("Replace with Analytic Tibble")
 #' 
 closed_wbs_main_paper_all_characteristics <- function(analytic){
-  confirm_stability_of_related_visual('wbs_main_paper_all_characteristics', 'b054ff90ca69827f4eead5402bef667b')
+  confirm_stability_of_related_visual('wbs_main_paper_all_characteristics', 'b81f3bec87d18d6a958e40475bc82fb1')
   inner_wbs_characteristics <- function(df){
     total <- nrow(df)
     
