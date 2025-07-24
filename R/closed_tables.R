@@ -1027,7 +1027,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
 closed_complications_by_severity_relatedness <- function(analytic){
   analytic <- if_needed_generate_example_data(analytic,
                                               example_constructs = c("complication_data", "treatment_arm"),
-                                              example_types = c("(';new_row: ', '|')FollowupPeriod|Form|Category|Category|Character|Date|Category|Category|Character", "TreatmentArm"))
+                                              example_types = c("(';new_row: ', '|')FollowupPeriod|Date|Category|Date|Category|Category|Boolean|Category|Character|Character", "TreatmentArm"))
   
   #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-23)
   
@@ -1040,9 +1040,9 @@ closed_complications_by_severity_relatedness <- function(analytic){
     unzipped_comp <- comp %>%
       separate_rows(complication_data, sep = ";new_row: ") %>%
       separate(complication_data, into = c("redcap_event_name", "visit_date", "complications", 
-                                           "first_complication_note", "another_complication_note", "diagnosis_date", 
+                                           "diagnosis_date", 
                                            "relatedness", "severity", "treatment_related", "new_or_previous_diagnosis",
-                                           "form_notes"), sep = '\\|')  %>% 
+                                           "form_notes","other_info"), sep = '\\|')  %>% 
       select(study_id, severity, relatedness, complications) %>% 
       mutate(severity = case_when(
         severity %in% c('Mild', 'Moderate') ~ "Grade 2,1",
@@ -2011,8 +2011,8 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
 #' @description 
 #' Closed version of the characteristics_treatment function; see its documentation for details.
 #'
-#' @param analytic analytic data set that must study_id, enrolled, df_date, plat_df_surgical_incision, 
-#' pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm
+#' @param analytic analytic data set that must study_id, enrolled, df_date, df_plat_surgical_incision, 
+#' df_pil_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm
 #'
 #' @return An HTML table.
 #' @export
@@ -2023,11 +2023,11 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
 closed_characteristics_treatment <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,
-    example_constructs = c("treatment_arm", "enrolled", "df_date", "plat_df_surgical_incision",
-                           "pil_df_surgical_incision", "df_number_procedures", "adherence_to_intervention"),
+    example_constructs = c("treatment_arm", "enrolled", "df_date", "df_plat_surgical_incision",
+                           "df_pil_surgical_incision", "df_number_procedures", "adherence_to_intervention"),
     example_types = c('Boolean', 'Boolean', 'Date', 'Category-NS', 'Category-NS', 'Number-U2', 'Boolean'))
   
-  confirm_stability_of_related_visual('characteristics_treatment', 'f2624d670cf94115f31e4dcf6dea5266')
+  confirm_stability_of_related_visual('characteristics_treatment', '44d22be0a10be43b14ce93202f4f13ae')
   
   inner_characteristics_treatment <- function(df){
     total <- sum(df$enrolled, na.rm=T)
@@ -2035,8 +2035,8 @@ closed_characteristics_treatment <- function(analytic){
     
     df_complete <- data.frame(type = 'Patients with Definitive Fixation Data Complete', percentage = format_count_percent(df_total, total))
     
-    plat <- sum(!is.na(df$plat_df_surgical_incision))
-    pil <- sum(!is.na(df$pil_df_surgical_incision))
+    plat <- sum(!is.na(df$df_plat_surgical_incision))
+    pil <- sum(!is.na(df$df_pil_surgical_incision))
     
     avg_stages <- df %>% 
       filter(!is.na(df_date)) %>% 
@@ -2052,12 +2052,12 @@ closed_characteristics_treatment <- function(analytic){
     
     plat_incisions <- df %>%
       filter(!is.na(df_date)) %>% 
-      mutate(plat_incisions = str_count(plat_df_surgical_incision, ";") + 1) %>% 
+      mutate(plat_incisions = str_count(df_plat_surgical_incision, ";") + 1) %>% 
       summarize(type = paste0('Plateau Fractures (n = ', plat, ")"), percentage = format_mean_sd(plat_incisions))
     
     pil_incisions <- df %>%
       filter(!is.na(df_date)) %>% 
-      mutate(pil_incisions = str_count(pil_df_surgical_incision, ";") + 1) %>% 
+      mutate(pil_incisions = str_count(df_pil_surgical_incision, ";") + 1) %>% 
       summarize(type = paste0('Pilon Fractures (n = ', pil, ")"), percentage = format_mean_sd(pil_incisions))
     
     adherence <- df %>% 
@@ -2078,7 +2078,7 @@ closed_characteristics_treatment <- function(analytic){
   }
   
   df_all <- analytic %>% 
-    select(study_id, enrolled, df_date, plat_df_surgical_incision, pil_df_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm) %>% 
+    select(study_id, enrolled, df_date, df_plat_surgical_incision, df_pil_surgical_incision, df_number_procedures, adherence_to_intervention, treatment_arm) %>% 
     filter(enrolled)
   
   df_a <- df_all %>% filter(treatment_arm == 'Group A')
@@ -4026,5 +4026,149 @@ closed_promis_stats_by_time <- function(analytic){
   
   return(table_raw)
 }
+
+
+#' Closed Survival Analysis Kaplan-Meier
+#'
+#' @description This function outputs a table with the specified injury characteristics and patient characteristics
+#' for enrolled patients with "Ankle" injuries. This table is produced for Weight bearing main paper. 
+#'
+#' @param analytic This is the analytic dataset that must include enrolled and treatment_arm
+#' @param type_construct the name of the column of the analytic dataset that must include whether the outcome for that participant was a check or event
+#' @param days_construct the name of the column of the analytic dataset that must include the number of days till check or event
+#' @param outcome_length number of days for this outcome
+#' @param pre_filter_construct defaults to NULL but can be used to filter the participants using the name or names of other columns of the analytic dataset
+#' @param remove_zero_day_events defaults to TRUE removes zero day events to match STATA behavior
+#' @param non_inferiority defaults to FALSE lowers confidence interval on difference to 90%
+#' @param hazard_ratio adds a coxph hazard ratio and p value
+#' @param arm_labels named chr vec, c("0" = "Early Weight bearing","1" = "Restricted Weight bearing")
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_survival_analysis_kaplan_meier("Replace with Analytic Tibble")
+#' 
+closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days_construct, outcome_length, pre_filter_constructs=NULL, remove_zero_day_events=TRUE, non_inferiority=FALSE, hazard_ratio=FALSE, arm_labels = c(`0` = "Control", `1` = "Treatment"), outcome_label="Outcome"){
+  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', '0854391e845938515b1f9a3198dbbdad')
+  # ── Prep data ───────────────────────────────────────────────────────────
+  df <- analytic %>%
+    filter(enrolled == 1) %>%
+    rename(type = !!sym(type_construct),
+           days = !!sym(days_construct)) %>%
+    mutate(
+      outcome = case_when(
+        type == "event"  ~ 1,
+        type == "check"  ~ 0,
+        TRUE             ~ NA_real_
+      ),
+      days   = as.numeric(days),
+      trt    = case_when(
+        treatment_arm == "Group A"  ~ 1,
+        treatment_arm == "Group B"  ~ 0,
+        TRUE             ~ NA_real_
+      )
+    )
+  
+  # optional additional filters
+  if (!is.null(pre_filter_constructs)) {
+    for (pre_filter_col in pre_filter_constructs) {
+      df <- df %>% filter(!!sym(pre_filter_col)==TRUE)
+    }
+  }
+  
+  if (remove_zero_day_events) {
+    df <- df %>% filter(!(outcome == 1 & days == 0))
+  }
+  # ── Kaplan–Meier fit ────────────────────────────────────────────────────
+  fit <- survfit(Surv(days, outcome) ~ trt, data = df, conf.type="log-log")
+  
+  if(hazard_ratio){
+    coxph_fit <- coxph(Surv(days, outcome) ~ trt, data = df)
+    summary_coxph_fit <- summary(coxph_fit)
+    hz_ratio <- summary_coxph_fit$coefficients[2]
+    hz_p <- summary_coxph_fit$coefficients[5]
+    hz_low <- summary_coxph_fit$conf.int[3]
+    hz_high <- summary_coxph_fit$conf.int[4]
+  }
+  # ── Extract per-arm KM estimates & n ─────────────────────────────────────
+  summary_fit <- summary(fit, times = outcome_length, extend = TRUE)
+  
+  # Pull out the stratum label (e.g. "trt=0") and keep only the number after "="
+  arm_code <- as.integer(sub(".*=", "", summary_fit$strata))
+  
+  # Sample size straight from the data
+  n_counts <- df %>% count(trt)         # tibble: trt | n
+  
+  est <- tibble(
+    trt      = arm_code,
+    surv     = summary_fit$surv,
+    std.err  = summary_fit$std.err
+  ) %>%
+    left_join(n_counts, by = "trt") %>%     # add n
+    arrange(trt)       
+  
+  # difference & 90 % CI
+  surv_diff  <- est$surv[2] - est$surv[1]             
+  se_diff    <- sqrt(summary_fit$std.err[2]^2 + summary_fit$std.err[1]^2)
+  if(non_inferiority){
+    zValue        <- qnorm(0.95)
+    diff_text <- "Difference (two-sided 90% CI)"
+  } else{
+    zValue        <- qnorm(0.975)
+    diff_text <- "Difference (two-sided 95% CI)"
+  }
+  lower95    <- summary_fit$lower
+  upper95    <- summary_fit$upper
+  diff_low   <- surv_diff - zValue * se_diff
+  diff_high  <- surv_diff + zValue * se_diff
+  
+  # ── Build table ─────────────────────────────────────────────────────────
+  make_cell <- function(p, lo, hi) {
+    sprintf("%.1f (%.1f, %.1f)", 100 * p, 100 * lo, 100 * hi)
+  }
+  
+  zero_col <- make_cell(est$surv[1], lower95[1], upper95[1])
+  one_col  <- make_cell(est$surv[2], lower95[2], upper95[2])
+  diff_col  <- sprintf("%.1f (%.1f, %.1f)",
+                       100 * surv_diff, 100 * diff_low, 100 * diff_high)
+  
+  hdr_zero <- sprintf("%s (n=%d) (%%)", arm_labels["0"], est$n[1])
+  hdr_one  <- sprintf("%s (n=%d) (%%)", arm_labels["1"], est$n[2])
+  
+  
+  out_tbl <- tibble(
+    " " = outcome_label,
+    !!hdr_one    := one_col,
+    !!hdr_zero   := zero_col,
+    !!diff_text  := diff_col
+  )
+  
+  header <- c(" " = 1, "Kaplan-Meier Estimate (95% CI)" = 2, "Treatment effect" = 1)
+  
+  if(hazard_ratio){
+    hz_col  <- sprintf("%.1f (%.1f, %.1f)",
+                       hz_ratio, hz_low, hz_high)
+    p_col <- hz_p
+    out_tbl <- tibble(
+      " " = outcome_label,
+      !!hdr_one    := one_col,
+      !!hdr_zero   := zero_col,
+      !!diff_text  := diff_col,
+      "Hazard Ratio" := hz_col,
+      "P value" := p_col
+    )
+    
+    header <- c(" " = 1, "Kaplan-Meier Estimate (95% CI)" = 2, "Treatment effect" = 2, " " = 1)
+  } 
+  
+  table <- kable(out_tbl, format = "html", align = "l") %>%
+    add_header_above(header) %>% 
+    kable_styling("striped", full_width = FALSE, position = "left")
+  
+  return(table)
+}
+  
+
 
 
