@@ -4052,7 +4052,7 @@ closed_promis_stats_by_time <- function(analytic){
 #' closed_survival_analysis_kaplan_meier("Replace with Analytic Tibble")
 #' 
 closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days_construct, outcome_length, pre_filter_constructs=NULL, remove_zero_day_events=TRUE, non_inferiority=FALSE, hazard_ratio=FALSE, arm_labels = c(`0` = "Control", `1` = "Treatment"), outcome_label="Outcome"){
-  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', '109f0bafcde089948abb518b0bdf3df1')
+  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', '0854391e845938515b1f9a3198dbbdad')
   # ── Prep data ───────────────────────────────────────────────────────────
   df <- analytic %>%
     filter(enrolled == 1) %>%
@@ -4095,8 +4095,6 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
   }
   # ── Extract per-arm KM estimates & n ─────────────────────────────────────
   summary_fit <- summary(fit, times = outcome_length, extend = TRUE)
-  
-  print(summary)
   
   # Pull out the stratum label (e.g. "trt=0") and keep only the number after "="
   arm_code <- as.integer(sub(".*=", "", summary_fit$strata))

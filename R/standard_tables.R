@@ -5050,8 +5050,6 @@ survival_analysis_kaplan_meier <- function(analytic, type_construct, days_constr
   # ── Extract per-arm KM estimates & n ─────────────────────────────────────
   summary_fit <- summary(fit, times = outcome_length, extend = TRUE)
   
-  print(summary)
-  
   # Pull out the stratum label (e.g. "trt=0") and keep only the number after "="
   arm_code <- as.integer(sub(".*=", "", summary_fit$strata))
   
