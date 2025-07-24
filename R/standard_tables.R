@@ -5117,7 +5117,7 @@ survival_analysis_kaplan_meier <- function(analytic, type_construct, days_constr
       "P value" := p_col
     )
     
-    header <- c(" " = 1, "Kaplan-Meier Estimate (95% CI)" = 2, "FAKE! Treatment effect" = 2)
+    header <- c(" " = 1, "Kaplan-Meier Estimate (95% CI)" = 2, "FAKE! Treatment effect" = 2, " " = 1)
   } 
   
   table <- kable(out_tbl, format = "html", align = "l") %>%

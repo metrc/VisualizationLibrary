@@ -4052,7 +4052,7 @@ closed_promis_stats_by_time <- function(analytic){
 #' closed_survival_analysis_kaplan_meier("Replace with Analytic Tibble")
 #' 
 closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days_construct, outcome_length, pre_filter_constructs=NULL, remove_zero_day_events=TRUE, non_inferiority=FALSE, hazard_ratio=FALSE, arm_labels = c(`0` = "Control", `1` = "Treatment"), outcome_label="Outcome"){
-  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', 'db8515ba4536efb7bcd58821f27e6fc5')
+  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', '109f0bafcde089948abb518b0bdf3df1')
   # ── Prep data ───────────────────────────────────────────────────────────
   df <- analytic %>%
     filter(enrolled == 1) %>%
@@ -4163,7 +4163,7 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
       "P value" := p_col
     )
     
-    header <- c(" " = 1, "Kaplan-Meier Estimate (95% CI)" = 2, "Treatment effect" = 2)
+    header <- c(" " = 1, "Kaplan-Meier Estimate (95% CI)" = 2, "Treatment effect" = 2, " " = 1)
   } 
   
   table <- kable(out_tbl, format = "html", align = "l") %>%
