@@ -2460,11 +2460,11 @@ closed_fracture_characteristics <- function(analytic){
   df_final_b <- inner_fracture_characteristics(df_b)
   df_final_full <- inner_fracture_characteristics(df)
   
-  df_table <- full_join(df_final_full, df_final_a, by = "type") %>%
-    left_join(df_final_b, by = "type") %>%
+  df_table <- full_join(df_final_a, df_final_b, by = "type") %>%
+    left_join(df_final_full, by = "type") %>%
     mutate(percentage.y = ifelse(is.na(percentage.y), '0 (0%)', percentage.y)) %>% 
-    mutate(percentage = ifelse(is.na(percentage), '0 (0%)', percentage.y)) %>% 
-    select(type, percentage.y, percentage, percentage.x)
+    mutate(percentage.x = ifelse(is.na(percentage.x), '0 (0%)', percentage.x)) %>% 
+    select(type, percentage.x, percentage.y, percentage)
   
   cnames <- c(' ', paste0('Group A (n=', sum(df_a$enrolled), ')'),
               paste0('Group B (n=', sum(df_b$enrolled), ')'),
