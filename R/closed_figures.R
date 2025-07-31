@@ -77,7 +77,8 @@ closed_consort_diagram_wb_publication <- function(analytic){
   ineligible <- sum(df$ineligible, na.rm = TRUE)
   
   refused <- sum(df$refused, na.rm = TRUE)
-  constraint <- sum(df$constraint_other, na.rm = TRUE)
+  constraint <- sum(df$constraint_other,  na.rm = TRUE) +
+    sum(df$constraint_issue, na.rm = TRUE)
   constraint_unavailable <- sum(df$constraint_unavailable & (is.na(df$constraint_other)|!df$constraint_other), na.rm = TRUE)
   constraint_surgeon_unwilling <- sum(df$constraint_surgeon_unwilling & (is.na(df$constraint_other)|!df$constraint_other)& (is.na(df$constraint_unavailable)|!df$constraint_unavailable), na.rm = TRUE)
   
@@ -85,7 +86,9 @@ closed_consort_diagram_wb_publication <- function(analytic){
                                 df$consented, na.rm = TRUE)
   
   plateau_injuries <- sum(df$injury_type=='plateau', na.rm = TRUE)
-  randomized <- sum(df$injury_type=='ankle', na.rm = TRUE)
+  randomized <- sum((df$injury_type == "ankle" | is.na(df$injury_type)) &
+                      df$randomized,
+                    na.rm = TRUE)
   
   accounted_ids <- df %>% filter(ineligible|refused|constraint_other|constraint_unavailable|
                                    constraint_surgeon_unwilling|(discontinued_pre_randomization & consented)|
@@ -95,8 +98,15 @@ closed_consort_diagram_wb_publication <- function(analytic){
   
   
   
-  randomized_a <- sum(df$treatment_arm == 'Group A' & df$injury_type=='ankle', na.rm = TRUE)
-  randomized_b <- sum(df$treatment_arm == 'Group B' & df$injury_type=='ankle', na.rm = TRUE)
+  randomized_a <- sum(df$treatment_arm == "Group A" &
+                        (df$injury_type == "ankle" | is.na(df$injury_type)) &
+                        df$randomized,
+                      na.rm = TRUE)
+  
+  randomized_b <- sum(df$treatment_arm == "Group B" &
+                        (df$injury_type == "ankle" | is.na(df$injury_type)) &
+                        df$randomized,
+                      na.rm = TRUE)
   
   df_a <- df %>% filter(treatment_arm == 'Group A')
   df_b <- df %>% filter(treatment_arm == 'Group B')
@@ -106,11 +116,27 @@ closed_consort_diagram_wb_publication <- function(analytic){
   dnr_treatment_df_b <- df_b %>% filter(injury_type == 'ankle'|is.na(injury_type)) %>% filter(randomized)
   dnr_treatment_b <- sum(!dnr_treatment_df_b$received_treatment, na.rm = TRUE)
   
-  late_ineligible_a <- sum(df_a$late_ineligible, na.rm = TRUE)
-  late_ineligible_b <- sum(df_b$late_ineligible, na.rm = TRUE)
+  late_ineligible_a <- sum(df_a$late_ineligible &
+                             (df_a$injury_type == "ankle" | is.na(df_a$injury_type)) &
+                             df_a$randomized,
+                           na.rm = TRUE)
   
-  diverging_review_a <- sum(!df_a$per_protocol_sample, na.rm = TRUE)
-  diverging_review_b <- sum(!df_b$per_protocol_sample, na.rm = TRUE)
+  late_ineligible_b <- sum(df_b$late_ineligible &
+                             (df_b$injury_type == "ankle" | is.na(df_b$injury_type)) &
+                             df_b$randomized,
+                           na.rm = TRUE)
+  
+  diverging_review_a <- sum((df_a$injury_type == "ankle" | is.na(df_a$injury_type)) &
+                              df_a$randomized &
+                              (!df_a$late_ineligible | is.na(df_a$late_ineligible)) &
+                              !df_a$per_protocol_sample,
+                            na.rm = TRUE)
+  
+  diverging_review_b <- sum((df_b$injury_type == "ankle" | is.na(df_b$injury_type)) &
+                              df_b$randomized &
+                              (!df_b$late_ineligible | is.na(df_b$late_ineligible)) &
+                              !df_b$per_protocol_sample,
+                            na.rm = TRUE)
   
   died_a <- sum(as.Date(df_a$death_date)-as.Date(df_a$consent_date)<365, na.rm = TRUE)
   died_b <- sum(as.Date(df_b$death_date)-as.Date(df_b$consent_date)<365, na.rm = TRUE)
