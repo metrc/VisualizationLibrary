@@ -5123,3 +5123,48 @@ survival_analysis_kaplan_meier <- function(analytic, type_construct, days_constr
   
   return(table)
 }
+
+
+#' recruitment_source_statistics
+#'
+#' @description This function outputs a table with the baseline statistics organized by all possible combinations of recruitment source and clinic.
+#' This table is produced for TBI DSMB. 
+#'
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' recruitment_source_statistics("Replace with Analytic Tibble")
+#' 
+recruitment_source_statistics <- function(analytic){
+  data <- analytic %>% 
+    select(study_id, recruitment_source, recruitment_clinic, build_clinical_lead, 
+                              consented, randomized, pre_screened_ineligibility_reasons, ineligible) %>% 
+    mutate(pre_screened_ineligible = ifelse(!is.na(pre_screened_ineligibility_reasons), TRUE, FALSE)) 
+    
+  bcl_total <- sum(data$build_clinical_lead, na.rm = TRUE)
+  consented_total <- sum(data$consented, na.rm = TRUE)
+  randomized_total <- sum(data$randomized, na.rm = TRUE)
+  psinelg_total <- sum(data$pre_screened_ineligible, na.rm = TRUE)
+  inelg_total <- sum(data$ineligible, na.rm = TRUE)
+  
+  results <- data %>% 
+    select(-pre_screened_ineligibility_reasons) %>% 
+    group_by(
+      Source = recruitment_source,
+      Clinic = recruitment_clinic) %>%
+    summarise(
+      `Build Clinical Lead` = format_count_percent(sum(build_clinical_lead, na.rm = TRUE), bcl_total),
+      Consented = format_count_percent(sum(consented, na.rm = TRUE), consented_total),
+      Randomized = format_count_percent(sum(randomized, na.rm = TRUE), randomized_total), 
+      `Prescreened Ineligible` = format_count_percent(sum(pre_screened_ineligible, na.rm = TRUE), psinelg_total),
+      Ineligible = format_count_percent(sum(ineligible, na.rm = TRUE), inelg_total),
+      .groups = "drop")
+    
+  
+  vis <- kable(results, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position='left')
+  
+  return(vis)
+}
