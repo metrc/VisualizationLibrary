@@ -1497,7 +1497,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
 #' NOTE: This is a closed version of certification_date_data, request if certification_date_data is present in your study.
 #' See certification_date_data for more information.
 #'
-#' @param analytic This is the analytic data set that must include site_certified_date
+#' @param analytic This is the analytic data set that must include site_certification_data
 #'
 #' @return An HTML table.
 #' @export
@@ -1508,7 +1508,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
 closed_certification_date_data <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c('treatment_arm', "site_certified_date"), 
+    example_constructs = c('treatment_arm', "site_certification_data"), 
     example_types = c('TreatmentArm', 'FacilityCode;Date;Date;Boolean;Number'))
   
   date_today <- Sys.Date()
@@ -1520,8 +1520,8 @@ closed_certification_date_data <- function(analytic){
   df <- analytic %>%
     filter(!is.na(treatment_arm)) %>%
     group_by(treatment_arm) %>%
-    mutate(site_certified_date = na_if(site_certified_date, "NA")) %>%
-    separate(site_certified_date, cols, sep = ';') %>%
+    mutate(site_certification_data = na_if(site_certification_data, "NA")) %>%
+    separate(site_certification_data, cols, sep = ';') %>%
     select(treatment_arm, Facility, `Local (or sIRB) Approval Date`, `DoD Approval Date`,
            `Certified by MCC to Start Screening`, `Days Number of Days Certified (as of Thursday, March 07, 2024)`) %>%
     filter(!is.na(Facility))
@@ -1642,7 +1642,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
 #' for details.
 #'
 #' @param analytic analytic data set that must include constructs screened, eligible, refused, consented, 
-#' not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+#' not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_data_metrc_date, 
 #' facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm, 
 #' @param days the number of last days to include in the last days summary section of the table
 #' @param discontinued the name of the construct where you can specify your discontinued construct like 
@@ -1668,7 +1668,7 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("screened", "eligible", "refused", "consented", "enrolled", "randomized",
-                           "not_consented", "site_certified_days", "facilitycode", "consent_date",
+                           "not_consented", "site_certification_data_metrc_date", "facilitycode", "consent_date",
                            "not_randomized", "discontinued", "treatment_arm", "consented_and_randomized", "screened_date"), 
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Date", "FacilityCode", "Date", "Boolean", "Boolean", "TreatmentArm", 
@@ -2123,7 +2123,7 @@ closed_characteristics_treatment <- function(analytic){
 #' details.
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, refused, consented, 
-#' enrolled, not_consented, site_certified_days, facilitycode, treatment_arm
+#' enrolled, not_consented, site_certification_data_metrc_date, facilitycode, treatment_arm
 #' @param discontinued name of the construct for discontinued status
 #' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
 #' @param only_total hide all the site specific rows
@@ -2141,7 +2141,7 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("screened", "eligible", "refused", "not_consented", "consented", 
-                           "not_randomized", "randomized", "enrolled", "site_certified_days", 
+                           "not_randomized", "randomized", "enrolled", "site_certification_data_metrc_date", 
                            "facilitycode", "discontinued", 'treatment_arm'),
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
                       "Boolean", "Boolean", "Boolean", "Date", 
@@ -3411,7 +3411,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
 #' See enrollment_status_by_site for more information.
 #'
 #' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
+#' eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certification_data_metrc_date, 
 #' facilitycode, late_ineligible
 #'
 #' @return html table
@@ -3425,7 +3425,7 @@ closed_enrollment_status_by_site <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c('screened', 'eligible', 'refused', 'consented', 'enrolled', 
-                           'not_consented', 'discontinued_pre_randomization', 'site_certified_days', 
+                           'not_consented', 'discontinued_pre_randomization', 'site_certification_data_metrc_date', 
                            'facilitycode', 'late_ineligible', 'treatment_arm'),
     example_types = c('Boolean', 'Boolean', "Boolean", "Boolean", 'Boolean', 'Boolean', 
                       'Boolean', 'Number', 'FacilityCode', 'Boolean', 'TreatmentArm'))

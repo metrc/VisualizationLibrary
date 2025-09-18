@@ -8,7 +8,7 @@ closed_enrollment_status_by_site(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, 
-eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
+eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certification_data_metrc_date, 
 facilitycode, late_ineligible}
 }
 \value{
