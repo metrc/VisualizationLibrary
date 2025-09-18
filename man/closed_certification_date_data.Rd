@@ -7,7 +7,7 @@
 closed_certification_date_data(analytic)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include site_certified_date}
+\item{analytic}{This is the analytic data set that must include site_certification_data}
 }
 \value{
 An HTML table.

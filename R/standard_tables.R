@@ -8,7 +8,7 @@
 #' enrollment_by_site_last_days_var_disc, enrollment_status_by_site
 #'
 #' @param analytic analytic data set that must include screened, eligible, refused, consented, enrolled, 
-#' not_consented, discontinued_pre_randomization, site_certified_days, facilitycode, late_ineligible
+#' not_consented, discontinued_pre_randomization, site_certification_data_metrc_date, facilitycode, late_ineligible
 #'
 #' @return html table
 #' @export
@@ -20,16 +20,16 @@ enrollment_status_by_site <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('screened', 'eligible', 'refused', 'consented', 'enrolled', 'not_consented', 
-                           'discontinued_pre_randomization', 'site_certified_days', 
+                           'discontinued_pre_randomization', 'site_certification_data_metrc_date', 
                            'facilitycode', 'late_ineligible'), 
     example_types = c('Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Boolean', 'Number',
                       'FacilityCode', 'Boolean'))
 
   df <- analytic %>% 
-    select(screened, eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certified_days, 
+    select(screened, eligible, refused, consented, enrolled, not_consented, discontinued_pre_randomization, site_certification_data_metrc_date, 
            facilitycode, late_ineligible) %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certified_days))) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certification_data_metrc_date))) %>% 
     rename(Facility = facilitycode) %>% 
     rename(not_enrolled = not_consented) %>% 
     filter(!is.na(Facility))
@@ -86,7 +86,7 @@ enrollment_status_by_site <- function(analytic){
 #' enrollment_by_site_last_days_var_disc, enrollment_status_by_site, enrollment_status_by_site_var_discontinued
 #'
 #' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode,
+#' eligible, refused, consented, enrolled, not_consented, site_certification_data_metrc_date, facilitycode,
 #' consent_date, not_randomized
 #' @param discontinued meta construct for discontinued
 #' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
@@ -104,14 +104,14 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("screened", "eligible", "refused", "consented", "enrolled", "randomized",
-                           "not_consented", "site_certified_days", "facilitycode", "consent_date",
+                           "not_consented", "site_certification_data_metrc_date", "facilitycode", "consent_date",
                            "not_randomized", "discontinued"), 
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Date", "FacilityCode", "Date", "Boolean", "Boolean"))
   
   df <- analytic %>%
     select(screened, eligible, refused, not_consented, consented, not_randomized, randomized, enrolled,
-      site_certified_days, facilitycode, any_of(c(discontinued, pre_screened, pre_screened_eligible)))
+      site_certification_data_metrc_date, facilitycode, any_of(c(discontinued, pre_screened, pre_screened_eligible)))
   
   colnames(df)[which(names(df) == discontinued)] <- "discontinued"
 
@@ -124,7 +124,7 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
   
   df <- df %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certified_days))) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certification_data_metrc_date))) %>% 
     rename(Facility = facilitycode) %>% 
     filter(!is.na(Facility))
   
@@ -1593,9 +1593,9 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
 #' @description 
 #' Visualizes the sites for a given study and their dates of 
 #' local, DOD, and METRC certifications. This function outputs 5 columns, Facility, Local or sIRB approval date, DoD approval date, 
-#' certified by MCC to start screening, Number of days certified. To run this visualization a study needs qa site_certified_date long file.
+#' certified by MCC to start screening, Number of days certified. To run this visualization a study needs qa site_certification_data long file.
 #'
-#' @param analytic This is the analytic data set that must include site_certified_date
+#' @param analytic This is the analytic data set that must include site_certification_data
 #' @param exclude_local_irb whether Local (or iSRB) column is in output, defaults to false
 #'
 #' @return html table
@@ -1608,11 +1608,11 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
 certification_date_data <- function(analytic, exclude_local_irb=FALSE){
   analytic <- if_needed_generate_example_data(
     analytic,
-    example_constructs = "site_certified_date",
+    example_constructs = "site_certification_data",
     example_types = "FacilityCode;Date;Date;Date;NamedCategory['2 days' '3 days' '4 days' '40 days']") 
   
   df <- analytic %>% 
-    select(site_certified_date) %>%
+    select(site_certification_data) %>%
     unique()
   
   date_today <- Sys.Date()
@@ -1622,7 +1622,7 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
             paste0('Days Number of Days Certified (as of ', as.character(date_today), ')'))
   
   site_data <- df %>%
-    separate(site_certified_date, cols, sep = ';') %>%
+    separate(site_certification_data, cols, sep = ';') %>%
     filter(!is.na(Facility))
   
   site_data <- rbind(site_data %>% filter(.[[5]]!="NA days"),site_data %>% filter(.[[5]]=="NA days"))
@@ -2480,7 +2480,7 @@ fracture_characteristics <- function(analytic){
 #' enrollment_by_site_last_days_var_disc, enrollment_status_by_site, enrollment_status_by_site_var_discontinued
 #'
 #' @param analytic This is the analytic data set that must include screened, eligible, refused, not_consented, 
-#' not_randomized, consented_and_randomized, enrolled, site_certified_days, facilitycode, screened_date, 
+#' not_randomized, consented_and_randomized, enrolled, site_certification_data_metrc_date, facilitycode, screened_date, 
 #' consented, randomized, consent_date, discontinued
 #' @param days the number of last days to include in the last days summary section of the table
 #' @param discontinued this is a meta construct where you can specify your discontinued construct like 
@@ -2513,7 +2513,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("screened", "eligible", "refused", "consented", "enrolled", "randomized",
-                           "not_consented", "site_certified_days", "facilitycode", "consent_date",
+                           "not_consented", "site_certification_data_metrc_date", "facilitycode", "consent_date",
                            "not_randomized", "discontinued", "consented_and_randomized", "screened_date", "exclusive_safety_set"), 
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Date", "FacilityCode", "Date", "Boolean", "Boolean",
@@ -2521,11 +2521,11 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
   
   if(include_exclusive_safety_set){
     df <- analytic %>% 
-      select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+      select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_data_metrc_date, 
              facilitycode, all_of(discontinued), screened_date, exclusive_safety_set)
   } else{
     df <- analytic %>% 
-      select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certified_days, 
+      select(screened, eligible, refused, not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_data_metrc_date, 
              facilitycode, all_of(discontinued), screened_date)
   }
   
@@ -2535,7 +2535,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
   
   df <- df %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certified_days))) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certification_data_metrc_date))) %>% 
     rename(Facility = facilitycode) %>% 
     filter(!is.na(Facility)) %>% 
     mutate(weeks_site_certified = site_certified_days/7)
@@ -4348,7 +4348,7 @@ outcome_by_name_overall <- function(analytic) {
 #' enrollment_by_site_last_days_var_disc, enrollment_status_by_site, enrollment_status_by_site_var_discontinued
 #'
 #' @param analytic This is the analytic data set that must include screened, 
-#' eligible, refused, consented, enrolled, not_consented, site_certified_days, facilitycode,
+#' eligible, refused, consented, enrolled, not_consented, site_certification_data_metrc_date, facilitycode,
 #' consent_date, not_randomized
 #' @param discontinued meta construct for discontinued
 #' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
@@ -4365,19 +4365,19 @@ enrollment_status_by_site_consent_pre_screening <- function(analytic, discontinu
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("screened", "eligible", "ineligible", "consented", "enrolled", "randomized",
-                          "site_certified_days", "facilitycode", 'pre_screened', 'pre_eligible', "discontinued"), 
+                          "site_certification_data_metrc_date", "facilitycode", 'pre_screened', 'pre_eligible', "discontinued"), 
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Date", "FacilityCode", "Date", "Boolean", "Boolean"))
   
   df <- analytic %>%
     select(screened, eligible, ineligible, consented, randomized, enrolled,
-           site_certified_days, facilitycode, pre_screened, pre_eligible, any_of(discontinued))
+           site_certification_data_metrc_date, facilitycode, pre_screened, pre_eligible, any_of(discontinued))
   
   colnames(df)[which(names(df) == discontinued)] <- "discontinued"
   
   df <- df %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
-    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certified_days))) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certification_data_metrc_date))) %>% 
     rename(Facility = facilitycode) %>% 
     filter(!is.na(Facility))
   
