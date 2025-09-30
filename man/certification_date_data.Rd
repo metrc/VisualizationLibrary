@@ -7,7 +7,7 @@
 certification_date_data(analytic, exclude_local_irb = FALSE)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include site_certified_date}
+\item{analytic}{This is the analytic data set that must include site_certification_data}
 
 \item{exclude_local_irb}{whether Local (or iSRB) column is in output, defaults to false}
 }
@@ -17,7 +17,7 @@ html table
 \description{
 Visualizes the sites for a given study and their dates of 
 local, DOD, and METRC certifications. This function outputs 5 columns, Facility, Local or sIRB approval date, DoD approval date, 
-certified by MCC to start screening, Number of days certified. To run this visualization a study needs qa site_certified_date long file.
+certified by MCC to start screening, Number of days certified. To run this visualization a study needs qa site_certification_data long file.
 }
 \examples{
 certification_date_data("Replace with Analytic Tibble")
