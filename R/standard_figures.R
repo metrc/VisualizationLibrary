@@ -663,7 +663,7 @@ dsmb_consort_diagram_pre_shifted_consent <- function(analytic, final_period="12 
                          pull(not_consented), na.rm=TRUE)
   
   Refused <- sum(pre_analytic %>% 
-                   filter(eligible) %>% 
+                   filter(pre_eligible) %>% 
                    pull(refused), na.rm=TRUE)
   
   analytic <- analytic %>% 
