@@ -4678,6 +4678,98 @@ wbs_main_paper_all_characteristics <- function(analytic){
   return(table_raw)
 }
 
+
+#' Nerve BPI for Main Paper
+#'
+#' @description This function outputs a table with the Brief Pain Inventory scores for enrolled patients. This table is produced for Nerve main paper. 
+#'
+#' @param analytic enrolled, 
+#' bpi_severity_score_6wk, bpi_severity_score_3mo, bpi_severity_score_6mo, bpi_severity_score_12mo, 
+#' bpi_interference_score_6wk, bpi_interference_score_3mo, bpi_interference_score_6mo, bpi_interference_score_12mo
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' nerve_main_paper_bpi("Replace with Analytic Tibble")
+#' 
+nerve_main_paper_bpi <- function(analytic){
+  df <- analytic %>%
+    select(enrolled, bpi_severity_score_3mo, bpi_severity_score_6mo, bpi_severity_score_12mo, bpi_severity_score_18mo, bpi_severity_score_24mo, 
+           bpi_interference_score_3mo, bpi_interference_score_6mo, bpi_interference_score_12mo, bpi_interference_score_18mo, bpi_interference_score_24mo) %>%
+    filter(enrolled)
+  
+  severity <- df %>% 
+    select(bpi_severity_score_3mo, bpi_severity_score_6mo, bpi_severity_score_12mo, , bpi_severity_score_18mo, bpi_severity_score_24mo) %>% 
+    pivot_longer(cols = starts_with("bpi_severity_score"),
+                 names_to = "timepoint",
+                 values_to = "score") %>%
+    mutate(timepoint = recode(timepoint,
+                              bpi_severity_score_3mo  = "3 Months",
+                              bpi_severity_score_6mo  = "6 Months",
+                              bpi_severity_score_12mo = "12 Months",
+                              bpi_severity_score_18mo = "18 Months",
+                              bpi_severity_score_24mo = "24 Months"))
+  
+  severity_mean_sd <- severity %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>%
+    summarise(n = format_mean_sd(score))
+  
+  severity_counts <- severity %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>% 
+    count(timepoint)
+  
+  severity_final <- left_join(severity_counts, severity_mean_sd, by = 'timepoint') %>% 
+    mutate(timepoint = factor(timepoint, c("3 Months", "6 Months", "12 Months", "18 Months", "24 Months"))) %>% 
+    arrange(timepoint)
+  
+  interference <- df %>% 
+    select(bpi_interference_score_3mo, bpi_interference_score_6mo, bpi_interference_score_12mo,, bpi_interference_score_18mo, bpi_interference_score_24mo) %>% 
+    pivot_longer(cols = starts_with("bpi_interference_score"),
+                 names_to = "timepoint",
+                 values_to = "score") %>%
+    mutate(timepoint = recode(timepoint,
+                              bpi_interference_score_3mo  = "3 Months",
+                              bpi_interference_score_6mo  = "6 Months",
+                              bpi_interference_score_12mo = "12 Months",
+                              bpi_interference_score_18mo = "18 Months",
+                              bpi_interference_score_24mo = "24 Months"))
+  
+  interference_mean_sd <- interference %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>%
+    summarise(n = format_mean_sd(score))
+  
+  interference_counts <- interference %>% 
+    group_by(timepoint) %>% 
+    filter(!is.na(score)) %>% 
+    count(timepoint)
+  
+  interference_final <- left_join(interference_counts, interference_mean_sd, by = 'timepoint') %>% 
+    mutate(timepoint = factor(timepoint, c("3 Months", "6 Months", "12 Months", "18 Months", "24 Months"))) %>% 
+    arrange(timepoint)
+  
+  final <- rbind(severity_final, interference_final)
+  
+  colnames(final) <- c('', 'n', 'Overall Scores, Mean (SD)')
+  
+  index_vec_a <- c(
+    "Pain Severity" = nrow(severity_final),
+    "Pain Interference" = nrow(interference_final))
+  
+  border_rows <- c(0, cumsum(index_vec_a))
+  
+  table_raw <- kable(final, format="html", align='l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+  
+  return(table_raw)
+}
+
+
 #' Weight Bearing BPI for Main Paper
 #'
 #' @description This function outputs a table with the Brief Pain Inventory scores for enrolled patients. This table is produced for Weight bearing main paper. 

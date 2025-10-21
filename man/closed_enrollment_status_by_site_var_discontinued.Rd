@@ -14,7 +14,7 @@ closed_enrollment_status_by_site_var_discontinued(
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include screened, eligible, refused, consented, 
-enrolled, not_consented, site_certification_data_metrc_date, facilitycode, treatment_arm}
+enrolled, not_consented, site_certification_date, facilitycode, treatment_arm}
 
 \item{discontinued}{name of the construct for discontinued status}
 
