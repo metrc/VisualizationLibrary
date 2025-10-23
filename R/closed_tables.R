@@ -353,8 +353,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       mutate(Category = 'Sex')
     
     age_df <<- df %>% 
-      summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))
-    
+      summarize(type = 'Mean (SD)', percentage = format_mean_sd(age)) %>%
+      mutate(percentage = ifelse(percentage == 'NaN (NA)', NA, percentage))
     
     age_group_df <<- df %>% 
       mutate(age_group = replace_na(age_group, "Missing")) %>% 
@@ -395,7 +395,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       mutate(Category = 'Race')
     
     military_df <<- df %>% 
-      mutate(military = ifelse(is.na(military), "Missing", military)) %>% 
+      mutate(race = replace_na(race, "Missing")) %>% 
       group_by(military) %>% 
       count(military) %>% 
       rename(number = n) %>% 
@@ -409,11 +409,10 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       mutate(Category = 'Military')
     
     df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) %>% 
-      mutate_all(replace_na, "0 (0%)") %>% 
-      ungroup()
+      mutate(percentage = as.character(percentage)) %>%
+      mutate(percentage = replace_na(percentage, "0 (0%)"))
     df_final
   }
-  
   
   df_a <- analytic %>% filter(treatment_arm=="Group A")
   df_b <- analytic %>% filter(treatment_arm=="Group B")
@@ -422,9 +421,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   output_b <- inner_baseline_characteristics_percent(df_b) %>% mutate(percentage = replace_na(percentage, "NA"))
   output_total <- inner_baseline_characteristics_percent(analytic) %>% mutate(percentage = replace_na(percentage, "NA"))
   
-  
   full_output <- full_join(output_a, output_b, by = c('Category', 'type'))
-  
   
   full_output <- full_join(full_output, output_total, by = c('Category', 'type')) %>% 
     reorder_rows(list(Category = c('Sex', '0 (0%)', 'Age', 'Race', 'Education', 'Military'))) %>% 
@@ -2136,7 +2133,8 @@ closed_characteristics_treatment <- function(analytic){
 #' closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble", only_total = TRUE)
 #' 
 closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", 
-                                                              discontinued_colname="Discontinued",
+                                                              discontinued_colname="Discontinued", pre_screened = NULL,
+                                                              pre_screened_eligible = NULL, 
                                                               only_total=FALSE, footnotes = NULL){
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -2158,16 +2156,18 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, 
-                                                             only_total=only_total),
+                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total),
                   "<h4>Group B</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, 
-                                                             only_total=only_total))
+                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% 
+                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname,
+                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible) %>% 
                     add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% 
+                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname,
+                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible) %>% 
                     add_footnote(footnotes, notation="number", escape = FALSE))
   }
   
