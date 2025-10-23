@@ -15,7 +15,7 @@ closed_enrollment_by_site_last_days_var_disc(
 }
 \arguments{
 \item{analytic}{analytic data set that must include constructs screened, eligible, refused, consented, 
-not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_data_metrc_date, 
+not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_date, 
 facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm,}
 
 \item{days}{the number of last days to include in the last days summary section of the table}
