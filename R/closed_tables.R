@@ -355,7 +355,6 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
     age_df <<- df %>% 
       summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))
     
-    
     age_group_df <<- df %>% 
       mutate(age_group = replace_na(age_group, "Missing")) %>% 
       group_by(age_group) %>% 
@@ -413,7 +412,6 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       ungroup()
     df_final
   }
-  
   
   df_a <- analytic %>% filter(treatment_arm=="Group A")
   df_b <- analytic %>% filter(treatment_arm=="Group B")
