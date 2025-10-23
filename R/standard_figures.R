@@ -451,6 +451,244 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
 }
 
 
+
+#' DSMB consort diagram with pre-screening and no definitive event
+#'
+#' @description 
+#' Visualizes the counts of different study statuses, including prescreening statuses. The diagram works
+#' from the final_followup constructs rather than any df ones.
+#' 
+#' See dsmb_consort_diagram and consort_diagram for similar options.
+#'
+#' @param analytic This is the analytic data set that must include pre_screened, pre_eligible, pre_ineligible, 
+#' screened, eligible, ineligible, consented, not_consented, randomized, enrolled, refused, completed, 
+#' not_completed, not_expected, active, missed_final_followup, incomplete_final_followup
+#' @param missing_post_consent_check construct name for missing post event check
+#' @param missing_post_consent_check_label label for post missing event check
+#' @param post_consent_check construct name for post event check
+#' @param post_consent_check_label label for post event check
+#' @param post_consent_eligible construct name for post event eligible
+#' @param post_consent_eligible_label label for post event eligible
+#' @param post_consent_ineligible construct name for post event ineligible
+#' @param post_consent_ineligible_label label for post event ineligible
+#' @param final_period label of the final period
+#' @param adjudicated visual option to say that discontinuation was adjudicated, defaults to false
+#'
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
+#' @export
+#'
+#' @examples
+#' dsmb_consort_diagram_pre_post_consent_check("Replace with Analytic Tibble", "missing_double_check", "Missing Double Check", "post_consent_check", "Post Consent Check", "post_consent_eligible", "Post Consent Eligible", "post_consent_ineligible", "Post Consent Ineligible", final_period = '3 Month', adjudicated = TRUE)
+#' 
+dsmb_consort_diagram_pre_post_consent_check <- function(analytic, missing_post_consent_check, missing_post_consent_check_label, post_consent_check, post_consent_check_label,
+ post_consent_eligible, post_consent_eligible_label, post_consent_ineligible, post_consent_ineligible_label, final_period="12 Month", adjudicated=FALSE){
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
+                           "randomized", "enrolled", "adjudicated_discontinued", "not_consented",
+                           "completed", "safety_set", "exclusive_safety_set", "not_completed", 
+                           "not_expected", "active", "missed_final_followup", "incomplete_final_followup", 
+                           "pre_screened", "pre_eligible", "pre_ineligible",
+                           "discontinued", "double_check", "double_check_eligible", "double_check_ineligible", "missing_double_check"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean"))
+
+  # rename constructs by variable column names (won't necessarily be called that in the data so we need to rename them using the variable column names in dplyr)
+  analytic <- analytic %>% 
+    rename(missing_double_check = {{missing_post_consent_check}},
+           double_check = {{post_consent_check}},
+           double_check_eligible = {{post_consent_eligible}},
+           double_check_ineligible = {{post_consent_ineligible}}) 
+  
+  pre_analytic <- analytic
+  
+  pre_Screened <- sum(pre_analytic$pre_screened, na.rm=TRUE)
+  pre_Eligible <- sum(pre_analytic$pre_eligible, na.rm=TRUE)
+  pre_Ineligible <- sum(pre_analytic$pre_ineligible, na.rm=TRUE)
+  
+  analytic <- analytic %>% 
+    filter(screened == TRUE) 
+  
+  Screened <- sum(analytic$screened, na.rm=TRUE)
+  Eligible <- sum(analytic$eligible, na.rm=TRUE)
+  Ineligible <- sum(analytic$ineligible, na.rm=TRUE)
+  
+  Consented <- sum(analytic %>% 
+                     filter(eligible) %>% 
+                     pull(consented), na.rm=TRUE)
+  Refused <- sum(analytic %>% 
+                   filter(eligible) %>% 
+                   pull(refused), na.rm=TRUE)
+  Not_Consented <- sum(analytic %>% 
+                         filter(eligible) %>% 
+                         pull(not_consented), na.rm=TRUE)
+  Consented <- sum(analytic %>% 
+                     filter(eligible) %>% 
+                     pull(consented), na.rm=TRUE)
+
+  missing_post_consent_check <- sum(analytic %>% 
+                                      filter(eligible) %>% 
+                                      filter(consented) %>% 
+                                      pull(missing_double_check), na.rm=TRUE)
+
+  post_consent_check <- sum(analytic %>% 
+                              filter(eligible) %>% 
+                              filter(consented) %>% 
+                              pull(double_check), na.rm=TRUE)
+  post_consent_eligible <- sum(analytic %>% 
+                                 filter(eligible) %>% 
+                                 filter(consented) %>% 
+                                 filter(double_check) %>% 
+                                 pull(double_check_eligible), na.rm=TRUE)
+  post_consent_ineligible <- sum(analytic %>% 
+                                   filter(eligible) %>% 
+                                   filter(consented) %>% 
+                                   filter(double_check) %>% 
+                                   pull(double_check_ineligible), na.rm=TRUE)
+  Randomized <- sum(analytic %>% 
+                      filter(eligible) %>% 
+                      filter(consented) %>% 
+                      filter(double_check) %>% 
+                      filter(double_check_eligible) %>% 
+                      pull(randomized), na.rm=TRUE)
+  
+  Enrolled <- sum(analytic %>% 
+                    filter(eligible) %>% 
+                    filter(consented) %>% 
+                    filter(double_check) %>% 
+                    filter(double_check_eligible) %>% 
+                    filter(randomized) %>% 
+                    pull(enrolled), na.rm=TRUE)
+  if(adjudicated){
+    Post_Randomization_Discontinuation <- sum(analytic %>% 
+                             filter(eligible) %>% 
+                             filter(consented) %>% 
+                             filter(double_check) %>% 
+                             filter(double_check_eligible) %>% 
+                             filter(randomized) %>%
+                             pull(adjudicated_discontinued), na.rm=TRUE)
+
+    Pre_Randomization_Discontinuation <- sum(analytic %>% 
+                             filter(eligible) %>% 
+                             filter(consented) %>% 
+                             filter(double_check) %>% 
+                             filter(double_check_eligible) %>% 
+                             filter(!randomized|is.na(randomized)) %>%
+                             pull(adjudicated_discontinued), na.rm=TRUE)
+  } else{
+    Post_Randomization_Discontinuation <- sum(analytic %>% 
+                             filter(eligible) %>% 
+                             filter(consented) %>% 
+                             filter(double_check) %>% 
+                             filter(double_check_eligible) %>% 
+                             filter(randomized) %>%
+                             pull(discontinued), na.rm=TRUE)
+
+    Pre_Randomization_Discontinuation <- sum(analytic %>% 
+                             filter(eligible) %>% 
+                             filter(consented) %>% 
+                             filter(double_check) %>% 
+                             filter(double_check_eligible) %>% 
+                             filter(!randomized|is.na(randomized)) %>%
+                             pull(discontinued), na.rm=TRUE)
+  }
+  
+  
+  fu_df <- analytic %>% 
+    filter(eligible) %>% 
+    filter(consented) %>% 
+    filter(double_check) %>% 
+    filter(double_check_eligible) %>% 
+    filter(randomized) %>%
+    filter(enrolled)
+  
+  complete <- sum(fu_df$completed, na.rm = TRUE)
+  not_complete <- sum(fu_df$not_completed, na.rm = TRUE)
+  missed <- sum(fu_df$missed_final_followup, na.rm = TRUE)
+  incomplete <- sum(fu_df$incomplete_final_followup, na.rm = TRUE)
+  active <- sum(fu_df$active, na.rm = TRUE)
+  not_expected <- sum(fu_df$not_expected, na.rm = TRUE)
+  if(adjudicated){
+    not_expected_str= "Adjudicated Not Expected"
+  } else{
+    not_expected_str= "Not Expected"
+  }
+  if(adjudicated){
+    disc_str= "Adjudicated Discontinued"
+  } else{
+    disc_str= "Discontinued"
+  }
+  
+  consort_diagram <- grViz(paste0('
+    digraph g {
+      graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
+      
+      pre_screened [style="rounded,filled", fillcolor="#ccccff", pos="5,18!", shape = box, width=2.4, height=1, label = "Pre-Screened (n=',pre_Screened,')"];
+      pre_ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,18!", shape = box, width=2.4, height=1, label = "Pre-Ineligible (n=',pre_Ineligible,')"];
+      pre_eligible [style="rounded,filled", fillcolor="#ccccff", pos="5,16!", shape = box, width=2.4, height=1, label = "Pre-Eligible (n=',pre_Eligible,')"];
+      
+      screened [style="rounded,filled", fillcolor="#ccccff", pos="5,14!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
+      ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,14!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
+      eligible [style="rounded,filled", fillcolor="#ccccff", pos="5,12!", shape = box, width=2.4, height=1, label = "Eligible (n=',Eligible,')"];
+      
+      refused [style="rounded,filled", fillcolor="#ccccff", pos="10,12!", shape = box, width=2.4, height=1, label = "Not Consented (n=',Not_Consented,')\nRefused (n=',Refused,')"];
+
+      cons [style="rounded,filled", fillcolor="#ccccff", pos="5,10!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
+
+      missing_post_consent_check [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "',missing_post_consent_check_label,' (n=',missing_post_consent_check,')"];
+
+      post_consent_check [style="rounded,filled", fillcolor="#ccccff", pos="5,8!", shape = box, width=2.4, height=1, label = "',post_consent_check_label,' (n=',post_consent_check,')"];
+      post_consent_eligible [style="rounded,filled", fillcolor="#ccccff", pos="5,6!", shape = box, width=2.4, height=1, label = "',post_consent_eligible_label,' (n=',post_consent_eligible,')"];
+      
+      post_consent_ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,8!", shape = box, width=2.4, height=1, label = "',post_consent_ineligible_label,' (n=',post_consent_ineligible,')"];
+      
+      discontinuation_pre_consent [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "Pre Randomization\n',disc_str,' (n=',Pre_Randomization_Discontinuation,')"];
+
+      rand [style="rounded,filled", fillcolor="#ccccff", pos="5,4!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
+      
+      enrolled [style="rounded,filled", fillcolor="#ccccff", pos="5,2!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',Enrolled,')"];
+      post_randomization_discontinuation [style="rounded,filled", fillcolor="#ccccff", pos="10,4!", shape = box, width=2.4, height=1, label = "',disc_str,' (n=',Post_Randomization_Discontinuation,')"];
+
+      active [style="rounded,filled", fillcolor="#ccccff", pos="0,0!", shape = box, width=2.4, height=1, label = "Active (n=',active,')"];
+      not_expected [style="rounded,filled", fillcolor="#ccccff", pos="5,0!", shape = box, width=2.4, height=1, label = "',not_expected_str,' (n=',not_expected,')"];
+      fu_complete [style="rounded,filled", fillcolor="#ccccff", pos="10,0!", shape = box, width=2.4, height=1, label = "',final_period,' Follow-Up Complete (n=',complete,')\n',final_period,' Follow-Up Incomplete (n=',incomplete,')\nNot Completed (n=',not_complete,')\nMissed (n=',missed,')"];
+      
+      # Relationships
+      pre_screened -> pre_eligible
+      pre_screened -> pre_ineligible
+      pre_eligible -> screened
+      screened -> eligible
+      screened -> ineligible
+      eligible -> cons
+      eligible -> refused
+      cons -> missing_post_consent_check
+      cons -> post_consent_check
+      post_consent_check -> post_consent_eligible
+      post_consent_check -> post_consent_ineligible
+      post_consent_eligible -> rand
+      post_consent_eligible -> discontinuation_pre_consent
+      rand -> post_randomization_discontinuation
+      rand -> enrolled
+      enrolled -> active
+      enrolled -> not_expected
+      enrolled -> fu_complete
+      
+    }
+  '))
+  svg_content <- DiagrammeRsvg::export_svg(consort_diagram)
+  temp_svg_path <- tempfile(fileext = ".svg")
+  writeLines(svg_content, temp_svg_path)
+  temp_png_path <- tempfile(fileext = ".png")
+  rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 1200, height = 1200)
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 1200px;">', image_data)
+  file.remove(c(temp_svg_path, temp_png_path))
+  return(img_tag)
+}
+
+
 #' DSMB Consort Diagram With Pre Screened and No Definitive Event
 #'
 #' @description This function visualizes the categorical percentages of Study Status
