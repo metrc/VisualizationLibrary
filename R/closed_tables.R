@@ -353,7 +353,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       mutate(Category = 'Sex')
     
     age_df <<- df %>% 
-      summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))
+      summarize(type = 'Mean (SD)', percentage = format_mean_sd(age)) %>%
+      mutate(percentage = ifelse(percentage == 'NaN (NA)', NA, percentage))
     
     age_group_df <<- df %>% 
       mutate(age_group = replace_na(age_group, "Missing")) %>% 
@@ -394,7 +395,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       mutate(Category = 'Race')
     
     military_df <<- df %>% 
-      mutate(military = ifelse(is.na(military), "Missing", military)) %>% 
+      mutate(race = replace_na(race, "Missing")) %>% 
       group_by(military) %>% 
       count(military) %>% 
       rename(number = n) %>% 
@@ -408,8 +409,8 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       mutate(Category = 'Military')
     
     df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df) %>% 
-      mutate_all(replace_na, "0 (0%)") %>% 
-      ungroup()
+      mutate(percentage = as.character(percentage)) %>%
+      mutate(percentage = replace_na(percentage, "0 (0%)"))
     df_final
   }
   
@@ -420,9 +421,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   output_b <- inner_baseline_characteristics_percent(df_b) %>% mutate(percentage = replace_na(percentage, "NA"))
   output_total <- inner_baseline_characteristics_percent(analytic) %>% mutate(percentage = replace_na(percentage, "NA"))
   
-  
   full_output <- full_join(output_a, output_b, by = c('Category', 'type'))
-  
   
   full_output <- full_join(full_output, output_total, by = c('Category', 'type')) %>% 
     reorder_rows(list(Category = c('Sex', '0 (0%)', 'Age', 'Race', 'Education', 'Military'))) %>% 
