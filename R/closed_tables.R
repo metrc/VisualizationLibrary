@@ -2134,7 +2134,8 @@ closed_characteristics_treatment <- function(analytic){
 #' closed_enrollment_status_by_site_var_discontinued("Replace with Analytic Tibble", only_total = TRUE)
 #' 
 closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", 
-                                                              discontinued_colname="Discontinued",
+                                                              discontinued_colname="Discontinued", pre_screened = NULL,
+                                                              pre_screened_eligible = NULL, 
                                                               only_total=FALSE, footnotes = NULL){
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -2156,16 +2157,18 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, 
-                                                             only_total=only_total),
+                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total),
                   "<h4>Group B</h4><br />",
                   enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, 
-                                                             only_total=only_total))
+                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% 
+                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname,
+                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible) %>% 
                     add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname) %>% 
+                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname,
+                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible) %>% 
                     add_footnote(footnotes, notation="number", escape = FALSE))
   }
   
