@@ -5168,3 +5168,155 @@ recruitment_source_statistics <- function(analytic){
   
   return(vis)
 }
+
+
+#' Hardware duration statistics
+#'
+#' @description 
+#' Returns a table of buckets for the duration hardware was applied to the patient.
+#' 
+#' Candidate for general visualization which interprets numeric constructs into buckets
+#'
+#' @param analytic analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode
+#' @param by_site breaks down hardware times by site
+#' @param delta uses dates instead of datetimes
+#'
+#' @return html table
+#' @export
+#'
+#' @examples
+#' hardware_duration_statistics("Replace with Analytic Tibble")
+#' 
+hardware_duration_statistics <- function(analytic, delta = FALSE){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("hardware_duration", "hardware_delta"),
+    example_types = c("Number-U150", "Number-U6")) 
+  
+  df1 <- analytic %>%  
+    select(hardware_duration, hardware_delta, facilitycode) 
+  
+  if (delta) {
+    df1 <- df1 %>% mutate(target = hardware_delta)
+  } else {
+    df1 <- df1 %>% mutate(target = hardware_duration)
+  }
+  
+  filtered <- df1 %>%
+    filter(!is.na(target))
+  
+  if (delta) {
+    buckets <- c(1, 2, 3, 4)
+  } else {
+    buckets <- c(24, 48, 72, 96)
+  }
+  unit <- ifelse(delta, ' Days', ' Hours')
+  
+  labels <- c(paste0('Total < ', buckets[1], unit, ' (Nonadherent)'), paste0('Total >= ', buckets, unit))
+  
+  table <- tibble(
+    `VAC Time Thresholds` = c('Total', labels),
+    N = c(
+      nrow(filtered),
+      format_count_percent(nrow(filtered %>% filter(target < buckets[1])), nrow(filtered)),
+      format_count_percent(nrow(filtered %>% filter(target >= buckets[1])), nrow(filtered)),
+      format_count_percent(nrow(filtered %>% filter(target >= buckets[2])), nrow(filtered)),
+      format_count_percent(nrow(filtered %>% filter(target >= buckets[3])), nrow(filtered)),
+      format_count_percent(nrow(filtered %>% filter(target >= buckets[4])), nrow(filtered)))
+  )
+  
+  output <- kable(table, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
+}
+
+
+#' Hardware duration statistics by site
+#'
+#' @description 
+#' Returns a table of buckets for the duration hardware was applied to the patient, organized
+#' by site.
+#' 
+#' Candidate for general visualization which interprets numeric constructs into buckets
+#'
+#' @param analytic analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode
+#' @param by_site breaks down hardware times by site
+#' @param delta uses dates instead of datetimes
+#'
+#' @return html table
+#' @export
+#'
+#' @examples
+#' 
+hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
+  df1 <- analytic %>%  
+    select(hardware_application_date, hardware_application_datetime, hardware_removal_date, hardware_removal_datetime, 
+           hardware_removal_date_missing, hardware_duration, facilitycode) 
+  
+  if (delta) {
+    df1 <- df1 %>% mutate(start = hardware_application_date, end = hardware_removal_date, len = hardware_delta)
+  } else {
+    df1 <- df1 %>% mutate(start = hardware_application_datetime, end = hardware_removal_datetime, len = hardware_duration)
+  }
+  
+  sites <- df1 %>% 
+    pull(facilitycode) %>%
+    unique()
+  
+  sites <- c('Total', sites)
+  
+  site_list <- list()
+  for (site in sites) {
+    if (site != 'Total') {
+      site_data <- df1 %>%
+        filter(facilitycode == site)
+    } else {
+      site_data <- df1
+    }
+
+    app <- site_data %>%
+      filter(!is.na(start)) %>%
+      nrow()
+    intreatment <- site_data %>%
+      filter(!is.na(start)&is.na(end)&!hardware_removal_date_missing) %>%
+      nrow()
+    missing <- site_data %>%
+      filter(!is.na(start)&hardware_removal_date_missing) %>%
+      nrow()
+    rem <- site_data %>%
+      filter(!is.na(start)&!is.na(end)) %>%
+      nrow()
+    
+    len_vec <- site_data %>%
+      pull(len) %>%
+      as.numeric
+    len_vec <- len_vec[!is.na(len_vec)]
+    mean <- len_vec %>%
+      mean() %>%
+      round(2)
+    med <- len_vec %>%
+      median()
+    
+    site_list[[site]] <- c(app, intreatment, missing, rem, mean, med)
+  }
+  
+  unit <- ifelse(delta, ' (Days)', ' (Hours)')
+  
+  table <- tibble(
+    Site = sites,
+    `N patients with VAC placed` = sapply(site_list, `[`, 1),
+    `N assumed to be in treatment` = sapply(site_list, `[`, 2),
+    `N patients with missing removal date, confirmed by RC` = sapply(site_list, `[`, 3),
+    `N patients with calculable vac time means/medians` = sapply(site_list, `[`, 4),
+    `Mean VAC time` = sapply(site_list, `[`, 5),
+    `Median VAC time` = sapply(site_list, `[`, 6)
+  )
+  
+  names(table)[6:7] <- paste0(c('Mean VAC time', 'Median VAC time'), unit)
+  
+  output <- kable(table, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
+}
