@@ -5295,7 +5295,8 @@ hardware_duration_statistics <- function(analytic, delta = FALSE){
   }
   
   filtered <- df1 %>%
-    filter(!is.na(target))
+    filter(!is.na(target)) %>% 
+    mutate(target = as.numeric(target))
   
   if (delta) {
     buckets <- c(1, 2, 3, 4)
@@ -5347,9 +5348,9 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
            hardware_removal_date_missing, hardware_duration, facilitycode) 
   
   if (delta) {
-    df1 <- df1 %>% mutate(start = hardware_application_date, end = hardware_removal_date, len = hardware_delta)
+    df1 <- df1 %>% mutate(start = hardware_application_date, end = hardware_removal_date, len = as.numeric(hardware_delta))
   } else {
-    df1 <- df1 %>% mutate(start = hardware_application_datetime, end = hardware_removal_datetime, len = hardware_duration)
+    df1 <- df1 %>% mutate(start = hardware_application_datetime, end = hardware_removal_datetime, len = as.numeric(hardware_duration))
   }
   
   sites <- df1 %>% 
