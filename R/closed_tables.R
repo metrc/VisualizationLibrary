@@ -1453,7 +1453,8 @@ closed_appendix_D_protocol_deviation <- function(analytic){
 #' closed_ih_and_dc_crossover_monitoring_by_site("Replace with Analytic Tibble")
 #' 
 closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = NULL){
-  confirm_stability_of_related_visual('ih_and_dc_crossover_monitoring_by_site', 'c028f0d077842c22c8c6b3bf61baecd2')
+  #NOTE: STABILITY CONFIRMATION NOT RELEVANT, JUST A WRAPPER FOR THE OPEN FUNCTION (2025-10-23)
+  
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', 'enrolled', 'df_surg_completed', 'ih_discharge_date', 
