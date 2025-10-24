@@ -31,7 +31,7 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
     summarize('Enrolled' = sum(enrolled),
               "Definitive Fixation Complete" = sum(df_surg_completed), 
               "Discharged from Index Hospitalization" = sum(ih_discharge_date),
-              "Discharged on Radomization Date" = sum(ih_discharge_date_on_time_zero),
+              "Discharged on Randomization Date" = sum(ih_discharge_date_on_time_zero),
               "Inpatient Crossover" = sum(crossover_inpatient),
               "Discharge Crossover" = sum(crossover_discharge)) 
   
@@ -43,7 +43,7 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
     select(-is_total) %>% 
     mutate(`Definitive Fixation Complete` = format_count_percent(`Definitive Fixation Complete`, `Enrolled`)) %>% 
     mutate(`Discharged from Index Hospitalization` = format_count_percent(`Discharged from Index Hospitalization`, `Enrolled`)) %>%
-    mutate(`Discharged on Radomization Date` = format_count_percent(`Discharged on Radomization Date`, `Enrolled`)) %>%
+    mutate(`Discharged on Randomization Date` = format_count_percent(`Discharged on Randomization Date`, `Enrolled`)) %>%
     mutate(`Inpatient Crossover` = format_count_percent(`Inpatient Crossover`, `Enrolled`)) %>% 
     mutate(`Discharge Crossover` = format_count_percent(`Discharge Crossover`, `Enrolled`))
   
@@ -91,7 +91,7 @@ ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
     summarize('Enrolled' = sum(enrolled),
               "Definitive Fixation Complete" = sum(df_surg_completed), 
               "Discharged from Index Hospitalization" = sum(ih_discharge_date),
-              "Discharged on Radomization Date" = sum(ih_discharge_date_on_time_zero),
+              "Discharged on Randomization Date" = sum(ih_discharge_date_on_time_zero),
               "Inpatient Crossover" = sum(crossover_inpatient),
               "Discharge Crossover" = sum(crossover_discharge)) 
   
@@ -103,7 +103,7 @@ ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
     select(-is_total) %>% 
     mutate(`Definitive Fixation Complete` = format_count_percent(`Definitive Fixation Complete`, `Enrolled`)) %>% 
     mutate(`Discharged from Index Hospitalization` = format_count_percent(`Discharged from Index Hospitalization`, `Enrolled`)) %>%
-    mutate(`Discharged on Radomization Date` = format_count_percent(`Discharged on Radomization Date`, `Enrolled`)) %>%
+    mutate(`Discharged on Randomization Date` = format_count_percent(`Discharged on Randomization Date`, `Enrolled`)) %>%
     mutate(`Inpatient Crossover` = format_count_percent(`Inpatient Crossover`, `Enrolled`)) %>% 
     mutate(`Discharge Crossover` = format_count_percent(`Discharge Crossover`, `Enrolled`))
   
