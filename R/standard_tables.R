@@ -1500,7 +1500,8 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
   df <- data %>%
     select(study_id, facilitycode, ineligibility_reasons) %>%
     mutate(ineligibility_reasons = as.character(ineligibility_reasons)) %>%  
-    column_unzipper('ineligibility_reasons', sep = '; ')
+    column_unzipper('ineligibility_reasons', sep = '; ') %>%
+    filter(!is.na(ineligibility_reasons))
   
   if (nrow(df) == 0) {
     output <- tibble(
