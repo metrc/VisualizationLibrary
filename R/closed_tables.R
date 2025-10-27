@@ -2469,7 +2469,9 @@ closed_fracture_characteristics <- function(analytic){
   df_final_full <- inner_fracture_characteristics(df)
   
   df_table <- full_join(df_final_a, df_final_b, by = "type") %>%
-    left_join(df_final_full, by = "type") %>%
+    left_join(df_final_full %>% mutate(n=row_number()), by = "type") %>%
+    arrange(n) %>% 
+    select(-n) %>% 
     mutate(percentage.y = ifelse(is.na(percentage.y), '0 (0%)', percentage.y)) %>% 
     mutate(percentage.x = ifelse(is.na(percentage.x), '0 (0%)', percentage.x)) %>% 
     select(type, percentage.x, percentage.y, percentage)
