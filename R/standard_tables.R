@@ -1186,6 +1186,7 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
 #'
 #' @param analytic analytic data set that must include enrolled, not_expected_reason, not_completed_reason, 
 #' not_completed, protocol_deviation_full_data, sae_count, consented
+#' @param category_defaults a vector of category defaults to use for the protocol deviation categories, defaults to c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")
 #' @param include_ae whether to include adverse events in the visualization ae_count, defaults to FALSE
 #'
 #' @return An HTML table.

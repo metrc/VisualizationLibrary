@@ -868,7 +868,9 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
 #'
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, 
 #' not_completed_reason, protocol_deviation_full_data, sae_count
-#'
+#' @param category_defaults a vector of category defaults to use for the protocol deviation categories, defaults to c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")
+#' @param include_ae a boolean indicating whether to include the AE count in the table, defaults to FALSE
+
 #' @return html table
 #' @export
 #'
@@ -876,7 +878,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
 #' \dontrun{
 #' closed_not_complete_sae_deviation_by_type_auto_categories("Replace with Analytic Tibble")
 #' }
-closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")){
+closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other"), include_ae=FALSE){
   
   confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', '364588096d51d7fd23ebb489b613396f')
   

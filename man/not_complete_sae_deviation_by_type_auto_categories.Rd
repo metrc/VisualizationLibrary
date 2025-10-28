@@ -16,6 +16,8 @@ not_complete_sae_deviation_by_type_auto_categories(
 \item{analytic}{analytic data set that must include enrolled, not_expected_reason, not_completed_reason, 
 not_completed, protocol_deviation_full_data, sae_count, consented}
 
+\item{category_defaults}{a vector of category defaults to use for the protocol deviation categories, defaults to c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")}
+
 \item{include_ae}{whether to include adverse events in the visualization ae_count, defaults to FALSE}
 }
 \value{
