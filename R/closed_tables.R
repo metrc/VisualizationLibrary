@@ -425,7 +425,6 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   full_output <- full_join(output_a, output_b, by = c('Category', 'type'))
   
   full_output <- full_join(full_output, output_total, by = c('Category', 'type')) %>% 
-    reorder_rows(list(Category = c('Sex', '0 (0%)', 'Age', 'Race', 'Education', 'Military'))) %>% 
     mutate_all(replace_na, "0 (0%)") %>% 
     select(-Category) %>% 
     arrange(o) %>% 
