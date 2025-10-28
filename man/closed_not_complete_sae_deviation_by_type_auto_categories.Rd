@@ -26,6 +26,6 @@ See not_complete_sae_deviation_by_type_auto_categories for more information.
 }
 \examples{
 \dontrun{
-closed_not_complete_sae_deviation_by_type_auto_categories()
+closed_not_complete_sae_deviation_by_type_auto_categories("Replace with Analytic Tibble")
 }
 }
