@@ -1706,7 +1706,7 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
   
   df_table <- full_join(combined_a, combined_b, by = "Fracture Type", suffix = c(" (Group A)", " (Group B)")) %>%
     left_join(combined_full, by = "Fracture Type") %>%
-    select(`Fracture Type`, ends_with(" (Group A)"), ends_with(" (Group B)"), count) %>%
+    select(`Fracture Type`, ends_with(" (Group A)"), ends_with(" (Group B)"), count, o) %>%
     arrange(o) %>% 
     select(-o)
   
