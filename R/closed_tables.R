@@ -94,7 +94,7 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
   
   table_a <- inner_closed_injury_ankle_plateau_characteristics(df_a)
   table_b <- inner_closed_injury_ankle_plateau_characteristics(df_b)
-  table_full <- inner_closed_injury_ankle_plateau_characteristics(df) %>% mutate(o=row_number())
+  table_full <- inner_closed_injury_ankle_plateau_characteristics(df) %>% ungroup() %>% mutate(o=row_number())
   
   df_table <- full_join(full_join(table_a, table_b, by="Name"), 
                         table_full, by="Name") %>%
@@ -420,7 +420,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   
   output_a <- inner_baseline_characteristics_percent(df_a) %>% mutate(percentage = replace_na(percentage, "NA")) 
   output_b <- inner_baseline_characteristics_percent(df_b) %>% mutate(percentage = replace_na(percentage, "NA"))
-  output_total <- inner_baseline_characteristics_percent(analytic) %>% mutate(percentage = replace_na(percentage, "NA")) %>% mutate(o=row_number())
+  output_total <- inner_baseline_characteristics_percent(analytic) %>% mutate(percentage = replace_na(percentage, "NA")) %>% ungroup() %>% mutate(o=row_number())
   
   full_output <- full_join(output_a, output_b, by = c('Category', 'type'))
   
@@ -568,7 +568,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
   
   output_a <- inner_baseline_characteristics_percent_nm(df_a) %>% mutate(percentage = replace_na(percentage, "NA")) 
   output_b <- inner_baseline_characteristics_percent_nm(df_b) %>% mutate(percentage = replace_na(percentage, "NA"))
-  output_total <- inner_baseline_characteristics_percent_nm(analytic) %>% mutate(percentage = replace_na(percentage, "NA"))
+  output_total <- inner_baseline_characteristics_percent_nm(analytic) %>% mutate(percentage = replace_na(percentage, "NA")) %>% ungroup() %>% mutate(o=row_number())
   
   
   full_output <- full_join(output_a, output_b, by = c('Category', 'type'))
@@ -577,7 +577,9 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
   full_output <- full_join(full_output, output_total, by = c('Category', 'type')) %>% 
     reorder_rows(list(Category = c('sex', 'age', 'race', 'education'))) %>% 
     mutate_all(replace_na, "0 (0%)") %>% 
-    select(-Category)
+    select(-Category) %>% 
+    arrange(o) %>% 
+    select(-o)
   
   colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a %>% filter(enrolled)),")"), paste0("Group B (n=",nrow(df_b %>% filter(enrolled)),")"), paste0("Total (n=",nrow(df_a %>% filter(enrolled))+nrow(df_b %>% filter(enrolled)),")"))
   
@@ -1038,7 +1040,7 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
   
   table_a   <- inner_closed_not_complete_sae_deviation_by_type(df_a,   'Group A') %>% rename(n_a = n)
   table_b   <- inner_closed_not_complete_sae_deviation_by_type(df_b,   'Group B') %>% rename(n_b = n)
-  table_tot <- inner_closed_not_complete_sae_deviation_by_type(df_full,'Total') %>% rename(n_total = n)  %>% mutate(o = row_number())
+  table_tot <- inner_closed_not_complete_sae_deviation_by_type(df_full,'Total') %>% rename(n_total = n)  %>% ungroup() %>% mutate(o = row_number())
   
   df_table <- table_tot %>%
     left_join(table_a) %>%
@@ -1699,11 +1701,13 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
   combined_a <- inner_amputations_and_gustilo_injury_characteristics(pull_a)
   combined_b <- inner_amputations_and_gustilo_injury_characteristics(pull_b)
   
-  combined_full <- inner_amputations_and_gustilo_injury_characteristics(pull)
+  combined_full <- inner_amputations_and_gustilo_injury_characteristics(pull) %>% ungroup() %>% mutate(o=row_number())
   
   df_table <- full_join(combined_a, combined_b, by = "Fracture Type", suffix = c(" (Group A)", " (Group B)")) %>%
     left_join(combined_full, by = "Fracture Type") %>%
-    select(`Fracture Type`, ends_with(" (Group A)"), ends_with(" (Group B)"), count)
+    select(`Fracture Type`, ends_with(" (Group A)"), ends_with(" (Group B)"), count) %>%
+    arrange(o) %>% 
+    select(-o)
   
   output <- kable(df_table, format="html", align='l',  col.names = c(" ", "Group A", "Group B", "Overall")) %>%
     kable_styling("striped", position = "left", full_width = F) %>%
@@ -1845,11 +1849,13 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
   combined_a <- inner_dssi_reported_adjudicated(pull_a)
   combined_b <- inner_dssi_reported_adjudicated(pull_b)
   
-  combined_full <- inner_dssi_reported_adjudicated(pull)
+  combined_full <- inner_dssi_reported_adjudicated(pull) %>% ungroup() %>% mutate(o=row_number())
   
   df_table <- full_join(combined_a, combined_b, by = " ", suffix = c(" (Group A)", " (Group B)")) %>%
     left_join(combined_full, by = " ") %>%
-    select(" ", ends_with(" (Group A)"), ends_with(" (Group B)"), `Total`)
+    select(" ", ends_with(" (Group A)"), ends_with(" (Group B)"), `Total`) %>%
+    arrange(o) %>% 
+    select(-o)
   
   output <- kable(df_table, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position="left") 
@@ -2551,7 +2557,7 @@ closed_fracture_characteristics <- function(analytic){
   df_final_full <- inner_fracture_characteristics(df)
   
   df_table <- full_join(df_final_a, df_final_b, by = "type") %>%
-    left_join(df_final_full %>% mutate(n=row_number()), by = "type") %>%
+    left_join(df_final_full %>% ungroup() %>% mutate(n=row_number()), by = "type") %>%
     arrange(n) %>% 
     select(-n) %>% 
     mutate(percentage.y = ifelse(is.na(percentage.y), '0 (0%)', percentage.y)) %>% 
