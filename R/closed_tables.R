@@ -94,16 +94,17 @@ closed_injury_ankle_plateau_characteristics <- function(analytic){
   
   table_a <- inner_closed_injury_ankle_plateau_characteristics(df_a)
   table_b <- inner_closed_injury_ankle_plateau_characteristics(df_b)
-  table_full <- inner_closed_injury_ankle_plateau_characteristics(df)
+  table_full <- inner_closed_injury_ankle_plateau_characteristics(df) %>% mutate(o=row_number())
   
   df_table <- full_join(full_join(table_a, table_b, by="Name"), 
-                        table_full, by="Name")
-  
-  colnames(df_table) <- c("Name", "Group A", "Group B", "Total")
-  
-  
-  df_table <- df_table %>%
+                        table_full, by="Name") %>%
+    arrange(o) %>% 
+    select(-o)
+
+  df_table <- df_table %>% 
     mutate_all(~ ifelse(is.na(.), "-", .))
+
+  colnames(df_table) <- c("Name", "Group A", "Group B", "Total")
   
   
   index_vec <- c("OTA Classification"= ota_number + 1, "Tibial Plateau" = schatzer_number + 1)
@@ -419,14 +420,16 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
   
   output_a <- inner_baseline_characteristics_percent(df_a) %>% mutate(percentage = replace_na(percentage, "NA")) 
   output_b <- inner_baseline_characteristics_percent(df_b) %>% mutate(percentage = replace_na(percentage, "NA"))
-  output_total <- inner_baseline_characteristics_percent(analytic) %>% mutate(percentage = replace_na(percentage, "NA"))
+  output_total <- inner_baseline_characteristics_percent(analytic) %>% mutate(percentage = replace_na(percentage, "NA")) %>% mutate(o=row_number())
   
   full_output <- full_join(output_a, output_b, by = c('Category', 'type'))
   
   full_output <- full_join(full_output, output_total, by = c('Category', 'type')) %>% 
     reorder_rows(list(Category = c('Sex', '0 (0%)', 'Age', 'Race', 'Education', 'Military'))) %>% 
     mutate_all(replace_na, "0 (0%)") %>% 
-    select(-Category)
+    select(-Category) %>% 
+    arrange(o) %>% 
+    select(-o)
   
   colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a %>% filter(enrolled)),")"), paste0("Group B (n=",nrow(df_b %>% filter(enrolled)),")"), paste0("Total (n=",nrow(df_a %>% filter(enrolled))+nrow(df_b %>% filter(enrolled)),")"))
   
