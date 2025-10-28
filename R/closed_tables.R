@@ -1854,7 +1854,7 @@ closed_dssi_reported_adjudicated <- function(analytic, footnotes = NULL){
   
   df_table <- full_join(combined_a, combined_b, by = " ", suffix = c(" (Group A)", " (Group B)")) %>%
     left_join(combined_full, by = " ") %>%
-    select(" ", ends_with(" (Group A)"), ends_with(" (Group B)"), `Total`) %>%
+    select(" ", ends_with(" (Group A)"), ends_with(" (Group B)"), `Total`, o) %>%
     arrange(o) %>% 
     select(-o)
   
