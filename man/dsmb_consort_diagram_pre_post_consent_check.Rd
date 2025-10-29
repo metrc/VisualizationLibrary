@@ -6,8 +6,14 @@
 \usage{
 dsmb_consort_diagram_pre_post_consent_check(
   analytic,
+  pre_eligible_not_continuing,
+  pre_eligible_not_continuing_label,
   missing_post_consent_check,
   missing_post_consent_check_label,
+  not_started_post_consent_check,
+  not_started_post_consent_check_label,
+  late_post_consent_check,
+  late_post_consent_check_label,
   post_consent_check,
   post_consent_check_label,
   post_consent_eligible,
@@ -53,6 +59,6 @@ from the final_followup constructs rather than any df ones.
 See dsmb_consort_diagram and consort_diagram for similar options.
 }
 \examples{
-dsmb_consort_diagram_pre_post_consent_check("Replace with Analytic Tibble", "missing_double_check", "Missing Double Check", "post_consent_check", "Post Consent Check", "post_consent_eligible", "Post Consent Eligible", "post_consent_ineligible", "Post Consent Ineligible", final_period = '3 Month', adjudicated = TRUE)
+dsmb_consort_diagram_pre_post_consent_check("Replace with Analytic Tibble", "pre_eligible_not_continue", "Pre Eligible Not Continuing", "missing_double_check", "Missing Double Check", "not_started_post_consent_check", "Not Started Double Check", "late_post_consent_check", "Late Double Check", "post_consent_check", "Post Consent Check", "post_consent_eligible", "Post Consent Eligible", "post_consent_ineligible", "Post Consent Ineligible", final_period = '3 Month', adjudicated = TRUE)
 
 }

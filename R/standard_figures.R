@@ -478,13 +478,16 @@ dsmb_consort_diagram_pre_no_def <- function(analytic, final_period="12 Month", a
 #' @export
 #'
 #' @examples
-#' dsmb_consort_diagram_pre_post_consent_check("Replace with Analytic Tibble", "missing_double_check", "Missing Double Check", "post_consent_check", "Post Consent Check", "post_consent_eligible", "Post Consent Eligible", "post_consent_ineligible", "Post Consent Ineligible", final_period = '3 Month', adjudicated = TRUE)
+#' dsmb_consort_diagram_pre_post_consent_check("Replace with Analytic Tibble", "pre_eligible_not_continue", "Pre Eligible Not Continuing", "missing_double_check", "Missing Double Check", "not_started_post_consent_check", "Not Started Double Check", "late_post_consent_check", "Late Double Check", "post_consent_check", "Post Consent Check", "post_consent_eligible", "Post Consent Eligible", "post_consent_ineligible", "Post Consent Ineligible", final_period = '3 Month', adjudicated = TRUE)
 #' 
-dsmb_consort_diagram_pre_post_consent_check <- function(analytic, missing_post_consent_check, missing_post_consent_check_label, post_consent_check, post_consent_check_label,
+dsmb_consort_diagram_pre_post_consent_check <- function(analytic, pre_eligible_not_continuing, pre_eligible_not_continuing_label,
+ missing_post_consent_check, missing_post_consent_check_label, not_started_post_consent_check, not_started_post_consent_check_label,
+ late_post_consent_check, late_post_consent_check_label, post_consent_check, post_consent_check_label,
  post_consent_eligible, post_consent_eligible_label, post_consent_ineligible, post_consent_ineligible_label, final_period="12 Month", adjudicated=FALSE){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c("screened", "ineligible", "eligible", "refused", "consented", 
+    example_constructs = c("screened", "ineligible", "eligible",
+                           "refused", "consented", "pre_eligible_not_continue", "not_started_double_check", "late_double_check",
                            "randomized", "enrolled", "adjudicated_discontinued", "not_consented",
                            "completed", "safety_set", "exclusive_safety_set", "not_completed", 
                            "not_expected", "active", "missed_final_followup", "incomplete_final_followup", 
@@ -493,20 +496,24 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, missing_post_c
     example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
                       "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
-                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean"))
+                      "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean"))
 
   # rename constructs by variable column names (won't necessarily be called that in the data so we need to rename them using the variable column names in dplyr)
   analytic <- analytic %>% 
     rename(missing_double_check = {{missing_post_consent_check}},
            double_check = {{post_consent_check}},
            double_check_eligible = {{post_consent_eligible}},
-           double_check_ineligible = {{post_consent_ineligible}}) 
+           double_check_ineligible = {{post_consent_ineligible}},
+           pre_eligible_not_continue = {{pre_eligible_not_continuing}},
+           not_started_double_check = {{not_started_post_consent_check}},
+           late_double_check = {{late_post_consent_check}}) 
   
   pre_analytic <- analytic
   
   pre_Screened <- sum(pre_analytic$pre_screened, na.rm=TRUE)
   pre_Eligible <- sum(pre_analytic$pre_eligible, na.rm=TRUE)
   pre_Ineligible <- sum(pre_analytic$pre_ineligible, na.rm=TRUE)
+  pre_eligible_not_continue <- sum(pre_analytic %>% filter(pre_eligible) %>% pull(pre_eligible_not_continue), na.rm=TRUE)
   
   analytic <- analytic %>% 
     filter(screened == TRUE) 
@@ -532,6 +539,16 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, missing_post_c
                                       filter(eligible) %>% 
                                       filter(consented) %>% 
                                       pull(missing_double_check), na.rm=TRUE)
+
+  not_started_post_consent_check <- sum(analytic %>% 
+                                      filter(eligible) %>% 
+                                      filter(consented) %>% 
+                                      pull(not_started_double_check), na.rm=TRUE)
+
+  late_post_consent_check <- sum(analytic %>% 
+                                      filter(eligible) %>% 
+                                      filter(consented) %>% 
+                                      pull(late_double_check), na.rm=TRUE)                         
 
   post_consent_check <- sum(analytic %>% 
                               filter(eligible) %>% 
@@ -628,6 +645,7 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, missing_post_c
       pre_screened [style="rounded,filled", fillcolor="#ccccff", pos="5,18!", shape = box, width=2.4, height=1, label = "Pre-Screened (n=',pre_Screened,')"];
       pre_ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,18!", shape = box, width=2.4, height=1, label = "Pre-Ineligible (n=',pre_Ineligible,')"];
       pre_eligible [style="rounded,filled", fillcolor="#ccccff", pos="5,16!", shape = box, width=2.4, height=1, label = "Pre-Eligible (n=',pre_Eligible,')"];
+      pre_eligible_not_continue [style="rounded,filled", fillcolor="#ccccff", pos="10,16!", shape = box, width=2.4, height=1, label = "',pre_eligible_not_continuing_label,' (n=',pre_eligible_not_continue,')"];
       
       screened [style="rounded,filled", fillcolor="#ccccff", pos="5,14!", shape = box, width=2.4, height=1, label = "Screened (n=',Screened,')"];
       ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,14!", shape = box, width=2.4, height=1, label = "Ineligible (n=',Ineligible,')"];
@@ -637,7 +655,7 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, missing_post_c
 
       cons [style="rounded,filled", fillcolor="#ccccff", pos="5,10!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
 
-      missing_post_consent_check [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "',missing_post_consent_check_label,' (n=',missing_post_consent_check,')"];
+      missing_post_consent_check [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "',missing_post_consent_check_label,' (n=',missing_post_consent_check,')\n',not_started_post_consent_check_label,' (n=',not_started_post_consent_check,')\n',late_post_consent_check_label,' (n=',late_post_consent_check,')"];
 
       post_consent_check [style="rounded,filled", fillcolor="#ccccff", pos="5,8!", shape = box, width=2.4, height=1, label = "',post_consent_check_label,' (n=',post_consent_check,')"];
       post_consent_eligible [style="rounded,filled", fillcolor="#ccccff", pos="5,6!", shape = box, width=2.4, height=1, label = "',post_consent_eligible_label,' (n=',post_consent_eligible,')"];
@@ -658,6 +676,7 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, missing_post_c
       # Relationships
       pre_screened -> pre_eligible
       pre_screened -> pre_ineligible
+      pre_eligible -> pre_eligible_not_continue
       pre_eligible -> screened
       screened -> eligible
       screened -> ineligible
