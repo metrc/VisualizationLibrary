@@ -4,7 +4,13 @@
 \alias{outcome_by_id}
 \title{Visualize patient outcomes by ID over time}
 \usage{
-outcome_by_id(analytic, event_name, random_sample = NULL, facilitycodes = NULL)
+outcome_by_id(
+  analytic,
+  event_name,
+  random_sample = NULL,
+  facilitycodes = NULL,
+  days_since_tz = 365
+)
 }
 \arguments{
 \item{analytic}{analytic data set that must include study_id, facilitycode, events_data, outcome_data 
@@ -15,6 +21,8 @@ and time_zero}
 \item{random_sample}{optional integer to limit to a random sample of IDs}
 
 \item{facilitycodes}{optional character vector to limit to a certain facilities}
+
+\item{days_since_dz}{optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded timeline visualization in PNG format.

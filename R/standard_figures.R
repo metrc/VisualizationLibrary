@@ -2225,6 +2225,7 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
 #' @param event_name specific event to track (will mark first occurrence specially)
 #' @param random_sample optional integer to limit to a random sample of IDs
 #' @param facilitycodes optional character vector to limit to a certain facilities
+#' @param days_since_dz optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago
 #'
 #' @return An HTML string containing an image tag with the base64-encoded timeline visualization in PNG format.
 #' @export

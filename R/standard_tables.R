@@ -4237,6 +4237,7 @@ not_enrolled_reason <- function(analytic, last_days = NULL){
 #'
 #' @param analytic analytic data set that must include study_id, outcome_data, facilitycode, and enrolled
 #' @param outcome_name name of the outcome to be considered in the visualization
+#' @param days_since_dz optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago
 #'
 #' @return An HTML table.
 #' @export
@@ -4346,6 +4347,7 @@ outcome_by_site <- function(analytic, outcome_name, days_since_tz = 365) {
 #' Returns summary statistics on the number of days to complete various follow-up forms.
 #'
 #' @param analytic This is the analytic data set that must include study_id, outcome_data, and enrolled
+#' @param days_since_dz optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago
 #'
 #' @return An HTML table.
 #' @export
