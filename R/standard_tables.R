@@ -4244,7 +4244,7 @@ not_enrolled_reason <- function(analytic, last_days = NULL){
 #' @examples
 #' outcome_by_site("Replace with Analytic Tibble", 'test_outcome')
 #' 
-outcome_by_site <- function(analytic, outcome_name) {
+outcome_by_site <- function(analytic, outcome_name, days_since_tz = 365) {
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('outcome_data', 'facilitycode', 'enrolled'), 
@@ -4266,7 +4266,7 @@ outcome_by_site <- function(analytic, outcome_name) {
     ) %>%
     # Filter for the specific outcome
     filter(outcome_name == !!outcome_name) %>%
-    filter((as.Date(time_zero)+365)<Sys.Date()) %>% 
+    filter((as.Date(time_zero)+days_since_tz)<Sys.Date()) %>% 
     # Convert numeric columns
     mutate(
       target_days = as.numeric(target_days),
@@ -4353,7 +4353,7 @@ outcome_by_site <- function(analytic, outcome_name) {
 #' @examples
 #' outcome_by_name_overall("Replace with Analytic Tibble")
 #' 
-outcome_by_name_overall <- function(analytic) {
+outcome_by_name_overall <- function(analytic, days_since_tz = 365) {
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('outcome_data', 'enrolled'), 
                                               example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'Boolean'))
@@ -4363,7 +4363,7 @@ outcome_by_name_overall <- function(analytic) {
     filter(enrolled) %>%
     separate_rows(outcome_data, sep=";") %>%
     separate(outcome_data, c('outcome_name', 'target_days', 'expected_days', 'time_zero', 'outcome_date_extended', 'outcome_type', 'outcome_days_extended', 'outcome_days', 'outcome_date'), sep=",") %>% 
-    filter((as.Date(time_zero)+365)<Sys.Date())
+    filter((as.Date(time_zero)+days_since_tz)<Sys.Date())
 
   stats <- outcome_data %>%
     mutate(outcome_days = as.numeric(outcome_days)) %>%
