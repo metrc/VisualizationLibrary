@@ -4,10 +4,12 @@
 \alias{outcome_by_name_overall}
 \title{Outcome by Name Overall}
 \usage{
-outcome_by_name_overall(analytic)
+outcome_by_name_overall(analytic, days_since_tz = 365)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, outcome_data, and enrolled}
+
+\item{days_since_dz}{optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago}
 }
 \value{
 An HTML table.
