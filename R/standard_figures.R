@@ -2233,7 +2233,7 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
 #' outcome_by_id("Replace with Analytic Tibble", "test_outcome")
 #' outcome_by_id("Replace with Analytic Tibble", "test_outcome", random_sample = TRUE, facilitycodes = c('AAA', 'AAB'))
 #' 
-outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilitycodes = NULL) {
+outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilitycodes = NULL, days_since_tz = 365) {
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('outcome_data', 'enrolled', 'time_zero', 'facilitycode', 'events_data'), 
@@ -2300,7 +2300,7 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     filter(days_from_zero >= 0) %>% 
     left_join(event_outcomes, by = "study_id") %>% 
     arrange(patient_label) %>% 
-    filter((time_zero+365)<Sys.Date()) %>% 
+    filter((time_zero+days_since_tz)<Sys.Date()) %>% 
     select(-study_id, -facilitycode, -period) 
   
   patients_df <- events_df %>%
