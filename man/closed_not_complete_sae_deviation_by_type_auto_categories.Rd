@@ -7,12 +7,17 @@
 closed_not_complete_sae_deviation_by_type_auto_categories(
   analytic,
   category_defaults = c("Safety", "Informed Consent", "Eligibility",
-    "Protocol Implementation", "Other")
+    "Protocol Implementation", "Other"),
+  include_ae = FALSE
 )
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, not_expected_reason, 
 not_completed_reason, protocol_deviation_full_data, sae_count}
+
+\item{category_defaults}{a vector of category defaults to use for the protocol deviation categories, defaults to c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other")}
+
+\item{include_ae}{a boolean indicating whether to include the AE count in the table, defaults to FALSE}
 }
 \value{
 html table
@@ -26,6 +31,6 @@ See not_complete_sae_deviation_by_type_auto_categories for more information.
 }
 \examples{
 \dontrun{
-closed_not_complete_sae_deviation_by_type_auto_categories()
+closed_not_complete_sae_deviation_by_type_auto_categories("Replace with Analytic Tibble")
 }
 }

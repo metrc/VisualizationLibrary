@@ -4,12 +4,14 @@
 \alias{closed_not_complete_sae_deviation_by_type}
 \title{Closed Number of Discontinued Participants, SAEs, and Protocol Deviations by type}
 \usage{
-closed_not_complete_sae_deviation_by_type(analytic)
+closed_not_complete_sae_deviation_by_type(analytic, include_ae = FALSE)
 }
 \arguments{
 \item{analytic}{analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
 protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, 
 sae_count, treatment_arm}
+
+\item{include_ae}{boolean to include adverse events in the table, defaults to FALSE}
 }
 \value{
 An HTML table.
