@@ -4267,6 +4267,124 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
   
   return(table)
 }
+
+
+#' Closed outcome distribution
+#'
+#' @description 
+#' Returns a table of the percentage of each type of event being present. Closed version of outcome_distribution
+#'
+#' @param analytic analytic data set that must include study_id, treatment_arm, events_data, outcome_data (and wrapper constructs), 
+#' enrolled
+#' @param scarq whether or not to include scarq constructs
+#' @param pretty_outcome_names list with raw outcomes as names and pretty strings as values
+#' @param heirarchy the heirarchy of outcomes (order of table)
+#' @param exclusion outcomes higher in the heirarchy blinds those lower (per study_id)
+#'
+#' @return html table
+#' @export
+#'
+#' @examples
+#' 
+closed_outcome_distribution <- function(
+    analytic, scarq = FALSE, pretty_outcome_names = list(), 
+    heirarchy = c('death_outcome', 'amputation', 'reoperation_dssi', 'operation_related_to_complication', 
+                  'nonoperative_complication', 'scarq_symptom_score_6mo', 'scarq_appearance_score_6mo'),
+    exclusion = FALSE){
+  confirm_stability_of_related_visual('outcome_distribution', '31a8cce7644089545361e3d733b3c229')
+  
+  events <- analytic %>%
+    select(events_data) %>%
+    separate_rows(events_data, sep = ';') %>%
+    separate(events_data, into = c("period", "name", "form",
+                                   "type", "date"), sep = ',') %>%
+    pull(name) %>%
+    unique()
+  
+  events_vec <- events[!is.na(events)]
+  events_vec <- ifelse(
+    events_vec == 'death',
+    'death_outcome',
+    events_vec
+  )
+  col_vec <- paste0(events_vec, '_type')
+  
+  if (scarq) {
+    df1 <- analytic %>%  
+      select(study_id, treatment_arm, all_of(col_vec), scarq_symptom_score_6mo, scarq_appearance_score_6mo, enrolled)
+  } else {
+    df1 <- analytic %>%  
+      select(study_id, treatment_arm, all_of(col_vec), enrolled)
+  }
+  
+  filtered <- df1 %>%
+    filter(enrolled)
+  filtered_a <- df1 %>% filter(treatment_arm == 'Group A')
+  filtered_b <- df1 %>% filter(treatment_arm == 'Group B')
+  total <- nrow(filtered)
+  total_a <- nrow(filtered_a)
+  total_b <- nrow(filtered_b)
+  
+  bool_df_a <- filtered_a %>%
+    mutate_at(vars(ends_with('_type')), ~ . == 'event')
+  totals_a <- bool_df_a %>%
+    summarize(across(ends_with("_type"), ~ sum(.x, na.rm = TRUE))) %>%
+    pivot_longer(everything(), values_to = 'a') %>%
+    mutate(a = format_count_percent(a, total))
+  
+  bool_df_b <- filtered_b %>%
+    mutate_at(vars(ends_with('_type')), ~ . == 'event')
+  totals_b <- bool_df_b %>%
+    summarize(across(ends_with("_type"), ~ sum(.x, na.rm = TRUE))) %>%
+    pivot_longer(everything(), values_to = 'b') %>%
+    mutate(b = format_count_percent(b, total))
+  
+  totals <- full_join(totals_a, totals_b)
+  
+  if (scarq) {
+    scarq_df_a <- filtered_a %>%
+      summarise(across(c(scarq_symptom_score_6mo, scarq_appearance_score_6mo), 
+                       ~ paste0(round(mean(.x, na.rm = TRUE)), ' (', round(sd(.x, na.rm = TRUE)), ')'))) %>%
+      pivot_longer(everything(), values_to = 'b')
+    scarq_df_b <- filtered_b %>%
+      summarise(across(c(scarq_symptom_score_6mo, scarq_appearance_score_6mo), 
+                       ~ paste0(round(mean(.x, na.rm = TRUE)), ' (', round(sd(.x, na.rm = TRUE)), ')'))) %>%
+      pivot_longer(everything(), values_to = 'a')
+    
+    scarq_df <- full_join(scarq_df_a, scarq_df_b)
+    
+    totals <- rbind(totals, scarq_df)
+  }
+  
+  cleaned <- totals %>%
+    mutate(name = str_remove(name, '_type')) %>%
+    mutate(name = factor(name, levels = heirarchy)) %>%
+    arrange(name) %>%
+    mutate(Heirarchy = seq(1:nrow(totals))) %>%
+    relocate(Heirarchy, 1)
+  
+  lookup_table <- list(
+    'death_outcome' = 'All-cause mortality',
+    'amputation' = 'Injury-related amputation',
+    'reoperation_dssi' = 'Reoperation for deep or organ space infection',
+    'operation_related_to_complication' = 'Reoperation for wound healing complication',
+    'nonoperative_complication' = 'Nonoperative treatment for wound dehiscence, persistent drainage beyond 3 weeks, or superficial infection',
+    'scarq_symptom_score_6mo' = 'Scar symptoms, SCAR-Q Symptom Scale, mean (SD)',
+    'scarq_appearance_score_6mo' = 'Scar appearance, SCAR-Q Appearance Scale, mean (SD)'
+  )
+  for (name in names(pretty_outcome_names)) {
+    lookup_table[name] = pretty_outcome_names[name]
+  }
+  
+  table <- cleaned %>%
+    mutate(name = unlist(lookup_table[name])) %>%
+    rename(Outcome = name, !!paste0('Group A (n = ', total_a, ')') := a, !!paste0('Group B (n = ', total_b, ')') := b)
+  
+  output <- kable(table, format="html", align='l') %>%
+    kable_styling("striped", full_width = F, position="left") 
+  
+  return(output)
+}
   
 
 
