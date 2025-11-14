@@ -5506,9 +5506,12 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
 #' For the iVAC study, an argument for the scarq scores is present, which will add the mean and standard
 #' deviation of the appearance and symptom scores.
 #'
-#' @param analytic analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode
-#' @param by_site breaks down hardware times by site
-#' @param delta uses dates instead of datetimes
+#' @param analytic analytic data set that must include study_id, events_data, outcome_data (and wrapper constructs), 
+#' enrolled
+#' @param scarq whether or not to include scarq constructs
+#' @param pretty_outcome_names list with raw outcomes as names and pretty strings as values
+#' @param heirarchy the heirarchy of outcomes (order of table)
+#' @param exclusion outcomes higher in the heirarchy blinds those lower (per study_id)
 #'
 #' @return html table
 #' @export
@@ -5518,7 +5521,9 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
 outcome_distribution <- function(
     analytic, scarq = FALSE, pretty_outcome_names = list(), 
     heirarchy = c('death_outcome', 'amputation', 'reoperation_dssi', 'operation_related_to_complication', 
-                  'nonoperative_complication', 'scarq_symptom_score_6mo', 'scarq_appearance_score_6mo')){
+                  'nonoperative_complication', 'scarq_symptom_score_6mo', 'scarq_appearance_score_6mo'),
+    exclusion = FALSE)
+  {
   
   events <- analytic %>%
     select(events_data) %>%
@@ -5550,6 +5555,7 @@ outcome_distribution <- function(
   
   bool_df <- filtered %>%
     mutate_at(vars(ends_with('_type')), ~ . == 'event')
+  
   totals <- bool_df %>%
     summarize(across(ends_with("_type"), ~ sum(.x, na.rm = TRUE))) %>%
     pivot_longer(everything()) %>%
