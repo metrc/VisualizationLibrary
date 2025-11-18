@@ -5423,12 +5423,12 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
   if (delta) {
     df1 <- analytic %>%  
       select(hardware_application_date, hardware_application_datetime, hardware_removal_date, hardware_removal_datetime, 
-             hardware_removal_date_missing, hardware_duration, hardware_delta, facilitycode) 
+             hardware_removal_date_missing, hardware_duration, hardware_delta, facilitycode, enrolled) 
     df1 <- df1 %>% mutate(start = hardware_application_date, end = hardware_removal_date, len = hardware_delta)
   } else {
     df1 <- analytic %>%  
       select(hardware_application_date, hardware_application_datetime, hardware_removal_date, hardware_removal_datetime, 
-             hardware_removal_date_missing, hardware_duration, facilitycode) 
+             hardware_removal_date_missing, hardware_duration, facilitycode, enrolled) 
     df1 <- df1 %>% mutate(start = hardware_application_datetime, end = hardware_removal_datetime, len = hardware_duration)
   }
   
@@ -5490,109 +5490,6 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
   )
   
   names(table)[6:7] <- paste0(c('Mean VAC time', 'Median VAC time'), unit)
-  
-  output <- kable(table, format="html", align='l') %>%
-    kable_styling("striped", full_width = F, position="left") 
-  
-  return(output)
-}
-
-
-#' Outcome distribution
-#'
-#' @description 
-#' Returns a table of the percentage of each type of event being present.
-#' 
-#' For the iVAC study, an argument for the scarq scores is present, which will add the mean and standard
-#' deviation of the appearance and symptom scores.
-#'
-#' @param analytic analytic data set that must include study_id, events_data, outcome_data (and wrapper constructs), 
-#' enrolled
-#' @param scarq whether or not to include scarq constructs
-#' @param pretty_outcome_names list with raw outcomes as names and pretty strings as values
-#' @param heirarchy the heirarchy of outcomes (order of table)
-#' @param exclusion outcomes higher in the heirarchy blinds those lower (per study_id)
-#'
-#' @return html table
-#' @export
-#'
-#' @examples
-#' 
-outcome_distribution <- function(
-    analytic, scarq = FALSE, pretty_outcome_names = list(), 
-    heirarchy = c('death_outcome', 'amputation', 'reoperation_dssi', 'operation_related_to_complication', 
-                  'nonoperative_complication', 'scarq_symptom_score_6mo', 'scarq_appearance_score_6mo'),
-    exclusion = FALSE)
-  {
-  
-  events <- analytic %>%
-    select(events_data) %>%
-    separate_rows(events_data, sep = ';') %>%
-    separate(events_data, into = c("period", "name", "form",
-                                   "type", "date"), sep = ',') %>%
-    pull(name) %>%
-    unique()
-  
-  events_vec <- events[!is.na(events)]
-  events_vec <- ifelse(
-    events_vec == 'death',
-    'death_outcome',
-    events_vec
-  )
-  col_vec <- paste0(events_vec, '_type')
-  
-  if (scarq) {
-    df1 <- analytic %>%  
-      select(study_id, all_of(col_vec), scarq_symptom_score_6mo, scarq_appearance_score_6mo, enrolled)
-  } else {
-    df1 <- analytic %>%  
-      select(study_id, all_of(col_vec), enrolled)
-  }
-  
-  filtered <- df1 %>%
-    filter(enrolled)
-  total <- nrow(filtered)
-  
-  bool_df <- filtered %>%
-    mutate_at(vars(ends_with('_type')), ~ . == 'event')
-  
-  totals <- bool_df %>%
-    summarize(across(ends_with("_type"), ~ sum(.x, na.rm = TRUE))) %>%
-    pivot_longer(everything()) %>%
-    mutate(value = format_count_percent(value, total))
-  
-  if (scarq) {
-    scarq_df <- filtered %>%
-      summarise(across(c(scarq_symptom_score_6mo, scarq_appearance_score_6mo), 
-                       ~ paste0(round(mean(.x, na.rm = TRUE)), ' (', round(sd(.x, na.rm = TRUE)), ')'))) %>%
-      pivot_longer(everything())
-    
-    totals <- rbind(totals, scarq_df)
-  }
-  
-  cleaned <- totals %>%
-    mutate(name = str_remove(name, '_type')) %>%
-    mutate(name = factor(name, levels = heirarchy)) %>%
-    arrange(name) %>%
-    mutate(Heirarchy = seq(1:nrow(totals))) %>%
-    relocate(Heirarchy, 1)
-  
-  lookup_table <- list(
-    'death_outcome' = 'All-cause mortality',
-    'amputation' = 'Injury-related amputation',
-    'reoperation_dssi' = 'Reoperation for deep or organ space infection',
-    'operation_related_to_complication' = 'Reoperation for wound healing complication',
-    'nonoperative_complication' = 'Nonoperative treatment for wound dehiscence, persistent drainage beyond 3 weeks, or superficial infection',
-    'scarq_symptom_score_6mo' = 'Scar symptoms, SCAR-Q Symptom Scale, mean (SD)',
-    'scarq_appearance_score_6mo' = 'Scar appearance, SCAR-Q Appearance Scale, mean (SD)'
-  )
-  for (name in names(pretty_outcome_names)) {
-    lookup_table[name] = pretty_outcome_names[name]
-  }
-  
-  table <- cleaned %>%
-    mutate(name = unlist(lookup_table[name])) %>%
-    rename(Outcome = name, !!paste0('Enrolled (n = ', total, ')') := value)
   
   output <- kable(table, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position="left") 
