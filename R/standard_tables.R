@@ -5425,14 +5425,16 @@ hardware_duration_statistics <- function(analytic, delta = FALSE){
 #' @examples
 #' 
 hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
-  df1 <- analytic %>%  
-    select(hardware_application_date, hardware_application_datetime, hardware_removal_date, hardware_removal_datetime, 
-           hardware_removal_date_missing, hardware_duration, facilitycode, enrolled) 
-  
   if (delta) {
-    df1 <- df1 %>% mutate(start = hardware_application_date, end = hardware_removal_date, len = as.numeric(hardware_delta))
+    df1 <- analytic %>%  
+      select(hardware_application_date, hardware_application_datetime, hardware_removal_date, hardware_removal_datetime, 
+             hardware_removal_date_missing, hardware_duration, hardware_delta, facilitycode, enrolled) 
+    df1 <- df1 %>% mutate(start = hardware_application_date, end = hardware_removal_date, len = hardware_delta)
   } else {
-    df1 <- df1 %>% mutate(start = hardware_application_datetime, end = hardware_removal_datetime, len = as.numeric(hardware_duration))
+    df1 <- analytic %>%  
+      select(hardware_application_date, hardware_application_datetime, hardware_removal_date, hardware_removal_datetime, 
+             hardware_removal_date_missing, hardware_duration, facilitycode, enrolled) 
+    df1 <- df1 %>% mutate(start = hardware_application_datetime, end = hardware_removal_datetime, len = hardware_duration)
   }
   
   sites <- df1 %>%

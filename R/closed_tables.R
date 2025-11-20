@@ -4267,7 +4267,5 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
   
   return(table)
 }
-  
-
 
 
