@@ -11,7 +11,8 @@ generic_characteristics(
   filter_cols = c("enrolled"),
   titlecase = FALSE,
   splits = NULL,
-  subcategory_constructs = c()
+  subcategory_constructs = c(),
+  bottom_order_levels = c("Missing")
 )
 }
 \arguments{
@@ -29,6 +30,8 @@ generic_characteristics(
 
 \item{subcategory_constructs}{This allows a characteristic to have a construct as a sub category, 
 must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)}
+
+\item{bottom_order_levels}{A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".}
 }
 \value{
 html table
