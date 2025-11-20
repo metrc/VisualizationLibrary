@@ -2054,6 +2054,7 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #' @param splits Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them
 #' @param subcategory_constructs This allows a characteristic to have a construct as a sub category, 
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
+#' @param bottom_order_levels A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".
 #'
 #' @return html table
 #' @export
@@ -2065,7 +2066,7 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #' }
 generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
-                                    subcategory_constructs = c()){
+                                    subcategory_constructs = c(), bottom_order_levels = c("Missing")){
 
   out <- NULL
   index_vec <- c()
@@ -2123,6 +2124,20 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
         separate_rows(temp,sep = inner_split)
     }
     
+    non_bottom_temps <- sort(unique(inner$temp[!inner$temp %in% bottom_order_levels]))
+    
+    numeric_temps <- suppressWarnings(as.numeric(non_bottom_temps))
+    is_numeric <- !is.na(numeric_temps)
+    
+    numeric_sort_list <- non_bottom_temps[is_numeric] %>% 
+      as.numeric() %>% 
+      sort() %>% 
+      as.character()
+    
+    non_numeric_sort_list <- sort(non_bottom_temps[!is_numeric])
+    
+    custom_levels <- c(numeric_sort_list, non_numeric_sort_list, bottom_order_levels)
+    
     if(!is.na(sub_construct)){
       sub_cats <- sort(unique(inner$sub_temp))
       if("Missing" %in% sub_cats){
@@ -2145,9 +2160,9 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
         category_df <- category_df  %>% 
           select(-n) %>%
           mutate(header = name_str) %>%
-          mutate(temp_sort = ifelse(temp == "Missing", Inf, suppressWarnings(as.numeric(temp)))) %>%
-          arrange(temp_sort, temp) %>%
-          select(-temp_sort)
+          mutate(temp = factor(temp, levels = custom_levels)) %>% 
+          arrange(temp) %>%
+          mutate(temp = as.character(temp))
         
         
         if (titlecase) {
@@ -2175,9 +2190,9 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
         mutate(percentage = format_count_percent(n, total)) %>% 
         select(-n) %>%
         mutate(header = name_str) %>%
-        mutate(temp_sort = ifelse(temp == "Missing", Inf, suppressWarnings(as.numeric(temp)))) %>%
-        arrange(temp_sort, temp) %>%
-        select(-temp_sort)
+        mutate(temp = factor(temp, levels = custom_levels)) %>% 
+        arrange(temp) %>%
+        mutate(temp = as.character(temp))
       
       if (titlecase) {
         inner <- inner %>%
