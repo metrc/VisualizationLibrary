@@ -2145,7 +2145,10 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
         category_df <- category_df  %>% 
           select(-n) %>%
           mutate(header = name_str) %>%
-          arrange(temp == "Missing")
+          mutate(temp_sort = ifelse(temp == "Missing", Inf, suppressWarnings(as.numeric(temp)))) %>%
+          arrange(temp_sort, temp) %>%
+          select(-temp_sort)
+        
         
         if (titlecase) {
           category_df <- category_df %>%
@@ -2172,7 +2175,9 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
         mutate(percentage = format_count_percent(n, total)) %>% 
         select(-n) %>%
         mutate(header = name_str) %>%
-        arrange(temp == "Missing")
+        mutate(temp_sort = ifelse(temp == "Missing", Inf, suppressWarnings(as.numeric(temp)))) %>%
+        arrange(temp_sort, temp) %>%
+        select(-temp_sort)
       
       if (titlecase) {
         inner <- inner %>%
