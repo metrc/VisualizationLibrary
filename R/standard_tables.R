@@ -5516,3 +5516,96 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
   
   return(output)
 }
+
+#' Overall complications
+#'
+#' @description 
+#' Returns a table of the overall complications first ordered by complication alphabetically, then by relatedness (starting with most related), 
+#' then by severity (starting with most severe), each row is a unique combination of those items
+#'
+#' @param analytic analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode
+#' @param relatedness includes that column
+#' @param WB if the study is Weight Bearing
+#'
+#' @return html table
+#' @export
+#'
+#' @examples
+#' 
+overall_complications <- function(analytic, relatedness = TRUE, WB = NULL){
+    
+    if (is.null(WB)) {
+      df <- analytic %>%
+        select(study_id, complication_data) %>% 
+        separate_rows(complication_data, sep = ';new_row: ') %>%
+        separate(complication_data, into = c("redcap_event_name", "form_name", "event_type",
+                                             "complication", "notes", "diagnosis_date", "relatedness_val",
+                                             "severity_val", "treatment", "other_info"), sep = '\\|', fill = "right")
+    } else {
+      df <- analytic %>%
+        select(study_id, complication_data) %>% 
+        separate_rows(complication_data, sep = ';new_row: ') %>%
+        separate(complication_data, into = c("redcap_event_name", "visit_date", "complication", "diagnosis_date", 
+                                             "relatedness_val", "severity_val", "treatment_related", "new_or_previous_diagnosis", 
+                                             "form_notes", "other_info"), sep = '\\|', fill = "right")
+    }
+    
+    rel_levels <- c("Definitely related", 
+                    "Probably related", 
+                    "Possibly related", 
+                    "Unlikely related", 
+                    "Unrelated", 
+                    "Don't know")
+    
+    sev_levels <- c("Mild", 
+                    "Moderate", 
+                    "Severe and Undesirable", 
+                    "Life-threatening or disabling", 
+                    "Fatal")
+    
+    clean_df <- df %>%
+      filter(!is.na(complication)) %>% 
+      mutate(complication = str_trim(complication),
+             relatedness_val = str_trim(relatedness_val),
+             severity_val = str_trim(severity_val)) %>%
+      mutate(across(c(relatedness_val, severity_val), ~na_if(., ""))) %>%
+      mutate(relatedness_val = factor(relatedness_val, levels = rel_levels), 
+             severity_val = factor(severity_val, levels = sev_levels))
+    
+    if (relatedness) {
+      table_data <- clean_df %>%
+        group_by(complication, relatedness_val, severity_val) %>%
+        summarise(N = n(), 
+                  PTs = n_distinct(study_id), 
+                  .groups = 'drop') %>%
+        arrange(complication == "Other",
+                complication,
+                relatedness_val,
+                desc(severity_val))
+      
+    } else {
+      table_data <- clean_df %>%
+        group_by(complication, severity_val) %>%
+        summarise(N = n(), 
+                  PTs = n_distinct(study_id),
+                  .groups = 'drop') %>%
+        arrange(complication == "Other",
+                complication, 
+                desc(severity_val))
+    }
+    
+    final_table <- table_data %>%
+      mutate(`N[PTs]` = sprintf("%d[%d]", N, PTs)) %>%
+      select(-N, -PTs) %>%
+      rename(`Complication` = complication,
+             `Severity/Grade` = severity_val)
+    
+    if(relatedness) {
+      final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
+    }
+    
+    output <- kable(final_table, format = "html", align = 'l') %>%
+      kable_styling("striped", full_width = F, position = "left") 
+    
+    return(output)
+  }
