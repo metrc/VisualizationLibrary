@@ -4268,4 +4268,99 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
   return(table)
 }
 
-
+#' Overall complications closed
+#'
+#' @description 
+#' Returns a table of the overall complications separated by Treatment Arm (Group A vs Group B).
+#' Ordered by complication alphabetically (Other at bottom), then by relatedness, then by severity.
+#'
+#' @param analytic analytic data set that must include study_id, treatment_arm, complication_data
+#' @param relatedness includes that column
+#' @param WB if the study is Weight Bearing
+#'
+#' @return html table
+#' @export
+overall_complications_closed <- function(analytic, relatedness = TRUE, WB = NULL){
+  
+  if (is.null(WB)) {
+    df <- analytic %>%
+      select(study_id, treatment_arm, complication_data) %>% 
+      separate_rows(complication_data, sep = ';new_row: ') %>%
+      separate(complication_data, into = c("redcap_event_name", "form_name", "event_type",
+                                           "complication", "notes", "diagnosis_date", "relatedness_val",
+                                           "severity_val", "treatment", "other_info"), sep = '\\|', fill = "right")
+  } else {
+    df <- analytic %>%
+      select(study_id, treatment_arm, complication_data) %>% 
+      separate_rows(complication_data, sep = ';new_row: ') %>%
+      separate(complication_data, into = c("redcap_event_name", "visit_date", "complication", "diagnosis_date", 
+                                           "relatedness_val", "severity_val", "treatment_related", "new_or_previous_diagnosis", 
+                                           "form_notes", "other_info"), sep = '\\|', fill = "right")
+  }
+  
+  rel_levels <- c("Definitely related", 
+                  "Probably related", 
+                  "Possibly related", 
+                  "Unlikely related", 
+                  "Unrelated", 
+                  "Don't know")
+  
+  sev_levels <- c("Mild", 
+                  "Moderate", 
+                  "Severe and Undesirable", 
+                  "Life-threatening or disabling", 
+                  "Fatal")
+  
+  clean_df <- df %>%
+    filter(!is.na(complication)) %>% 
+    mutate(complication = str_trim(complication),
+           relatedness_val = str_trim(relatedness_val),
+           severity_val = str_trim(severity_val)) %>%
+    mutate(across(c(relatedness_val, severity_val), ~na_if(., ""))) %>%
+    mutate(relatedness_val = factor(relatedness_val, levels = rel_levels), 
+           severity_val = factor(severity_val, levels = sev_levels))
+  
+  if (relatedness) {
+    table_data <- clean_df %>%
+      group_by(complication, relatedness_val, severity_val) %>%
+      summarise(N_A = sum(treatment_arm == "Group A", na.rm = TRUE),
+                PTs_A = n_distinct(study_id[treatment_arm == "Group A"]),
+                N_B = sum(treatment_arm == "Group B", na.rm = TRUE),
+                PTs_B = n_distinct(study_id[treatment_arm == "Group B"]),
+                .groups = 'drop') %>%
+      arrange(complication == "Other",
+              complication,
+              relatedness_val,
+              desc(severity_val))
+    
+  } else {
+    table_data <- clean_df %>%
+      group_by(complication, severity_val) %>%
+      summarise( N_A = sum(treatment_arm == "Group A", na.rm = TRUE),
+                 PTs_A = n_distinct(study_id[treatment_arm == "Group A"]),
+                 N_B = sum(treatment_arm == "Group B", na.rm = TRUE),
+                 PTs_B = n_distinct(study_id[treatment_arm == "Group B"]),
+                 .groups = 'drop') %>%
+      arrange(complication == "Other",
+              complication, 
+              desc(severity_val))
+  }
+  
+  final_table <- table_data %>%
+    mutate(
+      `Group A (N[PTs])` = sprintf("%d[%d]", N_A, PTs_A),
+      `Group B (N[PTs])` = sprintf("%d[%d]", N_B, PTs_B)
+    ) %>%
+    select(-N_A, -PTs_A, -N_B, -PTs_B) %>%
+    rename(`Complication` = complication,
+           `Severity/Grade` = severity_val)
+  
+  if(relatedness) {
+    final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
+  }
+  
+  output <- kable(final_table, format = "html", align = 'l') %>%
+    kable_styling("striped", full_width = F, position = "left") 
+  
+  return(output)
+}
