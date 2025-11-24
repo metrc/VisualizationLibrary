@@ -4,7 +4,12 @@
 \alias{overall_complications}
 \title{Overall complications}
 \usage{
-overall_complications(analytic, relatedness = TRUE, WB = NULL)
+overall_complications(
+  analytic,
+  relatedness = TRUE,
+  WB = NULL,
+  breakout_other = FALSE
+)
 }
 \arguments{
 \item{analytic}{analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode}
@@ -12,6 +17,8 @@ overall_complications(analytic, relatedness = TRUE, WB = NULL)
 \item{relatedness}{includes that column}
 
 \item{WB}{if the study is Weight Bearing}
+
+\item{breakout_other}{If TRUE, replaces "Other" with "Other: [other_info]". Defaults to FALSE.}
 }
 \value{
 html table
