@@ -5526,13 +5526,11 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
 #' @param analytic analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode
 #' @param relatedness includes that column
 #' @param WB if the study is Weight Bearing
+#' @param breakout_other If TRUE, replaces "Other" with "Other: [other_info]". Defaults to FALSE.
 #'
 #' @return html table
 #' @export
-#'
-#' @examples
-#' 
-overall_complications <- function(analytic, relatedness = TRUE, WB = NULL){
+overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
     
     if (is.null(WB)) {
       df <- analytic %>%
@@ -5567,10 +5565,18 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL){
       filter(!is.na(complication)) %>% 
       mutate(complication = str_trim(complication),
              relatedness_val = str_trim(relatedness_val),
-             severity_val = str_trim(severity_val)) %>%
+             severity_val = str_trim(severity_val),
+             other_info = str_trim(other_info)) %>%
       mutate(across(c(relatedness_val, severity_val), ~na_if(., ""))) %>%
       mutate(relatedness_val = factor(relatedness_val, levels = rel_levels), 
              severity_val = factor(severity_val, levels = sev_levels))
+    
+    if (breakout_other) {
+      clean_df <- clean_df %>%
+        mutate(complication = case_when(
+          complication == "Other" & !is.na(other_info) & other_info != "" ~ paste0("Other: ", other_info),
+          TRUE ~ complication))
+    }
     
     if (relatedness) {
       table_data <- clean_df %>%
@@ -5578,7 +5584,7 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL){
         summarise(N = n(), 
                   PTs = n_distinct(study_id), 
                   .groups = 'drop') %>%
-        arrange(complication == "Other",
+        arrange(str_detect(complication, "^Other"),
                 complication,
                 relatedness_val,
                 desc(severity_val))
@@ -5589,7 +5595,7 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL){
         summarise(N = n(), 
                   PTs = n_distinct(study_id),
                   .groups = 'drop') %>%
-        arrange(complication == "Other",
+        arrange(str_detect(complication, "^Other"),
                 complication, 
                 desc(severity_val))
     }
@@ -5608,4 +5614,4 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL){
       kable_styling("striped", full_width = F, position = "left") 
     
     return(output)
-  }
+}
