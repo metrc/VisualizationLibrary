@@ -1902,7 +1902,7 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
     unzipped_complication <- df %>%
       separate_rows(complication_data, sep = ";new_row: ") %>% 
       separate(complication_data, into = c('redcap_event_name', 'form_name', 'event_type', 'complication',
-                                           'notes', 'diagnosis_date', 'severity', 'treatment', 'other_info'), 
+                                           'notes', 'diagnosis_date', 'relatedness', 'severity', 'treatment', 'other_info'), 
                sep='\\|') 
     
     
@@ -4294,7 +4294,7 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
 #'
 #' @return html table
 #' @export
-overall_complications_closed <- function(analytic, relatedness = TRUE, WB = NULL){
+closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL){
   
   if (is.null(WB)) {
     df <- analytic %>%
