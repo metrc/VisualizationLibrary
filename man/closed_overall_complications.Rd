@@ -4,7 +4,12 @@
 \alias{closed_overall_complications}
 \title{Overall complications closed}
 \usage{
-closed_overall_complications(analytic, relatedness = TRUE, WB = NULL)
+closed_overall_complications(
+  analytic,
+  relatedness = TRUE,
+  WB = NULL,
+  breakout_other = FALSE
+)
 }
 \arguments{
 \item{analytic}{analytic data set that must include study_id, treatment_arm, complication_data}
@@ -12,6 +17,8 @@ closed_overall_complications(analytic, relatedness = TRUE, WB = NULL)
 \item{relatedness}{includes that column}
 
 \item{WB}{if the study is Weight Bearing}
+
+\item{breakout_other}{boolean. If TRUE, replaces "Other" with "Other: [other_info]". Defaults to FALSE.}
 }
 \value{
 html table
