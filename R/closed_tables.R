@@ -4291,10 +4291,13 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
 #' @param analytic analytic data set that must include study_id, treatment_arm, complication_data
 #' @param relatedness includes that column
 #' @param WB if the study is Weight Bearing
+#' @param breakout_other boolean. If TRUE, replaces "Other" with "Other: [other_info]". Defaults to FALSE.
 #'
 #' @return html table
 #' @export
-closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL){
+closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
+  
+  confirm_stability_of_related_visual('overall_complications', 'f4cee245c9372bdecc98050dfcd9bc9c')
   
   if (is.null(WB)) {
     df <- analytic %>%
@@ -4329,10 +4332,18 @@ closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL
     filter(!is.na(complication)) %>% 
     mutate(complication = str_trim(complication),
            relatedness_val = str_trim(relatedness_val),
-           severity_val = str_trim(severity_val)) %>%
+           severity_val = str_trim(severity_val),
+           other_info = str_trim(other_info)) %>%
     mutate(across(c(relatedness_val, severity_val), ~na_if(., ""))) %>%
     mutate(relatedness_val = factor(relatedness_val, levels = rel_levels), 
            severity_val = factor(severity_val, levels = sev_levels))
+  
+  if (breakout_other) {
+    clean_df <- clean_df %>%
+      mutate(complication = case_when(
+        complication == "Other" & !is.na(other_info) & other_info != "" ~ paste0("Other: ", other_info),
+        TRUE ~ complication))
+  }
   
   if (relatedness) {
     table_data <- clean_df %>%
