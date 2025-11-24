@@ -5598,7 +5598,7 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL){
       mutate(`N[PTs]` = sprintf("%d[%d]", N, PTs)) %>%
       select(-N, -PTs) %>%
       rename(`Complication` = complication,
-             `Severity/Grade` = severity_val)
+             `Severity` = severity_val)
     
     if(relatedness) {
       final_table <- final_table %>% rename(`Relatedness` = relatedness_val)

@@ -4367,7 +4367,7 @@ closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL
     ) %>%
     select(-N_A, -PTs_A, -N_B, -PTs_B) %>%
     rename(`Complication` = complication,
-           `Severity/Grade` = severity_val)
+           `Severity` = severity_val)
   
   if(relatedness) {
     final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
