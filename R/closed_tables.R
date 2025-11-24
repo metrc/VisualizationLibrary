@@ -3284,7 +3284,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' @param splits Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them
 #' @param subcategory_constructs This allows a characteristic to have a construct as a sub category, 
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
-#'
+#' @param bottom_order_levels A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".
 #'
 #' @return html table
 #' @export
@@ -3294,10 +3294,9 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' generic_characteristics("Replace with Analytic Tibble", constructs="stages", names_vec="Stages")
 #' }
 closed_generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
-                                    filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
-                                    subcategory_constructs = c()){
-  
-  confirm_stability_of_related_visual('generic_characteristics', 'eaf3c24dd6f7b5b48c12c2348f56c9d2')
+                                         filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
+                                         subcategory_constructs = c(), bottom_order_levels = c("Missing")){
+  confirm_stability_of_related_visual('generic_characteristics', '13583c6d8b11c6198b62f69a9e6f244a')
   
   out <- NULL
   index_vec <- c()
@@ -3356,6 +3355,20 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       inner <- inner %>% 
         separate_rows(temp,sep = inner_split)
     }
+
+    non_bottom_temps <- sort(unique(inner$temp[!inner$temp %in% bottom_order_levels]))
+
+    numeric_temps <- suppressWarnings(as.numeric(non_bottom_temps))
+    is_numeric <- !is.na(numeric_temps)
+
+    numeric_sort_list <- non_bottom_temps[is_numeric] %>% 
+        as.numeric() %>% 
+        sort() %>% 
+        as.character()
+    
+    non_numeric_sort_list <- sort(non_bottom_temps[!is_numeric])
+    
+    custom_levels <- c(numeric_sort_list, non_numeric_sort_list, bottom_order_levels)
     
     if(!is.na(sub_construct)){
       sub_cats <- sort(unique(inner$sub_temp))
@@ -3378,7 +3391,9 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           count(temp) %>% 
           mutate(Total = format_count_percent(n, sum(category_df$n))) %>% 
           mutate(header = name_str) %>%
-          arrange(temp == "Missing")
+          mutate(temp = factor(temp, levels = custom_levels)) %>% 
+          arrange(temp) %>%
+          mutate(temp = as.character(temp))
         
         category_tot <- sum(category_df_all$n)
         category_tot_a <- sum(category_df %>% filter(treatment_arm=="Group A") %>% pull(n))
@@ -3388,16 +3403,15 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                          "Group B"=format_count_percent(category_tot_b, total),
                          Total=format_count_percent(category_tot, total))
         
-        category_df <- category_df   %>% 
+        category_df <- category_df    %>% 
           mutate(percentage = 
                    ifelse(treatment_arm == 'Group A', 
                           format_count_percent(n,  category_tot_a),
                           ifelse(treatment_arm == 'Group B', format_count_percent(n,  category_tot_b), NA)
                           )
-                   ) %>% 
+                        ) %>% 
           select(-n) %>%
           mutate(header = name_str) %>%
-          arrange(temp == "Missing") %>%
           pivot_wider(
             names_from = treatment_arm,
             values_from = percentage,
@@ -3443,7 +3457,6 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         mutate(percentage = format_count_percent(n, total)) %>% 
         select(-n) %>%
         mutate(header = name_str) %>%
-        arrange(temp == "Missing") %>%
         pivot_wider(
           names_from = treatment_arm,
           values_from = percentage,
@@ -3451,14 +3464,15 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         )%>%
         select(temp, header, `Group A`, `Group B`)
       
-      
       inner_all <- inner %>% 
         group_by(temp) %>% 
         count(temp) %>% 
         mutate(Total = format_count_percent(n, total)) %>% 
         select(-n) %>%
         mutate(header = name_str) %>%
-        arrange(temp == "Missing")
+        mutate(temp = factor(temp, levels = custom_levels)) %>% 
+        arrange(temp) %>%
+        mutate(temp = as.character(temp))
       
       inner <- full_join(inner_all, inner_some)%>%
         select(temp, header, `Group A`, `Group B`, Total)
