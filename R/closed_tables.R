@@ -3284,7 +3284,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' @param splits Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them
 #' @param subcategory_constructs This allows a characteristic to have a construct as a sub category, 
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
-#'
+#' @param bottom_order_levels A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".
 #'
 #' @return html table
 #' @export
@@ -3294,10 +3294,9 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' generic_characteristics("Replace with Analytic Tibble", constructs="stages", names_vec="Stages")
 #' }
 closed_generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
-                                    filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
-                                    subcategory_constructs = c()){
-  
-  confirm_stability_of_related_visual('generic_characteristics', 'eaf3c24dd6f7b5b48c12c2348f56c9d2')
+                                         filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
+                                         subcategory_constructs = c(), bottom_order_levels = c("Missing")){
+  confirm_stability_of_related_visual('generic_characteristics', '13583c6d8b11c6198b62f69a9e6f244a')
   
   out <- NULL
   index_vec <- c()
@@ -3356,6 +3355,20 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       inner <- inner %>% 
         separate_rows(temp,sep = inner_split)
     }
+
+    non_bottom_temps <- sort(unique(inner$temp[!inner$temp %in% bottom_order_levels]))
+
+    numeric_temps <- suppressWarnings(as.numeric(non_bottom_temps))
+    is_numeric <- !is.na(numeric_temps)
+
+    numeric_sort_list <- non_bottom_temps[is_numeric] %>% 
+        as.numeric() %>% 
+        sort() %>% 
+        as.character()
+    
+    non_numeric_sort_list <- sort(non_bottom_temps[!is_numeric])
+    
+    custom_levels <- c(numeric_sort_list, non_numeric_sort_list, bottom_order_levels)
     
     if(!is.na(sub_construct)){
       sub_cats <- sort(unique(inner$sub_temp))
@@ -3378,7 +3391,9 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           count(temp) %>% 
           mutate(Total = format_count_percent(n, sum(category_df$n))) %>% 
           mutate(header = name_str) %>%
-          arrange(temp == "Missing")
+          mutate(temp = factor(temp, levels = custom_levels)) %>% 
+          arrange(temp) %>%
+          mutate(temp = as.character(temp))
         
         category_tot <- sum(category_df_all$n)
         category_tot_a <- sum(category_df %>% filter(treatment_arm=="Group A") %>% pull(n))
@@ -3388,16 +3403,15 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                          "Group B"=format_count_percent(category_tot_b, total),
                          Total=format_count_percent(category_tot, total))
         
-        category_df <- category_df   %>% 
+        category_df <- category_df    %>% 
           mutate(percentage = 
                    ifelse(treatment_arm == 'Group A', 
                           format_count_percent(n,  category_tot_a),
                           ifelse(treatment_arm == 'Group B', format_count_percent(n,  category_tot_b), NA)
                           )
-                   ) %>% 
+                        ) %>% 
           select(-n) %>%
           mutate(header = name_str) %>%
-          arrange(temp == "Missing") %>%
           pivot_wider(
             names_from = treatment_arm,
             values_from = percentage,
@@ -3443,7 +3457,6 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         mutate(percentage = format_count_percent(n, total)) %>% 
         select(-n) %>%
         mutate(header = name_str) %>%
-        arrange(temp == "Missing") %>%
         pivot_wider(
           names_from = treatment_arm,
           values_from = percentage,
@@ -3451,14 +3464,15 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         )%>%
         select(temp, header, `Group A`, `Group B`)
       
-      
       inner_all <- inner %>% 
         group_by(temp) %>% 
         count(temp) %>% 
         mutate(Total = format_count_percent(n, total)) %>% 
         select(-n) %>%
         mutate(header = name_str) %>%
-        arrange(temp == "Missing")
+        mutate(temp = factor(temp, levels = custom_levels)) %>% 
+        arrange(temp) %>%
+        mutate(temp = as.character(temp))
       
       inner <- full_join(inner_all, inner_some)%>%
         select(temp, header, `Group A`, `Group B`, Total)
@@ -4268,4 +4282,99 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
   return(table)
 }
 
-
+#' Overall complications closed
+#'
+#' @description 
+#' Returns a table of the overall complications separated by Treatment Arm (Group A vs Group B).
+#' Ordered by complication alphabetically (Other at bottom), then by relatedness, then by severity.
+#'
+#' @param analytic analytic data set that must include study_id, treatment_arm, complication_data
+#' @param relatedness includes that column
+#' @param WB if the study is Weight Bearing
+#'
+#' @return html table
+#' @export
+overall_complications_closed <- function(analytic, relatedness = TRUE, WB = NULL){
+  
+  if (is.null(WB)) {
+    df <- analytic %>%
+      select(study_id, treatment_arm, complication_data) %>% 
+      separate_rows(complication_data, sep = ';new_row: ') %>%
+      separate(complication_data, into = c("redcap_event_name", "form_name", "event_type",
+                                           "complication", "notes", "diagnosis_date", "relatedness_val",
+                                           "severity_val", "treatment", "other_info"), sep = '\\|', fill = "right")
+  } else {
+    df <- analytic %>%
+      select(study_id, treatment_arm, complication_data) %>% 
+      separate_rows(complication_data, sep = ';new_row: ') %>%
+      separate(complication_data, into = c("redcap_event_name", "visit_date", "complication", "diagnosis_date", 
+                                           "relatedness_val", "severity_val", "treatment_related", "new_or_previous_diagnosis", 
+                                           "form_notes", "other_info"), sep = '\\|', fill = "right")
+  }
+  
+  rel_levels <- c("Definitely related", 
+                  "Probably related", 
+                  "Possibly related", 
+                  "Unlikely related", 
+                  "Unrelated", 
+                  "Don't know")
+  
+  sev_levels <- c("Mild", 
+                  "Moderate", 
+                  "Severe and Undesirable", 
+                  "Life-threatening or disabling", 
+                  "Fatal")
+  
+  clean_df <- df %>%
+    filter(!is.na(complication)) %>% 
+    mutate(complication = str_trim(complication),
+           relatedness_val = str_trim(relatedness_val),
+           severity_val = str_trim(severity_val)) %>%
+    mutate(across(c(relatedness_val, severity_val), ~na_if(., ""))) %>%
+    mutate(relatedness_val = factor(relatedness_val, levels = rel_levels), 
+           severity_val = factor(severity_val, levels = sev_levels))
+  
+  if (relatedness) {
+    table_data <- clean_df %>%
+      group_by(complication, relatedness_val, severity_val) %>%
+      summarise(N_A = sum(treatment_arm == "Group A", na.rm = TRUE),
+                PTs_A = n_distinct(study_id[treatment_arm == "Group A"]),
+                N_B = sum(treatment_arm == "Group B", na.rm = TRUE),
+                PTs_B = n_distinct(study_id[treatment_arm == "Group B"]),
+                .groups = 'drop') %>%
+      arrange(complication == "Other",
+              complication,
+              relatedness_val,
+              desc(severity_val))
+    
+  } else {
+    table_data <- clean_df %>%
+      group_by(complication, severity_val) %>%
+      summarise( N_A = sum(treatment_arm == "Group A", na.rm = TRUE),
+                 PTs_A = n_distinct(study_id[treatment_arm == "Group A"]),
+                 N_B = sum(treatment_arm == "Group B", na.rm = TRUE),
+                 PTs_B = n_distinct(study_id[treatment_arm == "Group B"]),
+                 .groups = 'drop') %>%
+      arrange(complication == "Other",
+              complication, 
+              desc(severity_val))
+  }
+  
+  final_table <- table_data %>%
+    mutate(
+      `Group A (N[PTs])` = sprintf("%d[%d]", N_A, PTs_A),
+      `Group B (N[PTs])` = sprintf("%d[%d]", N_B, PTs_B)
+    ) %>%
+    select(-N_A, -PTs_A, -N_B, -PTs_B) %>%
+    rename(`Complication` = complication,
+           `Severity/Grade` = severity_val)
+  
+  if(relatedness) {
+    final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
+  }
+  
+  output <- kable(final_table, format = "html", align = 'l') %>%
+    kable_styling("striped", full_width = F, position = "left") 
+  
+  return(output)
+}
