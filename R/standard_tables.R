@@ -2054,6 +2054,7 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #' @param splits Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them
 #' @param subcategory_constructs This allows a characteristic to have a construct as a sub category, 
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
+#' @param bottom_order_levels A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".
 #'
 #' @return html table
 #' @export
@@ -2065,7 +2066,7 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #' }
 generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
-                                    subcategory_constructs = c()){
+                                    subcategory_constructs = c(), bottom_order_levels = c("Missing")){
 
   out <- NULL
   index_vec <- c()
@@ -2123,6 +2124,20 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
         separate_rows(temp,sep = inner_split)
     }
     
+    non_bottom_temps <- sort(unique(inner$temp[!inner$temp %in% bottom_order_levels]))
+    
+    numeric_temps <- suppressWarnings(as.numeric(non_bottom_temps))
+    is_numeric <- !is.na(numeric_temps)
+    
+    numeric_sort_list <- non_bottom_temps[is_numeric] %>% 
+      as.numeric() %>% 
+      sort() %>% 
+      as.character()
+    
+    non_numeric_sort_list <- sort(non_bottom_temps[!is_numeric])
+    
+    custom_levels <- c(numeric_sort_list, non_numeric_sort_list, bottom_order_levels)
+    
     if(!is.na(sub_construct)){
       sub_cats <- sort(unique(inner$sub_temp))
       if("Missing" %in% sub_cats){
@@ -2145,7 +2160,10 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
         category_df <- category_df  %>% 
           select(-n) %>%
           mutate(header = name_str) %>%
-          arrange(temp == "Missing")
+          mutate(temp = factor(temp, levels = custom_levels)) %>% 
+          arrange(temp) %>%
+          mutate(temp = as.character(temp))
+        
         
         if (titlecase) {
           category_df <- category_df %>%
@@ -2172,7 +2190,9 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
         mutate(percentage = format_count_percent(n, total)) %>% 
         select(-n) %>%
         mutate(header = name_str) %>%
-        arrange(temp == "Missing")
+        mutate(temp = factor(temp, levels = custom_levels)) %>% 
+        arrange(temp) %>%
+        mutate(temp = as.character(temp))
       
       if (titlecase) {
         inner <- inner %>%
@@ -5492,4 +5512,103 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
     kable_styling("striped", full_width = F, position="left") 
   
   return(output)
+}
+
+#' Overall complications
+#'
+#' @description 
+#' Returns a table of the overall complications first ordered by complication alphabetically, then by relatedness (starting with most related), 
+#' then by severity (starting with most severe), each row is a unique combination of those items
+#'
+#' @param analytic analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode
+#' @param relatedness includes that column
+#' @param WB if the study is Weight Bearing
+#' @param breakout_other If TRUE, replaces "Other" with "Other: [other_info]". Defaults to FALSE.
+#'
+#' @return html table
+#' @export
+overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
+    
+    if (is.null(WB)) {
+      df <- analytic %>%
+        select(study_id, complication_data) %>% 
+        separate_rows(complication_data, sep = ';new_row: ') %>%
+        separate(complication_data, into = c("redcap_event_name", "form_name", "event_type",
+                                             "complication", "notes", "diagnosis_date", "relatedness_val",
+                                             "severity_val", "treatment", "other_info"), sep = '\\|', fill = "right")
+    } else {
+      df <- analytic %>%
+        select(study_id, complication_data) %>% 
+        separate_rows(complication_data, sep = ';new_row: ') %>%
+        separate(complication_data, into = c("redcap_event_name", "visit_date", "complication", "diagnosis_date", 
+                                             "relatedness_val", "severity_val", "treatment_related", "new_or_previous_diagnosis", 
+                                             "form_notes", "other_info"), sep = '\\|', fill = "right")
+    }
+    
+    rel_levels <- c("Definitely related", 
+                    "Probably related", 
+                    "Possibly related", 
+                    "Unlikely related", 
+                    "Unrelated", 
+                    "Don't know")
+    
+    sev_levels <- c("Mild", 
+                    "Moderate", 
+                    "Severe and Undesirable", 
+                    "Life-threatening or disabling", 
+                    "Fatal")
+    
+    clean_df <- df %>%
+      filter(!is.na(complication)) %>% 
+      mutate(complication = str_trim(complication),
+             relatedness_val = str_trim(relatedness_val),
+             severity_val = str_trim(severity_val),
+             other_info = str_trim(other_info)) %>%
+      mutate(across(c(relatedness_val, severity_val), ~na_if(., ""))) %>%
+      mutate(relatedness_val = factor(relatedness_val, levels = rel_levels), 
+             severity_val = factor(severity_val, levels = sev_levels))
+    
+    if (breakout_other) {
+      clean_df <- clean_df %>%
+        mutate(complication = case_when(
+          complication == "Other" & !is.na(other_info) & other_info != "" ~ paste0("Other: ", other_info),
+          TRUE ~ complication))
+    }
+    
+    if (relatedness) {
+      table_data <- clean_df %>%
+        group_by(complication, relatedness_val, severity_val) %>%
+        summarise(N = n(), 
+                  PTs = n_distinct(study_id), 
+                  .groups = 'drop') %>%
+        arrange(str_detect(complication, "^Other"),
+                complication,
+                relatedness_val,
+                desc(severity_val))
+      
+    } else {
+      table_data <- clean_df %>%
+        group_by(complication, severity_val) %>%
+        summarise(N = n(), 
+                  PTs = n_distinct(study_id),
+                  .groups = 'drop') %>%
+        arrange(str_detect(complication, "^Other"),
+                complication, 
+                desc(severity_val))
+    }
+    
+    final_table <- table_data %>%
+      mutate(`N[PTs]` = sprintf("%d[%d]", N, PTs)) %>%
+      select(-N, -PTs) %>%
+      rename(`Complication` = complication,
+             `Severity` = severity_val)
+    
+    if(relatedness) {
+      final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
+    }
+    
+    output <- kable(final_table, format = "html", align = 'l') %>%
+      kable_styling("striped", full_width = F, position = "left") 
+    
+    return(output)
 }
