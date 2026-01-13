@@ -6,7 +6,6 @@
 \usage{
 closed_enrollment_by_site_last_days_var_disc(
   analytic,
-  days = 0,
   discontinued = "discontinued",
   discontinued_colname = "Discontinued",
   include_exclusive_safety_set = FALSE,
@@ -18,8 +17,6 @@ closed_enrollment_by_site_last_days_var_disc(
 not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_date, 
 facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm,}
 
-\item{days}{the number of last days to include in the last days summary section of the table}
-
 \item{discontinued}{the name of the construct where you can specify your discontinued construct like 
 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')}
 
@@ -28,6 +25,8 @@ choosing (defaults to 'Discontinued')}
 
 \item{include_exclusive_safety_set}{this is a toggle that will include a exclusive_safety_set construct 
 if you want it included (defaults to FALSE)}
+
+\item{days}{the number of last days to include in the last days summary section of the table}
 }
 \value{
 An HTML table.

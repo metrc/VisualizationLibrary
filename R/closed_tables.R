@@ -1646,18 +1646,20 @@ closed_certification_date_data <- function(analytic){
 #' closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", include_exclusive_safety_set = FALSE, footnotes = TRUE)
 #' closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", include_exclusive_safety_set = TRUE)
 #' 
-closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, discontinued="discontinued", 
+closed_enrollment_by_site_last_days_var_disc <- function(analytic, discontinued="discontinued", 
                                                          discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, 
                                                          footnotes=NULL){
   
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c("screened", "eligible", "refused", "consented", "enrolled", "randomized",
-                           "not_consented", "site_certification_date", "facilitycode", "consent_date",
-                           "not_randomized", "discontinued", "treatment_arm", "consented_and_randomized", "screened_date"), 
-    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
-                      "Boolean", "Date", "FacilityCode", "Date", "Boolean", "Boolean", "TreatmentArm", 
-                      "Boolean", "Date"))
+    example_constructs = c("consented_and_randomized", "discontinued", 
+                           "enrolled", "exclusive_safety_set", 
+                           "eligible", 
+                           "site_certification_date", "facilitycode"), 
+    example_types = c("Boolean", "Boolean", 
+                      "Boolean", "Boolean", 
+                      "Boolean", 
+                      "Date", "FacilityCode"))
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-11-14)
   
@@ -1669,14 +1671,14 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
   
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set),
+                  enrollment_by_site_last_days_var_disc_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set),
                   "<h4>Group B</h4><br />",
-                  enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set))
+                  enrollment_by_site_last_days_var_disc_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  enrollment_by_site_last_days_var_disc_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+                  enrollment_by_site_last_days_var_disc_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE))
   }
 
   return(out)
@@ -2126,17 +2128,13 @@ closed_characteristics_treatment <- function(analytic){
 #' 
 closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", 
                                                               discontinued_colname="Discontinued",
-                                                              pre_screened = NULL,
-                                                              pre_screened_eligible = NULL,
                                                               only_total=FALSE, footnotes = NULL){
   analytic <- if_needed_generate_example_data(
-    analytic,
-    example_constructs = c("screened", "eligible", "refused", "not_consented", "consented", 
-                           "not_randomized", "randomized", "enrolled", "site_certification_date", 
-                           "facilitycode", "discontinued", 'treatment_arm'),
-    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
-                      "Boolean", "Boolean", "Boolean", "Date", 
-                      "FacilityCode", "Boolean", "TreatmentArm")) 
+    analytic, 
+    example_constructs = c("eligible", "consented", "enrolled", "randomized",
+                           "facilitycode", "discontinued"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean",
+                      "FacilityCode", "Boolean"))
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
@@ -2148,22 +2146,18 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
   
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, 
-                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible,
+                  enrollment_status_by_site_var_discontinued_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, 
                                                              only_total=only_total),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, 
-                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible,
+                  enrollment_status_by_site_var_discontinued_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, 
                                                              only_total=only_total))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname,
-                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible,
+                  enrollment_status_by_site_var_discontinued_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname,
                                                              only_total=only_total) %>% 
                     add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname,
-                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible,
+                  enrollment_status_by_site_var_discontinued_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname,
                                                              only_total=only_total) %>% 
                     add_footnote(footnotes, notation="number", escape = FALSE))
   }
