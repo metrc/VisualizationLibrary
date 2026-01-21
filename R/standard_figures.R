@@ -559,11 +559,6 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, pre_eligible_n
                                  filter(consented) %>% 
                                  filter(double_check) %>% 
                                  pull(double_check_eligible), na.rm=TRUE)
-  post_consent_ineligible <- sum(analytic %>% 
-                                   filter(eligible) %>% 
-                                   filter(consented) %>% 
-                                   filter(double_check) %>% 
-                                   pull(double_check_ineligible), na.rm=TRUE)
   Randomized <- sum(analytic %>% 
                       filter(eligible) %>% 
                       filter(consented) %>% 
@@ -592,6 +587,13 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, pre_eligible_n
                              filter(consented) %>% 
                              filter(!randomized|is.na(randomized)) %>%
                              pull(adjudicated_discontinued), na.rm=TRUE)
+    
+    post_consent_ineligible <- sum(analytic %>% 
+                                     filter(eligible) %>% 
+                                     filter(consented) %>% 
+                                     filter(double_check) %>% 
+                                     filter(!adjudicated_discontinued|is.na(adjudicated_discontinued)) %>% 
+                                     pull(double_check_ineligible), na.rm=TRUE)
   } else{
     Post_Randomization_Discontinuation <- sum(analytic %>% 
                              filter(eligible) %>% 
@@ -606,6 +608,13 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, pre_eligible_n
                              filter(consented) %>% 
                              filter(!randomized|is.na(randomized)) %>%
                              pull(discontinued), na.rm=TRUE)
+    
+    post_consent_ineligible <- sum(analytic %>% 
+                                     filter(eligible) %>% 
+                                     filter(consented) %>% 
+                                     filter(double_check) %>% 
+                                     filter(!discontinued|is.na(discontinued)) %>% 
+                                     pull(double_check_ineligible), na.rm=TRUE)
   }
   
   
