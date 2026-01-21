@@ -590,8 +590,6 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, pre_eligible_n
     Pre_Randomization_Discontinuation <- sum(analytic %>% 
                              filter(eligible) %>% 
                              filter(consented) %>% 
-                             filter(double_check) %>% 
-                             filter(double_check_eligible) %>% 
                              filter(!randomized|is.na(randomized)) %>%
                              pull(adjudicated_discontinued), na.rm=TRUE)
   } else{
@@ -606,8 +604,6 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, pre_eligible_n
     Pre_Randomization_Discontinuation <- sum(analytic %>% 
                              filter(eligible) %>% 
                              filter(consented) %>% 
-                             filter(double_check) %>% 
-                             filter(double_check_eligible) %>% 
                              filter(!randomized|is.na(randomized)) %>%
                              pull(discontinued), na.rm=TRUE)
   }
@@ -655,15 +651,13 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, pre_eligible_n
 
       cons [style="rounded,filled", fillcolor="#ccccff", pos="5,10!", shape = box, width=2.4, height=1, label = "Consented (n=',Consented,')"];
 
-      missing_post_consent_check [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "',missing_post_consent_check_label,' (n=',missing_post_consent_check,')\n',not_started_post_consent_check_label,' (n=',not_started_post_consent_check,')\n',late_post_consent_check_label,' (n=',late_post_consent_check,')"];
+      missing_post_consent_check [style="rounded,filled", fillcolor="#ccccff", pos="10,10!", shape = box, width=2.4, height=1, label = "Pre Randomization\n',disc_str,' (n=',Pre_Randomization_Discontinuation,')\n',missing_post_consent_check_label,' (n=',missing_post_consent_check,')\n',not_started_post_consent_check_label,' (n=',not_started_post_consent_check,')\n',late_post_consent_check_label,' (n=',late_post_consent_check,')"];
 
       post_consent_check [style="rounded,filled", fillcolor="#ccccff", pos="5,8!", shape = box, width=2.4, height=1, label = "',post_consent_check_label,' (n=',post_consent_check,')"];
       post_consent_eligible [style="rounded,filled", fillcolor="#ccccff", pos="5,6!", shape = box, width=2.4, height=1, label = "',post_consent_eligible_label,' (n=',post_consent_eligible,')"];
       
       post_consent_ineligible [style="rounded,filled", fillcolor="#ccccff", pos="10,8!", shape = box, width=2.4, height=1, label = "',post_consent_ineligible_label,' (n=',post_consent_ineligible,')"];
       
-      discontinuation_pre_consent [style="rounded,filled", fillcolor="#ccccff", pos="10,6!", shape = box, width=2.4, height=1, label = "Pre Randomization\n',disc_str,' (n=',Pre_Randomization_Discontinuation,')"];
-
       rand [style="rounded,filled", fillcolor="#ccccff", pos="5,4!", shape = box, width=2.4, height=1, label = "Randomized (n=',Randomized,')"];
       
       enrolled [style="rounded,filled", fillcolor="#ccccff", pos="5,2!", shape = box, width=2.4, height=1, label = "Eligible and Enrolled (n=',Enrolled,')"];
@@ -687,7 +681,6 @@ dsmb_consort_diagram_pre_post_consent_check <- function(analytic, pre_eligible_n
       post_consent_check -> post_consent_eligible
       post_consent_check -> post_consent_ineligible
       post_consent_eligible -> rand
-      post_consent_eligible -> discontinuation_pre_consent
       rand -> post_randomization_discontinuation
       rand -> enrolled
       enrolled -> active
