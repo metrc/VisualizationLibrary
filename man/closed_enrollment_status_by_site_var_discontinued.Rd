@@ -8,8 +8,6 @@ closed_enrollment_status_by_site_var_discontinued(
   analytic,
   discontinued = "discontinued",
   discontinued_colname = "Discontinued",
-  pre_screened = NULL,
-  pre_screened_eligible = NULL,
   only_total = FALSE,
   footnotes = NULL
 )
@@ -22,11 +20,11 @@ enrolled, not_consented, site_certification_date, facilitycode, treatment_arm}
 
 \item{discontinued_colname}{column name for discontinued to appear in visualization like "Adjudicated Discontinued"}
 
+\item{only_total}{hide all the site specific rows}
+
 \item{pre_screened}{name of the construct for pre-screened status defaults to NULL}
 
 \item{pre_screened_eligible}{name of the construct for pre-screened eligible status defaults to NULL}
-
-\item{only_total}{hide all the site specific rows}
 }
 \value{
 An HTML table.
