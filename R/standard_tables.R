@@ -200,12 +200,169 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
   
   header <- c(" " = no_header, "Among Eligible" = 3, "Among Consented" = 3)
   
-  table<- kable(table_raw, format="html", align='l') %>%
+  table <- kable(table_raw, format="html", align='l') %>%
     add_header_above(header) %>%
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
 
+#' enrollment_status_by_site_var_discontinued_i
+#'
+#' @description 
+#' Visualizes the totals of screening, eligibility, and consent by site.
+#'
+#' @param analytic Analytic data set. Must include: screened, eligible, refused, 
+#' consented, not_consented, site_certification_date, facilitycode.
+#' @param pre_screened Optional column name for pre-screened counts.
+#' @param pre_screened_eligible Optional column name for pre-screened eligible counts.
+#' @param only_total hide all the site specific rows
+#'
+#' @return An HTML table.
+#' @export
+enrollment_status_by_site_var_discontinued_i <- function(analytic, pre_screened = NULL,
+                                                pre_screened_eligible = NULL, only_total=FALSE){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "eligible", "refused", "consented", "not_consented", 
+                           "site_certification_date", "facilitycode"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Date", "FacilityCode"))
+  
+  df <- analytic %>%
+    select(screened, eligible, refused, not_consented, consented,
+           site_certification_date, facilitycode, any_of(c(pre_screened, pre_screened_eligible)))
+  
+  if (!is.null(pre_screened)) colnames(df)[which(names(df) == pre_screened)] <- "pre_screened"
+  if (!is.null(pre_screened_eligible)) colnames(df)[which(names(df) == pre_screened_eligible)] <- "pre_screened_eligible"
+  
+  df <- df %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certification_date))) %>% 
+    rename(Facility = facilitycode) %>% 
+    filter(!is.na(Facility))
+  
+  if (!is.null(pre_screened) && !is.null(pre_screened_eligible)) {
+    df_1st <- df %>% group_by(Facility) %>%
+      summarize(`Days Certified` = site_certified_days[1],
+                `Pre-screened` = sum(pre_screened),
+                `Pre-screened Eligible` = sum(pre_screened_eligible),
+                Screened = sum(screened), Eligible = sum(eligible))
+  } else if (!is.null(pre_screened)) {
+    df_1st <- df %>% group_by(Facility) %>%
+      summarize(`Days Certified` = site_certified_days[1],
+                `Pre-screened` = sum(pre_screened),
+                Screened = sum(screened), Eligible = sum(eligible))
+  } else if (!is.null(pre_screened_eligible)) {
+    df_1st <- df %>% group_by(Facility) %>%
+      summarize(`Days Certified` = site_certified_days[1],
+                `Pre-screened Eligible` = sum(pre_screened_eligible),
+                Screened = sum(screened), Eligible = sum(eligible))
+  } else {
+    df_1st <- df %>% group_by(Facility) %>%
+      summarize(`Days Certified` = site_certified_days[1],
+                Screened = sum(screened), Eligible = sum(eligible))
+  }
+  
+  df_2nd <- df %>% 
+    filter(eligible == TRUE) %>% 
+    group_by(Facility) %>% 
+    summarize(Refused = sum(refused), 'Not Consented' = sum(not_consented), Consented = sum(consented))
+  
+  table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
+    mutate_all(~ifelse(is.na(.), 0, .)) %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    mutate(`Days Certified`=ifelse(is_total,"-",`Days Certified`)) %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total) %>% 
+    mutate(Consented = format_count_percent(Consented, Eligible)) %>% 
+    mutate(Refused = format_count_percent(Refused, Eligible)) %>% 
+    mutate(`Not Consented` = format_count_percent(`Not Consented`, Eligible)) %>% 
+    mutate(Eligible = format_count_percent(Eligible, Screened))
+  
+  if(only_total) table_raw <- table_raw %>% filter(Facility=="Total")
+  
+  n_pre    <- !is.null(pre_screened)
+  n_pre_el <- !is.null(pre_screened_eligible)
+  no_header_left <- sum(c(n_pre, n_pre_el)) + 4 
+  
+  header_left <- c(" " = no_header_left, "Among Eligible" = 3)
+  
+  table <- kable(table_raw, format="html", align='l') %>%
+    add_header_above(header_left) %>%
+    kable_styling("striped", full_width = F, position="left")
+  
+  return(table)
+}
+
+#' enrollment_status_by_site_var_discontinued_ii
+#'
+#' @description 
+#' Visualizes the totals of randomization, discontinuation, and enrollment by site.
+#' Values are calculated as percentages of the "Consented" population.
+#'
+#' @param analytic Analytic data set. Must include: eligible, consented, enrolled, 
+#' randomized, facilitycode, discontinued (or custom name).
+#' @param discontinued meta construct for discontinued
+#' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
+#' @param only_total hide all the site specific rows
+#'
+#' @return An HTML table.
+#' @export
+enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued="discontinued", 
+                                                 discontinued_colname="Discontinued", only_total=FALSE){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("eligible", "consented", "enrolled", "randomized",
+                           "facilitycode", "discontinued"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean",
+                      "FacilityCode", "Boolean"))
+  
+  df <- analytic %>%
+    select(eligible, consented, randomized, enrolled, facilitycode, any_of(discontinued))
+  
+  colnames(df)[which(names(df) == discontinued)] <- "discontinued"
+  
+  df <- df %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    rename(Facility = facilitycode) %>% 
+    filter(!is.na(Facility))
+  
+  df_consented_totals <- df %>%
+    filter(eligible == TRUE) %>%
+    group_by(Facility) %>%
+    summarize(Consented_Count = sum(consented))
+  
+  df_main <- df %>% 
+    filter(eligible == TRUE & consented == TRUE) %>% 
+    group_by(Facility) %>% 
+    summarize("Randomized" = sum(randomized),
+              !!discontinued_colname := sum(discontinued),
+              "Enrolled" = sum(enrolled)) 
+  
+  table_raw <- full_join(df_consented_totals, df_main, by = 'Facility') %>% 
+    mutate_all(~ifelse(is.na(.), 0, .)) %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total) %>% 
+    mutate(!!discontinued_colname := format_count_percent(!!sym(discontinued_colname), Consented_Count)) %>% 
+    mutate(Randomized = format_count_percent(Randomized, Consented_Count)) %>% 
+    mutate(Enrolled = format_count_percent(Enrolled, Consented_Count)) %>%
+    select(-Consented_Count)
+  
+  if(only_total) table_raw <- table_raw %>% filter(Facility=="Total")
+  
+  header_right <- c(" " = 1, "Among Consented" = 3)
+  
+  table <- kable(table_raw, format="html", align='l') %>%
+    add_header_above(header_right) %>%
+    kable_styling("striped", full_width = F, position="left")
+  
+  return(table)
+}
 
 #' Monitoring required
 #'
@@ -2054,6 +2211,7 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #' @param splits Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them
 #' @param subcategory_constructs This allows a characteristic to have a construct as a sub category, 
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
+#' @param bottom_order_levels A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".
 #'
 #' @return html table
 #' @export
@@ -2065,7 +2223,7 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #' }
 generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
-                                    subcategory_constructs = c()){
+                                    subcategory_constructs = c(), bottom_order_levels = c("Missing")){
 
   out <- NULL
   index_vec <- c()
@@ -2123,6 +2281,20 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
         separate_rows(temp,sep = inner_split)
     }
     
+    non_bottom_temps <- sort(unique(inner$temp[!inner$temp %in% bottom_order_levels]))
+    
+    numeric_temps <- suppressWarnings(as.numeric(non_bottom_temps))
+    is_numeric <- !is.na(numeric_temps)
+    
+    numeric_sort_list <- non_bottom_temps[is_numeric] %>% 
+      as.numeric() %>% 
+      sort() %>% 
+      as.character()
+    
+    non_numeric_sort_list <- sort(non_bottom_temps[!is_numeric])
+    
+    custom_levels <- c(numeric_sort_list, non_numeric_sort_list, bottom_order_levels)
+    
     if(!is.na(sub_construct)){
       sub_cats <- sort(unique(inner$sub_temp))
       if("Missing" %in% sub_cats){
@@ -2145,7 +2317,10 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
         category_df <- category_df  %>% 
           select(-n) %>%
           mutate(header = name_str) %>%
-          arrange(temp == "Missing")
+          mutate(temp = factor(temp, levels = custom_levels)) %>% 
+          arrange(temp) %>%
+          mutate(temp = as.character(temp))
+        
         
         if (titlecase) {
           category_df <- category_df %>%
@@ -2172,7 +2347,9 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
         mutate(percentage = format_count_percent(n, total)) %>% 
         select(-n) %>%
         mutate(header = name_str) %>%
-        arrange(temp == "Missing")
+        mutate(temp = factor(temp, levels = custom_levels)) %>% 
+        arrange(temp) %>%
+        mutate(temp = as.character(temp))
       
       if (titlecase) {
         inner <- inner %>%
@@ -2210,86 +2387,6 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
   }
   return(vis)
 }
-
-
-
-#' Amputations and gustilo injury characteristics
-#'
-#' @description 
-#' Visualizes the injury characteristics for the amputation status (by category), and the fracture type 
-#' (by gustilo). In order for the indents to work properly, the injury_gustilo_type 
-#' construct must contain 7 unique values and the injury_amputation_status construct must contain 3 
-#' unique values. 
-#'
-#' @param analytic analytic data set that must include constructs enrolled, injury_gustilo_type, injury_amputation_status
-#'
-#' @return html table
-#' @export
-#'
-#' @examples
-#' amputations_and_gustilo_injury_characteristics("Replace with Analytic Tibble")
-#' 
-amputations_and_gustilo_injury_characteristics <- function(analytic){
-  analytic <- if_needed_generate_example_data(
-    analytic,
-    example_constructs = c('enrolled', 'injury_gustilo_type', 'injury_amputation_status'),
-    example_types = c('Boolean', 'Category-U7', 'Category-U3')) 
-  
-  pull <- analytic %>% 
-    filter(enrolled) %>%
-    select(injury_gustilo_type, injury_amputation_status)
-  
-  inj_gust <- pull %>%  
-    select(injury_gustilo_type) %>% 
-    mutate(injury_gustilo_type = strsplit(as.character(injury_gustilo_type), ";\\s*")) %>%
-    unnest(injury_gustilo_type) %>%
-    group_by(injury_gustilo_type) %>%
-    summarise(count = n()) %>%
-    mutate(injury_gustilo_type = coalesce(injury_gustilo_type, 'Unknown'))
-  
-  total <- inj_gust %>%
-    mutate(count=as.numeric(count)) %>%
-    pull(count) %>%
-    sum() 
-  
-  out_gustilo <- inj_gust %>%
-    mutate(count= format_count_percent(count, total))
-  
-  amputation_status <- pull %>% 
-    select(injury_amputation_status) %>% 
-    count(injury_amputation_status) %>%
-    pivot_longer(-n) %>%
-    mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
-    select(-name) %>%
-    rename(count = n, injury_gustilo_type = value)
-  
-  total_amputations <- amputation_status %>%
-    pull(count) %>% 
-    sum()
-  
-  out_amputations <- amputation_status %>%
-    mutate(count= format_count_percent(count, total_amputations))
-  
-  n_amputations <- data.frame(
-    count = as.character(total_amputations),
-    injury_gustilo_type = "Amputation Status")
-  
-  n_gustilo <- data.frame(
-    count = as.character(total),
-    injury_gustilo_type = "Fracture Type")
-  
-  combined <- bind_rows(n_amputations, out_amputations,n_gustilo, out_gustilo) %>%
-    relocate(count, .after=injury_gustilo_type) %>%
-    rename('Fracture Type'=injury_gustilo_type)
-  
-  output<- kable(combined, format="html", align='l', col.names = c(" ", " ")) %>%
-    add_indent(positions = c(2,3,4,6,7,8,9,10,11,12)) %>% 
-    kable_styling("striped", full_width = F, position="left") %>% 
-    row_spec(c(1,5), bold=T,hline_after = T)
-  
-  return(output)
-}
-
 
 #' Refusal reasons by each site
 #'
@@ -2768,6 +2865,303 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
       last <- last[, c(seq(from = 1, to = (ncol(last) - 7)))]
       header_num <- header_num[c(seq(from = 1, to = (length(days) + 1)))]
     }
+  }
+  
+  table <- kable(last, format="html", align='l') %>%
+    add_header_above(header_num) %>%
+    kable_styling("striped", full_width = F, position="left") %>% 
+    row_spec(nrow(last), bold = TRUE)
+  
+  return(table)
+}
+
+#' enrollment_by_site_last_days_var_disc_i
+#'
+#' @description 
+#' Visualizes the screening and eligibility status of subjects (Left half of original table).
+#' Includes: Screened, Eligible, Refused, and Not Consented.
+#'
+#' @param analytic Analytic data set.
+#' @param days Number of last days to include.
+#' @param average Return average over the time period.
+#' @param cumulative_data Include final counts.
+#'
+#' @return An HTML table.
+#' @export
+enrollment_by_site_last_days_var_disc_i <- function(analytic, days = 0, 
+                                         average = FALSE, 
+                                         cumulative_data = TRUE){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "eligible", "refused", 
+                           "not_consented", "site_certification_date", 
+                           "facilitycode", "screened_date"), 
+    example_types = c("Boolean", "Boolean", "Boolean", 
+                      "Boolean", "Date", 
+                      "FacilityCode", "Date"))
+  
+  df <- analytic %>% 
+    select(screened, eligible, refused, not_consented, site_certification_date, 
+           facilitycode, screened_date)
+  
+  last_days <- Sys.Date() - days
+  
+  df <- df %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certification_date))) %>% 
+    rename(Facility = facilitycode) %>% 
+    filter(!is.na(Facility)) %>% 
+    mutate(weeks_site_certified = site_certified_days/7)
+  
+  df_1st <- df %>% 
+    group_by(Facility) %>% 
+    summarize('Days Certified' = site_certified_days[1], 
+              Screened = sum(screened), Eligible = sum(eligible), 
+              Refused = sum(refused[eligible == TRUE]), 
+              'Not Consented' = sum(not_consented[eligible == TRUE])) 
+  
+  table_raw <- df_1st
+  
+  facilities <- df %>% 
+    select(Facility) %>% 
+    unique()
+  
+  last_day_df <- facilities
+  
+  for(last_day in last_days){
+    new_last_day_df <- df %>% 
+      mutate(screened_date = as.Date(screened_date)) %>% 
+      mutate(screened_last = ifelse(screened_date > last_day, TRUE, FALSE)) %>% 
+      mutate(eligible_last = ifelse(screened_last, eligible, FALSE)) %>% 
+      select(Facility, screened_last, eligible_last) %>% 
+      group_by(Facility) %>% 
+      summarize('last_days_Screened' = sum(screened_last, na.rm = T),
+                'last_days_Eligible' = sum(eligible_last, na.rm = T))
+    
+    last_day_df <- left_join(last_day_df, new_last_day_df, by = 'Facility')
+  }
+  
+  by_week <- df %>%
+    filter(!is.na(weeks_site_certified)) %>% 
+    select(Facility, screened, weeks_site_certified) %>% 
+    group_by(Facility) %>% 
+    summarize(
+      Screened2 = round(sum(screened, na.rm = TRUE) / first(weeks_site_certified), 2))
+  
+  weekly <- left_join(facilities, by_week, by = 'Facility')
+  
+  almost <- left_join(last_day_df, weekly, by = 'Facility')
+  
+  sum_days_certified <- sum(table_raw$`Days Certified`, na.rm=T)
+  
+  final <- left_join(almost, table_raw, by = 'Facility') %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    mutate(`Days Certified`=ifelse(is_total,sum_days_certified,`Days Certified`)) %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total) %>% 
+    mutate(across(starts_with("last_days_Eligible"), 
+                  ~ format_count_percent(.x, 
+                                         get(str_replace(cur_column(), 
+                                                         "^last_days_Eligible(.*)$", 
+                                                         "last_days_Screened\\1"))))) %>% 
+    mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
+    mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
+    mutate(`Eligible (% screened)` = format_count_percent(Eligible, Screened)) 
+  
+  total_row <- final %>% 
+    slice_head(n=1)
+  
+  last <- bind_rows(final, total_row) %>% 
+    slice_tail(n=-1) %>% 
+    select(-Eligible, -Refused, -`Not Consented`) %>% 
+    select(Facility, starts_with('last_days'), Screened2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for 'Other' Reasons (% eligible)`)
+  
+  colnames(last) <- c('Facility', rep(c('Screened', 'Eligible (% screened)'), length(days)), "Screened", 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)')
+  
+  header_num <- c(1, rep(2, length(days)), 1, 4)
+  header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
+  names(header_num) <- header_names
+  
+  if(length(days) == 1){
+    if(days == 0){
+      last <- last[, c(1, seq(from=4, to=ncol(last)))]
+      
+      if(average == FALSE){
+        last <- last[, c(1, seq(from=3, to=ncol(last)))]
+        header_num <- header_num[c(1, 4)]
+      }
+    } else {
+      if(average == FALSE){
+        last <- last[, c(1, 2, 3, seq(from=5, to=ncol(last)))]
+        header_num <- header_num[c(1, 2, 4)]
+      }
+    }
+  } else {
+    if(average == FALSE){
+      last <- last[, c(seq(from = 1, to = 2*length(days)+1), seq(2*length(days)+3, to=ncol(last)))]
+      header_num <- header_num[c(seq(from=1, to=length(days)+1), length(header_num))]
+    }
+  }
+  
+  if(cumulative_data == FALSE){
+    last <- last[, c(seq(from = 1, to = (ncol(last) - 4)))]
+    header_num <- header_num[1:(length(header_num)-1)]
+  }
+  
+  table <- kable(last, format="html", align='l') %>%
+    add_header_above(header_num) %>%
+    kable_styling("striped", full_width = F, position="left") %>% 
+    row_spec(nrow(last), bold = TRUE)
+  
+  return(table)
+}
+
+#' enrollment_by_site_last_days_var_disc_ii
+#'
+#' @description 
+#' Visualizes the right half of the enrollment table: Consented & Randomized, Discontinued, Enrolled, and Safety Set.
+#' Consented & Randomized is formatted as a percentage of Eligible.
+#'
+#' @param analytic Analytic data set.
+#' @param discontinued Meta construct for discontinued.
+#' @param discontinued_colname Label for the discontinued column.
+#' @param include_exclusive_safety_set Toggle for exclusive_safety_set.
+#' @param average Return average over the time period (Average Enrolled per week).
+#' @param cumulative_data Include final counts.
+#'
+#' @return An HTML table.
+#' @export
+enrollment_by_site_last_days_var_disc_ii <- function(analytic,  
+                                             discontinued="discontinued", 
+                                             discontinued_colname="Discontinued", 
+                                             include_exclusive_safety_set=FALSE, 
+                                             average = FALSE, 
+                                             cumulative_data = TRUE){
+
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("consented_and_randomized", "discontinued", 
+                           "enrolled", "exclusive_safety_set", 
+                           "eligible", 
+                           "site_certification_date", "facilitycode"), 
+    example_types = c("Boolean", "Boolean", 
+                      "Boolean", "Boolean", 
+                      "Boolean", 
+                      "Date", "FacilityCode"))
+  
+  if(include_exclusive_safety_set){
+    df <- analytic %>% 
+      select(consented_and_randomized, enrolled, exclusive_safety_set, 
+             eligible, 
+             site_certification_date, facilitycode, all_of(discontinued))
+  } else{
+    df <- analytic %>% 
+      select(consented_and_randomized, enrolled, 
+             eligible, 
+             site_certification_date, facilitycode, all_of(discontinued))
+  }
+  
+  colnames(df)[which(colnames(df) == discontinued)] <- "discontinued"
+  
+  df <- df %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certification_date))) %>% 
+    rename(Facility = facilitycode) %>% 
+    filter(!is.na(Facility)) %>% 
+    mutate(weeks_site_certified = site_certified_days/7)
+  
+  df_1st <- df %>% 
+    group_by(Facility) %>% 
+    summarize('Days Certified' = site_certified_days[1], 
+              Eligible = sum(eligible),
+              cnr = sum(consented_and_randomized[eligible == TRUE])) 
+  
+  if(include_exclusive_safety_set){
+    df_2nd <- df %>% 
+      group_by(Facility) %>% 
+      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), 
+                "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE]), 
+                'Safety Set' = sum(exclusive_safety_set[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+      select(Facility, Discontinued, Enrolled, `Safety Set`)
+  } else{
+    df_2nd <- df %>% 
+      group_by(Facility) %>% 
+      summarize('Discontinued' = sum(discontinued[eligible == TRUE & consented_and_randomized == TRUE]), 
+                "Enrolled" = sum(enrolled[eligible == TRUE & consented_and_randomized == TRUE])) %>% 
+      select(Facility, Discontinued, Enrolled)
+  }
+  
+  table_raw <- left_join(df_1st, df_2nd, by = 'Facility')
+  
+  facilities <- df %>% 
+    select(Facility) %>% 
+    unique()
+  
+  by_week <- df %>%
+    filter(!is.na(weeks_site_certified)) %>% 
+    select(Facility, enrolled, weeks_site_certified) %>% 
+    group_by(Facility) %>% 
+    summarize(
+      Enrolled2 = round(sum(enrolled, na.rm = TRUE) / first(weeks_site_certified), 2))
+  
+  weekly <- left_join(facilities, by_week, by = 'Facility')
+  
+  almost <- left_join(facilities, weekly, by = 'Facility')
+  
+  sum_days_certified <- sum(table_raw$`Days Certified`, na.rm=T)
+  
+  final <- left_join(almost, table_raw, by = 'Facility') %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    mutate(`Days Certified`=ifelse(is_total,sum_days_certified,`Days Certified`)) %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total) %>% 
+    mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
+    mutate(`Discontinued (% randomized)` = format_count_percent(Discontinued, cnr)) %>% 
+    mutate(`Eligible & Enrolled (% randomized)` = format_count_percent(Enrolled, cnr))
+  
+  if (include_exclusive_safety_set) {
+    final <- final %>%
+      mutate(`Safety Set` = format_count_percent(`Safety Set`, cnr))
+  }
+  
+  total_row <- final %>% 
+    slice_head(n=1)
+  
+  if(include_exclusive_safety_set){
+    last <- bind_rows(final, total_row) %>% 
+      slice_tail(n=-1) %>% 
+      select(Facility, Enrolled2, `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Safety Set`, `Eligible & Enrolled (% randomized)`)
+    
+    colnames(last) <- c('Facility', 'Enrolled', 
+                        'Consented & Randomized (% eligible)', paste(discontinued_colname, '(% randomized)'), 'Not Enrolled Safety Set (% randomized)', 'Eligible & Enrolled (% randomized)')
+    
+    header_num <- c(1, 1, 4)
+  } else{
+    last <- bind_rows(final, total_row) %>% 
+      slice_tail(n=-1) %>% 
+      select(Facility, Enrolled2, `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Eligible & Enrolled (% randomized)`)
+    
+    colnames(last) <- c('Facility', 'Enrolled', 
+                        'Consented & Randomized (% eligible)', paste(discontinued_colname, '(% randomized)'), 'Eligible & Enrolled (% randomized)')
+    
+    header_num <- c(1, 1, 3)
+  }
+  
+  header_names <- c(" ", "Average per week", paste("Cumulative", "to date"))
+  names(header_num) <- header_names
+  
+  if(average == FALSE){
+    last <- last[, c(1, seq(from=3, to=ncol(last)))]
+    header_num <- header_num[c(1, 3)]
+  }
+  
+  if(cumulative_data == FALSE){
+    if(include_exclusive_safety_set) remove_count <- 4 else remove_count <- 3
+    last <- last[, c(seq(from = 1, to = (ncol(last) - remove_count)))]
+    header_num <- header_num[1:(length(header_num)-1)]
   }
   
   table <- kable(last, format="html", align='l') %>%
@@ -4237,6 +4631,7 @@ not_enrolled_reason <- function(analytic, last_days = NULL){
 #'
 #' @param analytic analytic data set that must include study_id, outcome_data, facilitycode, and enrolled
 #' @param outcome_name name of the outcome to be considered in the visualization
+#' @param days_since_dz optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago
 #'
 #' @return An HTML table.
 #' @export
@@ -4244,7 +4639,7 @@ not_enrolled_reason <- function(analytic, last_days = NULL){
 #' @examples
 #' outcome_by_site("Replace with Analytic Tibble", 'test_outcome')
 #' 
-outcome_by_site <- function(analytic, outcome_name) {
+outcome_by_site <- function(analytic, outcome_name, days_since_tz = 365) {
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('outcome_data', 'facilitycode', 'enrolled'), 
@@ -4266,7 +4661,7 @@ outcome_by_site <- function(analytic, outcome_name) {
     ) %>%
     # Filter for the specific outcome
     filter(outcome_name == !!outcome_name) %>%
-    filter((as.Date(time_zero)+365)<Sys.Date()) %>% 
+    filter((as.Date(time_zero)+days_since_tz)<Sys.Date()) %>% 
     # Convert numeric columns
     mutate(
       target_days = as.numeric(target_days),
@@ -4346,6 +4741,7 @@ outcome_by_site <- function(analytic, outcome_name) {
 #' Returns summary statistics on the number of days to complete various follow-up forms.
 #'
 #' @param analytic This is the analytic data set that must include study_id, outcome_data, and enrolled
+#' @param days_since_dz optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago
 #'
 #' @return An HTML table.
 #' @export
@@ -4353,7 +4749,7 @@ outcome_by_site <- function(analytic, outcome_name) {
 #' @examples
 #' outcome_by_name_overall("Replace with Analytic Tibble")
 #' 
-outcome_by_name_overall <- function(analytic) {
+outcome_by_name_overall <- function(analytic, days_since_tz = 365) {
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('outcome_data', 'enrolled'), 
                                               example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'Boolean'))
@@ -4363,7 +4759,7 @@ outcome_by_name_overall <- function(analytic) {
     filter(enrolled) %>%
     separate_rows(outcome_data, sep=";") %>%
     separate(outcome_data, c('outcome_name', 'target_days', 'expected_days', 'time_zero', 'outcome_date_extended', 'outcome_type', 'outcome_days_extended', 'outcome_days', 'outcome_date'), sep=",") %>% 
-    filter((as.Date(time_zero)+365)<Sys.Date())
+    filter((as.Date(time_zero)+days_since_tz)<Sys.Date())
 
   stats <- outcome_data %>%
     mutate(outcome_days = as.numeric(outcome_days)) %>%
@@ -4497,12 +4893,151 @@ enrollment_status_by_site_consent_pre_screening <- function(analytic, discontinu
   
   header <- c(" " = 5, "Among Consented" = 3, "Among Eligible" = 3)
   
-  table<- kable(table_raw, format="html", align='l') %>%
+  table <- kable(table_raw, format="html", align='l') %>%
     add_header_above(header) %>%
     kable_styling("striped", full_width = F, position="left")
   return(table)
 }
 
+#' enrollment_status_by_site_consent_pre_screening_i
+#'
+#' @description 
+#' Visualizes the totals of pre-screening, consent, intra-operative screening, and eligibility by site.
+#' Structure: Pre-Screen -> Consent -> Intra-Op Screen -> Eligible.
+#'
+#' @param analytic Analytic data set. Must include: screened, eligible, ineligible, 
+#' consented, facilitycode, site_certification_date, pre_screened, pre_eligible.
+#' @param only_total hide all the site specific rows
+#'
+#' @return An HTML table.
+#' @export
+enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_total=FALSE){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("screened", "eligible", "ineligible", "consented", 
+                           "site_certification_date", "facilitycode", 'pre_screened', 'pre_eligible'), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", 
+                      "Date", "FacilityCode", "Boolean", "Boolean"))
+  
+  df <- analytic %>%
+    select(screened, eligible, ineligible, consented,
+           site_certification_date, facilitycode, pre_screened, pre_eligible)
+  
+  df <- df %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    mutate(site_certified_days = as.numeric(Sys.Date() - as.Date(site_certification_date))) %>% 
+    rename(Facility = facilitycode) %>% 
+    filter(!is.na(Facility))
+  
+  df_1st <- df %>%
+    group_by(Facility) %>%
+    summarize(
+      `Days Certified` = site_certified_days[1],
+      `Pre-Operative Screened` = sum(pre_screened),
+      `Pre-Operative Screened Eligible` = sum(pre_eligible),
+      Consented = sum(consented))
+  
+  df_2nd <- df %>% 
+    filter(consented == TRUE) %>% 
+    group_by(Facility) %>% 
+    summarize(`Intra-Operative Screened` = sum(screened), 
+              Ineligible = sum(ineligible), 
+              Eligible = sum(eligible))
+  
+  table_raw <- full_join(df_1st, df_2nd, by = 'Facility') %>% 
+    mutate_all(~ifelse(is.na(.), 0, .)) %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    mutate(`Days Certified`=ifelse(is_total,"-",`Days Certified`)) %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total) %>% 
+    mutate(`Intra-Operative Screened` = format_count_percent(`Intra-Operative Screened`, Consented)) %>% 
+    mutate(Ineligible = format_count_percent(Ineligible, Consented)) %>% 
+    mutate(Eligible = format_count_percent(Eligible, Consented))
+  
+  if(only_total){
+    table_raw <- table_raw %>% filter(Facility=="Total")
+  }
+  
+  header <- c(" " = 5, "Among Consented" = 3)
+  
+  table <- kable(table_raw, format="html", align='l') %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = F, position="left")
+  
+  return(table)
+}
+
+#' enrollment_status_by_site_consent_pre_screening_ii
+#'
+#' @description 
+#' Visualizes the totals of randomization, discontinuation, and enrollment by site.
+#' Values are calculated as percentages of the "Eligible" population.
+#'
+#' @param analytic Analytic data set. Must include: eligible, consented, randomized, 
+#' enrolled, facilitycode, discontinued (or custom name).
+#' @param discontinued meta construct for discontinued
+#' @param discontinued_colname column name for discontinued to appear in visualization like "Adjudicated Discontinued"
+#' @param only_total hide all the site specific rows
+#'
+#' @return An HTML table.
+#' @export
+enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, discontinued="discontinued", 
+                                                                  discontinued_colname="Discontinued", only_total=FALSE){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("eligible", "consented", "enrolled", "randomized",
+                           "facilitycode", "discontinued"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean",
+                      "FacilityCode", "Boolean"))
+  
+  df <- analytic %>%
+    select(eligible, consented, randomized, enrolled, facilitycode, any_of(discontinued))
+  
+  colnames(df)[which(names(df) == discontinued)] <- "discontinued"
+  
+  df <- df %>% 
+    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    rename(Facility = facilitycode) %>% 
+    filter(!is.na(Facility))
+  
+  df_eligible_totals <- df %>%
+    filter(consented == TRUE) %>% 
+    group_by(Facility) %>%
+    summarize(Eligible_Count = sum(eligible))
+  
+  df_main <- df %>% 
+    filter(eligible == TRUE & consented == TRUE) %>% 
+    group_by(Facility) %>% 
+    summarize(Randomized = sum(randomized),
+              !!discontinued_colname := sum(discontinued),
+              Enrolled = sum(enrolled)) 
+  
+  table_raw <- full_join(df_eligible_totals, df_main, by = 'Facility') %>% 
+    mutate_all(~ifelse(is.na(.), 0, .)) %>% 
+    adorn_totals("row") %>% 
+    mutate(is_total=Facility=="Total") %>% 
+    arrange(desc(is_total), Facility) %>% 
+    select(-is_total) %>% 
+    mutate(!!discontinued_colname := format_count_percent(!!sym(discontinued_colname), Eligible_Count)) %>% 
+    mutate(Randomized = format_count_percent(Randomized, Eligible_Count)) %>% 
+    mutate(Enrolled = format_count_percent(Enrolled, Eligible_Count)) %>%
+    select(-Eligible_Count)
+  
+  if(only_total){
+    table_raw <- table_raw %>% filter(Facility=="Total")
+  }
+  
+  header <- c(" " = 1, "Among Eligible" = 3)
+  
+ table <- kable(table_raw, format="html", align='l') %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = F, position="left")
+ 
+ return(table)
+}
 
 #' Weight Bearing ALL characteristics for Main paper
 #'
@@ -5418,14 +5953,16 @@ hardware_duration_statistics <- function(analytic, delta = FALSE){
 #' @examples
 #' 
 hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
-  df1 <- analytic %>%  
-    select(hardware_application_date, hardware_application_datetime, hardware_removal_date, hardware_removal_datetime, 
-           hardware_removal_date_missing, hardware_duration, facilitycode, enrolled) 
-  
   if (delta) {
-    df1 <- df1 %>% mutate(start = hardware_application_date, end = hardware_removal_date, len = as.numeric(hardware_delta))
+    df1 <- analytic %>%  
+      select(hardware_application_date, hardware_application_datetime, hardware_removal_date, hardware_removal_datetime, 
+             hardware_removal_date_missing, hardware_duration, hardware_delta, facilitycode, enrolled) 
+    df1 <- df1 %>% mutate(start = hardware_application_date, end = hardware_removal_date, len = hardware_delta)
   } else {
-    df1 <- df1 %>% mutate(start = hardware_application_datetime, end = hardware_removal_datetime, len = as.numeric(hardware_duration))
+    df1 <- analytic %>%  
+      select(hardware_application_date, hardware_application_datetime, hardware_removal_date, hardware_removal_datetime, 
+             hardware_removal_date_missing, hardware_duration, facilitycode, enrolled) 
+    df1 <- df1 %>% mutate(start = hardware_application_datetime, end = hardware_removal_datetime, len = hardware_duration)
   }
   
   sites <- df1 %>%
@@ -5491,4 +6028,103 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
     kable_styling("striped", full_width = F, position="left") 
   
   return(output)
+}
+
+#' Overall complications
+#'
+#' @description 
+#' Returns a table of the overall complications first ordered by complication alphabetically, then by relatedness (starting with most related), 
+#' then by severity (starting with most severe), each row is a unique combination of those items
+#'
+#' @param analytic analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode
+#' @param relatedness includes that column
+#' @param WB if the study is Weight Bearing
+#' @param breakout_other If TRUE, replaces "Other" with "Other: [other_info]". Defaults to FALSE.
+#'
+#' @return html table
+#' @export
+overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
+    
+    if (is.null(WB)) {
+      df <- analytic %>%
+        select(study_id, complication_data) %>% 
+        separate_rows(complication_data, sep = ';new_row: ') %>%
+        separate(complication_data, into = c("redcap_event_name", "form_name", "event_type",
+                                             "complication", "notes", "diagnosis_date", "relatedness_val",
+                                             "severity_val", "treatment", "other_info"), sep = '\\|', fill = "right")
+    } else {
+      df <- analytic %>%
+        select(study_id, complication_data) %>% 
+        separate_rows(complication_data, sep = ';new_row: ') %>%
+        separate(complication_data, into = c("redcap_event_name", "visit_date", "complication", "diagnosis_date", 
+                                             "relatedness_val", "severity_val", "treatment_related", "new_or_previous_diagnosis", 
+                                             "form_notes", "other_info"), sep = '\\|', fill = "right")
+    }
+    
+    rel_levels <- c("Definitely related", 
+                    "Probably related", 
+                    "Possibly related", 
+                    "Unlikely related", 
+                    "Unrelated", 
+                    "Don't know")
+    
+    sev_levels <- c("Mild", 
+                    "Moderate", 
+                    "Severe and Undesirable", 
+                    "Life-threatening or disabling", 
+                    "Fatal")
+    
+    clean_df <- df %>%
+      filter(!is.na(complication)) %>% 
+      mutate(complication = str_trim(complication),
+             relatedness_val = str_trim(relatedness_val),
+             severity_val = str_trim(severity_val),
+             other_info = str_trim(other_info)) %>%
+      mutate(across(c(relatedness_val, severity_val), ~na_if(., ""))) %>%
+      mutate(relatedness_val = factor(relatedness_val, levels = rel_levels), 
+             severity_val = factor(severity_val, levels = sev_levels))
+    
+    if (breakout_other) {
+      clean_df <- clean_df %>%
+        mutate(complication = case_when(
+          complication == "Other" & !is.na(other_info) & other_info != "" ~ paste0("Other: ", other_info),
+          TRUE ~ complication))
+    }
+    
+    if (relatedness) {
+      table_data <- clean_df %>%
+        group_by(complication, relatedness_val, severity_val) %>%
+        summarise(N = n(), 
+                  PTs = n_distinct(study_id), 
+                  .groups = 'drop') %>%
+        arrange(str_detect(complication, "^Other"),
+                complication,
+                relatedness_val,
+                desc(severity_val))
+      
+    } else {
+      table_data <- clean_df %>%
+        group_by(complication, severity_val) %>%
+        summarise(N = n(), 
+                  PTs = n_distinct(study_id),
+                  .groups = 'drop') %>%
+        arrange(str_detect(complication, "^Other"),
+                complication, 
+                desc(severity_val))
+    }
+    
+    final_table <- table_data %>%
+      mutate(`N[PTs]` = sprintf("%d[%d]", N, PTs)) %>%
+      select(-N, -PTs) %>%
+      rename(`Complication` = complication,
+             `Severity` = severity_val)
+    
+    if(relatedness) {
+      final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
+    }
+    
+    output <- kable(final_table, format = "html", align = 'l') %>%
+      kable_styling("striped", full_width = F, position = "left") 
+    
+    return(output)
 }

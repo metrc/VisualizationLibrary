@@ -4,12 +4,14 @@
 \alias{outcome_by_site}
 \title{Outcome by Site}
 \usage{
-outcome_by_site(analytic, outcome_name)
+outcome_by_site(analytic, outcome_name, days_since_tz = 365)
 }
 \arguments{
 \item{analytic}{analytic data set that must include study_id, outcome_data, facilitycode, and enrolled}
 
 \item{outcome_name}{name of the outcome to be considered in the visualization}
+
+\item{days_since_dz}{optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago}
 }
 \value{
 An HTML table.
