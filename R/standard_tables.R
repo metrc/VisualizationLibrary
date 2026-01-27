@@ -6128,3 +6128,312 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, break
     
     return(output)
 }
+
+
+# Required packages: kableExtra, janitor, dplyr, tidyr, htmltools
+# These are typically already loaded by VisualizationLibrary
+
+#' iVAC Invoice Report Table
+#'
+#' @description Generates an invoice report table for the iVAC study showing
+#' baseline and follow-up visit payments for each participant by site.
+#' 
+#' Baseline Visit: $417.50 when CRFs 03-07 are complete
+#' Follow-up Visits: $104.38 per completed visit (2wk, 6wk, 3mo, 6mo), 
+#' paid when AF01 is complete with fsf_agreement=1
+#' 
+#' @param analytic A data frame containing the required construct columns:
+#'   - study_id
+#'   - facilitycode
+#'   - payment_baseline
+#'   - payment_2wk
+#'   - payment_6wk
+#'   - payment_3mo
+#'   - payment_6mo
+#'   - enrolled (optional, for filtering)
+#' @param facilitycodes Optional character vector of facility codes to filter by.
+#'   If NULL, shows all facilities.
+#' @param show_all_enrolled If TRUE, shows all enrolled participants even if no
+#'   payments are due. If FALSE (default), only shows participants with at least
+#'   one payment.
+#'   
+#' @return An HTML kable table suitable for reports.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' analytic <- get_construct_outputs(c("facilitycode", "payment_baseline", 
+#'   "payment_2wk", "payment_6wk", "payment_3mo", "payment_6mo", "enrolled"))
+#' ivac_invoice_report(analytic)
+#' }
+ivac_invoice_report <- function(analytic, 
+                                facilitycodes = NULL, 
+                                show_all_enrolled = FALSE) {
+  
+  # Validate required columns
+  required_cols <- c("study_id", "facilitycode", "payment_baseline", 
+                     "payment_2wk", "payment_6wk", "payment_3mo", "payment_6mo")
+  missing_cols <- required_cols[!required_cols %in% names(analytic)]
+  if (length(missing_cols) > 0) {
+    stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
+  }
+  
+  # Filter by enrolled if column exists
+  if ("enrolled" %in% names(analytic)) {
+    analytic <- analytic %>% filter(enrolled == TRUE)
+  }
+  
+  # Filter by facilitycode if specified
+  if (!is.null(facilitycodes)) {
+    analytic <- analytic %>% filter(facilitycode %in% facilitycodes)
+  }
+  
+  # Helper function to parse payment string "amount;description" -> amount
+  parse_payment_amount <- function(payment_string) {
+    if (is.na(payment_string) || payment_string == "") {
+      return(0)
+    }
+    parts <- strsplit(as.character(payment_string), ";")[[1]]
+    return(as.numeric(parts[1]))
+  }
+  
+  # Helper function to format payment status
+  format_payment_status <- function(payment_string) {
+    if (is.na(payment_string) || payment_string == "") {
+      return("Incomplete")
+    }
+    return("Complete")
+  }
+  
+  # Process the data
+  invoice_df <- analytic %>%
+    select(study_id, facilitycode, payment_baseline, 
+           payment_2wk, payment_6wk, payment_3mo, payment_6mo) %>%
+    filter(!is.na(facilitycode)) %>%
+    mutate(
+      # Parse amounts
+      baseline_amount = sapply(payment_baseline, parse_payment_amount),
+      fu_2wk_amount = sapply(payment_2wk, parse_payment_amount),
+      fu_6wk_amount = sapply(payment_6wk, parse_payment_amount),
+      fu_3mo_amount = sapply(payment_3mo, parse_payment_amount),
+      fu_6mo_amount = sapply(payment_6mo, parse_payment_amount),
+      
+      # Parse statuses
+      baseline_status = sapply(payment_baseline, format_payment_status),
+      fu_2wk_status = sapply(payment_2wk, format_payment_status),
+      fu_6wk_status = sapply(payment_6wk, format_payment_status),
+      fu_3mo_status = sapply(payment_3mo, format_payment_status),
+      fu_6mo_status = sapply(payment_6mo, format_payment_status),
+      
+      # Calculate totals
+      followup_total = fu_2wk_amount + fu_6wk_amount + fu_3mo_amount + fu_6mo_amount,
+      total_payment = baseline_amount + followup_total,
+      
+      # Count completed follow-ups
+      completed_followups = (fu_2wk_status == "Complete") + 
+        (fu_6wk_status == "Complete") + 
+        (fu_3mo_status == "Complete") + 
+        (fu_6mo_status == "Complete")
+    )
+  
+  # Filter to only show participants with payments (unless show_all_enrolled)
+  if (!show_all_enrolled) {
+    invoice_df <- invoice_df %>% 
+      filter(total_payment > 0)
+  }
+  
+  # Create the detail table (one row per participant)
+  detail_table <- invoice_df %>%
+    mutate(
+      Facility = facilitycode,
+      `Study ID` = study_id,
+      `Baseline Visit ($417.50)` = baseline_status,
+      `2wk F/U` = fu_2wk_status,
+      `6wk F/U` = fu_6wk_status,
+      `3mo F/U` = fu_3mo_status,
+      `6mo F/U` = fu_6mo_status,
+      `F/U Count` = paste0(completed_followups, "/4"),
+      `F/U Payment` = ifelse(followup_total > 0, 
+                             paste0("$", format(followup_total, nsmall = 2)),
+                             "-"),
+      `Total Due` = ifelse(total_payment > 0,
+                           paste0("$", format(total_payment, nsmall = 2)),
+                           "-")
+    ) %>%
+    select(Facility, `Study ID`, `Baseline Visit ($417.50)`, 
+           `2wk F/U`, `6wk F/U`, `3mo F/U`, `6mo F/U`,
+           `F/U Count`, `F/U Payment`, `Total Due`) %>%
+    arrange(Facility, `Study ID`)
+  
+  # Create summary by site
+  summary_table <- invoice_df %>%
+    group_by(facilitycode) %>%
+    summarize(
+      `Participants` = n(),
+      `Baseline Complete` = sum(baseline_status == "Complete"),
+      `Baseline Payment` = sum(baseline_amount),
+      `F/U Complete` = sum(completed_followups),
+      `F/U Payment` = sum(followup_total),
+      `Total Payment` = sum(total_payment),
+      .groups = 'drop'
+    ) %>%
+    rename(Facility = facilitycode) %>%
+    adorn_totals("row") %>%
+    mutate(
+      `Baseline Payment` = paste0("$", format(`Baseline Payment`, nsmall = 2)),
+      `F/U Payment` = paste0("$", format(`F/U Payment`, nsmall = 2)),
+      `Total Payment` = paste0("$", format(`Total Payment`, nsmall = 2))
+    )
+  
+  # Create the combined output
+  # First the summary table
+  summary_html <- kable(summary_table, format = "html", align = "l") %>%
+    add_header_above(c(" " = 2, "Baseline" = 2, "Follow-up" = 2, " " = 1)) %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    row_spec(nrow(summary_table), bold = TRUE, background = "#f0f0f0")
+  
+  # Then the detail table  
+  header <- c(1, 1, 1, 4, 3)
+  names(header) <- c(" ", " ", "Baseline", "Follow-up Visits ($104.38 each)", "Payment")
+  
+  detail_html <- kable(detail_table, format = "html", align = "l") %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+  
+  # Title section
+  title_html <- paste0(
+    "<h3>iVAC Invoice Report</h3>",
+    "<p><strong>Payment Schedule:</strong></p>",
+    "<ul>",
+    "<li>Baseline Visit: $417.50 (when CRFs 03-07 complete)</li>",
+    "<li>Follow-up Visits: $104.38 per completed visit (2wk, 6wk, 3mo, 6mo)</li>",
+    "<li>Follow-up payments triggered when AF01 complete with fsf_agreement=1</li>",
+    "</ul>",
+    "<h4>Summary by Site</h4>"
+  )
+  
+  detail_title <- "<h4>Detail by Participant</h4>"
+  
+  # Combine all HTML
+  full_html <- paste0(
+    title_html,
+    as.character(summary_html),
+    detail_title,
+    as.character(detail_html)
+  )
+  
+  return(htmltools::HTML(full_html))
+}
+
+
+#' iVAC Invoice Summary Table
+#'
+#' @description Generates a simplified invoice summary table showing payment 
+#' totals by site for the iVAC study. This is a more compact version suitable
+#' for monthly reports.
+#' 
+#' @param analytic A data frame containing the required construct columns.
+#' @param facilitycodes Optional character vector of facility codes to filter.
+#'   
+#' @return An HTML kable table suitable for reports.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' analytic <- get_construct_outputs(c("facilitycode", "payment_baseline", 
+#'   "payment_2wk", "payment_6wk", "payment_3mo", "payment_6mo", "enrolled"))
+#' ivac_invoice_summary(analytic)
+#' }
+ivac_invoice_summary <- function(analytic, facilitycodes = NULL) {
+  
+  # Validate required columns
+  required_cols <- c("study_id", "facilitycode", "payment_baseline", 
+                     "payment_2wk", "payment_6wk", "payment_3mo", "payment_6mo")
+  missing_cols <- required_cols[!required_cols %in% names(analytic)]
+  if (length(missing_cols) > 0) {
+    stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
+  }
+  
+  # Filter by enrolled if column exists
+  if ("enrolled" %in% names(analytic)) {
+    analytic <- analytic %>% filter(enrolled == TRUE)
+  }
+  
+  # Filter by facilitycode if specified
+  if (!is.null(facilitycodes)) {
+    analytic <- analytic %>% filter(facilitycode %in% facilitycodes)
+  }
+  
+  # Helper function to parse payment string
+  parse_payment_amount <- function(payment_string) {
+    if (is.na(payment_string) || payment_string == "") {
+      return(0)
+    }
+    parts <- strsplit(as.character(payment_string), ";")[[1]]
+    return(as.numeric(parts[1]))
+  }
+  
+  # Process the data
+  invoice_df <- analytic %>%
+    filter(!is.na(facilitycode)) %>%
+    mutate(
+      baseline_amount = sapply(payment_baseline, parse_payment_amount),
+      fu_2wk_amount = sapply(payment_2wk, parse_payment_amount),
+      fu_6wk_amount = sapply(payment_6wk, parse_payment_amount),
+      fu_3mo_amount = sapply(payment_3mo, parse_payment_amount),
+      fu_6mo_amount = sapply(payment_6mo, parse_payment_amount),
+      followup_total = fu_2wk_amount + fu_6wk_amount + fu_3mo_amount + fu_6mo_amount,
+      total_payment = baseline_amount + followup_total
+    )
+  
+  # Create summary by site
+  summary_table <- invoice_df %>%
+    group_by(facilitycode) %>%
+    summarize(
+      `Enrolled` = n(),
+      `Baseline ($417.50)` = paste0(sum(baseline_amount > 0), " ($", 
+                                    format(sum(baseline_amount), nsmall = 2), ")"),
+      `2wk ($104.38)` = paste0(sum(fu_2wk_amount > 0), " ($", 
+                               format(sum(fu_2wk_amount), nsmall = 2), ")"),
+      `6wk ($104.38)` = paste0(sum(fu_6wk_amount > 0), " ($", 
+                               format(sum(fu_6wk_amount), nsmall = 2), ")"),
+      `3mo ($104.38)` = paste0(sum(fu_3mo_amount > 0), " ($", 
+                               format(sum(fu_3mo_amount), nsmall = 2), ")"),
+      `6mo ($104.38)` = paste0(sum(fu_6mo_amount > 0), " ($", 
+                               format(sum(fu_6mo_amount), nsmall = 2), ")"),
+      `Total Due` = paste0("$", format(sum(total_payment), nsmall = 2)),
+      .groups = 'drop'
+    ) %>%
+    rename(Facility = facilitycode)
+  
+  # Add totals row
+  totals <- invoice_df %>%
+    summarize(
+      Facility = "TOTAL",
+      `Enrolled` = n(),
+      `Baseline ($417.50)` = paste0(sum(baseline_amount > 0), " ($", 
+                                    format(sum(baseline_amount), nsmall = 2), ")"),
+      `2wk ($104.38)` = paste0(sum(fu_2wk_amount > 0), " ($", 
+                               format(sum(fu_2wk_amount), nsmall = 2), ")"),
+      `6wk ($104.38)` = paste0(sum(fu_6wk_amount > 0), " ($", 
+                               format(sum(fu_6wk_amount), nsmall = 2), ")"),
+      `3mo ($104.38)` = paste0(sum(fu_3mo_amount > 0), " ($", 
+                               format(sum(fu_3mo_amount), nsmall = 2), ")"),
+      `6mo ($104.38)` = paste0(sum(fu_6mo_amount > 0), " ($", 
+                               format(sum(fu_6mo_amount), nsmall = 2), ")"),
+      `Total Due` = paste0("$", format(sum(total_payment), nsmall = 2))
+    )
+  
+  summary_table <- bind_rows(summary_table, totals)
+  
+  # Create kable output
+  header <- c(1, 1, 1, 4, 1)
+  names(header) <- c(" ", " ", "Baseline", "Follow-up Visits", " ")
+  
+  table <- kable(summary_table, format = "html", align = "l") %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    row_spec(nrow(summary_table), bold = TRUE, background = "#f0f0f0")
+  
+  return(table)
+}
