@@ -1620,106 +1620,6 @@ closed_certification_date_data <- function(analytic){
   return(vis)
 }
 
-
-#' Amputations and Gustilo injury characteristics, closed version
-#'
-#' @description 
-#' This is the closed version of amputations_and_gustilo_injury_characteristics; see its documentation
-#' for details.
-#'
-#' @param analytic analytic data set that must include enrolled, treatment_arm, injury_gustilo_type, 
-#' injury_amputation_status
-#'
-#' @return An HTML table.
-#' @export
-#'
-#' @examples
-#' closed_amputations_and_gustilo_injury_characteristics("Replace with Analytic Tibble")
-#' 
-closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
-  analytic <- if_needed_generate_example_data(
-    analytic,
-    example_constructs = c("enrolled", "treatment_arm", "injury_gustilo_type", "injury_amputation_status"),
-    example_types = c("Boolean", "TreatmentArm", "Category-U7", "Category-U3")) 
-  
-  confirm_stability_of_related_visual("amputations_and_gustilo_injury_characteristics", "2af7b3cdbbcc705b3f642265d3222776")
-  
-  inner_amputations_and_gustilo_injury_characteristics <- function(pull) {
-    inj_gust <- pull %>%
-      select(injury_gustilo_type) %>%  
-      mutate(injury_gustilo_type = gsub('"|“|”', '', injury_gustilo_type)) %>%
-      mutate(injury_gustilo_type = strsplit(as.character(injury_gustilo_type), ";\\s*")) %>%
-      unnest(injury_gustilo_type) %>%
-      group_by(injury_gustilo_type) %>%
-      summarise(count = n()) %>%
-      mutate(injury_gustilo_type = coalesce(injury_gustilo_type, 'Unknown'))
-    total <- inj_gust %>%
-        mutate(count=as.numeric(count)) %>%
-        pull(count) %>%
-        sum()
-      
-    out_gustilo <- inj_gust %>%
-      mutate(count= format_count_percent(count, total)) %>%
-      rename(`Fracture Type` = injury_gustilo_type)
-    
-    amputation_status <- pull %>%
-      select(injury_amputation_status) %>%
-      count(injury_amputation_status) %>%
-      pivot_longer(-n) %>%
-      mutate(value=ifelse(is.na(value), 'Unknown', value)) %>%
-      select(-name) %>%
-      rename(count = n, injury_gustilo_type = value)
-    
-    total_amputations <- amputation_status %>%
-      pull(count) %>%
-      sum()
-    
-    out_amputations <- amputation_status %>%
-      mutate(count= format_count_percent(count, total_amputations)) %>%
-      rename(`Fracture Type` = injury_gustilo_type)
-    
-    n_amputations <- tibble(
-      count = as.character(total_amputations),
-      `Fracture Type` = "Amputation Status")
-    
-    n_gustilo <- tibble(
-      count = as.character(total),
-      `Fracture Type` = "Fracture Type")
-    
-    combined <- bind_rows(n_amputations, out_amputations,n_gustilo, out_gustilo) %>%
-      relocate(count, .after = `Fracture Type`)
-    
-    combined
-  }
-  
-  pull <- analytic %>%
-    filter(enrolled) %>%
-    select(enrolled, treatment_arm, injury_gustilo_type, injury_amputation_status)
-  
-  pull_a <- pull %>% filter(treatment_arm == "Group A")
-  pull_b <- pull %>% filter(treatment_arm == "Group B")
-  
-  combined_a <- inner_amputations_and_gustilo_injury_characteristics(pull_a)
-  combined_b <- inner_amputations_and_gustilo_injury_characteristics(pull_b)
-  
-  combined_full <- inner_amputations_and_gustilo_injury_characteristics(pull) %>% ungroup() %>% mutate(o=row_number())
-  
-  df_table <- full_join(combined_a, combined_b, by = "Fracture Type", suffix = c(" (Group A)", " (Group B)")) %>%
-    left_join(combined_full, by = "Fracture Type") %>%
-    select(`Fracture Type`, ends_with(" (Group A)"), ends_with(" (Group B)"), count, o) %>%
-    arrange(o) %>% 
-    select(-o)
-  
-  output <- kable(df_table, format="html", align='l',  col.names = c(" ", "Group A", "Group B", "Overall")) %>%
-    kable_styling("striped", position = "left", full_width = F) %>%
-    add_indent(positions = c(2,3,4,6,7,8,9,10,11,12)) %>%
-    row_spec(c(1,5), bold=T,hline_after = T)
-  
-  return(output)
-}
-
-
-
 #' Closed enrollment by site Tobra and Sextant (variable discontinued)
 #'
 #' @description 
@@ -1746,18 +1646,20 @@ closed_amputations_and_gustilo_injury_characteristics <- function(analytic){
 #' closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", include_exclusive_safety_set = FALSE, footnotes = TRUE)
 #' closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", include_exclusive_safety_set = TRUE)
 #' 
-closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, discontinued="discontinued", 
+closed_enrollment_by_site_last_days_var_disc <- function(analytic, discontinued="discontinued", 
                                                          discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, 
                                                          footnotes=NULL){
   
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c("screened", "eligible", "refused", "consented", "enrolled", "randomized",
-                           "not_consented", "site_certification_date", "facilitycode", "consent_date",
-                           "not_randomized", "discontinued", "treatment_arm", "consented_and_randomized", "screened_date"), 
-    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean",
-                      "Boolean", "Date", "FacilityCode", "Date", "Boolean", "Boolean", "TreatmentArm", 
-                      "Boolean", "Date"))
+    example_constructs = c("consented_and_randomized", "discontinued", 
+                           "enrolled", "exclusive_safety_set", 
+                           "eligible", 
+                           "site_certification_date", "facilitycode"), 
+    example_types = c("Boolean", "Boolean", 
+                      "Boolean", "Boolean", 
+                      "Boolean", 
+                      "Date", "FacilityCode"))
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-11-14)
   
@@ -1769,14 +1671,14 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, days=0, disco
   
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set),
+                  enrollment_by_site_last_days_var_disc_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set),
                   "<h4>Group B</h4><br />",
-                  enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set))
+                  enrollment_by_site_last_days_var_disc_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_by_site_last_days_var_disc(df_a, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  enrollment_by_site_last_days_var_disc_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_by_site_last_days_var_disc(df_b, days, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+                  enrollment_by_site_last_days_var_disc_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE))
   }
 
   return(out)
@@ -2226,17 +2128,13 @@ closed_characteristics_treatment <- function(analytic){
 #' 
 closed_enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="discontinued", 
                                                               discontinued_colname="Discontinued",
-                                                              pre_screened = NULL,
-                                                              pre_screened_eligible = NULL,
                                                               only_total=FALSE, footnotes = NULL){
   analytic <- if_needed_generate_example_data(
-    analytic,
-    example_constructs = c("screened", "eligible", "refused", "not_consented", "consented", 
-                           "not_randomized", "randomized", "enrolled", "site_certification_date", 
-                           "facilitycode", "discontinued", 'treatment_arm'),
-    example_types = c("Boolean", "Boolean", "Boolean", "Boolean", "Boolean", 
-                      "Boolean", "Boolean", "Boolean", "Date", 
-                      "FacilityCode", "Boolean", "TreatmentArm")) 
+    analytic, 
+    example_constructs = c("eligible", "consented", "enrolled", "randomized",
+                           "facilitycode", "discontinued"), 
+    example_types = c("Boolean", "Boolean", "Boolean", "Boolean",
+                      "FacilityCode", "Boolean"))
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-05-23)
   
@@ -2248,22 +2146,18 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
   
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, 
-                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible,
+                  enrollment_status_by_site_var_discontinued_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, 
                                                              only_total=only_total),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, 
-                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible,
+                  enrollment_status_by_site_var_discontinued_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, 
                                                              only_total=only_total))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname,
-                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible,
+                  enrollment_status_by_site_var_discontinued_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname,
                                                              only_total=only_total) %>% 
                     add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname,
-                                                             pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible,
+                  enrollment_status_by_site_var_discontinued_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname,
                                                              only_total=only_total) %>% 
                     add_footnote(footnotes, notation="number", escape = FALSE))
   }
