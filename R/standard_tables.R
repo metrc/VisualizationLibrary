@@ -2786,7 +2786,7 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
     adorn_totals("row") %>% 
     mutate(is_total=Facility=="Total") %>% 
     mutate(`Days Certified`=ifelse(is_total,sum_days_certified,`Days Certified`)) %>% 
-    arrange(is_total, Facility) %>% 
+    arrange(desc(is_total), Facility) %>% 
     select(-is_total) %>% 
     mutate(across(starts_with(c("last_days_Eligible", "last_days_Enrolled")), 
       ~ format_count_percent(.x, 
@@ -2805,8 +2805,12 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
       mutate(`Safety Set` = format_count_percent(`Safety Set`, cnr))
   }
   
+  total_row <- final %>% 
+    slice_head(n=1)
+  
   if(include_exclusive_safety_set){
-    last <- final %>%
+    last <- bind_rows(final, total_row) %>% 
+      slice_tail(n=-1) %>% 
       select(-Eligible, -Enrolled, -Refused, -`Not Consented`, -cnr, -Discontinued) %>% 
       select(Facility, starts_with('last_days'), Screened2, Enrolled2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for 'Other' Reasons (% eligible)`, 
              `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Safety Set`, `Eligible & Enrolled (% randomized)`)
