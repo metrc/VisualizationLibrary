@@ -6167,7 +6167,7 @@ ivac_invoice_report <- function(analytic,
   # Validate required columns
   required_cols <- c("study_id", "facilitycode", "payment_baseline", 
                      "payment_2wk", "payment_6wk", "payment_3mo", "payment_6mo")
-  p <- required_cols[!required_cols %in% names(analytic)]
+  missing_cols <- required_cols[!required_cols %in% names(analytic)]
   if (length(missing_cols) > 0) {
     stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
   }
