@@ -32,6 +32,6 @@ Creates a timeline visualization for each patient showing events relative to tim
 }
 \examples{
 outcome_by_id("Replace with Analytic Tibble", "test_outcome")
-outcome_by_id("Replace with Analytic Tibble", "test_outcome", random_sample = TRUE, facilitycodes = c('AAA', 'AAB'))
+outcome_by_id("Replace with Analytic Tibble", "test_outcome", random_sample = 50, facilitycodes = c('AAA', 'AAB'))
 
 }
