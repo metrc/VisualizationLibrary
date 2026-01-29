@@ -2716,7 +2716,8 @@ enrollment_by_site_last_days_var_disc <- function(analytic, days = 0,
     df_1st <- df %>% 
       group_by(Facility) %>% 
       summarize('Days Certified' = site_certified_days[1], 
-                Screened = sum(screened), Eligible = sum(eligible), 
+                Screened = sum(screened), 
+                Eligible = sum(eligible), 
                 Refused = sum(refused[eligible == TRUE]), 
                 'Not Consented' = sum(not_consented[eligible == TRUE]), 
                 cnr = sum(consented_and_randomized[eligible == TRUE])) 
@@ -6162,9 +6163,6 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, break
 #'
 #' @examples
 #' \dontrun{
-#' analytic <- get_construct_outputs(c("facilitycode", "payment_baseline", 
-#'   "payment_2wk", "payment_6wk", "payment_3mo", "payment_6mo", "enrolled"))
-#' ivac_invoice_report(analytic)
 #' }
 ivac_invoice_report <- function(analytic, 
                                 facilitycodes = NULL, 
@@ -6340,9 +6338,6 @@ ivac_invoice_report <- function(analytic,
 #'
 #' @examples
 #' \dontrun{
-#' analytic <- get_construct_outputs(c("facilitycode", "payment_baseline", 
-#'   "payment_2wk", "payment_6wk", "payment_3mo", "payment_6mo", "enrolled"))
-#' ivac_invoice_summary(analytic)
 #' }
 ivac_invoice_summary <- function(analytic, facilitycodes = NULL) {
   

@@ -2234,7 +2234,7 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
 #'
 #' @examples
 #' outcome_by_id("Replace with Analytic Tibble", "test_outcome")
-#' outcome_by_id("Replace with Analytic Tibble", "test_outcome", random_sample = TRUE, facilitycodes = c('AAA', 'AAB'))
+#' outcome_by_id("Replace with Analytic Tibble", "test_outcome", random_sample = 50, facilitycodes = c('AAA', 'AAB'))
 #' 
 outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilitycodes = NULL, days_since_tz = 365) {
   analytic <- if_needed_generate_example_data(
@@ -2272,13 +2272,15 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     filter(name == event_name)
   
   # Parse the outcome_data
-  outcome_parsed <- analytic %>%
+  outcome_raw <- analytic %>%
     select(study_id, outcome_data) %>%
     separate_rows(outcome_data, sep = ";") %>%
     separate(outcome_data, into = c("outcome_name", "target_days", "expected_days", 
                                    "time_zero", "outcome_date_extended", "outcome_type", 
                                    "outcome_days_extended", "outcome_days", "outcome_date"), 
-             sep = ",") %>%
+             sep = ",") 
+
+  outcome_parsed <- outcome_raw %>%
     mutate(target_days = as.numeric(target_days),
            expected_days = as.numeric(expected_days),
            outcome_days = as.numeric(outcome_days),
@@ -2313,14 +2315,30 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
   # Get the global target_days (should be same for all patients)
   target_days <- unique(event_outcomes$target_days)[1]
   
+  favorable_events_present <- nrow(events_df %>% filter(type == 'favorable_event')) > 0
+  
   # Create the plot
   g <- ggplot() +
-    geom_segment(data = patients_df, 
-                aes(x = 0, y = patient_label, 
-                   xend = outcome_days, 
+    #solid black until outcome_days
+    geom_segment(data = patients_df,
+                aes(x = 0, y = patient_label,
+                   xend = outcome_days,
                    yend = patient_label),
                 size = 1) +
     
+    geom_segment(data = events_df %>% filter(type != 'favorable_event'), 
+                 aes(x = outcome_days, 
+                     y = patient_label, 
+                     xend = outcome_days, yend = patient_label),
+                 linetype = 'dotted', size = 1) +
+    
+    geom_segment(data = events_df %>% filter(type == 'favorable_event'), 
+                 aes(x = outcome_days, 
+                     y = patient_label, 
+                     xend = outcome_days_extended, yend = patient_label),
+                 linetype = "dotted", size = 1, color = "green") +
+    
+    #if event occurs before expected days, then red dot line until expected days
     # Dotted line after first event until outcome_days
     geom_segment(data = patients_df %>% filter(outcome_days < expected_days), 
                  aes(x = outcome_days, 
@@ -2340,9 +2358,25 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     
     # Event points - now with size mapping for "event" type
     geom_point(data = events_df, 
-              aes(x = days_from_zero, y = patient_label, color = form, shape = type,
-                  size = type == "event")) +
-    
+              aes(x = days_from_zero, y = patient_label, color = form, 
+                  shape = case_when(type == "check" ~ 16,
+                                    type %in% c('event', 'unfavorable_event') ~ 17,
+                                    TRUE ~ 15),
+                  size = str_detect(type, "event"))) +
+    scale_shape_identity(
+      name = "Event type",
+      guide = "legend",
+      breaks = if(favorable_events_present) {
+        c(16, 17, 15)
+      } else {
+        c(16, 17)
+      },
+      labels = if(favorable_events_present) {
+        c("Check", "Unfavorable Event", "Favorable event")
+      } else {
+        c("Check", "Event")
+      }) +
+  
     # Formatting with classic paper theme
     scale_size_manual(values = c("TRUE" = 5, "FALSE" = 2), guide = "none") +
     scale_color_brewer(palette = "Set1", direction = -1) +  # More muted color palette
