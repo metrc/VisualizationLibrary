@@ -2271,13 +2271,6 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     separate(events_data, into = c("period", "name", "form", "type", "date"), sep = ",") %>% 
     filter(name == event_name)
   
-  events_df <- events_df %>%
-    mutate(type = ifelse(type == 'event',
-                         if_else(runif(n()) < 0.5, 
-                                 'favorable_event', 
-                                 'unfavorable_event'),
-                         'check'))
-  
   temp_df <-  events_df %>% mutate(outcome_name = name, outcome_date_extended = date) %>% select(study_id, outcome_date_extended, outcome_name, type)
   
   # Parse the outcome_data
@@ -2290,11 +2283,6 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
              sep = ",") %>%
     left_join(temp_df, by = c("study_id", "outcome_name", "outcome_date_extended")) %>%
     mutate(outcome_type = type)
-  
-  outcome_raw <- outcome_raw %>%
-    mutate(outcome_days = ifelse(outcome_type == 'favorable_event',
-                                 182,
-                                 outcome_days))
 
   outcome_parsed <- outcome_raw %>%
     mutate(target_days = as.numeric(target_days),
@@ -2382,7 +2370,11 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     scale_shape_identity(
       name = "Event type",
       guide = "legend",
-      breaks = c(16, 17, 15),
+      breaks = if(favorable_events_present) {
+        c(16, 17, 15)
+      } else {
+        c(16, 17)
+      },
       labels = if(favorable_events_present) {
         c("Check", "Unfavorable Event", "Favorable event")
       } else {
