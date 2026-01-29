@@ -2291,11 +2291,11 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     left_join(temp_df, by = c("study_id", "outcome_name", "outcome_date_extended")) %>%
     mutate(outcome_type = type)
   
-  # outcome_raw <- outcome_raw %>%
-  #   mutate(outcome_days = ifelse(outcome_type == 'favorable_event',
-  #                                182,
-  #                                outcome_days))
-  
+  outcome_raw <- outcome_raw %>%
+    mutate(outcome_days = ifelse(outcome_type == 'favorable_event',
+                                 182,
+                                 outcome_days))
+
   outcome_parsed <- outcome_raw %>%
     mutate(target_days = as.numeric(target_days),
            expected_days = as.numeric(expected_days),
@@ -2331,6 +2331,8 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
   # Get the global target_days (should be same for all patients)
   target_days <- unique(event_outcomes$target_days)[1]
   
+  favorable_events_present <- nrow(events_df %>% filter(type == 'favorable_event')) > 0
+  
   # Create the plot
   g <- ggplot() +
     #solid black until outcome_days
@@ -2340,7 +2342,6 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
                    yend = patient_label),
                 size = 1) +
     
-    #if 
     geom_segment(data = events_df %>% filter(type != 'favorable_event'), 
                  aes(x = outcome_days, 
                      y = patient_label, 
@@ -2382,8 +2383,12 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
       name = "Event type",
       guide = "legend",
       breaks = c(16, 17, 15),
-      labels = c("Check", "Event", "Favorable event")) +
-    
+      labels = if(favorable_events_present) {
+        c("Check", "Unfavorable Event", "Favorable event")
+      } else {
+        c("Check", "Event")
+      }) +
+  
     # Formatting with classic paper theme
     scale_size_manual(values = c("TRUE" = 5, "FALSE" = 2), guide = "none") +
     scale_color_brewer(palette = "Set1", direction = -1) +  # More muted color palette
