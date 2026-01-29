@@ -2271,8 +2271,6 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     separate(events_data, into = c("period", "name", "form", "type", "date"), sep = ",") %>% 
     filter(name == event_name)
   
-  temp_df <-  events_df %>% mutate(outcome_name = name, outcome_date_extended = date) %>% select(study_id, outcome_date_extended, outcome_name, type)
-  
   # Parse the outcome_data
   outcome_raw <- analytic %>%
     select(study_id, outcome_data) %>%
@@ -2280,9 +2278,7 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     separate(outcome_data, into = c("outcome_name", "target_days", "expected_days", 
                                    "time_zero", "outcome_date_extended", "outcome_type", 
                                    "outcome_days_extended", "outcome_days", "outcome_date"), 
-             sep = ",") %>%
-    left_join(temp_df, by = c("study_id", "outcome_name", "outcome_date_extended")) %>%
-    mutate(outcome_type = type)
+             sep = ",") 
 
   outcome_parsed <- outcome_raw %>%
     mutate(target_days = as.numeric(target_days),
