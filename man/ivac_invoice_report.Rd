@@ -37,8 +37,5 @@ paid when AF01 is complete with fsf_agreement=1
 }
 \examples{
 \dontrun{
-analytic <- get_construct_outputs(c("facilitycode", "payment_baseline", 
-  "payment_2wk", "payment_6wk", "payment_3mo", "payment_6mo", "enrolled"))
-ivac_invoice_report(analytic)
 }
 }
