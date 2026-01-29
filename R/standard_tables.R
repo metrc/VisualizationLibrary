@@ -6159,9 +6159,6 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, break
 #'
 #' @examples
 #' \dontrun{
-#' analytic <- get_construct_outputs(c("facilitycode", "payment_baseline", 
-#'   "payment_2wk", "payment_6wk", "payment_3mo", "payment_6mo", "enrolled"))
-#' ivac_invoice_report(analytic)
 #' }
 ivac_invoice_report <- function(analytic, 
                                 facilitycodes = NULL, 
@@ -6170,7 +6167,7 @@ ivac_invoice_report <- function(analytic,
   # Validate required columns
   required_cols <- c("study_id", "facilitycode", "payment_baseline", 
                      "payment_2wk", "payment_6wk", "payment_3mo", "payment_6mo")
-  missing_cols <- required_cols[!required_cols %in% names(analytic)]
+  p <- required_cols[!required_cols %in% names(analytic)]
   if (length(missing_cols) > 0) {
     stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
   }
@@ -6337,9 +6334,6 @@ ivac_invoice_report <- function(analytic,
 #'
 #' @examples
 #' \dontrun{
-#' analytic <- get_construct_outputs(c("facilitycode", "payment_baseline", 
-#'   "payment_2wk", "payment_6wk", "payment_3mo", "payment_6mo", "enrolled"))
-#' ivac_invoice_summary(analytic)
 #' }
 ivac_invoice_summary <- function(analytic, facilitycodes = NULL) {
   
