@@ -2326,16 +2326,10 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
                    yend = patient_label),
                 size = 1) +
     
-    geom_segment(data = events_df %>% filter(type != 'favorable_event'), 
-                 aes(x = outcome_days, 
+    geom_segment(data = events_df %>% filter(type == 'favorable_event' & days_from_zero < outcome_days), 
+                 aes(x = days_from_zero, 
                      y = patient_label, 
                      xend = outcome_days, yend = patient_label),
-                 linetype = 'dotted', size = 1) +
-    
-    geom_segment(data = events_df %>% filter(type == 'favorable_event'), 
-                 aes(x = outcome_days, 
-                     y = patient_label, 
-                     xend = outcome_days_extended, yend = patient_label),
                  linetype = "dotted", size = 1, color = "green") +
     
     #if event occurs before expected days, then red dot line until expected days
