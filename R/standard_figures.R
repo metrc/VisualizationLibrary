@@ -2296,7 +2296,7 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     select(study_id, target_days, expected_days, outcome_days, outcome_days_extended)
   
   # Convert date to proper format and join with outcome info
-  events_df <- events_df %>%
+  dates_df <- events_df %>%
     mutate(date = as.Date(date),
            time_zero = as.Date(time_zero),
            days_from_zero = as.numeric(difftime(date, time_zero, units = "days")),
@@ -2308,7 +2308,7 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     filter((time_zero+days_since_tz)<Sys.Date()) %>% 
     select(-study_id, -facilitycode, -period) 
   
-  patients_df <- events_df %>%
+  patients_df <- dates_df %>%
     select(patient_label, outcome_days, outcome_days_extended, expected_days) %>% 
     distinct()
   
@@ -2326,7 +2326,7 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
                    yend = patient_label),
                 size = 1) +
     
-    geom_segment(data = events_df %>% filter(type == 'favorable_event' & days_from_zero < outcome_days), 
+    geom_segment(data = dates_df %>% filter(type == 'favorable_event' & days_from_zero < outcome_days), 
                  aes(x = days_from_zero, 
                      y = patient_label, 
                      xend = outcome_days, yend = patient_label),
@@ -2351,7 +2351,7 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     geom_vline(xintercept = target_days, linetype = "dashed", color = "red") +
     
     # Event points - now with size mapping for "event" type
-    geom_point(data = events_df, 
+    geom_point(data = dates_df, 
               aes(x = days_from_zero, y = patient_label, color = form, 
                   shape = case_when(type == "check" ~ 16,
                                     type %in% c('event', 'unfavorable_event') ~ 17,
