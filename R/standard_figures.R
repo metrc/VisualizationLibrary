@@ -2253,7 +2253,7 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     stop(paste("Missing required columns:", paste(missing_cols, collapse = ", ")))
   }
   
-  analytic <- analytic %>% filter(enrolled == TRUE)
+  analytic <- analytic %>% filter(enrolled == TRUE & !is.na(time_zero))
 
   if (!is.null(random_sample)) {
     sample_ids <- sample(unique(analytic$study_id), random_sample)
@@ -2296,7 +2296,7 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     select(study_id, target_days, expected_days, outcome_days, outcome_days_extended)
   
   # Convert date to proper format and join with outcome info
-  events_df <- events_df %>%
+  dates_df <- events_df %>%
     mutate(date = as.Date(date),
            time_zero = as.Date(time_zero),
            days_from_zero = as.numeric(difftime(date, time_zero, units = "days")),
@@ -2308,7 +2308,7 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     filter((time_zero+days_since_tz)<Sys.Date()) %>% 
     select(-study_id, -facilitycode, -period) 
   
-  patients_df <- events_df %>%
+  patients_df <- dates_df %>%
     select(patient_label, outcome_days, outcome_days_extended, expected_days) %>% 
     distinct()
   
@@ -2316,6 +2316,18 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
   target_days <- unique(event_outcomes$target_days)[1]
   
   favorable_events_present <- nrow(events_df %>% filter(type == 'favorable_event')) > 0
+  events_present <- nrow(events_df %>% filter(str_detect(type, 'event'))) > 0
+  # Build shape legend dynamically based on what's present
+  shape_breaks <- 16  # Circle for checks (always present)
+  shape_labels <- "Check"
+  if (events_present) {
+    shape_breaks <- c(shape_breaks, 17)  # Triangle for events
+    shape_labels <- c(shape_labels, if(any(dates_df$type == "unfavorable_event")) "Unfavorable Event" else "Event")
+  }
+  if (favorable_events_present) {
+    shape_breaks <- c(shape_breaks, 15)  # Square for favorable events
+    shape_labels <- c(shape_labels, "Favorable Event")
+  }
   
   # Create the plot
   g <- ggplot() +
@@ -2326,16 +2338,10 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
                    yend = patient_label),
                 size = 1) +
     
-    geom_segment(data = events_df %>% filter(type != 'favorable_event'), 
-                 aes(x = outcome_days, 
+    geom_segment(data = dates_df %>% filter(type == 'favorable_event' & days_from_zero < outcome_days), 
+                 aes(x = days_from_zero, 
                      y = patient_label, 
                      xend = outcome_days, yend = patient_label),
-                 linetype = 'dotted', size = 1) +
-    
-    geom_segment(data = events_df %>% filter(type == 'favorable_event'), 
-                 aes(x = outcome_days, 
-                     y = patient_label, 
-                     xend = outcome_days_extended, yend = patient_label),
                  linetype = "dotted", size = 1, color = "green") +
     
     #if event occurs before expected days, then red dot line until expected days
@@ -2357,25 +2363,18 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
     geom_vline(xintercept = target_days, linetype = "dashed", color = "red") +
     
     # Event points - now with size mapping for "event" type
-    geom_point(data = events_df, 
+    geom_point(data = dates_df, 
               aes(x = days_from_zero, y = patient_label, color = form, 
                   shape = case_when(type == "check" ~ 16,
                                     type %in% c('event', 'unfavorable_event') ~ 17,
-                                    TRUE ~ 15),
+                                    type == 'favorable_event' ~ 15,
+                                    TRUE ~ 16),
                   size = str_detect(type, "event"))) +
     scale_shape_identity(
       name = "Event type",
       guide = "legend",
-      breaks = if(favorable_events_present) {
-        c(16, 17, 15)
-      } else {
-        c(16, 17)
-      },
-      labels = if(favorable_events_present) {
-        c("Check", "Unfavorable Event", "Favorable event")
-      } else {
-        c("Check", "Event")
-      }) +
+      breaks = shape_breaks,
+      labels = shape_labels) +
   
     # Formatting with classic paper theme
     scale_size_manual(values = c("TRUE" = 5, "FALSE" = 2), guide = "none") +
