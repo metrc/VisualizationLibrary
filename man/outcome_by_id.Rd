@@ -9,7 +9,8 @@ outcome_by_id(
   event_name,
   random_sample = NULL,
   facilitycodes = NULL,
-  days_since_tz = 365
+  days_since_tz = 365,
+  sort_by_fu_days = FALSE
 )
 }
 \arguments{
@@ -22,7 +23,11 @@ and time_zero}
 
 \item{facilitycodes}{optional character vector to limit to a certain facilities}
 
-\item{days_since_dz}{optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago}
+\item{sort_by_fu_days}{optional boolean that sorts the html by the span from time_zero of the most
+available data we have}
+
+\item{days_since_dz}{optional numeric keyowrd argument to filter only for rows whose time_zero occured 
+at least that many days ago}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded timeline visualization in PNG format.
@@ -32,6 +37,7 @@ Creates a timeline visualization for each patient showing events relative to tim
 }
 \examples{
 outcome_by_id("Replace with Analytic Tibble", "test_outcome")
+outcome_by_id("Replace with Analytic Tibble", "test_outcome", sort_by_followup_days = TRUE)
 outcome_by_id("Replace with Analytic Tibble", "test_outcome", random_sample = 50, facilitycodes = c('AAA', 'AAB'))
 
 }
