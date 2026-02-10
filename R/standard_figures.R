@@ -2227,16 +2227,21 @@ consort_diagram_no_definitive_event <- function(analytic, final_period="12 Month
 #' @param event_name specific event to track (will mark first occurrence specially)
 #' @param random_sample optional integer to limit to a random sample of IDs
 #' @param facilitycodes optional character vector to limit to a certain facilities
-#' @param days_since_dz optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago
+#' @param days_since_dz optional numeric keyowrd argument to filter only for rows whose time_zero occured 
+#' at least that many days ago
+#' @param sort_by_fu_days optional boolean that sorts the html by the span from time_zero of the most
+#' available data we have
 #'
 #' @return An HTML string containing an image tag with the base64-encoded timeline visualization in PNG format.
 #' @export
 #'
 #' @examples
 #' outcome_by_id("Replace with Analytic Tibble", "test_outcome")
+#' outcome_by_id("Replace with Analytic Tibble", "test_outcome", sort_by_followup_days = TRUE)
 #' outcome_by_id("Replace with Analytic Tibble", "test_outcome", random_sample = 50, facilitycodes = c('AAA', 'AAB'))
 #' 
-outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilitycodes = NULL, days_since_tz = 365) {
+outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilitycodes = NULL, 
+                          days_since_tz = 365, sort_by_fu_days = FALSE) {
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('outcome_data', 'enrolled', 'time_zero', 'facilitycode', 'events_data'), 
@@ -2317,15 +2322,14 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
   
   favorable_events_present <- nrow(events_df %>% filter(type == 'favorable_event')) > 0
   events_present <- nrow(events_df %>% filter(str_detect(type, 'event'))) > 0
-  # Build shape legend dynamically based on what's present
   shape_breaks <- 16  # Circle for checks (always present)
   shape_labels <- "Check"
   if (events_present) {
-    shape_breaks <- c(shape_breaks, 17)  # Triangle for events
+    shape_breaks <- c(shape_breaks, 17)  
     shape_labels <- c(shape_labels, if(any(dates_df$type == "unfavorable_event")) "Unfavorable Event" else "Event")
   }
   if (favorable_events_present) {
-    shape_breaks <- c(shape_breaks, 15)  # Square for favorable events
+    shape_breaks <- c(shape_breaks, 15)  
     shape_labels <- c(shape_labels, "Favorable Event")
   }
   
@@ -2378,7 +2382,7 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
   
     # Formatting with classic paper theme
     scale_size_manual(values = c("TRUE" = 5, "FALSE" = 2), guide = "none") +
-    scale_color_brewer(palette = "Set1", direction = -1) +  # More muted color palette
+    scale_color_brewer(palette = "Set1", direction = -1) + 
     labs(title = paste("Patient outcomes tracking:", str_replace_all(event_name, "_"," ")),
          subtitle = "Solid line until first event or expected follow-up date. Red line at target date.",
          x = "Days from time zero",
@@ -2392,15 +2396,29 @@ outcome_by_id <- function(analytic, event_name, random_sample = NULL, facilityco
           axis.ticks = element_line(color = "black"),
           legend.position = "bottom",
           plot.title = element_text(size = 14, face = "bold"),
-          plot.subtitle = element_text(size = 10, face = "italic", margin = margin(b = 20)),  # Add bottom margin to subtitle
-          plot.margin = margin(t = 20, r = 20, b = 20, l = 20))  # Add overall plot margins
+          plot.subtitle = element_text(size = 10, face = "italic", margin = margin(b = 20)),  
+          plot.margin = margin(t = 20, r = 20, b = 20, l = 20))  
   
   # Add annotation for target days mark
   g <- g + annotate("text", x = target_days, y = 0, 
                    label = paste0("Target (", target_days, " days)"), 
-                   vjust = 2, color = "red")  # Changed y to 0 and vjust to 2 to position below
+                   vjust = 2, color = "red")
   
-  # Save and convert to base64 image
+  # section for arranging final output
+  if (sort_by_fu_days) {
+    order_df <- dates_df %>% 
+      group_by(patient_label) %>%
+      summarize(days_of_followup = max(days_from_zero)) %>%
+      ungroup() %>%
+      arrange(days_of_followup)
+  } else {
+    order_df <- dates_df %>% arrange(desc(patient_label))
+  }
+  order <- order_df %>%
+    pull(patient_label) %>%
+    unique()
+  g <- g + scale_y_discrete(limits = order)
+  
   temp_png_path <- tempfile(fileext = ".png")
   ggsave(temp_png_path, plot = g, width = 10, height = max(8, nrow(patients_df) * 0.2), units = 'in', dpi = 200, limitsize = FALSE)
   image_data <- base64enc::base64encode(temp_png_path)
