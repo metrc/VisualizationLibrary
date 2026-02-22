@@ -4,7 +4,7 @@
 \alias{outcome_by_name_overall}
 \title{Outcome by Name Overall}
 \usage{
-outcome_by_name_overall(analytic, days_since_tz = 365)
+outcome_by_name_overall(analytic, days_since_tz = 365, header = FALSE)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, outcome_data, and enrolled}
