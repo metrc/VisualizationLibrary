@@ -4,7 +4,12 @@
 \alias{monitoring_required}
 \title{Monitoring required}
 \usage{
-monitoring_required(analytic, standard_threshold = 10, spec_threshold = list())
+monitoring_required(
+  analytic,
+  standard_threshold = 10,
+  spec_threshold = list(),
+  date_cols_inclusion = FALSE
+)
 }
 \arguments{
 \item{analytic}{analytic data set that must include enrolled, facilitycode, consent_date}
