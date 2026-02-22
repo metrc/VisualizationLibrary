@@ -10,7 +10,8 @@ enrollment_by_site_last_days_var_disc_ii(
   discontinued_colname = "Discontinued",
   include_exclusive_safety_set = FALSE,
   average = FALSE,
-  cumulative_data = TRUE
+  cumulative_data = TRUE,
+  days = NULL
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ enrollment_by_site_last_days_var_disc_ii(
 \item{average}{Return average over the time period (Average Enrolled per week).}
 
 \item{cumulative_data}{Include final counts.}
+
+\item{days}{left side of table time period selection}
 }
 \value{
 An HTML table.
