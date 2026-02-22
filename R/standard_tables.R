@@ -3625,7 +3625,7 @@ wbs_main_paper_patient_characteristics <- function(analytic){
 #' @examples
 #' expected_and_followup_visit_overall("Replace with Analytic Tibble")
 #' 
-expected_and_followup_visit_overall <- function(analytic){
+expected_and_followup_visit_overall <- function(analytic, pretty_cols = c()){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("followup_data"),
@@ -3708,6 +3708,10 @@ expected_and_followup_visit_overall <- function(analytic){
   
   final_last <- rbind(not_expected, expected_row, top, middle, bottom) %>% 
     rename(Status = status)
+  
+  if (!is.null(pretty_cols)) {
+    colnames(final_last) = c('Status', pretty_cols)
+  }
   
   vis <- kable(final_last, format="html", align='l') %>%
     add_indent(c(4,5)) %>% 
@@ -4770,7 +4774,7 @@ outcome_by_site <- function(analytic, outcome_name, days_since_tz = 365) {
 #' @examples
 #' outcome_by_name_overall("Replace with Analytic Tibble")
 #' 
-outcome_by_name_overall <- function(analytic, days_since_tz = 365) {
+outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALSE) {
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('outcome_data', 'enrolled'), 
                                               example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'Boolean'))
@@ -4825,6 +4829,15 @@ outcome_by_name_overall <- function(analytic, days_since_tz = 365) {
   
   vis <- kable(results, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
+  
+  if (header) {
+    col_vec <- c(3,5)
+    name_vec <- c(" ", "Person-days of follow-up time")
+    names(col_vec) <- name_vec
+    
+    vis <- vis %>%
+      add_header_above(col_vec)
+  }
   
   return(vis)
 }
