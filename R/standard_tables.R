@@ -5927,6 +5927,7 @@ hardware_duration_statistics <- function(analytic, delta = FALSE){
   
   filtered <- df1 %>%
     filter(!is.na(target)) %>% 
+    filter(target > 0) %>%
     mutate(target = as.numeric(target))
   
   if (delta) {
