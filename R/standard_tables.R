@@ -4774,7 +4774,7 @@ outcome_by_site <- function(analytic, outcome_name, days_since_tz = 365) {
 #' @examples
 #' outcome_by_name_overall("Replace with Analytic Tibble")
 #' 
-outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALSE) {
+outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALSE, opt_col_order = FALSE) {
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('outcome_data', 'enrolled'), 
                                               example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'Boolean'))
@@ -4822,6 +4822,13 @@ outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALS
     select(`Outcome`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, 
            `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Expected (non-event participants)`, 
            `Percent of Expected`)
+  
+  if (opt_call_order) {
+    results <- results %>%
+      select(`Outcome`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, 
+             `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Expected`, 
+             `Percent of Expected (non-event participants)`)
+  }
 
   # cleanup the names of the outcomes by replacing the underscores with spaces and capitalizing the first letter
   results <- results %>%
