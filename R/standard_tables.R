@@ -6043,6 +6043,7 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
       pull(len) %>%
       as.numeric
     len_vec <- len_vec[!is.na(len_vec)]
+    len_vec <- len_vec[len_vec > 0]
     mean <- len_vec %>%
       mean() %>%
       round(2)
