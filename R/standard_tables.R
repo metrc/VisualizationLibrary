@@ -3047,7 +3047,7 @@ enrollment_by_site_last_days_var_disc_ii <- function(analytic,
     analytic, 
     example_constructs = c("consented_and_randomized", "discontinued", 
                            "enrolled", "exclusive_safety_set", 
-                           "eligible", "consent_date",
+                           "eligible", "screened_date",
                            "site_certification_date", "facilitycode"), 
     example_types = c("Boolean", "Boolean", 
                       "Boolean", "Boolean", 
@@ -3057,12 +3057,12 @@ enrollment_by_site_last_days_var_disc_ii <- function(analytic,
   if(include_exclusive_safety_set){
     df <- analytic %>% 
       select(consented_and_randomized, enrolled, exclusive_safety_set, 
-             eligible, consent_date,
+             eligible, screened_date,
              site_certification_date, facilitycode, all_of(discontinued))
   } else{
     df <- analytic %>% 
       select(consented_and_randomized, enrolled, 
-             eligible, consent_date,
+             eligible, screened_date,
              site_certification_date, facilitycode, all_of(discontinued))
   }
   
@@ -3078,8 +3078,8 @@ enrollment_by_site_last_days_var_disc_ii <- function(analytic,
   if (length(days) == 1) {
     last_day <- Sys.Date() - days
     last_day_df <- df %>%
-      mutate(consent_date = as.Date(consent_date)) %>%
-      mutate(elig_last = consent_date > last_day) %>%
+      mutate(screened_date = as.Date(screened_date)) %>%
+      mutate(elig_last = screened_date > last_day) %>%
       mutate(cnr = consented_and_randomized & eligible) %>%
       mutate(consent_last = ifelse(elig_last, cnr, FALSE)) %>%
       select(Facility, consent_last, elig_last) %>%
@@ -4823,7 +4823,7 @@ outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALS
            `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Expected (non-event participants)`, 
            `Percent of Expected`)
   
-  if (opt_call_order) {
+  if (opt_col_order) {
     results <- results %>%
       select(`Outcome`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, 
              `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Expected`, 
