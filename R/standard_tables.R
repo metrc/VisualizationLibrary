@@ -4801,7 +4801,7 @@ outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALS
     )
   
   expected_non_event <- outcome_data %>%
-    filter(outcome_type != 'event') %>%
+    filter(!str_detect(outcome_type, 'event')) %>%
     group_by(outcome_name) %>%
     mutate(expected_days = as.numeric(expected_days)) %>%
     mutate(outcome_days = as.numeric(outcome_days)) %>%
