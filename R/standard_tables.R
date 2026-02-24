@@ -3031,6 +3031,7 @@ enrollment_by_site_last_days_var_disc_i <- function(analytic, days = 0,
 #' @param include_exclusive_safety_set Toggle for exclusive_safety_set.
 #' @param average Return average over the time period (Average Enrolled per week).
 #' @param cumulative_data Include final counts.
+#' @param days left side of table time period selection
 #'
 #' @return An HTML table.
 #' @export
@@ -3039,28 +3040,29 @@ enrollment_by_site_last_days_var_disc_ii <- function(analytic,
                                              discontinued_colname="Discontinued", 
                                              include_exclusive_safety_set=FALSE, 
                                              average = FALSE, 
-                                             cumulative_data = TRUE){
+                                             cumulative_data = TRUE,
+                                             days = NULL){
 
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("consented_and_randomized", "discontinued", 
                            "enrolled", "exclusive_safety_set", 
-                           "eligible", 
+                           "eligible", "screened_date",
                            "site_certification_date", "facilitycode"), 
     example_types = c("Boolean", "Boolean", 
                       "Boolean", "Boolean", 
-                      "Boolean", 
+                      "Boolean", "Date",
                       "Date", "FacilityCode"))
   
   if(include_exclusive_safety_set){
     df <- analytic %>% 
       select(consented_and_randomized, enrolled, exclusive_safety_set, 
-             eligible, 
+             eligible, screened_date,
              site_certification_date, facilitycode, all_of(discontinued))
   } else{
     df <- analytic %>% 
       select(consented_and_randomized, enrolled, 
-             eligible, 
+             eligible, screened_date,
              site_certification_date, facilitycode, all_of(discontinued))
   }
   
@@ -3072,6 +3074,19 @@ enrollment_by_site_last_days_var_disc_ii <- function(analytic,
     rename(Facility = facilitycode) %>% 
     filter(!is.na(Facility)) %>% 
     mutate(weeks_site_certified = site_certified_days/7)
+  
+  if (length(days) == 1) {
+    last_day <- Sys.Date() - days
+    last_day_df <- df %>%
+      mutate(screened_date = as.Date(screened_date)) %>%
+      mutate(elig_last = screened_date > last_day) %>%
+      mutate(cnr = consented_and_randomized & eligible) %>%
+      mutate(consent_last = ifelse(elig_last, cnr, FALSE)) %>%
+      select(Facility, consent_last, elig_last) %>%
+      group_by(Facility) %>%
+      summarize('last_days_Eligible' = sum(elig_last, na.rm = T),
+                'last_days_Consented' = sum(consent_last, na.rm = T))
+  }
   
   df_1st <- df %>% 
     group_by(Facility) %>% 
@@ -3106,18 +3121,21 @@ enrollment_by_site_last_days_var_disc_ii <- function(analytic,
     group_by(Facility) %>% 
     summarize(
       Enrolled2 = round(sum(enrolled, na.rm = TRUE) / first(weeks_site_certified), 2))
-  
   weekly <- left_join(facilities, by_week, by = 'Facility')
-  
   almost <- left_join(facilities, weekly, by = 'Facility')
-  
   sum_days_certified <- sum(table_raw$`Days Certified`, na.rm=T)
   
-  final <- left_join(almost, table_raw, by = 'Facility') %>% 
+  if (length(days) == 1) {
+    final <- left_join(last_day_df, almost, by = 'Facility') %>%
+      left_join(table_raw, by = 'Facility') 
+  } else {
+    final <- left_join(almost, table_raw, by = 'Facility')
+  }
+  
+  final <- final %>% 
     adorn_totals("row") %>% 
     mutate(is_total=Facility=="Total") %>% 
     mutate(`Days Certified`=ifelse(is_total,sum_days_certified,`Days Certified`)) %>% 
-    arrange(desc(is_total), Facility) %>% 
     select(-is_total) %>% 
     mutate(`Consented & Randomized (% eligible)` = format_count_percent(cnr, Eligible)) %>% 
     mutate(`Discontinued (% randomized)` = format_count_percent(Discontinued, cnr)) %>% 
@@ -3127,47 +3145,49 @@ enrollment_by_site_last_days_var_disc_ii <- function(analytic,
     final <- final %>%
       mutate(`Safety Set` = format_count_percent(`Safety Set`, cnr))
   }
-  
-  total_row <- final %>% 
-    slice_head(n=1)
-  
-  if(include_exclusive_safety_set){
-    last <- bind_rows(final, total_row) %>% 
-      slice_tail(n=-1) %>% 
-      select(Facility, Enrolled2, `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Safety Set`, `Eligible & Enrolled (% randomized)`)
-    
-    colnames(last) <- c('Facility', 'Enrolled', 
-                        'Consented & Randomized (% eligible)', paste(discontinued_colname, '(% randomized)'), 'Not Enrolled Safety Set (% randomized)', 'Eligible & Enrolled (% randomized)')
-    
-    header_num <- c(1, 1, 4)
-  } else{
-    last <- bind_rows(final, total_row) %>% 
-      slice_tail(n=-1) %>% 
-      select(Facility, Enrolled2, `Consented & Randomized (% eligible)`, `Discontinued (% randomized)`, `Eligible & Enrolled (% randomized)`)
-    
-    colnames(last) <- c('Facility', 'Enrolled', 
-                        'Consented & Randomized (% eligible)', paste(discontinued_colname, '(% randomized)'), 'Eligible & Enrolled (% randomized)')
-    
-    header_num <- c(1, 1, 3)
+  if (length(days) == 1) {
+    colnames(final)[2:3] <- c('Eligible', 'Consented')
   }
   
-  header_names <- c(" ", "Average per week", paste("Cumulative", "to date"))
-  names(header_num) <- header_names
+  disc_col <- paste(discontinued_colname, "(% randomized)")                                                                                    
+  names(final)[names(final) == "Discontinued (% randomized)"] <- disc_col                                                                      
   
-  if(average == FALSE){
-    last <- last[, c(1, seq(from=3, to=ncol(last)))]
-    header_num <- header_num[c(1, 3)]
+  if (include_exclusive_safety_set) {
+    final <- final %>%
+      rename(`Not Enrolled Safety Set (% randomized)` = `Safety Set`)
   }
   
-  if(cumulative_data == FALSE){
-    if(include_exclusive_safety_set) remove_count <- 4 else remove_count <- 3
-    last <- last[, c(seq(from = 1, to = (ncol(last) - remove_count)))]
-    header_num <- header_num[1:(length(header_num)-1)]
+  # new way to build colnames and header with multiple arguments
+  cols <- "Facility"
+  header_num <- c(" " = 1)
+  
+  if (length(days) == 1) {
+    cols <- c(cols, "Eligible", "Consented")
+    header_num <- c(header_num, setNames(2, paste("Over last", days, "days")))
   }
   
-  table <- kable(last, format="html", align='l') %>%
+  if (average) {
+    cols <- c(cols, "Enrolled2")
+    header_num <- c(header_num, "Average per week" = 1)
+  }
+  
+  if (cumulative_data) {
+    cum_cols <- c(
+      "Consented & Randomized (% eligible)",
+      disc_col,
+      if (include_exclusive_safety_set) "Not Enrolled Safety Set (% randomized)",
+      "Eligible & Enrolled (% randomized)"
+    )
+    cols <- c(cols, cum_cols)
+    header_num <- c(header_num, setNames(length(cum_cols), "Cumulative to date"))
+  }
+  
+  last <- final %>% select(all_of(cols))
+  if ("Enrolled2" %in% names(last)) names(last)[names(last) == "Enrolled2"] <- "Enrolled"
+  
+  table <- kable(last, format = "html", align = "l") %>%
     add_header_above(header_num) %>%
-    kable_styling("striped", full_width = F, position="left") %>% 
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
     row_spec(nrow(last), bold = TRUE)
   
   return(table)
@@ -3605,7 +3625,7 @@ wbs_main_paper_patient_characteristics <- function(analytic){
 #' @examples
 #' expected_and_followup_visit_overall("Replace with Analytic Tibble")
 #' 
-expected_and_followup_visit_overall <- function(analytic){
+expected_and_followup_visit_overall <- function(analytic, pretty_cols = c()){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("followup_data"),
@@ -3688,6 +3708,10 @@ expected_and_followup_visit_overall <- function(analytic){
   
   final_last <- rbind(not_expected, expected_row, top, middle, bottom) %>% 
     rename(Status = status)
+  
+  if (!is.null(pretty_cols)) {
+    colnames(final_last) = c('Status', pretty_cols)
+  }
   
   vis <- kable(final_last, format="html", align='l') %>%
     add_indent(c(4,5)) %>% 
@@ -4750,7 +4774,7 @@ outcome_by_site <- function(analytic, outcome_name, days_since_tz = 365) {
 #' @examples
 #' outcome_by_name_overall("Replace with Analytic Tibble")
 #' 
-outcome_by_name_overall <- function(analytic, days_since_tz = 365) {
+outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALSE, opt_col_order = FALSE) {
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('outcome_data', 'enrolled'), 
                                               example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'Boolean'))
@@ -4777,7 +4801,7 @@ outcome_by_name_overall <- function(analytic, days_since_tz = 365) {
     )
   
   expected_non_event <- outcome_data %>%
-    filter(outcome_type != 'event') %>%
+    filter(!str_detect(outcome_type, 'event')) %>%
     group_by(outcome_name) %>%
     mutate(expected_days = as.numeric(expected_days)) %>%
     mutate(outcome_days = as.numeric(outcome_days)) %>%
@@ -4798,6 +4822,13 @@ outcome_by_name_overall <- function(analytic, days_since_tz = 365) {
     select(`Outcome`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, 
            `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Expected (non-event participants)`, 
            `Percent of Expected`)
+  
+  if (opt_col_order) {
+    results <- results %>%
+      select(`Outcome`, `N (Participants)`, `Missing Time to Event (Participants)`, `Minimum (Days)`, 
+             `Maximum (Days)`, `Mean (Standard Deviation)`, `Percent of Expected`, 
+             `Percent of Expected (non-event participants)`)
+  }
 
   # cleanup the names of the outcomes by replacing the underscores with spaces and capitalizing the first letter
   results <- results %>%
@@ -4805,6 +4836,15 @@ outcome_by_name_overall <- function(analytic, days_since_tz = 365) {
   
   vis <- kable(results, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
+  
+  if (header) {
+    col_vec <- c(3,5)
+    name_vec <- c(" ", "Person-days of follow-up time")
+    names(col_vec) <- name_vec
+    
+    vis <- vis %>%
+      add_header_above(col_vec)
+  }
   
   return(vis)
 }
@@ -5907,6 +5947,7 @@ hardware_duration_statistics <- function(analytic, delta = FALSE){
   
   filtered <- df1 %>%
     filter(!is.na(target)) %>% 
+    filter(target > 0) %>%
     mutate(target = as.numeric(target))
   
   if (delta) {
@@ -6002,6 +6043,7 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
       pull(len) %>%
       as.numeric
     len_vec <- len_vec[!is.na(len_vec)]
+    len_vec <- len_vec[len_vec > 0]
     mean <- len_vec %>%
       mean() %>%
       round(2)
