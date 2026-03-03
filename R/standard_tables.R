@@ -1144,7 +1144,7 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
     example_types = c("Boolean", "Category", "Category", "Category", "Category",
                       "Category", "Number", "Boolean", "Boolean"))
   
-   total <- sum(analytic$enrolled, na.rm = TRUE)
+  total <- sum(analytic$enrolled, na.rm = TRUE)
   
   # --- Not Completed
   not_completed_df <- analytic %>% 
@@ -1169,15 +1169,18 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
   not_expected_df_tot <- tibble(type = "Not Expected", n = sum(not_expected_df$n))
   
   # --- SAE
+  total_saes <- sum(analytic$sae_count[analytic$enrolled == TRUE], na.rm = TRUE)
+  sae_label <- paste("Unique participants with SAEs (of", total_saes, "total):")
+  
   sae_df <- analytic %>% 
     select(study_id, enrolled, sae_count) %>% 
     filter(enrolled & sae_count > 0) %>% 
-    mutate(sae_count = "SAE") %>% 
+    mutate(sae_count = sae_label) %>% 
     count(sae_count) %>%
     rename(type = sae_count) %>% 
     filter(!is.na(type)) %>% 
     mutate(type = as.character(type))
-  if (nrow(sae_df) == 0) sae_df <- tibble(type = "SAE", n = 0)
+  if (nrow(sae_df) == 0) sae_df <- tibble(type = sae_label, n = 0)
   
   # --- AE (optional)
   if (include_ae) {
@@ -1222,7 +1225,7 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
     separate_rows(protocol_deviation_administrative, sep = ";") %>%
     filter(consented == TRUE) %>% 
     mutate(protocol_deviation_administrative = ifelse(grepl("^Other:", protocol_deviation_administrative), 
-                                                             "Other", protocol_deviation_administrative)) %>% 
+                                                      "Other", protocol_deviation_administrative)) %>% 
     count(protocol_deviation_administrative) %>%
     rename(type = protocol_deviation_administrative) %>% 
     filter(!is.na(type)) %>% 
@@ -1274,7 +1277,7 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
   parents <- c(
     "Not Completed",
     "Not Expected",
-    "SAE",
+    sae_label,
     if (include_ae) "AE",
     " ",                       # "n=... (Consented)" separator
     "Protocol Deviations",
@@ -1289,7 +1292,7 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
   # end-of-block rows computed from actual row positions + child counts
   r_not_completed_parent <- which(df_final$type == "Not Completed")
   r_not_expected_parent  <- which(df_final$type == "Not Expected")
-  r_sae                  <- which(df_final$type == "SAE")
+  r_sae                  <- which(df_final$type == sae_label)
   r_ae                   <- if (include_ae) which(df_final$type == "AE") else integer(0)
   r_consent_sep          <- which(df_final$type == " ")
   r_admin_parent         <- which(df_final$type == "Administrative/Other")
