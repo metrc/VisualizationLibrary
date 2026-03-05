@@ -2236,14 +2236,14 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #' @examples
 #' closed_expected_and_followup_visit_overall("Replace with Analytic Tibble")
 #' 
-closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL){
+closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL, pretty_cols = c()){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("followup_data","treatment_arm"),
     example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date",
                       "Boolean")) 
   
-  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '819920a6d38957636bee47fb326150f0')
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', 'ba051129047046ea389939d95e034aa2')
   
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
@@ -2355,6 +2355,10 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
     add_indent(c(4, 5)) %>%
     add_header_above(c(' ', 'Group A' = length(a_cols)-1, 'Group B' = length(b_cols)-1)) %>%
     kable_styling("striped", full_width = F, position = 'left')
+  
+  if (!is.null(pretty_cols)) {
+    colnames(final_last) = c('Status', pretty_cols)
+  }
   
   if (!is.null(footnote)) {
     vis <- add_footnote(vis, footnotes)
