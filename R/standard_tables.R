@@ -1170,7 +1170,7 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
   
   # --- SAE
   total_saes <- sum(as.numeric(analytic$sae_count[analytic$enrolled == TRUE]), na.rm = TRUE)
-  sae_label <- paste("Unique participants with SAEs (of", total_saes, "total):")
+  sae_label <- paste("Unique participants with SAEs (of", total_saes, "total SAEs):")
   
   sae_df <- analytic %>% 
     select(study_id, enrolled, sae_count) %>% 
