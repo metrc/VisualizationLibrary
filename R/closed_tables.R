@@ -620,7 +620,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' closed_not_complete_sae_deviation_by_type("Replace with Analytic Tibble")
 #' 
 closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '35ffbcc9f29fd2ac6f7353292044f739')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '487cea16eaa4c893a83a4a992c538f53')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -672,23 +672,26 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
       mutate(cat_order=3)
     not_expected_df_tot <- tibble(type = "Not Expected", n = sum(not_expected_df$n), cat_order=4)
     
+    total_saes <- sum(as.numeric(analytic$sae_count[analytic$enrolled == TRUE]), na.rm = TRUE)
+    sae_label <- paste("Unique participants with SAEs (of", total_saes, "total SAEs):")
+    
     # --- SAE
     sae_df <- inner_analytic %>% 
       select(study_id, enrolled, sae_count) %>% 
-      filter(enrolled & sae_count > 0) %>% 
-      mutate(sae_count = "SAE") %>% 
+      filter(enrolled & as.numeric(sae_count) > 0) %>% 
+      mutate(sae_count = sae_label) %>% 
       count(sae_count) %>%
       rename(type = sae_count) %>% 
       filter(!is.na(type)) %>% 
       mutate(type = as.character(type)) %>% 
       mutate(cat_order=5)
-    if (nrow(sae_df) == 0) sae_df <- tibble(type = "SAE", n = 0, cat_order=6)
+    if (nrow(sae_df) == 0) sae_df <- tibble(type = sae_label, n = 0, cat_order=6)
     
     # --- AE (optional)
     if (include_ae) {
       ae_df <- inner_analytic %>% 
         select(study_id, enrolled, ae_count) %>% 
-        filter(enrolled & ae_count > 0) %>% 
+        filter(enrolled & as.numeric(ae_count) > 0) %>% 
         mutate(ae_count = "AE") %>% 
         count(ae_count) %>% 
         rename(type = ae_count) %>% 
@@ -791,7 +794,10 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
     arrange(o) %>% 
     select(-o) %>% 
     mutate_all(replace_na, "0 (0%)") %>%
-    mutate(type = if_else(str_detect(type, "^Other"), "Other", type)) 
+    mutate(type = if_else(str_detect(type, "^Other"), "Other", type))
+  
+  total_saes <- sum(as.numeric(analytic$sae_count[analytic$enrolled == TRUE]), na.rm = TRUE)
+  sae_label <- paste("Unique participants with SAEs (of", total_saes, "total SAEs):")
   
   # =========================
   # Robust styling by labels:
@@ -799,7 +805,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
   parents <- c(
     "Not Completed",
     "Not Expected",
-    "SAE",
+    sae_label,
     if (include_ae) "AE",
     " ",                       # "n=... (Consented)" separator
     "Protocol Deviations",
@@ -818,7 +824,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
   # end-of-block rows computed from actual row positions + child counts
   r_not_completed_parent <- which(df_final$type == "Not Completed")
   r_not_expected_parent  <- which(df_final$type == "Not Expected")
-  r_sae                  <- which(df_final$type == "SAE")
+  r_sae                  <- which(df_final$type == sae_label)
   r_ae                   <- if (include_ae) which(df_final$type == "AE") else integer(0)
   r_consent_sep          <- which(df_final$type == " ")
   r_admin_parent         <- which(df_final$type == "Administrative/Other")
@@ -2236,14 +2242,14 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
 #' @examples
 #' closed_expected_and_followup_visit_overall("Replace with Analytic Tibble")
 #' 
-closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL){
+closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NULL, pretty_cols = c()){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("followup_data","treatment_arm"),
     example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date",
                       "Boolean")) 
   
-  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '819920a6d38957636bee47fb326150f0')
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', 'ba051129047046ea389939d95e034aa2')
   
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
@@ -2355,6 +2361,10 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
     add_indent(c(4, 5)) %>%
     add_header_above(c(' ', 'Group A' = length(a_cols)-1, 'Group B' = length(b_cols)-1)) %>%
     kable_styling("striped", full_width = F, position = 'left')
+  
+  if (!is.null(pretty_cols)) {
+    colnames(final_last) = c('Status', pretty_cols)
+  }
   
   if (!is.null(footnote)) {
     vis <- add_footnote(vis, footnotes)
