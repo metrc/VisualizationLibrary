@@ -1169,12 +1169,12 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
   not_expected_df_tot <- tibble(type = "Not Expected", n = sum(not_expected_df$n))
   
   # --- SAE
-  total_saes <- sum(analytic$sae_count[analytic$enrolled == TRUE], na.rm = TRUE)
+  total_saes <- sum(as.numeric(analytic$sae_count[analytic$enrolled == TRUE]), na.rm = TRUE)
   sae_label <- paste("Unique participants with SAEs (of", total_saes, "total):")
   
   sae_df <- analytic %>% 
     select(study_id, enrolled, sae_count) %>% 
-    filter(enrolled & sae_count > 0) %>% 
+    filter(enrolled & as.numeric(sae_count) > 0) %>% 
     mutate(sae_count = sae_label) %>% 
     count(sae_count) %>%
     rename(type = sae_count) %>% 
@@ -1186,7 +1186,7 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
   if (include_ae) {
     ae_df <- analytic %>% 
       select(study_id, enrolled, ae_count) %>% 
-      filter(enrolled & ae_count > 0) %>% 
+      filter(enrolled & as.numeric(ae_count) > 0) %>% 
       mutate(ae_count = "AE") %>% 
       count(ae_count) %>% 
       rename(type = ae_count) %>% 
