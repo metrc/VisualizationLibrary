@@ -6477,3 +6477,518 @@ ivac_invoice_summary <- function(analytic, facilitycodes = NULL) {
   
   return(table)
 }
+
+
+#' Patient Characteristics Summary Table
+#'
+#' @description 
+#' Visualizes the patient characteristics for enrolled subjects, including Age, Sex, 
+#' Race/Ethnicity, Education, Preinjury Health, Tobacco Use, and Comorbidities.
+#'
+#' @param analytic This is the analytic data set that must include: enrolled, age, 
+#' sex, ethnicity_race, education, preinjury_health, tobacco_use, and comorbidities_list.
+#'
+#' @return An HTML table styled with kableExtra.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' }
+patient_characteristics_table <- function(analytic){
+  
+  inner_analytic <- analytic %>% filter(enrolled == TRUE)
+  enrolled_tot <- nrow(inner_analytic)
+  
+  age_vec <- inner_analytic %>% 
+    mutate(age = as.numeric(age)) %>% 
+    pull(age)
+  
+  df_age <- tibble(
+    Construct = "Age, mean years (SD)", 
+    Value = format_mean_sd(age_vec))
+  
+  df_sex_data <- inner_analytic %>%
+    count(sex) %>%
+    mutate(Value = format_count_percent(n, enrolled_tot),
+           Construct = as.character(sex)) %>%
+    select(Construct, Value)
+  
+  df_sex <- bind_rows(tibble(Construct = "Sex", Value = "n(%)"), df_sex_data)
+  
+  df_race_data <- inner_analytic %>%
+    count(ethnicity_race) %>%
+    mutate(Value = format_count_percent(n, enrolled_tot),
+           Construct = as.character(ethnicity_race)) %>%
+    select(Construct, Value)
+  
+  df_race <- bind_rows(tibble(Construct = "Race/Ethnicity", Value = "n(%)"), df_race_data)
+  
+  education_factor <- c("GED or high school graduate",
+                        "Some college, no degree",
+                        "Associates degree (2 year degree)",
+                        "Bachelors/college degree",
+                        "Graduate degree")
+  
+  df_edu_data <- inner_analytic %>%
+    count(education) %>%
+    arrange(match(education, education_factor)) %>%
+    mutate(Value = format_count_percent(n, enrolled_tot),
+           Construct = as.character(education)) %>%
+    select(Construct, Value)
+  
+  df_edu <- bind_rows(tibble(Construct = "Education", Value = "n(%)"), df_edu_data)
+  
+  df_health_data <- inner_analytic %>%
+    count(preinjury_health) %>%
+    mutate(Value = format_count_percent(n, enrolled_tot),
+           Construct = as.character(preinjury_health)) %>%
+    select(Construct, Value)
+  
+  df_health <- bind_rows(tibble(Construct = "Preinjury Health", Value = "n(%)"), df_health_data)
+  
+  df_tobacco_data <- inner_analytic %>%
+    count(tobacco_use) %>%
+    mutate(Value = format_count_percent(n, enrolled_tot),
+           Construct = as.character(tobacco_use)) %>%
+    select(Construct, Value)
+  
+  df_tobacco <- bind_rows(tibble(Construct = "Tobacco Use", Value = "n(%)"), df_tobacco_data)
+  
+  df_comorb_data <- inner_analytic %>%
+    select(comorbidities_list) %>%
+    separate_rows(comorbidities_list, sep = '; ') %>%
+    count(comorbidities_list) %>%
+    arrange(comorbidities_list == "None", comorbidities_list) %>%
+    mutate(Value = format_count_percent(n, enrolled_tot),
+           Construct = as.character(comorbidities_list)) %>%
+    select(Construct, Value)
+  
+  df_comorb <- bind_rows(tibble(Construct = "Comorbidity", Value = "n(%)"), df_comorb_data)
+  
+  table_raw <- bind_rows(
+    df_age,
+    df_sex,
+    df_race,
+    df_edu,
+    df_health,
+    df_tobacco,
+    df_comorb)
+  
+  is_header <- table_raw$Value == "n(%)" | table_raw$Construct == "Age, mean years (SD)"
+  
+  indent_rows <- which(!is_header)
+  
+  table <- kable(table_raw, format = "html", col.names = c("Construct", "n"), align = 'l') %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    column_spec(1, bold = is_header) %>%
+    add_indent(indent_rows)
+  
+  return(table)
+}
+
+#' Amputation, Residual Limb and Prostheses Characteristics Summary Table
+#'
+#' @description 
+#' Visualizes the characteristics of enrolled subjects including years since amputation, 
+#' cause, prosthesis use, ambulatory devices, socket comfort scores, and treatments.
+#'
+#' @param analytic This is the analytic data set that must include: enrolled, 
+#' amputation_days_since, prosthesis_days_per_week, prosthesis_hours_per_day, 
+#' socket_comfort_score_sit, socket_comfort_score_stand, socket_comfort_score_walk, 
+#' amputation_cause, ambulatory_device_list, medication_frequency_list, and meds_skin_list.
+#'
+#' @return An HTML table styled with kableExtra.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' }
+amputation_characteristics_table <- function(analytic){
+  
+  inner_analytic <- analytic %>% filter(enrolled == TRUE)
+  enrolled_tot <- nrow(inner_analytic)
+  
+  ays_vec <- inner_analytic %>%
+    mutate(amputation_years_since = as.numeric(amputation_days_since) / 365) %>%
+    pull(amputation_years_since)
+  
+  df_ays <- tibble(
+    Construct = "Years since amputation, mean (SD)", 
+    Value = format_mean_sd(ays_vec),
+    Is_Header = TRUE)
+  
+  df_cause_data <- inner_analytic %>%
+    count(amputation_cause) %>%
+    mutate(Value = format_count_percent(n, enrolled_tot),
+           Construct = as.character(amputation_cause),
+           Is_Header = FALSE) %>%
+    select(Construct, Value, Is_Header)
+  
+  df_cause <- bind_rows(tibble(Construct = "Cause of amputation", Value = "n(%)", Is_Header = TRUE), df_cause_data)
+  
+  pros_week <- format_mean_sd(inner_analytic %>% pull(prosthesis_days_per_week) %>% as.numeric())
+  pros_day <- format_mean_sd(inner_analytic %>% pull(prosthesis_hours_per_day) %>% as.numeric())
+  
+  df_pros <- bind_rows(
+    tibble(Construct = "Prosthesis Use", Value = "", Is_Header = TRUE),
+    tibble(Construct = "Days per week, mean (SD)", Value = pros_week, Is_Header = FALSE),
+    tibble(Construct = "Hours per day, mean (SD)", Value = pros_day, Is_Header = FALSE))
+  
+  ambulatory_device_factor <- c("Cane", "Walker", "Wheelchair", "Other", "None")
+  
+  df_amb_data <- inner_analytic %>%
+    select(ambulatory_device_list) %>%
+    separate_rows(ambulatory_device_list, sep = '; ') %>%
+    count(ambulatory_device_list) %>%
+    arrange(match(ambulatory_device_list, ambulatory_device_factor)) %>%
+    mutate(Value = format_count_percent(n, enrolled_tot),
+           Construct = as.character(ambulatory_device_list),
+           Is_Header = FALSE) %>%
+    select(Construct, Value, Is_Header)
+  
+  df_amb <- bind_rows(tibble(Construct = "Ambulatory device use", Value = "n(%)", Is_Header = TRUE), df_amb_data)
+  
+  scs_sit <- format_mean_sd(inner_analytic %>% pull(socket_comfort_score_sit) %>% as.numeric())
+  scs_stand <- format_mean_sd(inner_analytic %>% pull(socket_comfort_score_stand) %>% as.numeric())
+  scs_walk <- format_mean_sd(inner_analytic %>% pull(socket_comfort_score_walk) %>% as.numeric())
+  
+  df_scs <- bind_rows(
+    tibble(Construct = "Socket Comfort Score", Value = "", Is_Header = TRUE),
+    tibble(Construct = "Sitting, mean (SD)", Value = scs_sit, Is_Header = FALSE),
+    tibble(Construct = "Standing, mean (SD)", Value = scs_stand, Is_Header = FALSE),
+    tibble(Construct = "Walking, mean (SD)", Value = scs_walk, Is_Header = FALSE))
+  
+  meds <- inner_analytic %>%
+    select(medication_frequency_list) %>%
+    separate(medication_frequency_list, into = c("acetaminophen", "opiods", "nsaids",
+                                                 "gaba analogue", "other"), sep = '; ')
+  meds_sum <- meds %>%
+    filter(if_all(everything(), ~ . == "Did not use")) %>%
+    nrow()
+  
+  df_meds <- tibble(
+    Construct = "Medications used to address residual limb pain",
+    Value = format_count_percent(enrolled_tot - meds_sum, enrolled_tot),
+    Is_Header = TRUE)
+  
+  skin_treats <- inner_analytic %>%
+    select(meds_skin_list) %>%
+    separate(meds_skin_list, into = c("creams", "anti-perspirents", "antibiotics",
+                                      "bandages", "other"), sep = '; ')
+  skin_sum <- skin_treats %>%
+    filter(if_all(everything(), ~ . == "Did not use")) %>%
+    nrow()
+  
+  df_skin <- tibble(
+    Construct = "Skin treatments to address residual limb problems",
+    Value = format_count_percent(enrolled_tot - skin_sum, enrolled_tot),
+    Is_Header = TRUE)
+  
+  table_raw <- bind_rows(
+    df_ays,
+    df_cause,
+    df_pros,
+    df_amb,
+    df_scs,
+    df_meds,
+    df_skin)
+  
+  is_header <- table_raw$Is_Header
+  indent_rows <- which(!is_header)
+  
+  table_print <- table_raw %>% select(-Is_Header)
+  
+  table <- kable(table_print, format = "html", col.names = c("Construct", "n"), align = 'l') %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    column_spec(1, bold = is_header) %>%
+    add_indent(indent_rows)
+  
+  return(table)
+}
+
+#' Patient Reported Outcomes Summary Table
+#'
+#' @description 
+#' Visualizes Patient Reported Outcomes (DLQI, PEQ, PLUS-M) across multiple 
+#' time points (Pre-injection, 1 Month, 2 Months, 3 Months) for enrolled subjects.
+#'
+#' @param analytic This is the analytic data set that must include: enrolled, 
+#' dlqi_baseline, dlqi_1mo, dlqi_2mo, dlqi_3mo, 
+#' peq_rl_baseline, peq_rl_1mo, peq_rl_2mo, peq_rl_3mo, 
+#' plus_m_baseline, plus_m_1mo, plus_m_2mo, plus_m_3mo.
+#'
+#' @return An HTML table styled with kableExtra.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' }
+patient_reported_outcomes_table <- function(analytic){
+  
+  inner_analytic <- analytic %>% filter(enrolled == TRUE)
+  
+  get_msd <- function(col_name) {
+    vec <- as.numeric(inner_analytic[[col_name]])
+    format_mean_sd(vec)
+  }
+  
+  df_dlqi <- bind_rows(
+    tibble(Construct = "DLQI", Value = "", Is_Header = TRUE),
+    tibble(Construct = "Pre-injection, mean (SD)", Value = get_msd("dlqi_baseline"), Is_Header = FALSE),
+    tibble(Construct = "1 Month, mean (SD)", Value = get_msd("dlqi_1mo"), Is_Header = FALSE),
+    tibble(Construct = "2 Month, mean (SD)", Value = get_msd("dlqi_2mo"), Is_Header = FALSE),
+    tibble(Construct = "3 Month, mean (SD)", Value = get_msd("dlqi_3mo"), Is_Header = FALSE))
+  
+  df_peq <- bind_rows(
+    tibble(Construct = "PEQ", Value = "", Is_Header = TRUE),
+    tibble(Construct = "Pre-injection, mean (SD)", Value = get_msd("peq_rl_baseline"), Is_Header = FALSE),
+    tibble(Construct = "1 Month, mean (SD)", Value = get_msd("peq_rl_1mo"), Is_Header = FALSE),
+    tibble(Construct = "2 Month, mean (SD)", Value = get_msd("peq_rl_2mo"), Is_Header = FALSE),
+    tibble(Construct = "3 Month, mean (SD)", Value = get_msd("peq_rl_3mo"), Is_Header = FALSE))
+  
+  df_plus_m <- bind_rows(
+    tibble(Construct = "PLUS-M", Value = "", Is_Header = TRUE),
+    tibble(Construct = "Pre-injection, mean (SD)", Value = get_msd("plus_m_baseline"), Is_Header = FALSE),
+    tibble(Construct = "1 Month, mean (SD)", Value = get_msd("plus_m_1mo"), Is_Header = FALSE),
+    tibble(Construct = "2 Month, mean (SD)", Value = get_msd("plus_m_2mo"), Is_Header = FALSE),
+    tibble(Construct = "3 Month, mean (SD)", Value = get_msd("plus_m_3mo"), Is_Header = FALSE))
+  
+  table_raw <- bind_rows(df_dlqi, df_peq, df_plus_m)
+  
+  is_header <- table_raw$Is_Header
+  indent_rows <- which(!is_header)
+  
+  table_print <- table_raw %>% select(-Is_Header)
+  
+  table <- kable(table_print, format = "html", col.names = c("Construct", "n"), align = 'l') %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    column_spec(1, bold = is_header) %>%
+    add_indent(indent_rows)
+  
+  return(table)
+}
+
+#' Durometer Readings Summary Table
+#'
+#' @description 
+#' Visualizes durometer readings by position, comparing pre-injection to 3 months 
+#' post-injection. Optionally includes anonymized individual participant values.
+#'
+#' @param analytic This is the analytic data set that must include: enrolled, study_id, 
+#' and durometer_readings_set_1.
+#' @param include_per_participant_values Logical. If TRUE, includes an indented 
+#' "Per participant values" subheader, followed by randomized and anonymized 
+#' individual rows for each position.
+#'
+#' @return An HTML table styled with kableExtra.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' }
+durometer_readings_table <- function(analytic, include_per_participant_values = FALSE){
+  
+  inner_analytic <- analytic %>% filter(enrolled == TRUE)
+  
+  duro_unzipped <- inner_analytic %>%
+    select(study_id, durometer_readings_set_1) %>%
+    separate_rows(durometer_readings_set_1, sep = ';') %>%
+    separate(durometer_readings_set_1, into = c("set", "event", "position",
+                                                "injection", "reading"), sep = ',') %>%
+    mutate(event = ifelse(event == '3_month', 'month_3', event))
+  
+  duro_means <- duro_unzipped %>%
+    group_by(study_id, set, event, position) %>%
+    mutate(reading = as.double(reading)) %>%
+    summarize(mean_reading = mean(reading, na.rm = TRUE), .groups = "drop")
+  
+  duro_base <- duro_means %>%
+    filter((event == 'injection_1' | event == 'month_3') & set == 'set_1') %>%
+    select(-set) %>%
+    group_by(study_id, position) %>%
+    pivot_wider(values_from = mean_reading, names_from = event) %>%
+    mutate(difference = injection_1 - month_3) %>%
+    ungroup()
+  
+  duro_summary <- duro_base %>%
+    group_by(position) %>%
+    summarize(
+      `Pre-injection, Mean (SD)` = format_mean_sd(injection_1),
+      `3 Month Post-injection, Mean (SD)` = format_mean_sd(month_3),
+      `Difference` = format_mean_sd(difference),
+      .groups = "drop"
+    ) %>%
+    rename(Construct = position) %>%
+    mutate(Is_Header = TRUE, Is_Subheader = FALSE)
+  
+  if (include_per_participant_values){
+    
+    safe_fmt <- function(x) ifelse(is.na(x), "NA", as.character(round(x, 2)))
+    
+    duro_indiv <- duro_base %>%
+      mutate(
+        `Pre-injection, Mean (SD)` = safe_fmt(injection_1),
+        `3 Month Post-injection, Mean (SD)` = safe_fmt(month_3),
+        `Difference` = safe_fmt(difference),
+        Construct = "", 
+        Is_Header = FALSE,
+        Is_Subheader = FALSE
+      ) %>%
+      select(position, Construct, `Pre-injection, Mean (SD)`, 
+             `3 Month Post-injection, Mean (SD)`, `Difference`, Is_Header, Is_Subheader) %>%
+      group_by(position) %>%
+      slice_sample(prop = 1) %>%
+      ungroup()
+    
+    duro_subheader <- duro_summary %>%
+      select(position = Construct) %>%
+      mutate(
+        Construct = "Per participant values",
+        `Pre-injection, Mean (SD)` = "",
+        `3 Month Post-injection, Mean (SD)` = "",
+        `Difference` = "",
+        Is_Header = FALSE,
+        Is_Subheader = TRUE
+      )
+    
+    table_raw <- bind_rows(
+      duro_summary %>% mutate(sort_key = 0, position = Construct),
+      duro_subheader %>% mutate(sort_key = 1),
+      duro_indiv %>% mutate(sort_key = 2)
+    ) %>%
+      arrange(position, sort_key) %>%
+      select(-sort_key, -position)
+    
+  } else {
+    table_raw <- duro_summary
+  }
+  
+  is_header <- table_raw$Is_Header
+  indent_rows <- which(table_raw$Is_Subheader) 
+  
+  table_print <- table_raw %>% select(-Is_Header, -Is_Subheader)
+  col_names <- c("Position", "Pre-injection, Mean (SD)", 
+                 "3 Month Post-injection, Mean (SD)", "Difference")
+  
+  table <- kable(table_print, format = "html", col.names = col_names, align = 'l') %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    column_spec(1, bold = is_header)
+  
+  if (length(indent_rows) > 0) {
+    table <- table %>% add_indent(indent_rows)
+  }
+  
+  return(table)
+}
+
+#' OCT Readings Summary Table
+#'
+#' @description 
+#' Visualizes OCT width readings by position, comparing pre-injection to 3 months 
+#' post-injection. Optionally includes anonymized individual participant values.
+#'
+#' @param analytic This is the analytic data set that must include: enrolled, study_id, 
+#' and oct_readings_set_1.
+#' @param include_per_participant_values Logical. If TRUE, includes an indented 
+#' "Per participant values" subheader, followed by randomized and anonymized 
+#' individual rows for each position.
+#'
+#' @return An HTML table styled with kableExtra.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' }
+oct_readings_table <- function(analytic, include_per_participant_values = FALSE){
+  
+  inner_analytic <- analytic %>% filter(enrolled == TRUE)
+
+  oct_unzipped <- inner_analytic %>%
+    select(study_id, oct_readings_set_1) %>%
+    separate_rows(oct_readings_set_1, sep = ';') %>%
+    separate(oct_readings_set_1, into = c("set", "event", "position",
+                                          "orientation", "area", "length", "width"), sep = ',') %>%
+    mutate(event = ifelse(event == '3_month', 'month_3', event))
+
+  oct_means <- oct_unzipped %>%
+    group_by(study_id, set, event, position) %>%
+    mutate(width = as.double(width)) %>%
+    summarize(mean_width = mean(width, na.rm = TRUE), .groups = "drop")
+  
+  oct_base <- oct_means %>%
+    filter((event == 'injection_1' | event == 'month_3') & set == 'set_1') %>%
+    select(-set) %>%
+    group_by(study_id, position) %>%
+    pivot_wider(values_from = mean_width, names_from = event) %>%
+    mutate(difference = injection_1 - month_3) %>%
+    ungroup()
+
+  oct_summary <- oct_base %>%
+    group_by(position) %>%
+    summarize(
+      `Pre-injection, Mean (SD)` = format_mean_sd(injection_1),
+      `3 Month Post-injection, Mean (SD)` = format_mean_sd(month_3),
+      `Difference` = format_mean_sd(difference),
+      .groups = "drop"
+    ) %>%
+    rename(Construct = position) %>%
+    mutate(Is_Header = TRUE, Is_Subheader = FALSE)
+  
+  if (include_per_participant_values){
+    
+    safe_fmt <- function(x) ifelse(is.na(x), "NA", as.character(round(x, 2)))
+    
+    oct_indiv <- oct_base %>%
+      mutate(
+        `Pre-injection, Mean (SD)` = safe_fmt(injection_1),
+        `3 Month Post-injection, Mean (SD)` = safe_fmt(month_3),
+        `Difference` = safe_fmt(difference),
+        Construct = "", 
+        Is_Header = FALSE,
+        Is_Subheader = FALSE
+      ) %>%
+      select(position, Construct, `Pre-injection, Mean (SD)`, 
+             `3 Month Post-injection, Mean (SD)`, `Difference`, Is_Header, Is_Subheader) %>%
+      group_by(position) %>%
+      slice_sample(prop = 1) %>%
+      ungroup()
+    
+    oct_subheader <- oct_summary %>%
+      select(position = Construct) %>%
+      mutate(
+        Construct = "Per participant values",
+        `Pre-injection, Mean (SD)` = "",
+        `3 Month Post-injection, Mean (SD)` = "",
+        `Difference` = "",
+        Is_Header = FALSE,
+        Is_Subheader = TRUE)
+    
+    table_raw <- bind_rows(
+      oct_summary %>% mutate(sort_key = 0, position = Construct),
+      oct_subheader %>% mutate(sort_key = 1),
+      oct_indiv %>% mutate(sort_key = 2)
+    ) %>%
+      arrange(position, sort_key) %>%
+      select(-sort_key, -position)
+    
+  } else {
+    table_raw <- oct_summary
+  }
+  
+  is_header <- table_raw$Is_Header
+  indent_rows <- which(table_raw$Is_Subheader)
+  
+  table_print <- table_raw %>% select(-Is_Header, -Is_Subheader)
+  col_names <- c("Position", "Pre-injection, Mean (SD)", 
+                 "3 Month Post-injection, Mean (SD)", "Difference")
+  
+  table <- kable(table_print, format = "html", col.names = col_names, align = 'l') %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    column_spec(1, bold = is_header)
+  
+  if (length(indent_rows) > 0) {
+    table <- table %>% add_indent(indent_rows)
+  }
+  
+  return(table)
+}
