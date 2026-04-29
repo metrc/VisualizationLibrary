@@ -4,13 +4,21 @@
 \alias{not_complete_sae_deviation_by_type}
 \title{Number of Non-Completing Participants, SAEs, and Protocol Deviations by type}
 \usage{
-not_complete_sae_deviation_by_type(analytic, include_ae = FALSE)
+not_complete_sae_deviation_by_type(
+  analytic,
+  include_ae = FALSE,
+  factors = list()
+)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
 protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count, not_completed}
 
 \item{include_ae}{whether to include adverse events in the visualization ae_count, defaults to FALSE}
+
+\item{factors}{dynamic argument to set a custom order in the final visualization, accepted names are 
+not_completed, not_espected, deviation_a, deviation_p, deviation_sc and the values are character vectors
+of final strings in desired order.}
 }
 \value{
 html table
