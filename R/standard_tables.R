@@ -6800,7 +6800,8 @@ patient_reported_outcomes_table <- function(analytic){
 #'
 #' @description 
 #' Visualizes durometer readings by position, comparing pre-injection to 3 months 
-#' post-injection. Optionally includes anonymized individual participant values.
+#' post-injection (Difference = 3 Month - Pre). Optionally includes anonymized 
+#' individual participant values showing their personal Mean (SD) across readings.
 #'
 #' @param analytic This is the analytic data set that must include: enrolled, study_id, 
 #' and durometer_readings_set_1.
@@ -6813,51 +6814,53 @@ patient_reported_outcomes_table <- function(analytic){
 #'
 #' @examples
 #' \dontrun{
-#' }
+#' } 
 durometer_readings_table <- function(analytic, include_per_participant_values = FALSE){
-  
   inner_analytic <- analytic %>% filter(enrolled == TRUE)
   
-  duro_unzipped <- inner_analytic %>%
+  duro_raw <- inner_analytic %>%
     select(study_id, durometer_readings_set_1) %>%
     separate_rows(durometer_readings_set_1, sep = ';') %>%
     separate(durometer_readings_set_1, into = c("set", "event", "position",
                                                 "injection", "reading"), sep = ',') %>%
-    mutate(event = ifelse(event == '3_month', 'month_3', event))
-  
-  duro_means <- duro_unzipped %>%
-    group_by(study_id, set, event, position) %>%
-    mutate(reading = as.double(reading)) %>%
-    summarize(mean_reading = mean(reading, na.rm = TRUE), .groups = "drop")
-  
-  duro_base <- duro_means %>%
+    mutate(event = ifelse(event == '3_month', 'month_3', event),
+           reading = as.double(reading)) %>%
     filter((event == 'injection_1' | event == 'month_3') & set == 'set_1') %>%
-    select(-set) %>%
+    select(study_id, position, event, injection, reading) %>%
+    pivot_wider(names_from = event, values_from = reading) %>%
+    mutate(difference = month_3 - injection_1) 
+  
+  duro_base <- duro_raw %>%
     group_by(study_id, position) %>%
-    pivot_wider(values_from = mean_reading, names_from = event) %>%
-    mutate(difference = injection_1 - month_3) %>%
-    ungroup()
+    summarize(
+      mean_inj1 = mean(injection_1, na.rm = TRUE),
+      mean_m3 = mean(month_3, na.rm = TRUE),
+      mean_diff = mean(difference, na.rm = TRUE),
+      .groups = "drop"
+    )
   
   duro_summary <- duro_base %>%
     group_by(position) %>%
     summarize(
-      `Pre-injection, Mean (SD)` = format_mean_sd(injection_1),
-      `3 Month Post-injection, Mean (SD)` = format_mean_sd(month_3),
-      `Difference` = format_mean_sd(difference),
+      `Pre-injection, Mean (SD)` = format_mean_sd(mean_inj1),
+      `3 Month Post-injection, Mean (SD)` = format_mean_sd(mean_m3),
+      `Difference` = format_mean_sd(mean_diff),
       .groups = "drop"
     ) %>%
     rename(Construct = position) %>%
     mutate(Is_Header = TRUE, Is_Subheader = FALSE)
   
-  if (include_per_participant_values){
+  if (include_per_participant_values) {
     
-    safe_fmt <- function(x) ifelse(is.na(x), "NA", as.character(round(x, 2)))
-    
-    duro_indiv <- duro_base %>%
+    duro_indiv <- duro_raw %>%
+      group_by(study_id, position) %>%
+      summarize(
+        `Pre-injection, Mean (SD)` = format_mean_sd(injection_1),
+        `3 Month Post-injection, Mean (SD)` = format_mean_sd(month_3),
+        `Difference` = format_mean_sd(difference),
+        .groups = "drop"
+      ) %>%
       mutate(
-        `Pre-injection, Mean (SD)` = safe_fmt(injection_1),
-        `3 Month Post-injection, Mean (SD)` = safe_fmt(month_3),
-        `Difference` = safe_fmt(difference),
         Construct = "", 
         Is_Header = FALSE,
         Is_Subheader = FALSE
@@ -6913,7 +6916,8 @@ durometer_readings_table <- function(analytic, include_per_participant_values = 
 #'
 #' @description 
 #' Visualizes OCT width readings by position, comparing pre-injection to 3 months 
-#' post-injection. Optionally includes anonymized individual participant values.
+#' post-injection (Difference = 3 Month - Pre). Optionally includes anonymized 
+#' individual participant values showing their personal Mean (SD) across readings.
 #'
 #' @param analytic This is the analytic data set that must include: enrolled, study_id, 
 #' and oct_readings_set_1.
@@ -6926,51 +6930,53 @@ durometer_readings_table <- function(analytic, include_per_participant_values = 
 #'
 #' @examples
 #' \dontrun{
-#' }
+#' } 
 oct_readings_table <- function(analytic, include_per_participant_values = FALSE){
-  
   inner_analytic <- analytic %>% filter(enrolled == TRUE)
-
-  oct_unzipped <- inner_analytic %>%
+  
+  oct_raw <- inner_analytic %>%
     select(study_id, oct_readings_set_1) %>%
     separate_rows(oct_readings_set_1, sep = ';') %>%
     separate(oct_readings_set_1, into = c("set", "event", "position",
                                           "orientation", "area", "length", "width"), sep = ',') %>%
-    mutate(event = ifelse(event == '3_month', 'month_3', event))
-
-  oct_means <- oct_unzipped %>%
-    group_by(study_id, set, event, position) %>%
-    mutate(width = as.double(width)) %>%
-    summarize(mean_width = mean(width, na.rm = TRUE), .groups = "drop")
-  
-  oct_base <- oct_means %>%
+    mutate(event = ifelse(event == '3_month', 'month_3', event),
+           width = as.double(width)) %>%
     filter((event == 'injection_1' | event == 'month_3') & set == 'set_1') %>%
-    select(-set) %>%
+    select(study_id, position, event, orientation, width) %>%
+    pivot_wider(names_from = event, values_from = width) %>%
+    mutate(difference = month_3 - injection_1)
+  
+  oct_base <- oct_raw %>%
     group_by(study_id, position) %>%
-    pivot_wider(values_from = mean_width, names_from = event) %>%
-    mutate(difference = injection_1 - month_3) %>%
-    ungroup()
-
+    summarize(
+      mean_inj1 = mean(injection_1, na.rm = TRUE),
+      mean_m3 = mean(month_3, na.rm = TRUE),
+      mean_diff = mean(difference, na.rm = TRUE),
+      .groups = "drop"
+    )
+  
   oct_summary <- oct_base %>%
     group_by(position) %>%
     summarize(
-      `Pre-injection, Mean (SD)` = format_mean_sd(injection_1),
-      `3 Month Post-injection, Mean (SD)` = format_mean_sd(month_3),
-      `Difference` = format_mean_sd(difference),
+      `Pre-injection, Mean (SD)` = format_mean_sd(mean_inj1),
+      `3 Month Post-injection, Mean (SD)` = format_mean_sd(mean_m3),
+      `Difference` = format_mean_sd(mean_diff),
       .groups = "drop"
     ) %>%
     rename(Construct = position) %>%
     mutate(Is_Header = TRUE, Is_Subheader = FALSE)
   
-  if (include_per_participant_values){
+  if (include_per_participant_values) {
     
-    safe_fmt <- function(x) ifelse(is.na(x), "NA", as.character(round(x, 2)))
-    
-    oct_indiv <- oct_base %>%
+    oct_indiv <- oct_raw %>%
+      group_by(study_id, position) %>%
+      summarize(
+        `Pre-injection, Mean (SD)` = format_mean_sd(injection_1),
+        `3 Month Post-injection, Mean (SD)` = format_mean_sd(month_3),
+        `Difference` = format_mean_sd(difference),
+        .groups = "drop"
+      ) %>%
       mutate(
-        `Pre-injection, Mean (SD)` = safe_fmt(injection_1),
-        `3 Month Post-injection, Mean (SD)` = safe_fmt(month_3),
-        `Difference` = safe_fmt(difference),
         Construct = "", 
         Is_Header = FALSE,
         Is_Subheader = FALSE
@@ -6980,7 +6986,7 @@ oct_readings_table <- function(analytic, include_per_participant_values = FALSE)
       group_by(position) %>%
       slice_sample(prop = 1) %>%
       ungroup()
-    
+
     oct_subheader <- oct_summary %>%
       select(position = Construct) %>%
       mutate(
@@ -6989,7 +6995,8 @@ oct_readings_table <- function(analytic, include_per_participant_values = FALSE)
         `3 Month Post-injection, Mean (SD)` = "",
         `Difference` = "",
         Is_Header = FALSE,
-        Is_Subheader = TRUE)
+        Is_Subheader = TRUE
+      )
     
     table_raw <- bind_rows(
       oct_summary %>% mutate(sort_key = 0, position = Construct),
