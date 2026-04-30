@@ -1127,6 +1127,9 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
 #' @param analytic This is the analytic data set that must include enrolled, not_expected_reason, not_completed_reason,
 #' protocol_deviation_screen_consent, protocol_deviation_procedural, protocol_deviation_administrative, sae_count, not_completed
 #' @param include_ae whether to include adverse events in the visualization ae_count, defaults to FALSE
+#' @param factors dynamic argument to set a custom order in the final visualization, accepted names are 
+#' not_completed, not_espected, deviation_a, deviation_p, deviation_sc and the values are character vectors
+#' of final strings in desired order.
 #' 
 #' @return html table
 #' @export
@@ -1134,7 +1137,7 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
 #' @examples
 #' not_complete_sae_deviation_by_type("Replace with Analytic Tibble")
 #' 
-not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
+not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE, factors=list()){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("enrolled", "not_expected_reason", "not_completed_reason",
@@ -1237,6 +1240,31 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE){
   deviation_p_tot  <- tibble::tibble(type = "Procedural",             n = sum(deviation_p_df$n))
   deviation_a_tot  <- tibble::tibble(type = "Administrative/Other",   n = sum(deviation_a_df$n))
   deviation_df_tot <- tibble::tibble(type = "Protocol Deviations",    n = sum(deviation_sc_df$n) + sum(deviation_p_df$n) + sum(deviation_a_df$n))
+  
+  if (!is_empty(factors)) {
+    names <- names(factors)
+
+    if ('not_completed' %in% names) {
+      not_completed_df <- not_completed_df %>%
+        arrange(factor(type, levels = factors[['not_completed']]))
+    }
+    if ('not_expected' %in% names) {
+      not_expected_df <- not_expected_df %>%
+        arrange(factor(type, levels = factors[['not_expected']]))
+    }
+    if ('deviation_sc' %in% names) {
+      deviation_sc_df <- deviation_sc_df %>%
+        arrange(factor(type, levels = factors[['deviation_sc']]))
+    }
+    if ('deviation_p' %in% names) {
+      deviation_p_df <- deviation_p_df %>%
+        arrange(factor(type, levels = factors[['deviation_p']]))
+    }
+    if ('deviation_a' %in% names) {
+      deviation_a_df <- deviation_a_df %>%
+        arrange(factor(type, levels = factors[['deviation_a']]))
+    }
+  }
   
   # --- Assemble final table pieces
   if (include_ae) {
