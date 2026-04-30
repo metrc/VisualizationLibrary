@@ -19,9 +19,10 @@ An HTML table styled with kableExtra.
 }
 \description{
 Visualizes OCT width readings by position, comparing pre-injection to 3 months 
-post-injection. Optionally includes anonymized individual participant values.
+post-injection (Difference = 3 Month - Pre). Optionally includes anonymized 
+individual participant values showing their personal Mean (SD) across readings.
 }
 \examples{
 \dontrun{
-}
+} 
 }
