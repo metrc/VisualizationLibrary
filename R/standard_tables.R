@@ -6114,10 +6114,12 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
 #' @param relatedness includes that column
 #' @param WB if the study is Weight Bearing
 #' @param breakout_other If TRUE, replaces "Other" with "Other: [other_info]". Defaults to FALSE.
+#' @param cols_spec List of column names and their replacements, valid names are Complication Relatedness and Severity
 #'
 #' @return html table
 #' @export
-overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
+overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE, 
+                                  cols_spec = NULL){
     
     if (is.null(WB)) {
       df <- analytic %>%
@@ -6195,6 +6197,11 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, break
     
     if(relatedness) {
       final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
+    }
+    
+    if (!is.null(cols_spec)) {
+      final_table <- final_table %>%
+        rename_with(~ unlist(cols_spec)[.x], .cols = names(cols_spec))
     }
     
     output <- kable(final_table, format = "html", align = 'l') %>%

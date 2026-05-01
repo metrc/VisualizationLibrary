@@ -8,7 +8,8 @@ overall_complications(
   analytic,
   relatedness = TRUE,
   WB = NULL,
-  breakout_other = FALSE
+  breakout_other = FALSE,
+  cols_spec = NULL
 )
 }
 \arguments{
@@ -19,6 +20,8 @@ overall_complications(
 \item{WB}{if the study is Weight Bearing}
 
 \item{breakout_other}{If TRUE, replaces "Other" with "Other: [other_info]". Defaults to FALSE.}
+
+\item{cols_spec}{List of column names and their replacements, valid names are Complication Relatedness and Severity}
 }
 \value{
 html table
