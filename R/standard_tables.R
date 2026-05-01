@@ -3010,7 +3010,7 @@ enrollment_by_site_last_days_var_disc_i <- function(analytic, days = 0,
     select(-Eligible, -Refused, -`Not Consented`) %>% 
     select(Facility, starts_with('last_days'), Screened2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for 'Other' Reasons (% eligible)`)
   
-  colnames(last) <- c('Facility', rep(c('Screened', 'Eligible (% screened)'), length(days)), "Screened", 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)')
+  colnames(last) <- c('Facility', rep(c('Screened', 'Eligible (% screened)'), length(days)), "Screened", 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for Other Reasons (% eligible)')
   
   header_num <- c(1, rep(2, length(days)), 1, 4)
   header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
