@@ -2999,7 +2999,7 @@ enrollment_by_site_last_days_var_disc_i <- function(analytic, days = 0,
                                                          "^last_days_Eligible(.*)$", 
                                                          "last_days_Screened\\1"))))) %>% 
     mutate(`Refused (% eligible)` = format_count_percent(Refused, Eligible)) %>% 
-    mutate(`Not Enrolled for Other Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
+    mutate(`Not Enrolled for 'Other' Reasons (% eligible)` = format_count_percent(`Not Consented`, Eligible)) %>% 
     mutate(`Eligible (% screened)` = format_count_percent(Eligible, Screened)) 
   
   total_row <- final %>% 
