@@ -3008,7 +3008,7 @@ enrollment_by_site_last_days_var_disc_i <- function(analytic, days = 0,
   last <- bind_rows(final, total_row) %>% 
     slice_tail(n=-1) %>% 
     select(-Eligible, -Refused, -`Not Consented`) %>% 
-    select(Facility, starts_with('last_days'), Screened2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for 'Other' Reasons (% eligible)`)
+    select(Facility, starts_with('last_days'), Screened2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for Other Reasons (% eligible)`)
   
   colnames(last) <- c('Facility', rep(c('Screened', 'Eligible (% screened)'), length(days)), "Screened", 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for Other Reasons (% eligible)')
   
