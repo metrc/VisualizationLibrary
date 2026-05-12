@@ -219,6 +219,9 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #'
 #' @return An HTML table.
 #' @export
+#'
+#' @examples
+#' enrollment_status_by_site_var_discontinued_i("Replace with Analytic Tibble")
 enrollment_status_by_site_var_discontinued_i <- function(analytic, pre_screened = NULL,
                                                 pre_screened_eligible = NULL, only_total=FALSE){
   
@@ -310,7 +313,10 @@ enrollment_status_by_site_var_discontinued_i <- function(analytic, pre_screened 
 #'
 #' @return An HTML table.
 #' @export
-enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued="discontinued", 
+#'
+#' @examples
+#' enrollment_status_by_site_var_discontinued_ii("Replace with Analytic Tibble")
+enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued="discontinued",
                                                  discontinued_colname="Discontinued", only_total=FALSE){
   
   analytic <- if_needed_generate_example_data(
