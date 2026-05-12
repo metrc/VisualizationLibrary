@@ -35,17 +35,20 @@ jobs:
         ref: main
         path: 'VisualizationTools'
         
-    - name: Generate cache key using the number of the month (01 to 12)
+    - name: Generate cache key using the number of the month (01 to 12) and the R version
       run: |
         date +%m
         echo "month_number=$(date +%m)" >> $GITHUB_ENV
+        r_version=$(R --version | head -n 1 | grep -oP '\d+\.\d+\.\d+')
+        echo "r_version=${r_version}" >> $GITHUB_ENV
+        echo "R version: ${r_version}"
 
     - name: check runner temp
-      run: | 
+      run: |
         echo $RUNNER_TEMP
 
     - name: Temporarily change ownership for R site library path, so our cache can write to it during a restore
-      run: | 
+      run: |
         chown -R $(whoami) /usr/local/lib/R/
         chown -R $(whoami) /usr/lib/R/
 
@@ -53,7 +56,7 @@ jobs:
       uses: actions/cache@v3
       id: cache-R-site-lib
       with:
-        key: ${{ env.month_number }}
+        key: ${{ env.month_number }}-R${{ env.r_version }}
         path: |
           /usr/local/lib/R/site-library
           /usr/lib/R/site-library
