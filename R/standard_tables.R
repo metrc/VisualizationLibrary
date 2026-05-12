@@ -6121,7 +6121,7 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
 #'
 #' @examples
 #' overall_complications("Replace with Analytic Tibble")
-overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
+overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE, cols_spec = NULL){
 
     analytic <- if_needed_generate_example_data(
       analytic,
