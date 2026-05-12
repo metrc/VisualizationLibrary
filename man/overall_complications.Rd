@@ -12,7 +12,7 @@ overall_complications(
 )
 }
 \arguments{
-\item{analytic}{analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode}
+\item{analytic}{analytic data set that must include study_id, complication_data}
 
 \item{relatedness}{includes that column}
 
@@ -26,4 +26,7 @@ html table
 \description{
 Returns a table of the overall complications first ordered by complication alphabetically, then by relatedness (starting with most related), 
 then by severity (starting with most severe), each row is a unique combination of those items
+}
+\examples{
+overall_complications("Replace with Analytic Tibble")
 }
