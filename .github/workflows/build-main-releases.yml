@@ -66,9 +66,6 @@ jobs:
         chown -R root /usr/local/lib/R/
         chown -R root /usr/lib/R/
 
-    - name: Install R package dependencies for VisualizationTools using Rscript
-      run: Rscript -e "install.packages(c('tidyverse', 'janitor', 'kableExtra', 'DiagrammeR', 'DiagrammeRsvg', 'rsvg', 'base64enc', 'VisualizationTools', 'plotly', 'ggplot2', 'scales'), dependencies=TRUE, repos = 'http://cran.us.r-project.org', lib = '/usr/local/lib/R/site-library')"
-
     - name: Install VisualizationTools Package using RScript from the latest release tag
       working-directory: VisualizationTools
       run: Rscript -e "install.packages('.', repos = NULL, type = 'source', lib = '/usr/local/lib/R/site-library')"
