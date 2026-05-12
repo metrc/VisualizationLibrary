@@ -27,3 +27,6 @@ An HTML table.
 \description{
 Visualizes the totals of screening, eligibility, and consent by site.
 }
+\examples{
+enrollment_status_by_site_var_discontinued_i("Replace with Analytic Tibble")
+}
