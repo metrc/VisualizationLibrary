@@ -4482,7 +4482,7 @@ closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL
 #' closed_enrollment_status_by_site_consent_pre_screening_i("Replace with Analytic Tibble")
 #' closed_enrollment_status_by_site_consent_pre_screening_i("Replace with Analytic Tibble", only_totals = TRUE)
 #' 
-closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_totals = FALSE){
+closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_totals = FALSE, footnotes = NULL){
   
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
@@ -4532,7 +4532,7 @@ closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, o
 #' closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble")
 #' closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble", only_totals = TRUE)
 #' 
-closed_enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, only_totals = FALSE){
+closed_enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, only_totals = FALSE, footnotes = NULL){
   
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
@@ -4583,7 +4583,7 @@ closed_enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, 
 #' 
 closed_enrollment_status_by_site_var_discontinued_i <- function(analytic, discontinued="discontinued", 
                                                        discontinued_colname="Discontinued", pre_screened = NULL,
-                                                       pre_screened_eligible = NULL, only_total=FALSE){
+                                                       pre_screened_eligible = NULL, only_total=FALSE, footnotes = NULL){
   
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
@@ -4635,7 +4635,7 @@ closed_enrollment_status_by_site_var_discontinued_i <- function(analytic, discon
 #' 
 closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued="discontinued", 
                                                        discontinued_colname="Discontinued", pre_screened = NULL,
-                                                       pre_screened_eligible = NULL, only_total=FALSE){
+                                                       pre_screened_eligible = NULL, only_total=FALSE, footnotes = NULL){
   
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
