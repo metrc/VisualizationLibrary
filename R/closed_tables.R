@@ -4362,7 +4362,7 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
 #'
 #' @return html table
 #' @export
-closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
+closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, breakout_other=FALSE, closed_overall_complications=NULL){
   
   confirm_stability_of_related_visual('overall_complications', '51e8aca1cd0b0e17022209ec533fb163')
   
@@ -4449,6 +4449,11 @@ closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL
   
   if(relatedness) {
     final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
+  }
+  
+  if (!is.null(cols_spec)) {
+    final_table <- final_table %>%
+      rename_with(~ unlist(cols_spec)[.x], .cols = names(cols_spec))
   }
   
   output <- kable(final_table, format = "html", align = 'l') %>%
