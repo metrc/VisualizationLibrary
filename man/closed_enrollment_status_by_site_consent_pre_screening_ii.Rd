@@ -6,7 +6,7 @@
 \usage{
 closed_enrollment_status_by_site_consent_pre_screening_ii(
   analytic,
-  only_totals = FALSE,
+  only_total = FALSE,
   footnotes = NULL
 )
 }
@@ -35,6 +35,6 @@ for details.
 }
 \examples{
 closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble")
-closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble", only_totals = TRUE)
+closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble", only_total = TRUE)
 
 }
