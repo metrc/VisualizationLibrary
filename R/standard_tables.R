@@ -421,6 +421,19 @@ monitoring_required <- function(analytic, standard_threshold = 10, spec_threshol
     rename(`Enrolled Count` = enrolled_count) %>%
     ungroup()
   
+  anti_enrolled <- analytic %>%
+    filter(!enrolled | is.na(enrolled)) %>%
+    filter(!facilitycode %in% combined$facilitycode) %>%
+    filter(!is.na(facilitycode)) %>%
+    select(facilitycode) %>%
+    unique() %>%
+    mutate(`Enrolled Count` = 0,
+           `Date Monitoring Required` = "Monitoring Not Required")
+  
+  combined <- combined %>%
+    rbind(anti_enrolled) %>%
+    arrange(desc(`Enrolled Count`))
+  
   vis <- kable(combined, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
   
