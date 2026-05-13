@@ -327,7 +327,8 @@ enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued
                       "FacilityCode", "Boolean"))
   
   df <- analytic %>%
-    select(eligible, consented, randomized, enrolled, facilitycode, any_of(discontinued))
+    select(eligible, consented, randomized, enrolled, facilitycode, any_of(discontinued)) %>%
+    arrange(facilitycode)
   
   colnames(df)[which(names(df) == discontinued)] <- "discontinued"
   
@@ -2941,7 +2942,8 @@ enrollment_by_site_last_days_var_disc_i <- function(analytic, days = 0,
   
   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, site_certification_date, 
-           facilitycode, screened_date)
+           facilitycode, screened_date) %>%
+    arrange(facilitycode)
   
   last_days <- Sys.Date() - days
   
@@ -3095,12 +3097,14 @@ enrollment_by_site_last_days_var_disc_ii <- function(analytic,
     df <- analytic %>% 
       select(consented_and_randomized, enrolled, exclusive_safety_set, 
              eligible, screened_date,
-             site_certification_date, facilitycode, all_of(discontinued))
+             site_certification_date, facilitycode, all_of(discontinued)) %>%
+      arrange(facilitycode) 
   } else{
     df <- analytic %>% 
       select(consented_and_randomized, enrolled, 
              eligible, screened_date,
-             site_certification_date, facilitycode, all_of(discontinued))
+             site_certification_date, facilitycode, all_of(discontinued)) %>%
+      arrange(facilitycode)
   }
   
   colnames(df)[which(colnames(df) == discontinued)] <- "discontinued"
@@ -4821,7 +4825,7 @@ outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALS
     filter(enrolled) %>%
     separate_rows(outcome_data, sep=";") %>%
     separate(outcome_data, c('outcome_name', 'target_days', 'expected_days', 'time_zero', 'outcome_date_extended', 'outcome_type', 'outcome_days_extended', 'outcome_days', 'outcome_date'), sep=",") %>% 
-    filter((as.Date(time_zero)+days_since_tz)<Sys.Date())
+    filter((as.Date(time_zero)+days_since_tz)<Sys.Date()) 
 
   stats <- outcome_data %>%
     mutate(outcome_days = as.numeric(outcome_days)) %>%
@@ -4920,7 +4924,8 @@ enrollment_status_by_site_consent_pre_screening <- function(analytic, discontinu
   
   df <- analytic %>%
     select(screened, eligible, ineligible, consented, randomized, enrolled,
-           site_certification_date, facilitycode, pre_screened, pre_eligible, any_of(discontinued))
+           site_certification_date, facilitycode, pre_screened, pre_eligible, any_of(discontinued)) %>%
+    arrange(facilitycode)
   
   colnames(df)[which(names(df) == discontinued)] <- "discontinued"
   
@@ -5000,7 +5005,8 @@ enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_tot
   
   df <- analytic %>%
     select(screened, eligible, ineligible, consented,
-           site_certification_date, facilitycode, pre_screened, pre_eligible)
+           site_certification_date, facilitycode, pre_screened, pre_eligible) %>%
+    arrange(facilitycode)
   
   df <- df %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
@@ -5072,7 +5078,8 @@ enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, discont
                       "FacilityCode", "Boolean"))
   
   df <- analytic %>%
-    select(eligible, consented, randomized, enrolled, facilitycode, any_of(discontinued))
+    select(eligible, consented, randomized, enrolled, facilitycode, any_of(discontinued)) %>%
+    arrange(facilitycode)
   
   colnames(df)[which(names(df) == discontinued)] <- "discontinued"
   
