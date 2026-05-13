@@ -4362,7 +4362,7 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
 #'
 #' @return html table
 #' @export
-closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, breakout_other=FALSE, closed_overall_complications=NULL){
+closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, breakout_other=FALSE, cols_spec=NULL){
   
   confirm_stability_of_related_visual('overall_complications', '51e8aca1cd0b0e17022209ec533fb163')
   
