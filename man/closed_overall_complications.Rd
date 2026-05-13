@@ -8,7 +8,8 @@ closed_overall_complications(
   analytic,
   relatedness = TRUE,
   WB = NULL,
-  breakout_other = FALSE
+  breakout_other = FALSE,
+  closed_overall_complications = NULL
 )
 }
 \arguments{
