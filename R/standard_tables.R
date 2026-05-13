@@ -6123,7 +6123,7 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
 #' Returns a table of the overall complications first ordered by complication alphabetically, then by relatedness (starting with most related), 
 #' then by severity (starting with most severe), each row is a unique combination of those items
 #'
-#' @param analytic analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode
+#' @param analytic analytic data set that must include study_id, complication_data
 #' @param relatedness includes that column
 #' @param WB if the study is Weight Bearing
 #' @param breakout_other If TRUE, replaces "Other" with "Other: [other_info]". Defaults to FALSE.
@@ -6131,9 +6131,17 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
 #'
 #' @return html table
 #' @export
-overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE, 
-                                  cols_spec = NULL){
-    
+#'
+#' @examples
+#' overall_complications("Replace with Analytic Tibble")
+overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
+
+    analytic <- if_needed_generate_example_data(
+      analytic,
+      example_constructs = "complication_data",
+      example_types = "(';new_row: ', '|')FollowupPeriod|Character|Character|NamedCategory['Superficial-infection' 'Deep-Infection' 'Deep-Infection, Not Involving Bone' 'Deep-Infection, Septic Joint' 'Non-Union' 'Malunion' 'Loss of limb/amputation' 'Fixation failure' 'Peri-implant Fracture' 'Reaction to Hardware' 'Wound Dehiscence' 'Wound Seroma/Hematoma' 'Flap failure' 'Tendon Injury' 'Delayed Wound Healing' 'Cellulitis' 'DVT/PE' 'Joint Arthritis' 'Other']|Character|Date|NamedCategory['Definitely related' 'Probably related' 'Possibly related' 'Unlikely related' 'Unrelated' \"Don't know\"]|NamedCategory['Mild' 'Moderate' 'Severe and Undesirable' 'Life-threatening or disabling' 'Fatal']|NamedCategory['Operative' 'Non-operative' 'No treatment']|Character"
+    )
+
     if (is.null(WB)) {
       df <- analytic %>%
         select(study_id, complication_data) %>% 
