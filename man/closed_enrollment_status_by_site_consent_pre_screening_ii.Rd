@@ -6,6 +6,8 @@
 \usage{
 closed_enrollment_status_by_site_consent_pre_screening_ii(
   analytic,
+  discontinued = "discontinued",
+  discontinued_colname = "Discontinued",
   only_total = FALSE,
   footnotes = NULL
 )
@@ -15,13 +17,13 @@ closed_enrollment_status_by_site_consent_pre_screening_ii(
 not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_date, 
 facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm,}
 
-\item{days}{the number of last days to include in the last days summary section of the table}
-
 \item{discontinued}{the name of the construct where you can specify your discontinued construct like 
 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')}
 
 \item{discontinued_colname}{this determines the label applied to the discontinued column of your 
 choosing (defaults to 'Discontinued')}
+
+\item{days}{the number of last days to include in the last days summary section of the table}
 
 \item{include_exclusive_safety_set}{this is a toggle that will include a exclusive_safety_set construct 
 if you want it included (defaults to FALSE)}
