@@ -219,6 +219,9 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #'
 #' @return An HTML table.
 #' @export
+#'
+#' @examples
+#' enrollment_status_by_site_var_discontinued_i("Replace with Analytic Tibble")
 enrollment_status_by_site_var_discontinued_i <- function(analytic, pre_screened = NULL,
                                                 pre_screened_eligible = NULL, only_total=FALSE){
   
@@ -310,7 +313,10 @@ enrollment_status_by_site_var_discontinued_i <- function(analytic, pre_screened 
 #'
 #' @return An HTML table.
 #' @export
-enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued="discontinued", 
+#'
+#' @examples
+#' enrollment_status_by_site_var_discontinued_ii("Replace with Analytic Tibble")
+enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued="discontinued",
                                                  discontinued_colname="Discontinued", only_total=FALSE){
   
   analytic <- if_needed_generate_example_data(
@@ -6134,7 +6140,7 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
 #'
 #' @examples
 #' overall_complications("Replace with Analytic Tibble")
-overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
+overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE, cols_spec = NULL){
 
     analytic <- if_needed_generate_example_data(
       analytic,
