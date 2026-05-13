@@ -6,7 +6,8 @@
 \usage{
 closed_enrollment_status_by_site_consent_pre_screening_i(
   analytic,
-  only_totals = FALSE
+  only_totals = FALSE,
+  footnotes = NULL
 )
 }
 \arguments{
