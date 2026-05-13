@@ -10,7 +10,8 @@ closed_enrollment_status_by_site_var_discontinued_i(
   discontinued_colname = "Discontinued",
   pre_screened = NULL,
   pre_screened_eligible = NULL,
-  only_total = FALSE
+  only_total = FALSE,
+  footnotes = NULL
 )
 }
 \arguments{
