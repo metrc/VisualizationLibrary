@@ -4480,9 +4480,9 @@ closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL
 #'
 #' @examples
 #' closed_enrollment_status_by_site_consent_pre_screening_i("Replace with Analytic Tibble")
-#' closed_enrollment_status_by_site_consent_pre_screening_i("Replace with Analytic Tibble", only_totals = TRUE)
+#' closed_enrollment_status_by_site_consent_pre_screening_i("Replace with Analytic Tibble", only_total = TRUE)
 #' 
-closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_totals = FALSE, footnotes = NULL){
+closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_total = FALSE, footnotes = NULL){
   
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
@@ -4495,14 +4495,14 @@ closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, o
   
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_i(df_a, only_totals=only_totals),
+                  enrollment_status_by_site_consent_pre_screening_i(df_a, only_total=only_total),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_i(df_b, only_totals=only_totals))
+                  enrollment_status_by_site_consent_pre_screening_i(df_b, only_total=only_total))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_i(df_a, only_totals=only_totals) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  enrollment_status_by_site_consent_pre_screening_i(df_a, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_i(df_b, only_totals=only_totals) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+                  enrollment_status_by_site_consent_pre_screening_i(df_b, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
   }
   
   return(out)
@@ -4530,9 +4530,9 @@ closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, o
 #'
 #' @examples
 #' closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble")
-#' closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble", only_totals = TRUE)
+#' closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble", only_total = TRUE)
 #' 
-closed_enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, only_totals = FALSE, footnotes = NULL){
+closed_enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, only_total = FALSE, footnotes = NULL){
   
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
@@ -4545,14 +4545,14 @@ closed_enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, 
   
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_ii(df_a, only_totals=only_totals),
+                  enrollment_status_by_site_consent_pre_screening_ii(df_a, only_total=only_total),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_ii(df_b, only_totals=only_totals))
+                  enrollment_status_by_site_consent_pre_screening_ii(df_b, only_total=only_total))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_ii(df_a, only_totals=only_totals) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  enrollment_status_by_site_consent_pre_screening_ii(df_a, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_ii(df_b, only_totals=only_totals) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+                  enrollment_status_by_site_consent_pre_screening_ii(df_b, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
   }
   
   return(out)
