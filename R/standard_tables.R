@@ -234,7 +234,8 @@ enrollment_status_by_site_var_discontinued_i <- function(analytic, pre_screened 
   
   df <- analytic %>%
     select(screened, eligible, refused, not_consented, consented,
-           site_certification_date, facilitycode, any_of(c(pre_screened, pre_screened_eligible)))
+           site_certification_date, facilitycode, any_of(c(pre_screened, pre_screened_eligible))) %>%
+    arrange(facilitycode)
   
   if (!is.null(pre_screened)) colnames(df)[which(names(df) == pre_screened)] <- "pre_screened"
   if (!is.null(pre_screened_eligible)) colnames(df)[which(names(df) == pre_screened_eligible)] <- "pre_screened_eligible"
