@@ -4393,7 +4393,7 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
 #' @examples
 #' \dontrun{
 #' }
-pathogen_characteristics <- function(analytic){
+closed_pathogen_characteristics <- function(analytic){
   inner_analytic <- analytic %>% filter(enrolled == TRUE)
   enrolled_tot <- nrow(inner_analytic)
   a_tot <- inner_analytic %>% filter(treatment_arm=='Group A') %>% nrow()
