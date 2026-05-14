@@ -1680,7 +1680,142 @@ closed_certification_date_data <- function(analytic){
 #' closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", include_exclusive_safety_set = FALSE, footnotes = TRUE)
 #' closed_enrollment_by_site_last_days_var_disc("Replace with Analytic Tibble", include_exclusive_safety_set = TRUE)
 #' 
-closed_enrollment_by_site_last_days_var_disc <- function(analytic, discontinued="discontinued", 
+closed_enrollment_by_site_last_days_var_disc <- function(analytic, days = 0, 
+                                                         discontinued="discontinued", 
+                                                         discontinued_colname="Discontinued", 
+                                                         include_exclusive_safety_set=FALSE, 
+                                                         average = FALSE, 
+                                                         cumulative_data = TRUE, 
+                                                         footnotes=NULL){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("consented_and_randomized", "discontinued", 
+                           "enrolled", "exclusive_safety_set", 
+                           "eligible", 
+                           "site_certification_date", "facilitycode"), 
+    example_types = c("Boolean", "Boolean", 
+                      "Boolean", "Boolean", 
+                      "Boolean", 
+                      "Date", "FacilityCode"))
+  
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-11-14)
+  
+  df_a <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_by_site_last_days_var_disc(df_a, days, discontinued, discontinued_colname, include_exclusive_safety_set, average, cumulative_data),
+                  "<h4>Group B</h4><br />",
+                  enrollment_by_site_last_days_var_disc(df_b, days, discontinued, discontinued_colname, include_exclusive_safety_set, average, cumulative_data))
+  } else{
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_by_site_last_days_var_disc(df_a, days, discontinued, discontinued_colname, include_exclusive_safety_set, average, cumulative_data) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  enrollment_by_site_last_days_var_disc(df_b, days, discontinued, discontinued_colname, include_exclusive_safety_set, average, cumulative_data) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+
+  return(out)
+}
+
+
+#' Closed enrollment by site Tobra and Sextant (variable discontinued)
+#'
+#' @description 
+#' This is the closed version of the enrollment_by_site_last_days_var_disc_i function; see its documentation
+#' for details.
+#'
+#' @param analytic analytic data set that must include constructs screened, eligible, refused, consented, 
+#' not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_date, 
+#' facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm, 
+#' @param days the number of last days to include in the last days summary section of the table
+#' @param discontinued the name of the construct where you can specify your discontinued construct like 
+#' 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
+#' @param discontinued_colname this determines the label applied to the discontinued column of your 
+#' choosing (defaults to 'Discontinued')
+#' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct 
+#' if you want it included (defaults to FALSE)
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_enrollment_by_site_last_days_var_disc_i("Replace with Analytic Tibble")
+#' closed_enrollment_by_site_last_days_var_disc_i("Replace with Analytic Tibble", days = 100)
+#' closed_enrollment_by_site_last_days_var_disc_i("Replace with Analytic Tibble", include_exclusive_safety_set = FALSE, footnotes = TRUE)
+#' closed_enrollment_by_site_last_days_var_disc_i("Replace with Analytic Tibble", include_exclusive_safety_set = TRUE)
+#' 
+closed_enrollment_by_site_last_days_var_disc_i <- function(analytic, days = 0, 
+                                                           average = FALSE, 
+                                                           cumulative_data = TRUE, 
+                                                           footnotes=NULL){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic, 
+    example_constructs = c("consented_and_randomized", "discontinued", 
+                           "enrolled", "exclusive_safety_set", 
+                           "eligible", 
+                           "site_certification_date", "facilitycode"), 
+    example_types = c("Boolean", "Boolean", 
+                      "Boolean", "Boolean", 
+                      "Boolean", 
+                      "Date", "FacilityCode"))
+  
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2024-11-14)
+  
+  df_a <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_by_site_last_days_var_disc_i(df_a, days, average, cumulative_data),
+                  "<h4>Group B</h4><br />",
+                  enrollment_by_site_last_days_var_disc_i(df_b, days, average, cumulative_data))
+  } else{
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_by_site_last_days_var_disc_i(df_a, days, average, cumulative_data) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  enrollment_by_site_last_days_var_disc_i(df_b, days, average, cumulative_data) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+
+#' Closed enrollment by site Tobra and Sextant (variable discontinued)
+#'
+#' @description 
+#' This is the closed version of the enrollment_by_site_last_days_var_disc_ii function; see its documentation
+#' for details.
+#'
+#' @param analytic analytic data set that must include constructs screened, eligible, refused, consented, 
+#' not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_date, 
+#' facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm, 
+#' @param days the number of last days to include in the last days summary section of the table
+#' @param discontinued the name of the construct where you can specify your discontinued construct like 
+#' 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
+#' @param discontinued_colname this determines the label applied to the discontinued column of your 
+#' choosing (defaults to 'Discontinued')
+#' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct 
+#' if you want it included (defaults to FALSE)
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_enrollment_by_site_last_days_var_disc_ii("Replace with Analytic Tibble")
+#' closed_enrollment_by_site_last_days_var_disc_ii("Replace with Analytic Tibble", days = 100)
+#' closed_enrollment_by_site_last_days_var_disc_ii("Replace with Analytic Tibble", include_exclusive_safety_set = FALSE, footnotes = TRUE)
+#' closed_enrollment_by_site_last_days_var_disc_ii("Replace with Analytic Tibble", include_exclusive_safety_set = TRUE)
+#' 
+closed_enrollment_by_site_last_days_var_disc_ii <- function(analytic, discontinued="discontinued", 
                                                          discontinued_colname="Discontinued", include_exclusive_safety_set=FALSE, 
                                                          footnotes=NULL){
   
@@ -1714,7 +1849,7 @@ closed_enrollment_by_site_last_days_var_disc <- function(analytic, discontinued=
                   "<h4>Group B</h4><br />",
                   enrollment_by_site_last_days_var_disc_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, include_exclusive_safety_set=include_exclusive_safety_set) %>% add_footnote(footnotes, notation="number", escape = FALSE))
   }
-
+  
   return(out)
 }
 
@@ -4257,9 +4392,9 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
 #'
 #' @return html table
 #' @export
-closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
+closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, breakout_other=FALSE, cols_spec=NULL){
   
-  confirm_stability_of_related_visual('overall_complications', 'f4cee245c9372bdecc98050dfcd9bc9c')
+  confirm_stability_of_related_visual('overall_complications', '51e8aca1cd0b0e17022209ec533fb163')
   
   if (is.null(WB)) {
     df <- analytic %>%
@@ -4346,8 +4481,217 @@ closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL
     final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
   }
   
+  if (!is.null(cols_spec)) {
+    final_table <- final_table %>%
+      rename_with(~ unlist(cols_spec)[.x], .cols = names(cols_spec))
+  }
+  
   output <- kable(final_table, format = "html", align = 'l') %>%
     kable_styling("striped", full_width = F, position = "left") 
   
   return(output)
+}
+
+
+#' Closed enrollment by site Tobra and Sextant (variable discontinued)
+#'
+#' @description 
+#' This is the closed version of the enrollment_status_by_site_consent_pre_screening_i function; see its documentation
+#' for details.
+#'
+#' @param analytic analytic data set that must include constructs screened, eligible, refused, consented, 
+#' not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_date, 
+#' facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm, 
+#' @param days the number of last days to include in the last days summary section of the table
+#' @param discontinued the name of the construct where you can specify your discontinued construct like 
+#' 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
+#' @param discontinued_colname this determines the label applied to the discontinued column of your 
+#' choosing (defaults to 'Discontinued')
+#' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct 
+#' if you want it included (defaults to FALSE)
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_enrollment_status_by_site_consent_pre_screening_i("Replace with Analytic Tibble")
+#' closed_enrollment_status_by_site_consent_pre_screening_i("Replace with Analytic Tibble", only_total = TRUE)
+#' 
+closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_total = FALSE, footnotes = NULL){
+  
+  
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
+  
+  df_a <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_status_by_site_consent_pre_screening_i(df_a, only_total=only_total),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_consent_pre_screening_i(df_b, only_total=only_total))
+  } else{
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_status_by_site_consent_pre_screening_i(df_a, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_consent_pre_screening_i(df_b, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Closed enrollment by site Tobra and Sextant (variable discontinued)
+#'
+#' @description 
+#' This is the closed version of the enrollment_status_by_site_consent_pre_screening_ii function; see its documentation
+#' for details.
+#'
+#' @param analytic analytic data set that must include constructs screened, eligible, refused, consented, 
+#' not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_date, 
+#' facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm, 
+#' @param days the number of last days to include in the last days summary section of the table
+#' @param discontinued the name of the construct where you can specify your discontinued construct like 
+#' 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
+#' @param discontinued_colname this determines the label applied to the discontinued column of your 
+#' choosing (defaults to 'Discontinued')
+#' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct 
+#' if you want it included (defaults to FALSE)
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble")
+#' closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble", only_total = TRUE)
+#' 
+closed_enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, discontinued="discontinued", 
+                                                                      discontinued_colname="Discontinued", 
+                                                                      only_total=FALSE, footnotes = NULL){
+  
+  
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
+  
+  df_a <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_status_by_site_consent_pre_screening_ii(df_a,discontinued=discontinued,discontinued_colname=discontinued_colname,only_total=only_total),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_consent_pre_screening_ii(df_b,discontinued=discontinued,discontinued_colname=discontinued_colname,only_total=only_total))
+  } else{
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_status_by_site_consent_pre_screening_ii(df_a,discontinued=discontinued,discontinued_colname=discontinued_colname,only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_consent_pre_screening_ii(df_b,discontinued=discontinued,discontinued_colname=discontinued_colname,only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Closed enrollment by site Tobra and Sextant (variable discontinued)
+#'
+#' @description 
+#' This is the closed version of the enrollment_status_by_site_var_discontinued_i function; see its documentation
+#' for details.
+#'
+#' @param analytic analytic data set that must include constructs screened, eligible, refused, consented, 
+#' not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_date, 
+#' facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm, 
+#' @param days the number of last days to include in the last days summary section of the table
+#' @param discontinued the name of the construct where you can specify your discontinued construct like 
+#' 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
+#' @param discontinued_colname this determines the label applied to the discontinued column of your 
+#' choosing (defaults to 'Discontinued')
+#' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct 
+#' if you want it included (defaults to FALSE)
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_enrollment_status_by_site_var_discontinued_i("Replace with Analytic Tibble")
+#' 
+closed_enrollment_status_by_site_var_discontinued_i <- function(analytic,pre_screened = NULL,
+                                                       pre_screened_eligible = NULL, only_total=FALSE, footnotes = NULL){
+  
+  
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
+  
+  df_a <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_status_by_site_var_discontinued_i(df_a,pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_var_discontinued_i(df_b,pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total))
+  } else{
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_status_by_site_var_discontinued_i(df_a,pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_var_discontinued_i(df_b,pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
+}
+
+#' Closed enrollment by site Tobra and Sextant (variable discontinued)
+#'
+#' @description 
+#' This is the closed version of the enrollment_status_by_site_var_discontinued_ii function; see its documentation
+#' for details.
+#'
+#' @param analytic analytic data set that must include constructs screened, eligible, refused, consented, 
+#' not_consented, not_randomized, consented_and_randomized, enrolled, site_certification_date, 
+#' facilitycode, screened_date, randomized, consent_date, discontinued, treatment_arm, 
+#' @param days the number of last days to include in the last days summary section of the table
+#' @param discontinued the name of the construct where you can specify your discontinued construct like 
+#' 'discontinued' or 'adjudicated_discontinued' (defaults to 'discontinued')
+#' @param discontinued_colname this determines the label applied to the discontinued column of your 
+#' choosing (defaults to 'Discontinued')
+#' @param include_exclusive_safety_set this is a toggle that will include a exclusive_safety_set construct 
+#' if you want it included (defaults to FALSE)
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_enrollment_status_by_site_var_discontinued_ii("Replace with Analytic Tibble")
+#' closed_enrollment_status_by_site_var_discontinued_ii("Replace with Analytic Tibble", only_totals = TRUE)
+#' 
+closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued="discontinued", 
+                                                       discontinued_colname="Discontinued", only_total=FALSE, footnotes = NULL){
+  
+  
+  #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
+  
+  df_a <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group A")
+  
+  df_b <- analytic %>% 
+    filter(is.na(treatment_arm)|treatment_arm=="Group B")
+  
+  if(is.null(footnotes)){
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_status_by_site_var_discontinued_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname,only_total=only_total),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_var_discontinued_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname,only_total=only_total))
+  } else{
+    out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
+                  enrollment_status_by_site_var_discontinued_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname,only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  "<h4>Group B</h4><br />",
+                  enrollment_status_by_site_var_discontinued_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname,only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+  }
+  
+  return(out)
 }
