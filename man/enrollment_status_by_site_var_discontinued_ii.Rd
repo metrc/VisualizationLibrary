@@ -28,3 +28,6 @@ An HTML table.
 Visualizes the totals of randomization, discontinuation, and enrollment by site.
 Values are calculated as percentages of the "Consented" population.
 }
+\examples{
+enrollment_status_by_site_var_discontinued_ii("Replace with Analytic Tibble")
+}

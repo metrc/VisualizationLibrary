@@ -8,17 +8,20 @@ overall_complications(
   analytic,
   relatedness = TRUE,
   WB = NULL,
-  breakout_other = FALSE
+  breakout_other = FALSE,
+  cols_spec = NULL
 )
 }
 \arguments{
-\item{analytic}{analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode}
+\item{analytic}{analytic data set that must include study_id, complication_data}
 
 \item{relatedness}{includes that column}
 
 \item{WB}{if the study is Weight Bearing}
 
 \item{breakout_other}{If TRUE, replaces "Other" with "Other: [other_info]". Defaults to FALSE.}
+
+\item{cols_spec}{List of column names and their replacements, valid names are Complication Relatedness and Severity}
 }
 \value{
 html table
@@ -26,4 +29,7 @@ html table
 \description{
 Returns a table of the overall complications first ordered by complication alphabetically, then by relatedness (starting with most related), 
 then by severity (starting with most severe), each row is a unique combination of those items
+}
+\examples{
+overall_complications("Replace with Analytic Tibble")
 }
