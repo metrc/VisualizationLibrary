@@ -12,7 +12,8 @@ generic_characteristics(
   titlecase = FALSE,
   splits = NULL,
   subcategory_constructs = c(),
-  bottom_order_levels = c("Missing")
+  bottom_order_levels = c("Missing"),
+  mean_sd = c()
 )
 }
 \arguments{
@@ -20,7 +21,7 @@ generic_characteristics(
 
 \item{constructs}{The constructs to run statistics from}
 
-\item{names_vec}{The names of the constructs in the final visualization}
+\item{names_vec}{The names of the constructs in the final visualization. Pass NA to attach a construct to the previous group's header without creating a new top border.}
 
 \item{filter_cols}{The columns to filter the the data by (for totals and missing counts)}
 
@@ -32,6 +33,8 @@ generic_characteristics(
 must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)}
 
 \item{bottom_order_levels}{A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".}
+
+\item{mean_sd}{A vector of construct names. If a construct is included here, it will be displayed as "Mean [SD]" with its calculated values, instead of categorical counts.}
 }
 \value{
 html table
