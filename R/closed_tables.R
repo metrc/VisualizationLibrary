@@ -4379,6 +4379,104 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
   return(table)
 }
 
+
+#' Closed pathogen Characteristics
+#'
+#' @description 
+#' Closed version of pathogen_characteristics, see that function for details.
+#'
+#' @param analytic This is the analytic data set that must include dssi_data
+#'
+#' @return An HTML table styled with kableExtra.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' }
+closed_pathogen_characteristics <- function(analytic){
+  inner_analytic <- analytic %>% filter(enrolled == TRUE)
+  enrolled_tot <- nrow(inner_analytic)
+  a_tot <- inner_analytic %>% filter(treatment_arm=='Group A') %>% nrow()
+  b_tot <- inner_analytic %>% filter(treatment_arm=='Group B') %>% nrow()
+  
+  long_dssi_full <- inner_analytic %>%
+    select(study_id, dssi_data, treatment_arm) %>%
+    separate_rows(dssi_data, sep = ';;') %>%
+    separate(dssi_data, into = c("redcap_repeat_instance", "date", "culture",
+                                 "group", "id", "organism"), sep = ',,')
+  long_dssi_a <- long_dssi_full %>% filter(treatment_arm=='Group A')
+  long_dssi_b <- long_dssi_full %>% filter(treatment_arm=='Group B')
+  
+  cons_full <- inner_analytic %>%
+    select(study_id, deep_ssi_all_gram_negative,
+           deep_ssi_any_gram_positive, deep_ssi_polymicrobrial, deep_ssi_no_growth, treatment_arm)
+  cons_a <- cons_full %>% filter(treatment_arm=='Group A')
+  cons_b <- cons_full %>% filter(treatment_arm=='Group B')
+  
+  ids_full <- tibble(
+    `Pathogen Type` = c("Any gram-positive organism", "Any gram-negative organism", "Polymicrobrial infection",
+                        "Culture negative", "Missing"),
+    `N (% Enrolled)` = c(format_count_percent(sum(cons_full$deep_ssi_any_gram_positive, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(sum(cons_full$deep_ssi_any_gram_negative, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(sum(cons_full$deep_ssi_polymicrobrial, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(sum(cons_full$no_growth, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(nrow(long_dssi_full %>% filter(is.na(id))), enrolled_tot))
+  )
+  ids_a <- tibble(
+    `Pathogen Type` = c("Any gram-positive organism", "Any gram-negative organism", "Polymicrobrial infection",
+                        "Culture negative", "Missing"),
+    `N (% Enrolled)` = c(format_count_percent(sum(cons_a$deep_ssi_any_gram_positive, na.rm=TRUE), a_tot),
+                         format_count_percent(sum(cons_a$deep_ssi_any_gram_negative, na.rm=TRUE), a_tot),
+                         format_count_percent(sum(cons_a$deep_ssi_polymicrobrial, na.rm=TRUE), a_tot),
+                         format_count_percent(sum(cons_a$no_growth, na.rm=TRUE), a_tot),
+                         format_count_percent(nrow(long_dssi_a %>% filter(is.na(id))), a_tot))
+  )
+  ids_b <- tibble(
+    `Pathogen Type` = c("Any gram-positive organism", "Any gram-negative organism", "Polymicrobrial infection",
+                        "Culture negative", "Missing"),
+    `N (% Enrolled)` = c(format_count_percent(sum(cons_b$deep_ssi_any_gram_positive, na.rm=TRUE), b_tot),
+                         format_count_percent(sum(cons_b$deep_ssi_any_gram_negative, na.rm=TRUE), b_tot),
+                         format_count_percent(sum(cons_b$deep_ssi_polymicrobrial, na.rm=TRUE), b_tot),
+                         format_count_percent(sum(cons_b$no_growth, na.rm=TRUE), b_tot),
+                         format_count_percent(nrow(long_dssi_a %>% filter(is.na(id))), b_tot))
+  )
+  
+  top_microbes_full <- long_dssi_full %>%
+    filter(organism!="NA" & (id=='gram_positive'|id=='gram_negative')) %>%
+    count(organism) %>%
+    arrange(desc(n)) %>%
+    slice_head(n=5) %>%
+    rename(`Top Pathogens Detected`=organism) %>%
+    rename("(N)"=n)
+  top_microbes_a <- long_dssi_a %>%
+    filter(organism!="NA" & (id=='gram_positive'|id=='gram_negative')) %>%
+    count(organism) %>%
+    arrange(desc(n)) %>%
+    slice_head(n=5) %>%
+    rename(`Top Pathogens Detected`=organism) %>%
+    rename("(N)"=n)
+  top_microbes_b <- long_dssi_b %>%
+    filter(organism!="NA" & (id=='gram_positive'|id=='gram_negative')) %>%
+    count(organism) %>%
+    arrange(desc(n)) %>%
+    slice_head(n=5) %>%
+    rename(`Top Pathogens Detected`=organism) %>%
+    rename("(N)"=n)
+  
+  ids_b <- ids_b %>%
+    select(-`Pathogen Type`)
+  
+  out <- cbind(ids_a,ids_b,top_microbes_a,top_microbes_b)
+   
+  header <- list(" "= 1, "Group A"=1, "Group B"=1, "Group A"=2, "Group B"=2)
+  
+  table <- kable(out, format = "html", align = 'l') %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    add_header_above(header) %>% 
+    column_spec(4, extra_css = "border-left: 1px solid black;")
+  return(table)
+}
+
 #' Overall complications closed
 #'
 #' @description 
