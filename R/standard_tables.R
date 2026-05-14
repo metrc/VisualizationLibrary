@@ -219,6 +219,9 @@ enrollment_status_by_site_var_discontinued <- function(analytic, discontinued="d
 #'
 #' @return An HTML table.
 #' @export
+#'
+#' @examples
+#' enrollment_status_by_site_var_discontinued_i("Replace with Analytic Tibble")
 enrollment_status_by_site_var_discontinued_i <- function(analytic, pre_screened = NULL,
                                                 pre_screened_eligible = NULL, only_total=FALSE){
   
@@ -231,7 +234,8 @@ enrollment_status_by_site_var_discontinued_i <- function(analytic, pre_screened 
   
   df <- analytic %>%
     select(screened, eligible, refused, not_consented, consented,
-           site_certification_date, facilitycode, any_of(c(pre_screened, pre_screened_eligible)))
+           site_certification_date, facilitycode, any_of(c(pre_screened, pre_screened_eligible))) %>%
+    arrange(facilitycode)
   
   if (!is.null(pre_screened)) colnames(df)[which(names(df) == pre_screened)] <- "pre_screened"
   if (!is.null(pre_screened_eligible)) colnames(df)[which(names(df) == pre_screened_eligible)] <- "pre_screened_eligible"
@@ -310,7 +314,10 @@ enrollment_status_by_site_var_discontinued_i <- function(analytic, pre_screened 
 #'
 #' @return An HTML table.
 #' @export
-enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued="discontinued", 
+#'
+#' @examples
+#' enrollment_status_by_site_var_discontinued_ii("Replace with Analytic Tibble")
+enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued="discontinued",
                                                  discontinued_colname="Discontinued", only_total=FALSE){
   
   analytic <- if_needed_generate_example_data(
@@ -321,7 +328,8 @@ enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued
                       "FacilityCode", "Boolean"))
   
   df <- analytic %>%
-    select(eligible, consented, randomized, enrolled, facilitycode, any_of(discontinued))
+    select(eligible, consented, randomized, enrolled, facilitycode, any_of(discontinued)) %>%
+    arrange(facilitycode)
   
   colnames(df)[which(names(df) == discontinued)] <- "discontinued"
   
@@ -420,6 +428,19 @@ monitoring_required <- function(analytic, standard_threshold = 10, spec_threshol
     select(-consent_dates, -`Monitoring Required`) %>%
     rename(`Enrolled Count` = enrolled_count) %>%
     ungroup()
+  
+  anti_enrolled <- analytic %>%
+    filter(!enrolled | is.na(enrolled)) %>%
+    filter(!facilitycode %in% combined$facilitycode) %>%
+    filter(!is.na(facilitycode)) %>%
+    select(facilitycode) %>%
+    unique() %>%
+    mutate(`Enrolled Count` = 0,
+           `Date Monitoring Required` = "Monitoring Not Required")
+  
+  combined <- combined %>%
+    rbind(anti_enrolled) %>%
+    arrange(desc(`Enrolled Count`))
   
   vis <- kable(combined, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
@@ -2961,7 +2982,8 @@ enrollment_by_site_last_days_var_disc_i <- function(analytic, days = 0,
   
   df <- analytic %>% 
     select(screened, eligible, refused, not_consented, site_certification_date, 
-           facilitycode, screened_date)
+           facilitycode, screened_date) %>%
+    arrange(facilitycode)
   
   last_days <- Sys.Date() - days
   
@@ -3036,7 +3058,7 @@ enrollment_by_site_last_days_var_disc_i <- function(analytic, days = 0,
     select(-Eligible, -Refused, -`Not Consented`) %>% 
     select(Facility, starts_with('last_days'), Screened2, Screened, `Eligible (% screened)`, `Refused (% eligible)`, `Not Enrolled for Other Reasons (% eligible)`)
   
-  colnames(last) <- c('Facility', rep(c('Screened', 'Eligible (% screened)'), length(days)), "Screened", 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for `Other` Reasons (% eligible)')
+  colnames(last) <- c('Facility', rep(c('Screened', 'Eligible (% screened)'), length(days)), "Screened", 'Screened', 'Eligible (% screened)', 'Refused (% eligible)', 'Not Enrolled for Other Reasons (% eligible)')
   
   header_num <- c(1, rep(2, length(days)), 1, 4)
   header_names <- c(" ", paste("Last", days, " Days"), paste("Average per week"), paste("Cumulative", "to date"))
@@ -3115,12 +3137,14 @@ enrollment_by_site_last_days_var_disc_ii <- function(analytic,
     df <- analytic %>% 
       select(consented_and_randomized, enrolled, exclusive_safety_set, 
              eligible, screened_date,
-             site_certification_date, facilitycode, all_of(discontinued))
+             site_certification_date, facilitycode, all_of(discontinued)) %>%
+      arrange(facilitycode) 
   } else{
     df <- analytic %>% 
       select(consented_and_randomized, enrolled, 
              eligible, screened_date,
-             site_certification_date, facilitycode, all_of(discontinued))
+             site_certification_date, facilitycode, all_of(discontinued)) %>%
+      arrange(facilitycode)
   }
   
   colnames(df)[which(colnames(df) == discontinued)] <- "discontinued"
@@ -4841,7 +4865,7 @@ outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALS
     filter(enrolled) %>%
     separate_rows(outcome_data, sep=";") %>%
     separate(outcome_data, c('outcome_name', 'target_days', 'expected_days', 'time_zero', 'outcome_date_extended', 'outcome_type', 'outcome_days_extended', 'outcome_days', 'outcome_date'), sep=",") %>% 
-    filter((as.Date(time_zero)+days_since_tz)<Sys.Date())
+    filter((as.Date(time_zero)+days_since_tz)<Sys.Date()) 
 
   stats <- outcome_data %>%
     mutate(outcome_days = as.numeric(outcome_days)) %>%
@@ -4940,7 +4964,8 @@ enrollment_status_by_site_consent_pre_screening <- function(analytic, discontinu
   
   df <- analytic %>%
     select(screened, eligible, ineligible, consented, randomized, enrolled,
-           site_certification_date, facilitycode, pre_screened, pre_eligible, any_of(discontinued))
+           site_certification_date, facilitycode, pre_screened, pre_eligible, any_of(discontinued)) %>%
+    arrange(facilitycode)
   
   colnames(df)[which(names(df) == discontinued)] <- "discontinued"
   
@@ -5020,7 +5045,8 @@ enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_tot
   
   df <- analytic %>%
     select(screened, eligible, ineligible, consented,
-           site_certification_date, facilitycode, pre_screened, pre_eligible)
+           site_certification_date, facilitycode, pre_screened, pre_eligible) %>%
+    arrange(facilitycode)
   
   df <- df %>% 
     mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
@@ -5092,7 +5118,8 @@ enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, discont
                       "FacilityCode", "Boolean"))
   
   df <- analytic %>%
-    select(eligible, consented, randomized, enrolled, facilitycode, any_of(discontinued))
+    select(eligible, consented, randomized, enrolled, facilitycode, any_of(discontinued)) %>%
+    arrange(facilitycode)
   
   colnames(df)[which(names(df) == discontinued)] <- "discontinued"
   
@@ -6136,15 +6163,25 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
 #' Returns a table of the overall complications first ordered by complication alphabetically, then by relatedness (starting with most related), 
 #' then by severity (starting with most severe), each row is a unique combination of those items
 #'
-#' @param analytic analytic data set that must include study_id, hardware_duration, hardware_delta, facilitycode
+#' @param analytic analytic data set that must include study_id, complication_data
 #' @param relatedness includes that column
 #' @param WB if the study is Weight Bearing
 #' @param breakout_other If TRUE, replaces "Other" with "Other: [other_info]". Defaults to FALSE.
+#' @param cols_spec List of column names and their replacements, valid names are Complication Relatedness and Severity
 #'
 #' @return html table
 #' @export
-overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
-    
+#'
+#' @examples
+#' overall_complications("Replace with Analytic Tibble")
+overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE, cols_spec = NULL){
+
+    analytic <- if_needed_generate_example_data(
+      analytic,
+      example_constructs = "complication_data",
+      example_types = "(';new_row: ', '|')FollowupPeriod|Character|Character|NamedCategory['Superficial-infection' 'Deep-Infection' 'Deep-Infection, Not Involving Bone' 'Deep-Infection, Septic Joint' 'Non-Union' 'Malunion' 'Loss of limb/amputation' 'Fixation failure' 'Peri-implant Fracture' 'Reaction to Hardware' 'Wound Dehiscence' 'Wound Seroma/Hematoma' 'Flap failure' 'Tendon Injury' 'Delayed Wound Healing' 'Cellulitis' 'DVT/PE' 'Joint Arthritis' 'Other']|Character|Date|NamedCategory['Definitely related' 'Probably related' 'Possibly related' 'Unlikely related' 'Unrelated' \"Don't know\"]|NamedCategory['Mild' 'Moderate' 'Severe and Undesirable' 'Life-threatening or disabling' 'Fatal']|NamedCategory['Operative' 'Non-operative' 'No treatment']|Character"
+    )
+
     if (is.null(WB)) {
       df <- analytic %>%
         select(study_id, complication_data) %>% 
@@ -6221,6 +6258,11 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, break
     
     if(relatedness) {
       final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
+    }
+    
+    if (!is.null(cols_spec)) {
+      final_table <- final_table %>%
+        rename_with(~ unlist(cols_spec)[.x], .cols = names(cols_spec))
     }
     
     output <- kable(final_table, format = "html", align = 'l') %>%
