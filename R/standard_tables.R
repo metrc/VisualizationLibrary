@@ -6826,7 +6826,8 @@ pathogen_characteristics <- function(analytic){
   out <- cbind(ids, top_microbes)
   
   table <- kable(out, format = "html", align = 'l') %>%
-    kable_styling("striped", full_width = FALSE, position = "left")
+    kable_styling("striped", full_width = FALSE, position = "left") %>% 
+    column_spec(3, extra_css = "border-left: 1px solid black;")
   return(table)
 }
 
