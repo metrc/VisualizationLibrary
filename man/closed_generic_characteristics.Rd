@@ -48,6 +48,6 @@ See generic_characteristics for more information.
 }
 \examples{
 \dontrun{
-closed_generic_characteristics(analytic, constructs=c("age_cat", "age"), names_vec=c("Age", NA), mean_sd=c("age"))
+generic_characteristics("Replace with Analytic Tibble", constructs="stages", names_vec="Stages")
 }
 }
