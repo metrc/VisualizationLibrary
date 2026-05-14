@@ -3345,13 +3345,14 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #'
 #' @param analytic This is the analytic data set 
 #' @param constructs The constructs to run statistics from
-#' @param names_vec The names of the constructs in the final visualization
+#' @param names_vec The names of the constructs in the final visualization. Pass NA to attach a construct to the previous group's header without creating a new top border.
 #' @param filter_cols The columns to filter the the data by (for totals and missing counts)
 #' @param titlecase Changes construct values to Title Case
 #' @param splits Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them
 #' @param subcategory_constructs This allows a characteristic to have a construct as a sub category, 
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
 #' @param bottom_order_levels A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".
+#' @param mean_sd A vector of construct names. If a construct is included here, it will be displayed as "Mean [SD]" with its calculated values, instead of categorical counts.
 #'
 #' @return html table
 #' @export
@@ -3361,14 +3362,16 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' generic_characteristics("Replace with Analytic Tibble", constructs="stages", names_vec="Stages")
 #' }
 closed_generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
-                                         filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
-                                         subcategory_constructs = c(), bottom_order_levels = c("Missing")){
-  confirm_stability_of_related_visual('generic_characteristics', '13583c6d8b11c6198b62f69a9e6f244a')
+                                           filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
+                                           subcategory_constructs = c(), bottom_order_levels = c("Missing"),
+                                           mean_sd = c()){
+  confirm_stability_of_related_visual('generic_characteristics', '84f9a708a4905b32591c0cbf30cc56d4')
   
   out <- NULL
   index_vec <- c()
   sub_index_vec <- c()
   sub_bold_index_vec <- c()
+  has_border <- c()
   
   if(is.null(splits)){
     splits <- rep(NA, length(constructs))
@@ -3406,6 +3409,28 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
     a_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group A"))
     b_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group B"))
     
+    if (construct %in% mean_sd) {
+      vec_all <- suppressWarnings(as.numeric(inner_analytic[[construct]]))
+      vec_a <- suppressWarnings(as.numeric(inner_analytic %>% filter(treatment_arm == "Group A") %>% pull(!!sym(construct))))
+      vec_b <- suppressWarnings(as.numeric(inner_analytic %>% filter(treatment_arm == "Group B") %>% pull(!!sym(construct))))
+      
+      inner <- tibble::tibble(temp = "Mean [SD]", header = name_str, `Group A` = format_mean_sd(vec_a), `Group B` = format_mean_sd(vec_b), Total = format_mean_sd(vec_all))
+      
+      if (is.na(name_str) || name_str == "") {
+        if (length(index_vec) > 0) {
+          index_vec[length(index_vec)] <- index_vec[length(index_vec)] + 1
+        } else {
+          new <- 1; names(new) <- " "; index_vec <- c(index_vec, new); has_border <- c(has_border, FALSE)
+        }
+      } else {
+        new <- 1; names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')'); index_vec <- c(index_vec, new); has_border <- c(has_border, FALSE)
+      }
+      
+      if (is.null(out)) out <- inner else out <- rbind(out, inner)
+      next
+    }
+    
+    # ORIGINAL LOGIC BELOW (No indentation changes)
     inner <- inner_analytic %>%
       mutate(temp = !!sym(construct)) %>% 
       mutate(temp =  replace_na(as.character(temp), "Missing"))
@@ -3422,16 +3447,16 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       inner <- inner %>% 
         separate_rows(temp,sep = inner_split)
     }
-
+    
     non_bottom_temps <- sort(unique(inner$temp[!inner$temp %in% bottom_order_levels]))
-
+    
     numeric_temps <- suppressWarnings(as.numeric(non_bottom_temps))
     is_numeric <- !is.na(numeric_temps)
-
+    
     numeric_sort_list <- non_bottom_temps[is_numeric] %>% 
-        as.numeric() %>% 
-        sort() %>% 
-        as.character()
+      as.numeric() %>% 
+      sort() %>% 
+      as.character()
     
     non_numeric_sort_list <- sort(non_bottom_temps[!is_numeric])
     
@@ -3475,8 +3500,8 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                    ifelse(treatment_arm == 'Group A', 
                           format_count_percent(n,  category_tot_a),
                           ifelse(treatment_arm == 'Group B', format_count_percent(n,  category_tot_b), NA)
-                          )
-                        ) %>% 
+                   )
+          ) %>% 
           select(-n) %>%
           mutate(header = name_str) %>%
           pivot_wider(
@@ -3517,6 +3542,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       new <- new_row_count
       names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')')
       index_vec <- c(index_vec, new)
+      has_border <- c(has_border, TRUE)
     } else{
       inner_some <- inner %>% 
         group_by(temp, treatment_arm) %>% 
@@ -3553,6 +3579,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       new <- nrow(inner)
       names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')')
       index_vec <- c(index_vec, new)
+      has_border <- c(has_border, TRUE)
       
       if (is.null(out)) {
         out <- inner
@@ -3564,10 +3591,13 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
   out <- out %>%
     select(-header)
   
+  all_group_starts <- if(length(index_vec) > 1) c(1, cumsum(index_vec[1:(length(index_vec)-1)]) + 1) else c(1)
+  border_rows <- all_group_starts[has_border]
+  
   if(is_empty(sub_bold_index_vec)){
     vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
       add_indent(c(seq(nrow(out)))) %>% 
-      row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
+      { if(length(border_rows) > 0) row_spec(., border_rows, extra_css = "border-top: 1px solid") else . } %>%  
       pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
       kable_styling("striped", full_width = F, position="left")
   }else{
@@ -3575,7 +3605,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       add_indent(c(seq(nrow(out)))) %>% 
       add_indent(sub_index_vec) %>% 
       row_spec(sub_bold_index_vec, bold = TRUE) %>% 
-      row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
+      { if(length(border_rows) > 0) row_spec(., border_rows, extra_css = "border-top: 1px solid") else . } %>%  
       pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
       kable_styling("striped", full_width = F, position="left")
   }
