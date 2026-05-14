@@ -47,6 +47,7 @@ For other relevant characteristics counting visualizations, please see: baseline
 }
 \examples{
 \dontrun{
-generic_characteristics(analytic, constructs=c("age_cat", "age"), names_vec=c("Age", NA), mean_sd=c("age"))
+
+generic_characteristics("Replace with Analytic Tibble", constructs="stages", names_vec="Stages")
 }
 }
