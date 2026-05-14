@@ -6776,6 +6776,60 @@ amputation_characteristics_table <- function(analytic){
   return(table)
 }
 
+
+
+#' Pathogen Characteristics
+#'
+#' @description 
+#' Visualizes the breakdown of the dssi_data long file, uses helper constructs to get counts of everything.
+#'
+#' @param analytic This is the analytic data set that must include dssi_data
+#'
+#' @return An HTML table styled with kableExtra.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' }
+pathogen_characteristics <- function(analytic){
+  inner_analytic <- analytic %>% filter(enrolled == TRUE)
+  enrolled_tot <- nrow(inner_analytic)
+  
+  long_dssi <- inner_analytic %>%
+    select(study_id, dssi_data) %>%
+    separate_rows(dssi_data, sep = ';;') %>%
+    separate(dssi_data, into = c("redcap_repeat_instance", "date", "culture",
+                                 "group", "id", "organism"), sep = ',,')
+  
+  cons <- inner_analytic %>%
+    select(study_id, deep_ssi_all_gram_negative,
+           deep_ssi_any_gram_positive, deep_ssi_polymicrobrial, deep_ssi_no_growth)
+  
+  ids <- tibble(
+    `Pathogen Type` = c("Any gram-positive organism", "Any gram-negative organism", "Polymicrobrial infection",
+                        "Culture negative", "Missing"),
+    `N (% Enrolled)` = c(format_count_percent(sum(cons$deep_ssi_any_gram_positive, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(sum(cons$deep_ssi_any_gram_negative, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(sum(cons$deep_ssi_polymicrobrial, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(sum(cons$no_growth, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(nrow(long_dssi %>% filter(is.na(id))), enrolled_tot))
+  )
+  
+  top_microbes <- long_dssi %>%
+    filter(organism!="NA" & (id=='gram_positive'|id=='gram_negative')) %>%
+    count(organism) %>%
+    arrange(desc(n)) %>%
+    slice_head(n=5) %>%
+    rename(`Top Pathogens Detected`=organism) %>%
+    rename("(N)"=n)
+  
+  out <- cbind(ids, top_microbes)
+  
+  table <- kable(out, format = "html", align = 'l') %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+  return(table)
+}
+
 #' Patient Reported Outcomes Summary Table
 #'
 #' @description 

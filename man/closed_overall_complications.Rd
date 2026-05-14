@@ -9,7 +9,7 @@ closed_overall_complications(
   relatedness = TRUE,
   WB = NULL,
   breakout_other = FALSE,
-  closed_overall_complications = NULL
+  cols_spec = NULL
 )
 }
 \arguments{
