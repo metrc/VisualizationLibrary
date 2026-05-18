@@ -4408,7 +4408,7 @@ closed_pathogen_characteristics <- function(analytic){
   long_dssi_b <- long_dssi_full %>% filter(treatment_arm=='Group B')
   
   cons_full <- inner_analytic %>%
-    select(study_id, deep_ssi_all_gram_negative,
+    select(study_id, deep_ssi_any_gram_negative,
            deep_ssi_any_gram_positive, deep_ssi_polymicrobrial, deep_ssi_no_growth, treatment_arm)
   cons_a <- cons_full %>% filter(treatment_arm=='Group A')
   cons_b <- cons_full %>% filter(treatment_arm=='Group B')
