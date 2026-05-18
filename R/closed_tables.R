@@ -3345,13 +3345,14 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #'
 #' @param analytic This is the analytic data set 
 #' @param constructs The constructs to run statistics from
-#' @param names_vec The names of the constructs in the final visualization
+#' @param names_vec The names of the constructs in the final visualization. Pass NA to attach a construct to the previous group's header without creating a new top border.
 #' @param filter_cols The columns to filter the the data by (for totals and missing counts)
 #' @param titlecase Changes construct values to Title Case
 #' @param splits Splits the constructs if they are lists like "test_one,test_two" into two rows then counts them
 #' @param subcategory_constructs This allows a characteristic to have a construct as a sub category, 
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
 #' @param bottom_order_levels A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".
+#' @param mean_sd A vector of construct names. If a construct is included here, it will be displayed as "Mean [SD]" with its calculated values, instead of categorical counts.
 #'
 #' @return html table
 #' @export
@@ -3361,14 +3362,16 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
 #' generic_characteristics("Replace with Analytic Tibble", constructs="stages", names_vec="Stages")
 #' }
 closed_generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
-                                         filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
-                                         subcategory_constructs = c(), bottom_order_levels = c("Missing")){
-  confirm_stability_of_related_visual('generic_characteristics', '13583c6d8b11c6198b62f69a9e6f244a')
+                                           filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
+                                           subcategory_constructs = c(), bottom_order_levels = c("Missing"),
+                                           mean_sd = c()){
+  confirm_stability_of_related_visual('generic_characteristics', '84f9a708a4905b32591c0cbf30cc56d4')
   
   out <- NULL
   index_vec <- c()
   sub_index_vec <- c()
   sub_bold_index_vec <- c()
+  has_border <- c()
   
   if(is.null(splits)){
     splits <- rep(NA, length(constructs))
@@ -3406,6 +3409,28 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
     a_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group A"))
     b_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group B"))
     
+    if (construct %in% mean_sd) {
+      vec_all <- suppressWarnings(as.numeric(inner_analytic[[construct]]))
+      vec_a <- suppressWarnings(as.numeric(inner_analytic %>% filter(treatment_arm == "Group A") %>% pull(!!sym(construct))))
+      vec_b <- suppressWarnings(as.numeric(inner_analytic %>% filter(treatment_arm == "Group B") %>% pull(!!sym(construct))))
+      
+      inner <- tibble::tibble(temp = "Mean [SD]", header = name_str, `Group A` = format_mean_sd(vec_a), `Group B` = format_mean_sd(vec_b), Total = format_mean_sd(vec_all))
+      
+      if (is.na(name_str) || name_str == "") {
+        if (length(index_vec) > 0) {
+          index_vec[length(index_vec)] <- index_vec[length(index_vec)] + 1
+        } else {
+          new <- 1; names(new) <- " "; index_vec <- c(index_vec, new); has_border <- c(has_border, FALSE)
+        }
+      } else {
+        new <- 1; names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')'); index_vec <- c(index_vec, new); has_border <- c(has_border, FALSE)
+      }
+      
+      if (is.null(out)) out <- inner else out <- rbind(out, inner)
+      next
+    }
+    
+    # ORIGINAL LOGIC BELOW (No indentation changes)
     inner <- inner_analytic %>%
       mutate(temp = !!sym(construct)) %>% 
       mutate(temp =  replace_na(as.character(temp), "Missing"))
@@ -3422,16 +3447,16 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       inner <- inner %>% 
         separate_rows(temp,sep = inner_split)
     }
-
+    
     non_bottom_temps <- sort(unique(inner$temp[!inner$temp %in% bottom_order_levels]))
-
+    
     numeric_temps <- suppressWarnings(as.numeric(non_bottom_temps))
     is_numeric <- !is.na(numeric_temps)
-
+    
     numeric_sort_list <- non_bottom_temps[is_numeric] %>% 
-        as.numeric() %>% 
-        sort() %>% 
-        as.character()
+      as.numeric() %>% 
+      sort() %>% 
+      as.character()
     
     non_numeric_sort_list <- sort(non_bottom_temps[!is_numeric])
     
@@ -3473,8 +3498,8 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                    ifelse(treatment_arm == 'Group A', 
                           format_count_percent(n,  category_tot_a),
                           ifelse(treatment_arm == 'Group B', format_count_percent(n,  category_tot_b), NA)
-                          )
-                        ) %>% 
+                   )
+          ) %>% 
           select(-n) %>%
           mutate(header = name_str) %>%
           pivot_wider(
@@ -3515,6 +3540,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       new <- new_row_count
       names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')')
       index_vec <- c(index_vec, new)
+      has_border <- c(has_border, TRUE)
     } else{
       inner_some <- inner %>% 
         group_by(temp, treatment_arm) %>% 
@@ -3551,6 +3577,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       new <- nrow(inner)
       names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')')
       index_vec <- c(index_vec, new)
+      has_border <- c(has_border, TRUE)
       
       if (is.null(out)) {
         out <- inner
@@ -3562,10 +3589,13 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
   out <- out %>%
     select(-header)
   
+  all_group_starts <- if(length(index_vec) > 1) c(1, cumsum(index_vec[1:(length(index_vec)-1)]) + 1) else c(1)
+  border_rows <- all_group_starts[has_border]
+  
   if(is_empty(sub_bold_index_vec)){
     vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
       add_indent(c(seq(nrow(out)))) %>% 
-      row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
+      { if(length(border_rows) > 0) row_spec(., border_rows, extra_css = "border-top: 1px solid") else . } %>%  
       pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
       kable_styling("striped", full_width = F, position="left")
   }else{
@@ -3573,7 +3603,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       add_indent(c(seq(nrow(out)))) %>% 
       add_indent(sub_index_vec) %>% 
       row_spec(sub_bold_index_vec, bold = TRUE) %>% 
-      row_spec(c(1, cumsum(index_vec[1: length(index_vec)-1])+1), extra_css = "border-top: 1px solid") %>%  
+      { if(length(border_rows) > 0) row_spec(., border_rows, extra_css = "border-top: 1px solid") else . } %>%  
       pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
       kable_styling("striped", full_width = F, position="left")
   }
@@ -4347,6 +4377,169 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
   return(table)
 }
 
+
+#' Closed pathogen Characteristics
+#'
+#' @description 
+#' Closed version of pathogen_characteristics, see that function for details.
+#'
+#' @param analytic This is the analytic data set that must include dssi_data
+#'
+#' @return An HTML table styled with kableExtra.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' }
+closed_pathogen_characteristics <- function(analytic){
+  inner_analytic <- analytic %>% filter(enrolled == TRUE)
+  enrolled_tot <- nrow(inner_analytic)
+  a_tot <- inner_analytic %>% filter(treatment_arm=='Group A') %>% nrow()
+  b_tot <- inner_analytic %>% filter(treatment_arm=='Group B') %>% nrow()
+  
+  long_dssi_full <- inner_analytic %>%
+    select(study_id, dssi_data, treatment_arm) %>%
+    separate_rows(dssi_data, sep = ';;') %>%
+    separate(dssi_data, into = c("redcap_repeat_instance", "date", "culture",
+                                 "group", "id", "organism"), sep = ',,')
+  long_dssi_a <- long_dssi_full %>% filter(treatment_arm=='Group A')
+  long_dssi_b <- long_dssi_full %>% filter(treatment_arm=='Group B')
+  
+  cons_full <- inner_analytic %>%
+    select(study_id, deep_ssi_any_gram_negative,
+           deep_ssi_any_gram_positive, deep_ssi_polymicrobrial, deep_ssi_no_growth, treatment_arm)
+  cons_a <- cons_full %>% filter(treatment_arm=='Group A')
+  cons_b <- cons_full %>% filter(treatment_arm=='Group B')
+  
+  ids_full <- tibble(
+    `Pathogen Type` = c("Any gram-positive organism", "Any gram-negative organism", "Polymicrobrial infection",
+                        "Culture negative", "Missing"),
+    `N (% Enrolled)` = c(format_count_percent(sum(cons_full$deep_ssi_any_gram_positive, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(sum(cons_full$deep_ssi_any_gram_negative, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(sum(cons_full$deep_ssi_polymicrobrial, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(sum(cons_full$no_growth, na.rm=TRUE), enrolled_tot),
+                         format_count_percent(nrow(long_dssi_full %>% filter(is.na(id))), enrolled_tot))
+  )
+  ids_a <- tibble(
+    `Pathogen Type` = c("Any gram-positive organism", "Any gram-negative organism", "Polymicrobrial infection",
+                        "Culture negative", "Missing"),
+    `N (% Enrolled)` = c(format_count_percent(sum(cons_a$deep_ssi_any_gram_positive, na.rm=TRUE), a_tot),
+                         format_count_percent(sum(cons_a$deep_ssi_any_gram_negative, na.rm=TRUE), a_tot),
+                         format_count_percent(sum(cons_a$deep_ssi_polymicrobrial, na.rm=TRUE), a_tot),
+                         format_count_percent(sum(cons_a$no_growth, na.rm=TRUE), a_tot),
+                         format_count_percent(nrow(long_dssi_a %>% filter(is.na(id))), a_tot))
+  )
+  ids_b <- tibble(
+    `Pathogen Type` = c("Any gram-positive organism", "Any gram-negative organism", "Polymicrobrial infection",
+                        "Culture negative", "Missing"),
+    `N (% Enrolled)` = c(format_count_percent(sum(cons_b$deep_ssi_any_gram_positive, na.rm=TRUE), b_tot),
+                         format_count_percent(sum(cons_b$deep_ssi_any_gram_negative, na.rm=TRUE), b_tot),
+                         format_count_percent(sum(cons_b$deep_ssi_polymicrobrial, na.rm=TRUE), b_tot),
+                         format_count_percent(sum(cons_b$no_growth, na.rm=TRUE), b_tot),
+                         format_count_percent(nrow(long_dssi_a %>% filter(is.na(id))), b_tot))
+  )
+  
+  top_microbes_full <- long_dssi_full %>%
+    filter(organism!="NA" & (id=='gram_positive'|id=='gram_negative'|id=='enterococci'|
+                               id=='staphylococci'|id=='streptococci'|id == 'candida'))
+  top_microbes_a <- long_dssi_a %>%
+    filter(organism!="NA" & (id=='gram_positive'|id=='gram_negative'|id=='enterococci'|
+                               id=='staphylococci'|id=='streptococci'|id == 'candida'))
+  top_microbes_b <- long_dssi_b %>%
+    filter(organism!="NA" & (id=='gram_positive'|id=='gram_negative'|id=='enterococci'|
+                               id=='staphylococci'|id=='streptococci'|id == 'candida'))
+  
+  top_positive_full <- top_microbes_full %>%
+    filter(id=='gram_positive'|id=='enterococci'|id=='staphylococci'|id=='streptococci'|
+             id == 'candida') %>%
+    mutate(id = (str_to_title(str_replace_all(id, '_', ' ')))) %>%
+    mutate(organism = paste0(id, ': ', organism)) %>%
+    count(organism) %>%
+    arrange(desc(n)) %>%
+    slice_head(n=5) %>%
+    rename(`Top Pathogens Detected (Gram Positive)`=organism) %>%
+    rename("(N)"=n)
+  top_negative_full <- top_microbes_full %>%
+    filter(id=='gram_negative') %>%
+    mutate(id = (str_to_title(str_replace_all(id, '_', ' ')))) %>%
+    mutate(organism = paste0(id, ': ', organism)) %>%
+    count(organism) %>%
+    arrange(desc(n)) %>%
+    slice_head(n=5) %>%
+    rename(`Top Pathogens Detected (Gram Negative)`=organism) %>%
+    rename("(N)"=n)
+  top_positive_a <- top_microbes_a %>%
+    filter(id=='gram_positive'|id=='enterococci'|id=='staphylococci'|id=='streptococci'|
+             id == 'candida') %>%
+    mutate(id = (str_to_title(str_replace_all(id, '_', ' ')))) %>%
+    mutate(organism = paste0(id, ': ', organism)) %>%
+    count(organism) %>%
+    arrange(desc(n)) %>%
+    slice_head(n=5) %>%
+    rename(`Top Pathogens Detected (Gram Positive)`=organism) %>%
+    rename("(N)"=n)
+  top_negative_a <- top_microbes_a %>%
+    filter(id=='gram_negative') %>%
+    mutate(id = (str_to_title(str_replace_all(id, '_', ' ')))) %>%
+    mutate(organism = paste0(id, ': ', organism)) %>%
+    count(organism) %>%
+    arrange(desc(n)) %>%
+    slice_head(n=5) %>%
+    rename(`Top Pathogens Detected (Gram Negative)`=organism) %>%
+    rename("(N)"=n)
+  top_positive_b <- top_microbes_b %>%
+    filter(id=='gram_positive'|id=='enterococci'|id=='staphylococci'|id=='streptococci'|
+             id == 'candida') %>%
+    mutate(id = (str_to_title(str_replace_all(id, '_', ' ')))) %>%
+    mutate(organism = paste0(id, ': ', organism)) %>%
+    count(organism) %>%
+    arrange(desc(n)) %>%
+    slice_head(n=5) %>%
+    rename(`Top Pathogens Detected (Gram Positive)`=organism) %>%
+    rename("(N)"=n)
+  top_negative_b <- top_microbes_b %>%
+    filter(id=='gram_negative') %>%
+    mutate(id = (str_to_title(str_replace_all(id, '_', ' ')))) %>%
+    mutate(organism = paste0(id, ': ', organism)) %>%
+    count(organism) %>%
+    arrange(desc(n)) %>%
+    slice_head(n=5) %>%
+    rename(`Top Pathogens Detected (Gram Negative)`=organism) %>%
+    rename("(N)"=n)
+  
+  ids_b <- ids_b %>%
+    select(-`Pathogen Type`)
+  
+  top_positive_a <- top_positive_a %>% mutate(row = row_number())
+  top_negative_a <- top_negative_a %>% mutate(row = row_number())
+  top_positive_b <- top_positive_b %>% mutate(row = row_number())
+  top_negative_b <- top_negative_b %>% mutate(row = row_number())
+  ids_a <- ids_a %>% mutate(row = row_number())
+  ids_b <- ids_b %>% mutate(row = row_number())
+  
+  out <- ids_a %>%
+    full_join(ids_b, by = "row") %>%
+    full_join(top_positive_a, by = "row") %>%
+    full_join(top_negative_a, by = "row") %>%
+    full_join(top_positive_b, by = "row") %>%
+    full_join(top_negative_b, by = "row") %>%
+    select(-row)
+  colnames(out) <- c(
+    "Pathogen Type", "N (% Enrolled)", "N (% Enrolled)",
+    "Top Gram Positive", "N", 
+    "Top Gram Negative", "N",
+    "Top Gram Positive", "N",
+    "Top Gram Negative", "N"
+  )
+  header <- list(" "= 1, "Group A"=1, "Group B"=1, "Group A"=4, "Group B"=4)
+  
+  table <- kable(out, format = "html", align = 'l') %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    add_header_above(header) %>% 
+    column_spec(4, extra_css = "border-left: 1px solid black;")
+  return(table)
+}
+
 #' Overall complications closed
 #'
 #' @description 
@@ -4360,7 +4553,7 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
 #'
 #' @return html table
 #' @export
-closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, breakout_other = FALSE){
+closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, breakout_other=FALSE, cols_spec=NULL){
   
   confirm_stability_of_related_visual('overall_complications', '51e8aca1cd0b0e17022209ec533fb163')
   
@@ -4449,6 +4642,11 @@ closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL
     final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
   }
   
+  if (!is.null(cols_spec)) {
+    final_table <- final_table %>%
+      rename_with(~ unlist(cols_spec)[.x], .cols = names(cols_spec))
+  }
+  
   output <- kable(final_table, format = "html", align = 'l') %>%
     kable_styling("striped", full_width = F, position = "left") 
   
@@ -4478,9 +4676,9 @@ closed_overall_complications <- function(analytic, relatedness = TRUE, WB = NULL
 #'
 #' @examples
 #' closed_enrollment_status_by_site_consent_pre_screening_i("Replace with Analytic Tibble")
-#' closed_enrollment_status_by_site_consent_pre_screening_i("Replace with Analytic Tibble", only_totals = TRUE)
+#' closed_enrollment_status_by_site_consent_pre_screening_i("Replace with Analytic Tibble", only_total = TRUE)
 #' 
-closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_totals = FALSE, footnotes = NULL){
+closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_total = FALSE, footnotes = NULL){
   
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
@@ -4493,14 +4691,14 @@ closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, o
   
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_i(df_a, only_totals=only_totals),
+                  enrollment_status_by_site_consent_pre_screening_i(df_a, only_total=only_total),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_i(df_b, only_totals=only_totals))
+                  enrollment_status_by_site_consent_pre_screening_i(df_b, only_total=only_total))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_i(df_a, only_totals=only_totals) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  enrollment_status_by_site_consent_pre_screening_i(df_a, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_i(df_b, only_totals=only_totals) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+                  enrollment_status_by_site_consent_pre_screening_i(df_b, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
   }
   
   return(out)
@@ -4528,9 +4726,11 @@ closed_enrollment_status_by_site_consent_pre_screening_i <- function(analytic, o
 #'
 #' @examples
 #' closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble")
-#' closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble", only_totals = TRUE)
+#' closed_enrollment_status_by_site_consent_pre_screening_ii("Replace with Analytic Tibble", only_total = TRUE)
 #' 
-closed_enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, only_totals = FALSE, footnotes = NULL){
+closed_enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, discontinued="discontinued", 
+                                                                      discontinued_colname="Discontinued", 
+                                                                      only_total=FALSE, footnotes = NULL){
   
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
@@ -4543,14 +4743,14 @@ closed_enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, 
   
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_ii(df_a, only_totals=only_totals),
+                  enrollment_status_by_site_consent_pre_screening_ii(df_a,discontinued=discontinued,discontinued_colname=discontinued_colname,only_total=only_total),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_ii(df_b, only_totals=only_totals))
+                  enrollment_status_by_site_consent_pre_screening_ii(df_b,discontinued=discontinued,discontinued_colname=discontinued_colname,only_total=only_total))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_ii(df_a, only_totals=only_totals) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  enrollment_status_by_site_consent_pre_screening_ii(df_a,discontinued=discontinued,discontinued_colname=discontinued_colname,only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_consent_pre_screening_ii(df_b, only_totals=only_totals) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+                  enrollment_status_by_site_consent_pre_screening_ii(df_b,discontinued=discontinued,discontinued_colname=discontinued_colname,only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
   }
   
   return(out)
@@ -4579,8 +4779,7 @@ closed_enrollment_status_by_site_consent_pre_screening_ii <- function(analytic, 
 #' @examples
 #' closed_enrollment_status_by_site_var_discontinued_i("Replace with Analytic Tibble")
 #' 
-closed_enrollment_status_by_site_var_discontinued_i <- function(analytic, discontinued="discontinued", 
-                                                       discontinued_colname="Discontinued", pre_screened = NULL,
+closed_enrollment_status_by_site_var_discontinued_i <- function(analytic,pre_screened = NULL,
                                                        pre_screened_eligible = NULL, only_total=FALSE, footnotes = NULL){
   
   
@@ -4594,14 +4793,14 @@ closed_enrollment_status_by_site_var_discontinued_i <- function(analytic, discon
   
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued_i(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total),
+                  enrollment_status_by_site_var_discontinued_i(df_a,pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued_i(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total))
+                  enrollment_status_by_site_var_discontinued_i(df_b,pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued_i(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  enrollment_status_by_site_var_discontinued_i(df_a,pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued_i(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+                  enrollment_status_by_site_var_discontinued_i(df_b,pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
   }
   
   return(out)
@@ -4632,8 +4831,7 @@ closed_enrollment_status_by_site_var_discontinued_i <- function(analytic, discon
 #' closed_enrollment_status_by_site_var_discontinued_ii("Replace with Analytic Tibble", only_totals = TRUE)
 #' 
 closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued="discontinued", 
-                                                       discontinued_colname="Discontinued", pre_screened = NULL,
-                                                       pre_screened_eligible = NULL, only_total=FALSE, footnotes = NULL){
+                                                       discontinued_colname="Discontinued", only_total=FALSE, footnotes = NULL){
   
   
   #NOTE: USES OPEN VERSION IN A STACKED FORMAT, AUTOMATICALLY SYNCED (2026-05-13)
@@ -4646,14 +4844,14 @@ closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, disco
   
   if(is.null(footnotes)){
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total),
+                  enrollment_status_by_site_var_discontinued_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname,only_total=only_total),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total))
+                  enrollment_status_by_site_var_discontinued_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname,only_total=only_total))
   } else{
     out <- paste0("<h4> </h4><br /><h4>Group A</h4><br />",
-                  enrollment_status_by_site_var_discontinued_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname, pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
+                  enrollment_status_by_site_var_discontinued_ii(df_a, discontinued=discontinued, discontinued_colname=discontinued_colname,only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE),
                   "<h4>Group B</h4><br />",
-                  enrollment_status_by_site_var_discontinued_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname, pre_screened=pre_screened, pre_screened_eligible=pre_screened_eligible, only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
+                  enrollment_status_by_site_var_discontinued_ii(df_b, discontinued=discontinued, discontinued_colname=discontinued_colname,only_total=only_total) %>% add_footnote(footnotes, notation="number", escape = FALSE))
   }
   
   return(out)
