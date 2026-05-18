@@ -6828,7 +6828,7 @@ pathogen_characteristics <- function(analytic){
                                  "group", "id", "organism"), sep = ',,')
   
   cons <- inner_analytic %>%
-    select(study_id, deep_ssi_all_gram_negative,
+    select(study_id, deep_ssi_any_gram_negative,
            deep_ssi_any_gram_positive, deep_ssi_polymicrobrial, deep_ssi_no_growth)
   
   ids <- tibble(
@@ -6842,14 +6842,31 @@ pathogen_characteristics <- function(analytic){
   )
   
   top_microbes <- long_dssi %>%
-    filter(organism!="NA" & (id=='gram_positive'|id=='gram_negative')) %>%
+    filter(organism!="NA" & (id=='gram_positive'|id=='gram_negative'|id=='enterococci'|
+                               id=='staphylococci'|id=='streptococci'|id == 'candida'))
+  
+  top_positive <- top_microbes %>%
+    filter(id=='gram_positive'|id=='enterococci'|id=='staphylococci'|id=='streptococci'|
+             id == 'candida') %>%
+    mutate(id = (str_to_title(str_replace_all(id, '_', ' ')))) %>%
+    mutate(organism = paste0(id, ': ', organism)) %>%
     count(organism) %>%
     arrange(desc(n)) %>%
     slice_head(n=5) %>%
-    rename(`Top Pathogens Detected`=organism) %>%
+    rename(`Top Pathogens Detected (Gram Positive)`=organism) %>%
     rename("(N)"=n)
   
-  out <- cbind(ids, top_microbes)
+  top_negative <- top_microbes %>%
+    filter(id=='gram_negative') %>%
+    mutate(id = (str_to_title(str_replace_all(id, '_', ' ')))) %>%
+    mutate(organism = paste0(id, ': ', organism)) %>%
+    count(organism) %>%
+    arrange(desc(n)) %>%
+    slice_head(n=5) %>%
+    rename(`Top Pathogens Detected (Gram Negative)`=organism) %>%
+    rename("(N)"=n)
+  
+  out <- cbind(ids, top_positive, top_negative)
   
   table <- kable(out, format = "html", align = 'l') %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>% 
