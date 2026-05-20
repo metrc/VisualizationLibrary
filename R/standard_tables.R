@@ -1294,14 +1294,14 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE, facto
       not_expected_df_tot,  not_expected_df,
       sae_df, ae_df,
       consented_df
-    ) %>% mutate(n = ifelse(type == " ", n, format_count_percent(n, total, decimals = 2)))
+    ) %>% mutate(n = ifelse(type == " ", n, format_count_percent(n, total, decimals = 0)))
   } else {
     df_final_top <- rbind(
       not_completed_df_tot, not_completed_df,
       not_expected_df_tot,  not_expected_df,
       sae_df,
       consented_df
-    ) %>% mutate(n = ifelse(type == " ", n, format_count_percent(n, total, decimals = 2)))
+    ) %>% mutate(n = ifelse(type == " ", n, format_count_percent(n, total, decimals = 0)))
   }
   
   df_final_bottom <- rbind(
@@ -1309,7 +1309,12 @@ not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE, facto
     deviation_sc_tot, deviation_sc_df,
     deviation_p_tot,  deviation_p_df,
     deviation_a_tot,  deviation_a_df
-  ) %>% mutate(n = ifelse(type == " ", n, format_count_percent(n, consented, decimals = 2)))
+  ) %>% 
+  mutate(n = case_when(
+      type == " " ~ as.character(n), 
+      type == "Protocol Deviations" ~ as.character(n),
+      TRUE ~ format_count_percent(as.integer(n), as.integer(deviation_df_tot$n), decimals = 0)
+    ))
   
   df_final <- rbind(df_final_top, df_final_bottom)
   
