@@ -820,7 +820,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
   table_full <- table_full %>% 
     mutate(o = seq(nrow(table_full)))
   
-  df_final <- full_join(full_join(table_a, table_b), 
+  df_final <- full_join(full_join(table_a %>% select(-cat_order), table_b %>% select(-cat_order)), 
                         table_full) %>% 
     arrange(o) %>% 
     select(-o) %>% 
