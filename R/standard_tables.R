@@ -2370,9 +2370,7 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
     
     if(!is.na(sub_construct)){
       sub_cats <- sort(unique(inner$sub_temp))
-      if("Missing" %in% sub_cats){
-        sub_cats <- c(sub_cats[sub_cats != "Missing"],"Missing")
-      }
+      sub_cats <- c(sub_cats[!sub_cats %in% bottom_order_levels], intersect(bottom_order_levels, sub_cats))
       row_count <- ifelse(is.null(out),0,nrow(out))
       new_row_count <- 0
       for(sub_cat in sub_cats){
