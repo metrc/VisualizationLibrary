@@ -3491,8 +3491,8 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         category_tot_a <- sum(category_df %>% filter(treatment_arm=="Group A") %>% pull(n))
         category_tot_b <- sum(category_df %>% filter(treatment_arm=="Group B") %>% pull(n))
         tot_df <- tibble(temp=sub_cat, header=name_str,
-                         "Group A"=format_count_percent(category_tot_a, total),
-                         "Group B"=format_count_percent(category_tot_b, total),
+                         "Group A"=format_count_percent(category_tot_a, a_total),
+                         "Group B"=format_count_percent(category_tot_b, b_total),
                          Total=format_count_percent(category_tot, total))
         
         category_df <- category_df    %>% 
@@ -3547,7 +3547,10 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       inner_some <- inner %>% 
         group_by(temp, treatment_arm) %>% 
         count(temp) %>% 
-        mutate(percentage = format_count_percent(n, total)) %>% 
+        mutate(percentage = case_when(
+          treatment_arm=='Group A' ~ format_count_percent(n, a_total),
+          treatment_arm=='Group B' ~ format_count_percent(n, b_total),
+          TRUE ~ NA_character_)) %>% 
         select(-n) %>%
         mutate(header = name_str) %>%
         pivot_wider(
