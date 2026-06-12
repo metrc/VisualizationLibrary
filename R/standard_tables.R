@@ -1542,10 +1542,14 @@ not_complete_sae_deviation_by_type_auto_categories <- function(analytic,
 
   # Format counts -> percents
   df_final_top <- df_final_top %>%
-    mutate(n = ifelse(type == " ", n, format_count_percent(n, total, decimals = 2)))
+    mutate(n = ifelse(type == " ", n, format_count_percent(n, total, decimals = 0)))
 
   df_final_bottom <- df_final_bottom %>%
-    mutate(n = ifelse(type == " ", n, format_count_percent(n, consented, decimals = 2)))
+    mutate(n = case_when(
+      type == " " ~ as.character(n),
+      type == "Protocol Deviations" ~ as.character(n),
+      TRUE ~ format_count_percent(as.integer(n), as.integer(deviation_df_tot$n), decimals = 0)
+    ))
 
   # Combine and compute indent positions directly from "level"
   df_final <- bind_rows(df_final_top, df_final_bottom)

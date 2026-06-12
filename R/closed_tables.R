@@ -917,7 +917,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
 #' }
 closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other"), include_ae=FALSE){
   
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', '364588096d51d7fd23ebb489b613396f')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', '5f953afe0d13fd14026876f8d88a8cb4')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -1065,10 +1065,13 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
     
     # Format counts -> percents
     df_final_top <- df_final_top %>%
-      mutate(n = ifelse(type == " ", n, format_count_percent(n, total, decimals = 2)))
-    
-    df_final_bottom <- df_final_bottom %>% 
-      mutate(n = ifelse(type == " ", n, format_count_percent(n, consented, decimals = 2)))
+      mutate(n = ifelse(type == " ", n, format_count_percent(n, total, decimals = 0)))
+
+    df_final_bottom <- df_final_bottom %>%
+      mutate(n = case_when(
+        type == " " ~ as.character(n),
+        type == "Protocol Deviations" ~ as.character(n),
+        TRUE ~ format_count_percent(n, deviation_df_tot$n, decimals = 0)))
     
     # Combine and compute indent positions directly from "level"
     df_final <- bind_rows(df_final_top, df_final_bottom)
