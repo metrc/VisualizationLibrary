@@ -6274,6 +6274,56 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, break
     return(output)
 }
 
+#' Participants with complications
+#'
+#' @description 
+#' Returns statistics of the presence of one or more complication across the participants of the study.
+#' Notably, this is numerically different from counting across complications themselves, as one participant
+#' can have multiple complications
+#'
+#' @param analytic analytic data set that must include study_id, complication_data
+#'
+#' @return html table
+#' @export
+#'
+#' @examples
+#' participants_w_complications("Replace with Analytic Tibble")
+participants_w_complications <- function(analytic){
+  
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = "complication_data",
+    example_types = "(';new_row: ', '|')FollowupPeriod|Character|Character|NamedCategory['Superficial-infection' 'Deep-Infection' 'Deep-Infection, Not Involving Bone' 'Deep-Infection, Septic Joint' 'Non-Union' 'Malunion' 'Loss of limb/amputation' 'Fixation failure' 'Peri-implant Fracture' 'Reaction to Hardware' 'Wound Dehiscence' 'Wound Seroma/Hematoma' 'Flap failure' 'Tendon Injury' 'Delayed Wound Healing' 'Cellulitis' 'DVT/PE' 'Joint Arthritis' 'Other']|Character|Date|NamedCategory['Definitely related' 'Probably related' 'Possibly related' 'Unlikely related' 'Unrelated' \"Don't know\"]|NamedCategory['Mild' 'Moderate' 'Severe and Undesirable' 'Life-threatening or disabling' 'Fatal']|NamedCategory['Operative' 'Non-operative' 'No treatment']|Character"
+  )
+  
+  df <- analytic %>%
+      select(study_id, enrolled, complication_data) %>% 
+      separate_rows(complication_data, sep = ';new_row: ') %>%
+      separate(complication_data, into = c("redcap_event_name", "form_name", "event_type",
+                                           "complication", "notes", "diagnosis_date", "relatedness_val",
+                                           "severity_val", "treatment", "other_info"), sep = '\\|', fill = "right")
+  n_enrolled <- analytic %>%
+    filter(enrolled) %>%
+    nrow()
+  
+  parts_w_comp <- df %>%
+    filter(enrolled) %>%
+    filter(!is.na(severity_val)) %>%
+    pull(study_id) %>%
+    unique() %>%
+    length()
+  
+  final_table <- tibble(
+    ` ` = c('Enrolled Participants', 'Participants with >0 Complications'),
+    n = c(n_enrolled, parts_w_comp)
+  )
+  
+  output <- kable(final_table, format = "html", align = 'l') %>%
+    kable_styling("striped", full_width = F, position = "left") 
+  
+  return(output)
+}
+
 
 # Required packages: kableExtra, janitor, dplyr, tidyr, htmltools
 # These are typically already loaded by VisualizationLibrary
@@ -6948,6 +6998,7 @@ patient_reported_outcomes_table <- function(analytic){
 #'
 #' @param analytic This is the analytic data set that must include: enrolled, study_id, 
 #' and durometer_readings_set_1.
+#' @param mode 1_month or 3_month, determines the comparator values
 #' @param include_per_participant_values Logical. If TRUE, includes an indented 
 #' "Per participant values" subheader, followed by randomized and anonymized 
 #' individual rows for each position.
@@ -6958,26 +7009,31 @@ patient_reported_outcomes_table <- function(analytic){
 #' @examples
 #' \dontrun{
 #' } 
-durometer_readings_table <- function(analytic, include_per_participant_values = FALSE){
+durometer_readings_table <- function(analytic, mode, include_per_participant_values = FALSE){
   inner_analytic <- analytic %>% filter(enrolled == TRUE)
+  
+  time2 <- case_when(
+    mode=='1mo' ~ c('1_month', 'month_1', 'mean_m1', '1 Month'),
+    mode=='3mo' ~ c('3_month', 'month_3', 'mean_m3', '3 Month')
+  )
   
   duro_raw <- inner_analytic %>%
     select(study_id, durometer_readings_set_1) %>%
     separate_rows(durometer_readings_set_1, sep = ';') %>%
     separate(durometer_readings_set_1, into = c("set", "event", "position",
                                                 "injection", "reading"), sep = ',') %>%
-    mutate(event = ifelse(event == '3_month', 'month_3', event),
+    mutate(event = ifelse(event == time2[1], time2[2], event),
            reading = as.double(reading)) %>%
-    filter((event == 'injection_1' | event == 'month_3') & set == 'set_1') %>%
+    filter((event == 'injection_1' | event == time2[2]) & set == 'set_1') %>%
     select(study_id, position, event, injection, reading) %>%
     pivot_wider(names_from = event, values_from = reading) %>%
-    mutate(difference = month_3 - injection_1) 
+    mutate(difference = !!sym(time2[2]) - injection_1) 
   
   duro_base <- duro_raw %>%
     group_by(study_id, position) %>%
     summarize(
       mean_inj1 = mean(injection_1, na.rm = TRUE),
-      mean_m3 = mean(month_3, na.rm = TRUE),
+      !!sym(time2[3]) := mean(!!sym(time2[2]), na.rm = TRUE),
       mean_diff = mean(difference, na.rm = TRUE),
       .groups = "drop"
     )
@@ -6986,7 +7042,7 @@ durometer_readings_table <- function(analytic, include_per_participant_values = 
     group_by(position) %>%
     summarize(
       `Pre-injection, Mean (SD)` = format_mean_sd(mean_inj1),
-      `3 Month Post-injection, Mean (SD)` = format_mean_sd(mean_m3),
+      !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := format_mean_sd(!!sym(time2[3])),
       `Difference` = format_mean_sd(mean_diff),
       .groups = "drop"
     ) %>%
@@ -6999,7 +7055,7 @@ durometer_readings_table <- function(analytic, include_per_participant_values = 
       group_by(study_id, position) %>%
       summarize(
         `Pre-injection, Mean (SD)` = format_mean_sd(injection_1),
-        `3 Month Post-injection, Mean (SD)` = format_mean_sd(month_3),
+        !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := format_mean_sd(!!sym(time)),
         `Difference` = format_mean_sd(difference),
         .groups = "drop"
       ) %>%
@@ -7009,7 +7065,7 @@ durometer_readings_table <- function(analytic, include_per_participant_values = 
         Is_Subheader = FALSE
       ) %>%
       select(position, Construct, `Pre-injection, Mean (SD)`, 
-             `3 Month Post-injection, Mean (SD)`, `Difference`, Is_Header, Is_Subheader) %>%
+             paste(time2[4], "Post-injection, Mean (SD)"), `Difference`, Is_Header, Is_Subheader) %>%
       group_by(position) %>%
       slice_sample(prop = 1) %>%
       ungroup()
@@ -7019,7 +7075,7 @@ durometer_readings_table <- function(analytic, include_per_participant_values = 
       mutate(
         Construct = "Per participant values",
         `Pre-injection, Mean (SD)` = "",
-        `3 Month Post-injection, Mean (SD)` = "",
+        !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := "",
         `Difference` = "",
         Is_Header = FALSE,
         Is_Subheader = TRUE
@@ -7042,7 +7098,7 @@ durometer_readings_table <- function(analytic, include_per_participant_values = 
   
   table_print <- table_raw %>% select(-Is_Header, -Is_Subheader)
   col_names <- c("Position", "Pre-injection, Mean (SD)", 
-                 "3 Month Post-injection, Mean (SD)", "Difference")
+                 paste(time2[4], "Post-injection, Mean (SD)"), "Difference")
   
   table <- kable(table_print, format = "html", col.names = col_names, align = 'l') %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
@@ -7064,6 +7120,7 @@ durometer_readings_table <- function(analytic, include_per_participant_values = 
 #'
 #' @param analytic This is the analytic data set that must include: enrolled, study_id, 
 #' and oct_readings_set_1.
+#' @param mode 1_month or 3_month, determines the comparator values
 #' @param include_per_participant_values Logical. If TRUE, includes an indented 
 #' "Per participant values" subheader, followed by randomized and anonymized 
 #' individual rows for each position.
@@ -7074,26 +7131,31 @@ durometer_readings_table <- function(analytic, include_per_participant_values = 
 #' @examples
 #' \dontrun{
 #' } 
-oct_readings_table <- function(analytic, include_per_participant_values = FALSE){
+oct_readings_table <- function(analytic, mode, include_per_participant_values = FALSE){
   inner_analytic <- analytic %>% filter(enrolled == TRUE)
+  
+  time2 <- case_when(
+    mode=='1mo' ~ c('1_month', 'month_1', 'mean_m1', '1 Month'),
+    mode=='3mo' ~ c('3_month', 'month_3', 'mean_m3', '3 Month')
+  )
   
   oct_raw <- inner_analytic %>%
     select(study_id, oct_readings_set_1) %>%
     separate_rows(oct_readings_set_1, sep = ';') %>%
     separate(oct_readings_set_1, into = c("set", "event", "position",
                                           "orientation", "area", "length", "width"), sep = ',') %>%
-    mutate(event = ifelse(event == '3_month', 'month_3', event),
+    mutate(event = ifelse(event == time2[1], time2[2], event),
            width = as.double(width)) %>%
-    filter((event == 'injection_1' | event == 'month_3') & set == 'set_1') %>%
+    filter((event == 'injection_1' | event == time2[2]) & set == 'set_1') %>%
     select(study_id, position, event, orientation, width) %>%
     pivot_wider(names_from = event, values_from = width) %>%
-    mutate(difference = month_3 - injection_1)
+    mutate(difference = !!sym(time2[2]) - injection_1)
   
   oct_base <- oct_raw %>%
     group_by(study_id, position) %>%
     summarize(
       mean_inj1 = mean(injection_1, na.rm = TRUE),
-      mean_m3 = mean(month_3, na.rm = TRUE),
+      !!sym(time2[3]) := mean(!!sym(time2[2]), na.rm = TRUE),
       mean_diff = mean(difference, na.rm = TRUE),
       .groups = "drop"
     )
@@ -7102,7 +7164,7 @@ oct_readings_table <- function(analytic, include_per_participant_values = FALSE)
     group_by(position) %>%
     summarize(
       `Pre-injection, Mean (SD)` = format_mean_sd(mean_inj1),
-      `3 Month Post-injection, Mean (SD)` = format_mean_sd(mean_m3),
+      !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := format_mean_sd(!!sym(time2[3])),
       `Difference` = format_mean_sd(mean_diff),
       .groups = "drop"
     ) %>%
@@ -7115,7 +7177,7 @@ oct_readings_table <- function(analytic, include_per_participant_values = FALSE)
       group_by(study_id, position) %>%
       summarize(
         `Pre-injection, Mean (SD)` = format_mean_sd(injection_1),
-        `3 Month Post-injection, Mean (SD)` = format_mean_sd(month_3),
+        !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := format_mean_sd(!!sym(time2[2])),
         `Difference` = format_mean_sd(difference),
         .groups = "drop"
       ) %>%
@@ -7125,7 +7187,7 @@ oct_readings_table <- function(analytic, include_per_participant_values = FALSE)
         Is_Subheader = FALSE
       ) %>%
       select(position, Construct, `Pre-injection, Mean (SD)`, 
-             `3 Month Post-injection, Mean (SD)`, `Difference`, Is_Header, Is_Subheader) %>%
+             paste(time2[4], "Post-injection, Mean (SD)"), `Difference`, Is_Header, Is_Subheader) %>%
       group_by(position) %>%
       slice_sample(prop = 1) %>%
       ungroup()
@@ -7135,7 +7197,7 @@ oct_readings_table <- function(analytic, include_per_participant_values = FALSE)
       mutate(
         Construct = "Per participant values",
         `Pre-injection, Mean (SD)` = "",
-        `3 Month Post-injection, Mean (SD)` = "",
+        !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := "",
         `Difference` = "",
         Is_Header = FALSE,
         Is_Subheader = TRUE
@@ -7158,7 +7220,7 @@ oct_readings_table <- function(analytic, include_per_participant_values = FALSE)
   
   table_print <- table_raw %>% select(-Is_Header, -Is_Subheader)
   col_names <- c("Position", "Pre-injection, Mean (SD)", 
-                 "3 Month Post-injection, Mean (SD)", "Difference")
+                 paste(time2[4], "Post-injection, Mean (SD)"), "Difference")
   
   table <- kable(table_print, format = "html", col.names = col_names, align = 'l') %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%

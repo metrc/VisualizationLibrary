@@ -4,11 +4,13 @@
 \alias{oct_readings_table}
 \title{OCT Readings Summary Table}
 \usage{
-oct_readings_table(analytic, include_per_participant_values = FALSE)
+oct_readings_table(analytic, mode, include_per_participant_values = FALSE)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include: enrolled, study_id, 
 and oct_readings_set_1.}
+
+\item{mode}{1_month or 3_month, determines the comparator values}
 
 \item{include_per_participant_values}{Logical. If TRUE, includes an indented 
 "Per participant values" subheader, followed by randomized and anonymized 
