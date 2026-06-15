@@ -7055,7 +7055,7 @@ durometer_readings_table <- function(analytic, mode, include_per_participant_val
       group_by(study_id, position) %>%
       summarize(
         `Pre-injection, Mean (SD)` = format_mean_sd(injection_1),
-        !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := format_mean_sd(!!sym(time)),
+        !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := format_mean_sd(!!sym(time2[2])),
         `Difference` = format_mean_sd(difference),
         .groups = "drop"
       ) %>%
