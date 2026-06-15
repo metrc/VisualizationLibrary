@@ -4,11 +4,17 @@
 \alias{durometer_readings_table}
 \title{Durometer Readings Summary Table}
 \usage{
-durometer_readings_table(analytic, include_per_participant_values = FALSE)
+durometer_readings_table(
+  analytic,
+  mode,
+  include_per_participant_values = FALSE
+)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include: enrolled, study_id, 
 and durometer_readings_set_1.}
+
+\item{mode}{1_month or 3_month, determines the comparator values}
 
 \item{include_per_participant_values}{Logical. If TRUE, includes an indented 
 "Per participant values" subheader, followed by randomized and anonymized 
