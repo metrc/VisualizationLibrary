@@ -7018,6 +7018,7 @@ durometer_readings_table <- function(analytic, mode, include_per_participant_val
   
   time2 <- case_when(
     mode=='1mo' ~ c('1_month', 'month_1', 'mean_m1', '1 Month'),
+    mode=='2mo' ~ c('2_month', 'month_2', 'mean_m2', '2 Month'),
     mode=='3mo' ~ c('3_month', 'month_3', 'mean_m3', '3 Month')
   )
   
@@ -7140,6 +7141,7 @@ oct_readings_table <- function(analytic, mode, include_per_participant_values = 
   
   time2 <- case_when(
     mode=='1mo' ~ c('1_month', 'month_1', 'mean_m1', '1 Month'),
+    mode=='2mo' ~ c('2_month', 'month_2', 'mean_m2', '2 Month'),
     mode=='3mo' ~ c('3_month', 'month_3', 'mean_m3', '3 Month')
   )
   
