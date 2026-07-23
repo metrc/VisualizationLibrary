@@ -4702,3 +4702,277 @@ closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, disco
   
   return(out)
 }
+
+
+#' Closed Survival Analysis Bayesian Poisson Noninferiority
+#'
+#' @description This function divides the time to event (event or time to last observation) into
+#' prespecified intervals and performs a Bayesian Poisson regression (the Poisson representation of a
+#' piecewise-exponential proportional-hazards model) to estimate the hazard of an event through
+#' outcome_length days. Hazards are converted to proportions, and the group difference with its 95
+#' percent credible interval is used to apply a noninferiority decision rule.
+#'
+#' Requires the brms package (and the cmdstanr package when backend = "cmdstanr"; by default
+#' CmdStan itself is installed into the working directory before fitting via install_cmdstan).
+#' All installation, compilation, and sampling output is suppressed; the only output is the
+#' returned HTML table.
+#'
+#' @param analytic This is the analytic dataset that must include enrolled, treatment_arm, and study_id
+#' @param type_construct the name of the column of the analytic dataset that must include whether the outcome for that participant was a check or event
+#' @param days_construct the name of the column of the analytic dataset that must include the number of days till check or event
+#' @param outcome_length number of days for this outcome (defaults to 365)
+#' @param cuts interval boundaries for the piecewise baseline hazard; must start at 0 and end at outcome_length.
+#' These should be selected and locked before unmasking (defaults to quarterly intervals c(0, 90, 180, 270, 365))
+#' @param ni_margin noninferiority margin for the risk difference (defaults to 0.10)
+#' @param control_arm value of treatment_arm treated as the control group (defaults to "Group A")
+#' @param baseline_prior_mean prior mean for each log baseline-hazard interval coefficient (defaults to -8.15, near a 10 percent annual event risk)
+#' @param baseline_prior_sd prior standard deviation for each interval coefficient (defaults to 1.5, intentionally broad)
+#' @param treatment_prior_sd prior standard deviation for the treatment log hazard ratio, centered at no effect (defaults to 1)
+#' @param arm_labels named chr vec, c("0" = "Control", "1" = "Treatment")
+#' @param outcome_label label for the outcome row of the table
+#' @param chains number of MCMC chains (defaults to 4)
+#' @param iter total iterations per chain (defaults to 4000)
+#' @param warmup warmup iterations per chain (defaults to 2000)
+#' @param cores number of cores for sampling (defaults to 4)
+#' @param seed random seed for sampling (defaults to 20260713)
+#' @param adapt_delta target acceptance rate passed to the sampler (defaults to 0.95)
+#' @param backend brms backend, "cmdstanr" or "rstan" (defaults to "cmdstanr")
+#' @param install_cmdstan when TRUE and backend = "cmdstanr", installs CmdStan version 2.35.0
+#' into the working directory (quietly, overwriting any existing installation) before fitting.
+#' Set to FALSE to reuse an existing CmdStan installation (defaults to TRUE)
+#' @param blinded when TRUE, ignores the real treatment_arm and deterministically reassigns
+#' arms from the digit sum of study_id (even = "Group A", odd = "Group B") so the table can be
+#' produced without unmasking (defaults to FALSE)
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_survival_analysis_bayes_poisson("Replace with Analytic Tibble",
+#'                                        type_construct = "surgery_or_healed_type",
+#'                                        days_construct = "surgery_or_healed_days")
+#' }
+closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, days_construct,
+                                                   outcome_length = 365,
+                                                   cuts = c(0, 90, 180, 270, 365),
+                                                   ni_margin = 0.10,
+                                                   control_arm = "Group A",
+                                                   baseline_prior_mean = -8.15,
+                                                   baseline_prior_sd = 1.5,
+                                                   treatment_prior_sd = 1,
+                                                   arm_labels = c(`0` = "Control", `1` = "Treatment"),
+                                                   outcome_label = "Outcome",
+                                                   chains = 4, iter = 4000, warmup = 2000, cores = 4,
+                                                   seed = 20260713, adapt_delta = 0.95,
+                                                   backend = "cmdstanr",
+                                                   install_cmdstan = TRUE,
+                                                   blinded = FALSE){
+  if (!requireNamespace("brms", quietly = TRUE)) {
+    stop("closed_survival_analysis_bayes_poisson requires the brms package; please install it.")
+  }
+  if (backend == "cmdstanr" && !requireNamespace("cmdstanr", quietly = TRUE)) {
+    stop("backend = \"cmdstanr\" requires the cmdstanr package; please install it or use backend = \"rstan\".")
+  }
+  if (cuts[1] != 0 || cuts[length(cuts)] != outcome_length) {
+    stop("cuts must start at 0 and end at outcome_length")
+  }
+
+  if (backend == "cmdstanr" && install_cmdstan) {
+    invisible(utils::capture.output(suppressWarnings(suppressMessages(
+      cmdstanr::install_cmdstan(
+        dir = getwd(),
+        version = "2.35.0",
+        cores = 2, overwrite = TRUE,
+        quiet = TRUE
+      )
+    )), type = "output"))
+  }
+
+  # ── Blinded mode: deterministic dummy arms from study_id ────────────────
+  if (blinded) {
+    assign_group <- function(study_id) {
+      digit_sum <- sapply(
+        strsplit(gsub("[^0-9]", "", as.character(study_id)), ""),
+        function(d) sum(as.integer(d))
+      )
+      if_else(digit_sum %% 2 == 0, "Group A", "Group B")
+    }
+
+    analytic <- analytic %>%
+      select(-treatment_arm) %>%
+      mutate(treatment_arm = assign_group(study_id))
+  }
+
+  # ── Prep data ───────────────────────────────────────────────────────────
+  dat <- analytic %>%
+    filter(enrolled == 1) %>%
+    rename(type = !!sym(type_construct),
+           days = !!sym(days_construct)) %>%
+    mutate(
+      days  = as.numeric(days),
+      # Treatment indicator: control arm = 0, treatment = 1
+      trt   = as.integer(treatment_arm != control_arm),
+      # Primary event must occur within outcome_length days
+      event = as.integer(type != "check" & !is.na(days) & days <= outcome_length),
+      # Follow-up time is event day for events;
+      # otherwise last known event-free day, capped at outcome_length
+      time  = ifelse(event == 1, days, pmin(days, outcome_length))
+    ) %>%
+    filter(!is.na(time) & !is.na(trt))
+
+  stopifnot(all(dat$trt %in% c(0, 1)))
+  stopifnot(all(dat$event %in% c(0, 1)))
+  stopifnot(all(dat$time >= 0 & dat$time <= outcome_length))
+
+  interval_start <- head(cuts, -1)
+  interval_stop  <- tail(cuts, -1)
+  interval_width <- interval_stop - interval_start
+  number_intervals <- length(interval_width)
+
+  # ── Convert each participant into interval records ─────────────────────
+  split_participant <- function(i) {
+
+    # Include every interval entered by this participant
+    entered <- interval_start < dat$time[i]
+
+    starts <- interval_start[entered]
+    stops  <- interval_stop[entered]
+
+    data.frame(
+      study_id = dat$study_id[i],
+      trt      = dat$trt[i],
+      interval = factor(
+        which(entered),
+        levels = seq_len(number_intervals)
+      ),
+
+      # Amount of time contributed during the interval
+      exposure = pmin(stops, dat$time[i]) - starts,
+
+      # Event occurs only in the interval containing the event time
+      event = as.integer(
+        dat$event[i] == 1 &
+          dat$time[i] > starts &
+          dat$time[i] <= stops
+      )
+    )
+  }
+
+  long_data <- do.call(
+    rbind,
+    lapply(seq_len(nrow(dat)), split_participant)
+  )
+
+  stopifnot(all(long_data$exposure > 0))
+
+  # ── Priors ──────────────────────────────────────────────────────────────
+  # Interval priors are broad log baseline-hazard priors; the treatment
+  # prior is centered at no treatment effect.
+  model_priors <- do.call(c, c(
+    lapply(seq_len(number_intervals), function(k) {
+      brms::prior_string(
+        sprintf("normal(%s, %s)", baseline_prior_mean, baseline_prior_sd),
+        class = "b", coef = paste0("interval", k)
+      )
+    }),
+    list(brms::prior_string(
+      sprintf("normal(0, %s)", treatment_prior_sd),
+      class = "b", coef = "trt"
+    ))
+  ))
+
+  # ── Fit the Bayesian piecewise-exponential model ────────────────────────
+  # capture.output + silent/refresh keep compilation and sampling progress
+  # off the console so the returned table is the only output
+  invisible(utils::capture.output(suppressWarnings(suppressMessages(
+    primary_fit <- brms::brm(
+      event ~ 0 + interval + trt + offset(log(exposure)),
+      data    = long_data,
+      family  = poisson(link = "log"),
+      prior   = model_priors,
+      chains  = chains,
+      iter    = iter,
+      warmup  = warmup,
+      cores   = cores,
+      seed    = seed,
+      backend = backend,
+      control = list(adapt_delta = adapt_delta),
+      silent  = 2,
+      refresh = 0
+    )
+  )), type = "output"))
+
+  # ── Posterior draws ─────────────────────────────────────────────────────
+  draws <- as.data.frame(primary_fit)
+
+  baseline_names <- paste0("b_interval", seq_len(number_intervals))
+
+  missing_parameters <- setdiff(c(baseline_names, "b_trt"), names(draws))
+  if (length(missing_parameters) > 0) {
+    stop(
+      "Expected posterior parameters were not found: ",
+      paste(missing_parameters, collapse = ", "),
+      ". Check the coefficient names produced by brms."
+    )
+  }
+
+  # ── Risks and risk difference ───────────────────────────────────────────
+  # Each interval coefficient is the log baseline hazard for the control
+  # group during that interval.
+  baseline_hazards <- exp(as.matrix(draws[, baseline_names, drop = FALSE]))
+
+  control_cumulative_hazard <- as.numeric(baseline_hazards %*% interval_width)
+
+  hazard_ratio_draws <- exp(draws$b_trt)
+
+  treatment_cumulative_hazard <- control_cumulative_hazard * hazard_ratio_draws
+
+  control_risk   <- 1 - exp(-control_cumulative_hazard)
+  treatment_risk <- 1 - exp(-treatment_cumulative_hazard)
+
+  # Primary estimand
+  risk_difference <- treatment_risk - control_risk
+
+  # ── Noninferiority decision rule ────────────────────────────────────────
+  upper_credible_limit <- unname(quantile(risk_difference, 0.975))
+  posterior_probability_below_margin <- mean(risk_difference < ni_margin)
+  noninferior <- upper_credible_limit < ni_margin
+
+  # ── Build table ─────────────────────────────────────────────────────────
+  make_cell <- function(x, percent = TRUE) {
+    scale <- if (percent) 100 else 1
+    sprintf("%.1f (%.1f, %.1f)",
+            scale * median(x),
+            scale * unname(quantile(x, 0.025)),
+            scale * unname(quantile(x, 0.975)))
+  }
+
+  n_counts <- dat %>% count(trt)
+  n_zero <- n_counts$n[n_counts$trt == 0]
+  n_one  <- n_counts$n[n_counts$trt == 1]
+
+  hdr_zero <- sprintf("%s (n=%d) (%%)", arm_labels["0"], n_zero)
+  hdr_one  <- sprintf("%s (n=%d) (%%)", arm_labels["1"], n_one)
+
+  out_tbl <- tibble(
+    " " = outcome_label,
+    !!hdr_one  := make_cell(treatment_risk),
+    !!hdr_zero := make_cell(control_risk),
+    "Difference (95% CrI)"   := make_cell(risk_difference),
+    "Hazard Ratio (95% CrI)" := make_cell(hazard_ratio_draws, percent = FALSE),
+    !!sprintf("Pr(Difference < %.0f%%)", 100 * ni_margin) := sprintf("%.4f", posterior_probability_below_margin),
+    "Noninferior" := ifelse(noninferior, "Yes", "No")
+  )
+
+  header <- c(" " = 1)
+  header[sprintf("Bayesian %d-Day Risk (95%% Credible Interval)", outcome_length)] <- 2
+  header["Treatment Effect"] <- 2
+  header["Noninferiority"] <- 2
+
+  table <- kable(out_tbl, format = "html", align = "l") %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+
+  return(table)
+}

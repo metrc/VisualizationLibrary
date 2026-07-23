@@ -20,7 +20,8 @@ Depends:
   km.ci
 Suggests:
   ggplot2,
-  scales
+  scales,
+  brms
 Remotes:
   metrc/VisualizationTools@*release
 Imports:
