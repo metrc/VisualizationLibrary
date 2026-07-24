@@ -4777,7 +4777,7 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
   if (cuts[1] != 0 || cuts[length(cuts)] != outcome_length) {
     stop("cuts must start at 0 and end at outcome_length")
   }
-
+  
   if (backend == "cmdstanr" && install_cmdstan) {
     invisible(utils::capture.output(suppressWarnings(suppressMessages(
       cmdstanr::install_cmdstan(
@@ -4800,13 +4800,15 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
     }
 
     analytic <- analytic %>%
-      select(-treatment_arm) %>%
       mutate(treatment_arm = assign_group(study_id))
   }
+  
+  analytic <- analytic %>%
+    select(study_id, enrolled, treatment_arm, !!sym(type_construct), !!sym(days_construct))
 
   # ── Prep data ───────────────────────────────────────────────────────────
   dat <- analytic %>%
-    filter(enrolled == 1) %>%
+    filter(enrolled) %>%
     rename(type = !!sym(type_construct),
            days = !!sym(days_construct)) %>%
     mutate(
@@ -4858,7 +4860,6 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
       )
     )
   }
-
   long_data <- do.call(
     rbind,
     lapply(seq_len(nrow(dat)), split_participant)
