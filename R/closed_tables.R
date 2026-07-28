@@ -397,9 +397,9 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       select(-order)%>% 
       mutate(Category = 'Race')
     
-    military_df <<- df %>% 
-      mutate(race = replace_na(race, "Missing")) %>% 
-      group_by(military) %>% 
+    military_df <<- df %>%
+      mutate(military = ifelse(is.na(military), "Missing", military)) %>%
+      group_by(military) %>%
       count(military) %>% 
       rename(number = n) %>% 
       mutate(percentage = format_count_percent(number, total)) %>% 
