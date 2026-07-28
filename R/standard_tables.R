@@ -4855,14 +4855,27 @@ outcome_by_site <- function(analytic, outcome_name, days_since_tz = 365) {
 #'
 #' @param analytic This is the analytic data set that must include study_id, outcome_data, and enrolled
 #' @param days_since_dz optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago
+#' @param window_start optional numeric, days since time zero at which the follow-up
+#'   window opens. NULL means day 0.
+#' @param window_end optional numeric, days since time zero at which the follow-up
+#'   window closes. NULL means no upper bound.
+#'
+#' When either window bound is supplied a final column is added, reporting percent of
+#' expected counting only the follow-up that falls inside the window. Both sides of the
+#' ratio are clipped, so a participant with 400 observed days against 500 expected
+#' contributes 275 of 275 to a 90 to 365 day window rather than 400 of 500.
+#'
+#' Both bounds are days since time zero, matching the units of every other column in
+#' this table. They are not calendar dates.
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' outcome_by_name_overall("Replace with Analytic Tibble")
-#' 
-outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALSE, opt_col_order = FALSE) {
+#'
+outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALSE, opt_col_order = FALSE,
+                                    window_start = NULL, window_end = NULL) {
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('outcome_data', 'enrolled'), 
                                               example_types = c("(';', ',')NamedCategory['test_outcome']|Number|Number|Date|Date|NamedCategory['check' 'event']|Number|Number|Date", 'Boolean'))
@@ -4897,7 +4910,41 @@ outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALS
   
   stats <- stats %>%
     left_join(expected_non_event)
-  
+
+  # Windowed percent of expected. Only the part of each participant's follow-up that
+  # falls inside the window counts, and it is clipped on both sides of the ratio so
+  # the denominator shrinks with the numerator.
+  windowed <- NULL
+  window_label <- NULL
+  if (!is.null(window_start) || !is.null(window_end)) {
+    window_lo <- if (is.null(window_start)) 0 else as.numeric(window_start)
+    window_hi <- if (is.null(window_end)) Inf else as.numeric(window_end)
+
+    if (window_hi <= window_lo) {
+      stop("window_end must be greater than window_start")
+    }
+
+    clip_to_window <- function(days) pmax(0, pmin(days, window_hi) - window_lo)
+
+    windowed <- outcome_data %>%
+      mutate(outcome_days = as.numeric(outcome_days),
+             expected_days = as.numeric(expected_days)) %>%
+      group_by(outcome_name) %>%
+      summarise(observed_in_window = sum(clip_to_window(outcome_days), na.rm = TRUE),
+                expected_in_window = sum(clip_to_window(expected_days), na.rm = TRUE),
+                .groups = 'drop') %>%
+      # No expected follow-up inside the window means there is nothing to be a
+      # percent of, which is different from 0%.
+      mutate(window_pct = ifelse(expected_in_window > 0,
+                                 paste0(round(observed_in_window / expected_in_window * 100, 0), "%"),
+                                 "-")) %>%
+      select(outcome_name, window_pct)
+
+    window_label <- paste0("Percent of Expected (",
+                           if (is.infinite(window_hi)) paste0("days ", window_lo, "+")
+                           else paste0("days ", window_lo, "-", window_hi), ")")
+  }
+
   results <- stats %>%
     rename(`N (Participants)` = n_total,
            `Missing Time to Event (Participants)` = n_missing,
@@ -4921,19 +4968,32 @@ outcome_by_name_overall <- function(analytic, days_since_tz = 365, header = FALS
   # cleanup the names of the outcomes by replacing the underscores with spaces and capitalizing the first letter
   results <- results %>%
     mutate(Outcome = str_replace_all(Outcome, "_", " "))
-  
+
+  # Appended last, so it lands after whichever column order was requested.
+  if (!is.null(windowed)) {
+    results <- results %>%
+      left_join(windowed %>%
+                  rename(Outcome = outcome_name) %>%
+                  mutate(Outcome = str_replace_all(Outcome, "_", " ")),
+                by = "Outcome")
+    names(results)[ncol(results)] <- window_label
+  }
+
   vis <- kable(results, format="html", align='l') %>%
     kable_styling("striped", full_width = F, position='left')
-  
+
   if (header) {
-    col_vec <- c(3,5)
+    # The windowed column is more person-days of follow-up time, so it extends that
+    # span rather than adding one - otherwise the header widths stop summing to ncol
+    # and add_header_above errors.
+    col_vec <- if (is.null(windowed)) c(3,5) else c(3,6)
     name_vec <- c(" ", "Person-days of follow-up time")
     names(col_vec) <- name_vec
-    
+
     vis <- vis %>%
       add_header_above(col_vec)
   }
-  
+
   return(vis)
 }
 
@@ -7237,4 +7297,455 @@ oct_readings_table <- function(analytic, mode, include_per_participant_values = 
   }
   
   return(table)
+}
+
+
+#' Persistent pain
+#'
+#' @description
+#' Returns the persistent pain shell for a trial's secondary outcomes: BPI severity
+#' and BPI interference at 3, 6 and 12 months, reported as n, mean (SD), and the
+#' proportion with severe pain. Severe is a subscale score of 7 or above, per SAP
+#' section 11.2, which classifies 0-6 as mild or moderate and 7-10 as severe.
+#'
+#' @param analytic enrolled, bpi_severity_score and bpi_interference_score 3mo - 12mo constructs
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' persistent_pain("Replace with Analytic Tibble")
+#'
+persistent_pain <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('enrolled',
+                           'bpi_severity_score_3mo', 'bpi_severity_score_6mo', 'bpi_severity_score_12mo',
+                           'bpi_interference_score_3mo', 'bpi_interference_score_6mo',
+                           'bpi_interference_score_12mo'),
+    example_types = c("Boolean", "Number", "Number", "Number", "Number", "Number", "Number"))
+
+  df <- analytic %>%
+    select(enrolled,
+           bpi_severity_score_3mo, bpi_severity_score_6mo, bpi_severity_score_12mo,
+           bpi_interference_score_3mo, bpi_interference_score_6mo, bpi_interference_score_12mo) %>%
+    filter(enrolled)
+
+  inner_data_extractor <- function(prefix, inner_df) {
+    recode_map <- setNames(c("3 Months", "6 Months", "12 Months"),
+                           paste0(prefix, c("3mo", "6mo", "12mo")))
+
+    long <- inner_df %>%
+      select(paste0(prefix, c("3mo", "6mo", "12mo"))) %>%
+      pivot_longer(cols = everything(), names_to = "timepoint", values_to = "score") %>%
+      mutate(timepoint = recode(timepoint, !!!recode_map),
+             score = as.numeric(score)) %>%
+      filter(!is.na(score))
+
+    stats <- long %>%
+      group_by(timepoint) %>%
+      summarise(n = n(),
+                mean_sd = format_mean_sd(score),
+                # SAP 11.2: severe pain is a subscale score of 7 to 10.
+                severe = paste0(sum(score >= 7), " (",
+                                trimws(format(round(100 * mean(score >= 7), 1), nsmall = 1)), "%)"),
+                .groups = 'drop')
+
+    stats %>%
+      mutate(timepoint = factor(timepoint, c("3 Months", "6 Months", "12 Months"))) %>%
+      arrange(timepoint)
+  }
+
+  sev_final <- inner_data_extractor('bpi_severity_score_', df)
+  int_final <- inner_data_extractor('bpi_interference_score_', df)
+
+  final <- rbind(sev_final, int_final)
+
+  colnames(final) <- c('', 'n', 'Score, Mean (SD)', 'Severe (7-10), n (%)')
+
+  index_vec_a <- c("BPI Severity" = nrow(sev_final),
+                   "BPI Interference" = nrow(int_final))
+
+  border_rows <- c(0, cumsum(index_vec_a))
+
+  table_raw <- kable(final, format = "html", align = 'l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+
+  return(table_raw)
+}
+
+
+#' Opioid days
+#'
+#' @description
+#' Returns the opioid utilisation shell for a trial's secondary outcomes: total days
+#' of reported opioid use at baseline, 3, 6 and 12 months, reported as n and
+#' mean (SD). Opioid use is defined in SAP section 11.2 as the total days of
+#' patient-reported opioid use.
+#'
+#' @param analytic enrolled, opioid_days baseline - 12mo constructs
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' opioid_days("Replace with Analytic Tibble")
+#'
+opioid_days <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('enrolled', 'opioid_days_baseline', 'opioid_days_3mo',
+                           'opioid_days_6mo', 'opioid_days_12mo'),
+    example_types = c("Boolean", "Number", "Number", "Number", "Number"))
+
+  df <- analytic %>%
+    select(enrolled, opioid_days_baseline, opioid_days_3mo, opioid_days_6mo, opioid_days_12mo) %>%
+    filter(enrolled)
+
+  inner_data_extractor <- function(inner_df) {
+    recode_map <- setNames(c("Baseline", "3 Months", "6 Months", "12 Months"),
+                           paste0('opioid_days_', c("baseline", "3mo", "6mo", "12mo")))
+
+    long <- inner_df %>%
+      select(paste0('opioid_days_', c("baseline", "3mo", "6mo", "12mo"))) %>%
+      pivot_longer(cols = everything(), names_to = "timepoint", values_to = "days") %>%
+      mutate(timepoint = recode(timepoint, !!!recode_map),
+             days = as.numeric(days)) %>%
+      filter(!is.na(days))
+
+    long %>%
+      group_by(timepoint) %>%
+      summarise(n = n(), mean_sd = format_mean_sd(days), .groups = 'drop') %>%
+      mutate(timepoint = factor(timepoint, c("Baseline", "3 Months", "6 Months", "12 Months"))) %>%
+      arrange(timepoint)
+  }
+
+  final <- inner_data_extractor(df)
+
+  colnames(final) <- c('', 'n', 'Opioid Days, Mean (SD)')
+
+  index_vec_a <- c("Days of Reported Opioid Use" = nrow(final))
+
+  border_rows <- c(0, cumsum(index_vec_a))
+
+  table_raw <- kable(final, format = "html", align = 'l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+
+  return(table_raw)
+}
+
+
+#' Other drugs review
+#'
+#' @description
+#' Lists every distinct free-text medication entry that is awaiting clinical
+#' classification, so that the "Other" entries on the pain medication questions can
+#' be reviewed and assigned an opioid status. Rows are drawn from the
+#' opioid_days_data long file where other_review_status is "Pending review",
+#' de-duplicated case-insensitively, with the number of times each entry was
+#' reported and the forms it came from.
+#'
+#' Deliberately not split by treatment arm. Free-text medication names can identify
+#' the assigned treatment, so an arm-level version of this table would unmask.
+#'
+#' @param analytic opioid_days_data construct
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' other_drugs_review("Replace with Analytic Tibble")
+#' }
+other_drugs_review <- function(analytic){
+  df <- analytic %>%
+    select(opioid_days_data) %>%
+    separate_rows(opioid_days_data, sep = ";new_row: ") %>%
+    separate(opioid_days_data,
+             into = c('facilitycode', 'nominal_visit', 'assessment_date', 'days_from_time_zero',
+                      'source_form', 'raw_drug_name', 'standardized_drug_name', 'opioid_yn',
+                      'raw_frequency_response', 'assigned_days', 'other_drug_text',
+                      'other_review_status', 'number_of_opioids_reported_at_visit'),
+             sep = '\\|', fill = 'right') %>%
+    mutate_all(na_if, 'NA') %>%
+    filter(other_review_status == 'Pending review', !is.na(raw_drug_name)) %>%
+    mutate(raw_drug_name = str_squish(raw_drug_name))
+
+  review <- df %>%
+    group_by(entry = str_to_lower(raw_drug_name)) %>%
+    summarise(`Free-text entry` = first(raw_drug_name),
+              `Times reported` = n(),
+              `Source form(s)` = paste(sort(unique(source_form)), collapse = '; '),
+              .groups = 'drop') %>%
+    arrange(desc(`Times reported`), `Free-text entry`) %>%
+    select(-entry)
+
+  if (nrow(review) == 0) {
+    review <- tibble(`Free-text entry` = 'No entries awaiting review',
+                     `Times reported` = 0, `Source form(s)` = '-')
+  }
+
+  table_raw <- kable(review, format = "html", align = 'l') %>%
+    kable_styling("striped", full_width = FALSE, position = 'left')
+
+  return(table_raw)
+}
+
+
+#' Other events review
+#'
+#' @description
+#' Lists every distinct clinical event awaiting category assignment, so that the
+#' "Other" complication checklist entries can be reviewed and mapped to an analysis
+#' grouping. Rows are drawn from the clinical_events_data long file where
+#' complication_category_mapped is "NEEDS REVIEW" or "UNMAPPED", de-duplicated
+#' case-insensitively, with the number of times each entry was reported and the
+#' forms it came from.
+#'
+#' UNMAPPED rows are a different problem from NEEDS REVIEW rows: they are labels the
+#' category mapping did not recognise at all, rather than free text expected to need
+#' classification, so the reason is reported alongside each entry.
+#'
+#' @param analytic clinical_events_data construct
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' other_events_review("Replace with Analytic Tibble")
+#' }
+other_events_review <- function(analytic){
+  df <- analytic %>%
+    select(clinical_events_data) %>%
+    separate_rows(clinical_events_data, sep = ";new_row: ") %>%
+    separate(clinical_events_data,
+             into = c('facilitycode', 'date_of_event', 'days_from_time_zero', 'source_form',
+                      'event_type', 'complication_category_redcap', 'complication_category_mapped',
+                      'other_text', 'other_review_status'),
+             sep = '\\|', fill = 'right') %>%
+    mutate_all(na_if, 'NA') %>%
+    filter(complication_category_mapped %in% c('NEEDS REVIEW', 'UNMAPPED')) %>%
+    # An Other box carries its detail in other_text; an unrecognised label has none,
+    # so fall back to the REDCap category so the row is still identifiable.
+    mutate(entry_text = str_squish(coalesce(other_text, complication_category_redcap))) %>%
+    filter(!is.na(entry_text))
+
+  review <- df %>%
+    group_by(entry = str_to_lower(entry_text), Reason = complication_category_mapped) %>%
+    summarise(`Free-text entry` = first(entry_text),
+              `Times reported` = n(),
+              `Source form(s)` = paste(sort(unique(source_form)), collapse = '; '),
+              .groups = 'drop') %>%
+    arrange(desc(`Times reported`), `Free-text entry`) %>%
+    select(`Free-text entry`, `Times reported`, `Source form(s)`, Reason)
+
+  if (nrow(review) == 0) {
+    review <- tibble(`Free-text entry` = 'No entries awaiting review',
+                     `Times reported` = 0, `Source form(s)` = '-', Reason = '-')
+  }
+
+  table_raw <- kable(review, format = "html", align = 'l') %>%
+    kable_styling("striped", full_width = FALSE, position = 'left')
+
+  return(table_raw)
+}
+
+
+#' Clinical event categories
+#'
+#' @description
+#' Shared inner worker for the side effect and adverse event tables. Unpacks
+#' the clinical_events_data long file, optionally windows it, and returns the number
+#' and percentage of participants reporting an event in each analysis category.
+#'
+#' Counts participants, not events - a participant with three bleeding events
+#' contributes once. The denominator is the number of enrolled participants passed
+#' in, so percentages are of the arm being summarised rather than of the event count.
+#'
+#' Categories come from the values present in complication_category_mapped, but the
+#' display order is fixed, so a category with no events still produces a 0 (0.0%)
+#' row rather than disappearing from the table.
+#'
+#' @param events_df Unpacked clinical_events_data with study_id, days_from_time_zero
+#'   and complication_category_mapped.
+#' @param denominator Number of enrolled participants to divide by.
+#' @param row_order Character vector of category rows, in display order.
+#' @param composites Named list mapping a composite row label to the categories it
+#'   sums over, e.g. list(`Major NSAID Related` = c('Renal', 'Gastric')).
+#' @param other_label Label for the catch-all row.
+#' @param other_categories Categories folded into the catch-all row.
+#' @param max_days Optional day cutoff applied to days_from_time_zero.
+#' @param none_label Optional label for a row counting participants with no event.
+#'
+#' @return A data frame of category, n and percentage.
+#' @noRd
+event_category_counts <- function(events_df, denominator, row_order,
+                                        composites = list(), other_label = NULL,
+                                        other_categories = character(0),
+                                        max_days = NULL, none_label = NULL){
+  fmt <- function(n) paste0(n, " (",
+                            trimws(format(round(ifelse(denominator > 0, 100 * n / denominator, 0), 1),
+                                          nsmall = 1)), "%)")
+
+  windowed <- events_df
+  if (!is.null(max_days)) {
+    windowed <- windowed %>%
+      mutate(days_from_time_zero = suppressWarnings(as.numeric(days_from_time_zero))) %>%
+      filter(!is.na(days_from_time_zero), days_from_time_zero <= max_days)
+  }
+
+  ids_for <- function(cats) unique(windowed$study_id[windowed$complication_category_mapped %in% cats])
+
+  rows <- lapply(row_order, function(lbl){
+    if (!is.null(none_label) && lbl == none_label) {
+      n <- max(0, denominator - length(unique(windowed$study_id)))
+    } else if (lbl %in% names(composites)) {
+      n <- length(ids_for(composites[[lbl]]))
+    } else if (!is.null(other_label) && lbl == other_label) {
+      n <- length(ids_for(other_categories))
+    } else {
+      n <- length(ids_for(lbl))
+    }
+    tibble(Category = lbl, n = n, pct = fmt(n))
+  })
+
+  return(bind_rows(rows))
+}
+
+
+#' Reported side effects
+#'
+#' @description
+#' Returns the analgesic side effect burden shell: the number and
+#' percentage of enrolled participants reporting each category of side effect through
+#' three months. Per SAP Safety Outcomes, burden is summarised as no side effects, a
+#' major side effect, and minor side effects, with major defined as renal impairment
+#' and/or gastric ulcer.
+#'
+#' The composition of the major row is set in one place at the top of the function,
+#' because whether bleeding belongs in it is still an open question - the SAP says
+#' renal and gastric only, while the secondary outcomes table also lists bleeding.
+#'
+#' Events with no days_from_time_zero cannot be placed in the three month window and
+#' are excluded from this table.
+#'
+#' @param analytic enrolled, clinical_events_data constructs
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' reported_side_effects("Replace with Analytic Tibble")
+#' }
+reported_side_effects <- function(analytic){
+  # SAP Safety Outcomes: major is renal impairment and/or gastric ulcer. Add
+  # 'Bleeding' here if the secondary outcomes table reading is adopted instead.
+  major_categories <- c('Renal', 'Gastric')
+  named_categories <- c('Bleeding', 'Renal', 'Thromboembolic', 'Gastric', 'Allergy', 'Minor Allergy')
+  other_categories <- c('Surgical/Wound', 'NEEDS REVIEW', 'UNMAPPED')
+
+  row_order <- c('None', 'Major NSAID Related', named_categories, 'All Others')
+
+  events_df <- unpack_clinical_events(analytic)
+  denominator <- analytic %>% filter(enrolled) %>% nrow()
+
+  final <- event_category_counts(
+    events_df, denominator, row_order,
+    composites = list(`Major NSAID Related` = major_categories),
+    other_label = 'All Others', other_categories = other_categories,
+    max_days = 90, none_label = 'None') %>%
+    select(Category, pct)
+
+  colnames(final) <- c('', 'N (%)')
+
+  table_raw <- kable(final, format = "html", align = 'l') %>%
+    pack_rows(index = c("Reported Side Effects, through 3 Months" = nrow(final)),
+              label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(c(0, nrow(final)), extra_css = "border-bottom: 1px solid;")
+
+  return(table_raw)
+}
+
+
+#' Adverse events
+#'
+#' @description
+#' Returns the adverse event shell: the number and percentage of
+#' enrolled participants with an event in each category, across the whole study
+#' period rather than windowed to three months. Deaths are taken from the dead
+#' construct rather than from the complication checklists.
+#'
+#' @param analytic enrolled, dead, clinical_events_data constructs
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' adverse_events("Replace with Analytic Tibble")
+#' }
+adverse_events <- function(analytic){
+  named_categories <- c('Surgical/Wound', 'Thromboembolic', 'Renal', 'Gastric', 'Bleeding')
+  other_categories <- c('Allergy', 'Minor Allergy', 'NEEDS REVIEW', 'UNMAPPED')
+
+  row_order <- c(named_categories, 'Other Medical')
+
+  events_df <- unpack_clinical_events(analytic)
+  enrolled_df <- analytic %>% filter(enrolled)
+  denominator <- nrow(enrolled_df)
+
+  counts <- event_category_counts(
+    events_df, denominator, row_order,
+    other_label = 'Other Medical', other_categories = other_categories) %>%
+    select(Category, pct)
+
+  deaths_n <- sum(enrolled_df$dead %in% TRUE)
+  deaths <- tibble(Category = 'Deaths',
+                   pct = paste0(deaths_n, " (",
+                                trimws(format(round(ifelse(denominator > 0, 100 * deaths_n / denominator, 0), 1),
+                                              nsmall = 1)), "%)"))
+
+  final <- bind_rows(deaths, counts)
+
+  colnames(final) <- c('', 'N (%)')
+
+  table_raw <- kable(final, format = "html", align = 'l') %>%
+    pack_rows(index = c("Adverse Events, Whole Study" = nrow(final)),
+              label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(c(0, nrow(final)), extra_css = "border-bottom: 1px solid;")
+
+  return(table_raw)
+}
+
+
+#' Unpack clinical events
+#'
+#' @description
+#' Shared inner worker that unpacks the clinical_events_data long file into one row
+#' per reported event, keeping study_id so that participants can be counted rather
+#' than events.
+#'
+#' @param analytic A tibble containing study_id and clinical_events_data.
+#'
+#' @return A data frame of unpacked events.
+#' @noRd
+unpack_clinical_events <- function(analytic){
+  return(analytic %>%
+    select(study_id, clinical_events_data) %>%
+    separate_rows(clinical_events_data, sep = ";new_row: ") %>%
+    separate(clinical_events_data,
+             into = c('facilitycode', 'date_of_event', 'days_from_time_zero', 'source_form',
+                      'event_type', 'complication_category_redcap', 'complication_category_mapped',
+                      'other_text', 'other_review_status'),
+             sep = '\\|', fill = 'right') %>%
+    mutate_all(na_if, 'NA') %>%
+    filter(!is.na(complication_category_mapped)))
 }

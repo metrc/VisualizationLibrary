@@ -4976,3 +4976,180 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
 
   return(table)
 }
+
+
+#' closed Persistent pain
+#'
+#' @description
+#' Returns the persistent pain shell for a trial's secondary outcomes, split by
+#' partially unmasked treatment assignment. BPI severity and BPI interference at 3,
+#' 6 and 12 months, reported as n, mean (SD), and the proportion with severe pain.
+#' Severe is a subscale score of 7 or above, per SAP section 11.2. This is the
+#' closed version of persistent_pain.
+#'
+#' @param analytic enrolled, treatment_arm, bpi_severity_score and bpi_interference_score 3mo - 12mo constructs
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_persistent_pain("Replace with Analytic Tibble")
+#'
+closed_persistent_pain <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('enrolled', 'treatment_arm',
+                           'bpi_severity_score_3mo', 'bpi_severity_score_6mo', 'bpi_severity_score_12mo',
+                           'bpi_interference_score_3mo', 'bpi_interference_score_6mo',
+                           'bpi_interference_score_12mo'),
+    example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Number",
+                      "Number", "Number", "Number"))
+
+  df <- analytic %>%
+    select(enrolled, treatment_arm,
+           bpi_severity_score_3mo, bpi_severity_score_6mo, bpi_severity_score_12mo,
+           bpi_interference_score_3mo, bpi_interference_score_6mo, bpi_interference_score_12mo) %>%
+    filter(enrolled)
+
+  df_a <- df %>% filter(treatment_arm == 'Group A')
+  df_b <- df %>% filter(treatment_arm == 'Group B')
+
+  inner_data_extractor <- function(prefix, inner_df) {
+    recode_map <- setNames(c("3 Months", "6 Months", "12 Months"),
+                           paste0(prefix, c("3mo", "6mo", "12mo")))
+
+    long <- inner_df %>%
+      select(paste0(prefix, c("3mo", "6mo", "12mo"))) %>%
+      pivot_longer(cols = everything(), names_to = "timepoint", values_to = "score") %>%
+      mutate(timepoint = recode(timepoint, !!!recode_map),
+             score = as.numeric(score)) %>%
+      filter(!is.na(score))
+
+    # A timepoint with no observed scores in an arm must still produce a row, or
+    # the cbind against the other arm silently misaligns the timepoints.
+    stats <- long %>%
+      group_by(timepoint) %>%
+      summarise(n = n(),
+                mean_sd = format_mean_sd(score),
+                severe = paste0(sum(score >= 7), " (",
+                                trimws(format(round(100 * mean(score >= 7), 1), nsmall = 1)), "%)"),
+                .groups = 'drop')
+
+    tibble(timepoint = c("3 Months", "6 Months", "12 Months")) %>%
+      left_join(stats, by = 'timepoint') %>%
+      mutate(n = ifelse(is.na(n), 0, n),
+             mean_sd = ifelse(is.na(mean_sd), '-', mean_sd),
+             severe = ifelse(is.na(severe), '-', severe)) %>%
+      mutate(timepoint = factor(timepoint, c("3 Months", "6 Months", "12 Months"))) %>%
+      arrange(timepoint)
+  }
+
+  sev_a   <- inner_data_extractor('bpi_severity_score_', df_a)
+  sev_b   <- inner_data_extractor('bpi_severity_score_', df_b)[, 2:4]
+  sev_tot <- inner_data_extractor('bpi_severity_score_', df)[, 2:4]
+  sev_final <- cbind(sev_a, sev_b, sev_tot)
+
+  int_a   <- inner_data_extractor('bpi_interference_score_', df_a)
+  int_b   <- inner_data_extractor('bpi_interference_score_', df_b)[, 2:4]
+  int_tot <- inner_data_extractor('bpi_interference_score_', df)[, 2:4]
+  int_final <- cbind(int_a, int_b, int_tot)
+
+  final <- rbind(sev_final, int_final)
+
+  colnames(final) <- c('',
+                       'n (Group A)', 'Score, Mean (SD) (Group A)', 'Severe (7-10), n (%) (Group A)',
+                       'n (Group B)', 'Score, Mean (SD) (Group B)', 'Severe (7-10), n (%) (Group B)',
+                       'n ', 'Score, Mean (SD)', 'Severe (7-10), n (%)')
+
+  index_vec_a <- c("BPI Severity" = nrow(sev_final),
+                   "BPI Interference" = nrow(int_final))
+
+  border_rows <- c(0, cumsum(index_vec_a))
+
+  table_raw <- kable(final, format = "html", align = 'l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+
+  return(table_raw)
+}
+
+
+#' closed Opioid days
+#'
+#' @description
+#' Returns the opioid utilisation shell for a trial's secondary outcomes, split by
+#' partially unmasked treatment assignment. Total days of reported opioid use at
+#' baseline, 3, 6 and 12 months, reported as n and mean (SD). This is the closed
+#' version of opioid_days.
+#'
+#' @param analytic enrolled, treatment_arm, opioid_days baseline - 12mo constructs
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_opioid_days("Replace with Analytic Tibble")
+#'
+closed_opioid_days <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('enrolled', 'treatment_arm', 'opioid_days_baseline',
+                           'opioid_days_3mo', 'opioid_days_6mo', 'opioid_days_12mo'),
+    example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Number", "Number"))
+
+  df <- analytic %>%
+    select(enrolled, treatment_arm, opioid_days_baseline, opioid_days_3mo,
+           opioid_days_6mo, opioid_days_12mo) %>%
+    filter(enrolled)
+
+  df_a <- df %>% filter(treatment_arm == 'Group A')
+  df_b <- df %>% filter(treatment_arm == 'Group B')
+
+  inner_data_extractor <- function(inner_df) {
+    recode_map <- setNames(c("Baseline", "3 Months", "6 Months", "12 Months"),
+                           paste0('opioid_days_', c("baseline", "3mo", "6mo", "12mo")))
+
+    long <- inner_df %>%
+      select(paste0('opioid_days_', c("baseline", "3mo", "6mo", "12mo"))) %>%
+      pivot_longer(cols = everything(), names_to = "timepoint", values_to = "days") %>%
+      mutate(timepoint = recode(timepoint, !!!recode_map),
+             days = as.numeric(days)) %>%
+      filter(!is.na(days))
+
+    stats <- long %>%
+      group_by(timepoint) %>%
+      summarise(n = n(), mean_sd = format_mean_sd(days), .groups = 'drop')
+
+    tibble(timepoint = c("Baseline", "3 Months", "6 Months", "12 Months")) %>%
+      left_join(stats, by = 'timepoint') %>%
+      mutate(n = ifelse(is.na(n), 0, n),
+             mean_sd = ifelse(is.na(mean_sd), '-', mean_sd)) %>%
+      mutate(timepoint = factor(timepoint, c("Baseline", "3 Months", "6 Months", "12 Months"))) %>%
+      arrange(timepoint)
+  }
+
+  days_a   <- inner_data_extractor(df_a)
+  days_b   <- inner_data_extractor(df_b)[, 2:3]
+  days_tot <- inner_data_extractor(df)[, 2:3]
+
+  final <- cbind(days_a, days_b, days_tot)
+
+  colnames(final) <- c('',
+                       'n (Group A)', 'Opioid Days, Mean (SD) (Group A)',
+                       'n (Group B)', 'Opioid Days, Mean (SD) (Group B)',
+                       'n ', 'Opioid Days, Mean (SD)')
+
+  index_vec_a <- c("Days of Reported Opioid Use" = nrow(final))
+
+  border_rows <- c(0, cumsum(index_vec_a))
+
+  table_raw <- kable(final, format = "html", align = 'l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+
+  return(table_raw)
+}
+
+
