@@ -8,11 +8,27 @@ outcome_by_name_overall(
   analytic,
   days_since_tz = 365,
   header = FALSE,
-  opt_col_order = FALSE
+  opt_col_order = FALSE,
+  window_start = NULL,
+  window_end = NULL
 )
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include study_id, outcome_data, and enrolled}
+
+\item{window_start}{optional numeric, days since time zero at which the follow-up
+window opens. NULL means day 0.}
+
+\item{window_end}{optional numeric, days since time zero at which the follow-up
+  window closes. NULL means no upper bound.
+
+When either window bound is supplied a final column is added, reporting percent of
+expected counting only the follow-up that falls inside the window. Both sides of the
+ratio are clipped, so a participant with 400 observed days against 500 expected
+contributes 275 of 275 to a 90 to 365 day window rather than 400 of 500.
+
+Both bounds are days since time zero, matching the units of every other column in
+this table. They are not calendar dates.}
 
 \item{days_since_dz}{optional numeric keyowrd argument to filter only for rows whose time_zero occured at leas that many days ago}
 }
