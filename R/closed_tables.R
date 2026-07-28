@@ -18,7 +18,7 @@
 #' }
 closed_injury_ankle_plateau_characteristics <- function(analytic){
    
-  confirm_stability_of_related_visual('injury_ankle_plateau_characteristics', '68edc8ea493959cf7857b150f5b2c075')
+  confirm_stability_of_related_visual('injury_ankle_plateau_characteristics', 'a7569ebfd7f70e0d1d2231667cd21eb5')
   
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -146,7 +146,7 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
                       "NamedCategory['Left' 'Right' 'Missing']", 'Category', 
                       "NamedCategory['Blunt' 'Penetrating' 'Missing']"))
 
-  confirm_stability_of_related_visual('injury_characteristics_by_alternate_constructs', '8520d2328c14a91856866a6c4deec4a1')
+  confirm_stability_of_related_visual('injury_characteristics_by_alternate_constructs', 'c1c34302134d7ecf13befc2fa61124c3')
 
   inner_injury_characteristics_by_alternate_constructs <- function(df) {
     total <- sum(df$enrolled)
@@ -311,7 +311,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
                       "Number", "Category", "Boolean", "NamedCategory['Active Military' 'Active Reserves' 'Not Active Duty' 'Missing']",
                       "TreatmentArm")) 
   
-  confirm_stability_of_related_visual("baseline_characteristics_percent", "72ba1dddbef4904a7c707e182c3efed8")
+  confirm_stability_of_related_visual("baseline_characteristics_percent", "5fd9b5d9bb4e306b683e61485ca59967")
   
   sex_df <- tibble()
   age_df <- tibble()
@@ -474,7 +474,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
                                                        education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", 
                                                                           "Refused / Don't know", "Missing")){
   
-  confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "fe7cb8b490a86eccd44baa0eaab32b6d")
+  confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "162d2450ce325474649bb5cfe21130b5")
   
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -625,7 +625,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' closed_not_complete_sae_deviation_by_type("Replace with Analytic Tibble")
 #' 
 closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE, factors=list()){
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '572d5381c5396c90d999d63167508cf9')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '58a2736f3d620bdae4e3d9d132f97fa2')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -919,7 +919,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
 #' }
 closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other"), include_ae=FALSE){
   
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', '5f953afe0d13fd14026876f8d88a8cb4')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', 'b73c6a145ab348e90f07b82a189cd5af')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -1153,7 +1153,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
                                               example_constructs = c("complication_data", "treatment_arm"),
                                               example_types = c("(';new_row: ', '|')FollowupPeriod|Date|Category|Date|Category|Category|Boolean|Category|Character|Character", "TreatmentArm"))
   
-  confirm_stability_of_related_visual('complications_by_severity_relatedness', '2c34bb7df0fa989238102cf236e16db0')
+  confirm_stability_of_related_visual('complications_by_severity_relatedness', 'fc7d55921be949572c3a265e221130d1')
 
 
   inner_closed_complications_by_severity_relatedness <- function(analytic){
@@ -1636,7 +1636,7 @@ closed_certification_date_data <- function(analytic){
     example_constructs = c('treatment_arm', "site_certification_data"), 
     example_types = c('TreatmentArm', 'FacilityCode;Date;Date;Boolean;Number'))
 
-  confirm_stability_of_related_visual('certification_date_data', 'bff3f2f7acadab1f57fc574df6ee3bee')
+  confirm_stability_of_related_visual('certification_date_data', '8b68d94a0d9546d3f7a5015b465c5754')
 
   date_today <- Sys.Date()
   
@@ -2085,7 +2085,7 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
     example_types = c("TreatmentArm", "Boolean", "Boolean", "Boolean", 
                       "Date", "Boolean")) 
   
-  confirm_stability_of_related_visual('adherence_sextant', 'dffdf49f31e7c00274374f2103141409')
+  confirm_stability_of_related_visual('adherence_sextant', 'b6383f46d84e2a16887a0c1603976b47')
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -2130,7 +2130,7 @@ closed_characteristics_treatment <- function(analytic){
                            "df_pil_surgical_incision", "df_number_procedures", "adherence_to_intervention"),
     example_types = c('Boolean', 'Boolean', 'Date', 'Category-NS', 'Category-NS', 'Number-U2', 'Boolean'))
   
-  confirm_stability_of_related_visual('characteristics_treatment', '44d22be0a10be43b14ce93202f4f13ae')
+  confirm_stability_of_related_visual('characteristics_treatment', '1c15e8a58e59b16c018a5a61054720a0')
   
   inner_characteristics_treatment <- function(df){
     total <- sum(df$enrolled, na.rm=T)
@@ -2357,7 +2357,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
     example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date",
                       "Boolean")) 
   
-  confirm_stability_of_related_visual('expected_and_followup_visit_overall', 'ba051129047046ea389939d95e034aa2')
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '5f184b8969e8405ce6dbb664758f0ee3')
   
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
@@ -2497,7 +2497,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
 #' closed_fracture_characteristics("Replace with Analytic Tibble")
 #' 
 closed_fracture_characteristics <- function(analytic){
-  confirm_stability_of_related_visual('fracture_characteristics', 'fe024116685f39115df0add9c2ad061b')
+  confirm_stability_of_related_visual('fracture_characteristics', 'e0f06d779bce6f9d3bdf21e8d9bf8ed0')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -2621,7 +2621,7 @@ closed_fracture_characteristics <- function(analytic){
 #' closed_followup_form_at_timepoint_by_site("Replace with Analytic Tibble")
 #' 
 closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
-  confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', '878c411fde80fea78add23f5defe4c14')
+  confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', 'e891654a7eb3d99d7bbbd6c271b2e87b')
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
                                               example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 'TreatmentArm'))
@@ -2778,7 +2778,7 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', 
                                                         included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'),
                                                         footnotes = NULL){
-  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', '8bd48058fce7d721f2d18b6e9308df50')
+  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', '19d4c17d74358a10df294598c8091f5c')
   analytic <- if_needed_generate_example_data(analytic, 
                                           example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
                                           example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 
@@ -2945,7 +2945,7 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' closed_followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", c("Form 2", "Form 4"))
 #' 
 closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
-  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '3b1ff938637e400445cd2f89a1ee6cdd')
+  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '14ff7cb0df72eb2743d84ea42080da7d')
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
                                               example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 
@@ -3105,7 +3105,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
     example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
     example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", "TreatmentArm"))
   
-  confirm_stability_of_related_visual('followup_forms_all_timepoints', '1418b0b014673d1bd0dcc99f80bedee1')
+  confirm_stability_of_related_visual('followup_forms_all_timepoints', '19846da2b98188628f1953b55bce3279')
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
@@ -3310,7 +3310,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                            filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                            subcategory_constructs = c(), bottom_order_levels = c("Missing"),
                                            mean_sd = c()){
-  confirm_stability_of_related_visual('generic_characteristics', '208984adf5442270c394bdae964143d5')
+  confirm_stability_of_related_visual('generic_characteristics', '79a52d00d74bbed3b28a9d37f047bd06')
   
   out <- NULL
   index_vec <- c()
@@ -3618,7 +3618,7 @@ closed_enrollment_status_by_site <- function(analytic){
 #' closed_wbs_main_paper_all_characteristics("Replace with Analytic Tibble")
 #' 
 closed_wbs_main_paper_all_characteristics <- function(analytic){
-  confirm_stability_of_related_visual('wbs_main_paper_all_characteristics', 'b81f3bec87d18d6a958e40475bc82fb1')
+  confirm_stability_of_related_visual('wbs_main_paper_all_characteristics', 'c41f55efa0f83b4e152a328ece70a16e')
   inner_wbs_characteristics <- function(df){
     total <- nrow(df)
     
@@ -3865,7 +3865,7 @@ closed_wbs_main_paper_all_characteristics <- function(analytic){
 #' closed_wbs_main_paper_bpi("Replace with Analytic Tibble")
 #' 
 closed_wbs_main_paper_bpi <- function(analytic){
-  confirm_stability_of_related_visual('wbs_main_paper_bpi', '626df079eec0adf354b321724317884a')
+  confirm_stability_of_related_visual('wbs_main_paper_bpi', 'fc840e2f628fde4a65db2d13d561273a')
   inner_bpi <- function(df){
     sev <- df %>%
       select(starts_with("bpi_severity_score")) %>%
@@ -3975,7 +3975,7 @@ closed_wbs_main_paper_bpi <- function(analytic){
 #' closed_wbs_main_paper_aos("Replace with Analytic Tibble")
 #' 
 closed_wbs_main_paper_aos <- function(analytic){
-  confirm_stability_of_related_visual('wbs_main_paper_aos', 'bf41138721701da69e701770ecf89c77')
+  confirm_stability_of_related_visual('wbs_main_paper_aos', 'f5affe73579dc4ce838453b88d77d182')
   inner_bpi <- function(df){
     overall <- df %>%
       select(starts_with("aos_score")) %>%
@@ -4112,7 +4112,7 @@ closed_promis_stats_by_time <- function(analytic){
                            'promis_pain_interference_12mo'), 
     example_types = c("Boolean", "TreatmentArm", "Number","Number","Number","Number","Number","Number","Number","Number"))
 
-  confirm_stability_of_related_visual('promis_stats_by_time', '98888af7bcd6e780e7733ff6278d925f')
+  confirm_stability_of_related_visual('promis_stats_by_time', '02d2c58343421218e1220e4a33524bfa')
 
   df <- analytic %>%
     select(enrolled, treatment_arm,
@@ -4208,7 +4208,7 @@ closed_promis_stats_by_time <- function(analytic){
 #' closed_survival_analysis_kaplan_meier("Replace with Analytic Tibble")
 #' 
 closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days_construct, outcome_length, pre_filter_constructs=NULL, remove_zero_day_events=TRUE, non_inferiority=FALSE, hazard_ratio=FALSE, arm_labels = c(`0` = "Control", `1` = "Treatment"), outcome_label="Outcome"){
-  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', '0854391e845938515b1f9a3198dbbdad')
+  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', 'ead0d2b4793d74663873948a49adee33')
   # ── Prep data ───────────────────────────────────────────────────────────
   df <- analytic %>%
     filter(enrolled == 1) %>%
@@ -4342,7 +4342,7 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
 #' \dontrun{
 #' }
 closed_pathogen_characteristics <- function(analytic){
-  confirm_stability_of_related_visual('pathogen_characteristics', '6bd93dc303d4c26fd350d67bc81c2f01')
+  confirm_stability_of_related_visual('pathogen_characteristics', '655748bf4e78cb42de57d5851abf7841')
 
   inner_analytic <- analytic %>% filter(enrolled == TRUE)
   enrolled_tot <- nrow(inner_analytic)
@@ -4507,7 +4507,7 @@ closed_pathogen_characteristics <- function(analytic){
 #' @export
 closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, breakout_other=FALSE, cols_spec=NULL){
   
-  confirm_stability_of_related_visual('overall_complications', '51e8aca1cd0b0e17022209ec533fb163')
+  confirm_stability_of_related_visual('overall_complications', '7ab34026cb6a01fbe3e5db0a89fae6a6')
   
   if (is.null(WB)) {
     df <- analytic %>%
@@ -5014,7 +5014,7 @@ closed_persistent_pain <- function(analytic){
     example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Number",
                       "Number", "Number", "Number"))
 
-  confirm_stability_of_related_visual('persistent_pain', 'a364eb174086a2fa97dceb8e8929a6df')
+  confirm_stability_of_related_visual('persistent_pain', '3fef68b865e17b6f8dd2953b8cbf1f1b')
 
   df <- analytic %>%
     select(enrolled, treatment_arm,
@@ -5109,7 +5109,7 @@ closed_opioid_days <- function(analytic){
                            'opioid_days_3mo', 'opioid_days_6mo', 'opioid_days_12mo'),
     example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Number", "Number"))
 
-  confirm_stability_of_related_visual('opioid_days', '8bcc9510fedf449bd7ad10ea3137d670')
+  confirm_stability_of_related_visual('opioid_days', '653420f31c7bb5fc7eae17f4cc4e9fe9')
 
   df <- analytic %>%
     select(enrolled, treatment_arm, opioid_days_baseline, opioid_days_3mo,
