@@ -4729,6 +4729,7 @@ closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, disco
 #' @param type_construct the name of the column of the analytic dataset that must include whether the outcome for that participant was a check or event
 #' @param days_construct the name of the column of the analytic dataset that must include the number of days till check or event
 #' @param outcome_length number of days for this outcome (defaults to 365)
+#' @param minimum_days participants whose follow-up is at or below this many days are dropped before the interval split (defaults to 0). A participant with no follow-up time enters no interval, so the default drops only those. Raising it also drops any event that occurred at or before the threshold.
 #' @param cuts interval boundaries for the piecewise baseline hazard; must start at 0 and end at outcome_length.
 #' These should be selected and locked before unmasking (defaults to quarterly intervals c(0, 90, 180, 270, 365))
 #' @param ni_margin noninferiority margin for the risk difference (defaults to 0.10)
@@ -4763,6 +4764,7 @@ closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, disco
 #' }
 closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, days_construct,
                                                    outcome_length = 365,
+                                                   minimum_days = 0,
                                                    cuts = c(0, 90, 180, 270, 365),
                                                    ni_margin = 0.10,
                                                    control_arm = "Group A",
@@ -4830,6 +4832,13 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
       time  = ifelse(event == 1, days, pmin(days, outcome_length))
     ) %>%
     filter(!is.na(time) & !is.na(trt))
+
+  # Participants whose follow-up is at or below minimum_days are dropped. At the
+  # default of 0 this drops only participants with no follow-up time, who enter
+  # no interval and so contribute no exposure and no events and have no row in
+  # the interval split.
+  dat <- dat %>%
+    filter(time > minimum_days)
 
   stopifnot(all(dat$trt %in% c(0, 1)))
   stopifnot(all(dat$event %in% c(0, 1)))
