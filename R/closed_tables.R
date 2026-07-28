@@ -145,7 +145,9 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
                       "NamedCategory['Yes' 'No' 'Missing']", 'Date', 'Category', 
                       "NamedCategory['Left' 'Right' 'Missing']", 'Category', 
                       "NamedCategory['Blunt' 'Penetrating' 'Missing']"))
-  
+
+  confirm_stability_of_related_visual('injury_characteristics_by_alternate_constructs', '8520d2328c14a91856866a6c4deec4a1')
+
   inner_injury_characteristics_by_alternate_constructs <- function(df) {
     total <- sum(df$enrolled)
     type_df <- df %>% 
@@ -309,7 +311,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
                       "Number", "Category", "Boolean", "NamedCategory['Active Military' 'Active Reserves' 'Not Active Duty' 'Missing']",
                       "TreatmentArm")) 
   
-  confirm_stability_of_related_visual("baseline_characteristics_percent", "a94af36b5ce50165af1612005be223db")
+  confirm_stability_of_related_visual("baseline_characteristics_percent", "72ba1dddbef4904a7c707e182c3efed8")
   
   sex_df <- tibble()
   age_df <- tibble()
@@ -1151,9 +1153,9 @@ closed_complications_by_severity_relatedness <- function(analytic){
                                               example_constructs = c("complication_data", "treatment_arm"),
                                               example_types = c("(';new_row: ', '|')FollowupPeriod|Date|Category|Date|Category|Category|Boolean|Category|Character|Character", "TreatmentArm"))
   
-  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-23)
-  
-  
+  confirm_stability_of_related_visual('complications_by_severity_relatedness', '2c34bb7df0fa989238102cf236e16db0')
+
+
   inner_closed_complications_by_severity_relatedness <- function(analytic){
     comp <- analytic %>%  select(study_id, complication_data) %>% 
       filter(!is.na(complication_data))
@@ -1633,7 +1635,9 @@ closed_certification_date_data <- function(analytic){
     analytic, 
     example_constructs = c('treatment_arm', "site_certification_data"), 
     example_types = c('TreatmentArm', 'FacilityCode;Date;Date;Boolean;Number'))
-  
+
+  confirm_stability_of_related_visual('certification_date_data', 'bff3f2f7acadab1f57fc574df6ee3bee')
+
   date_today <- Sys.Date()
   
   cols <- c('Facility', 'Local (or sIRB) Approval Date', 'DoD Approval Date',
@@ -4107,7 +4111,9 @@ closed_promis_stats_by_time <- function(analytic){
                            'promis_pain_interference_6wk', 'promis_pain_interference_3mo', 'promis_pain_interference_6mo', 
                            'promis_pain_interference_12mo'), 
     example_types = c("Boolean", "TreatmentArm", "Number","Number","Number","Number","Number","Number","Number","Number"))
-  
+
+  confirm_stability_of_related_visual('promis_stats_by_time', '98888af7bcd6e780e7733ff6278d925f')
+
   df <- analytic %>%
     select(enrolled, treatment_arm,
            promis_pf_6wk, promis_pf_3mo, promis_pf_6mo, promis_pf_12mo, 
@@ -4336,6 +4342,8 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
 #' \dontrun{
 #' }
 closed_pathogen_characteristics <- function(analytic){
+  confirm_stability_of_related_visual('pathogen_characteristics', '6bd93dc303d4c26fd350d67bc81c2f01')
+
   inner_analytic <- analytic %>% filter(enrolled == TRUE)
   enrolled_tot <- nrow(inner_analytic)
   a_tot <- inner_analytic %>% filter(treatment_arm=='Group A') %>% nrow()
@@ -5006,6 +5014,8 @@ closed_persistent_pain <- function(analytic){
     example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Number",
                       "Number", "Number", "Number"))
 
+  confirm_stability_of_related_visual('persistent_pain', 'a364eb174086a2fa97dceb8e8929a6df')
+
   df <- analytic %>%
     select(enrolled, treatment_arm,
            bpi_severity_score_3mo, bpi_severity_score_6mo, bpi_severity_score_12mo,
@@ -5098,6 +5108,8 @@ closed_opioid_days <- function(analytic){
     example_constructs = c('enrolled', 'treatment_arm', 'opioid_days_baseline',
                            'opioid_days_3mo', 'opioid_days_6mo', 'opioid_days_12mo'),
     example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Number", "Number"))
+
+  confirm_stability_of_related_visual('opioid_days', '8bcc9510fedf449bd7ad10ea3137d670')
 
   df <- analytic %>%
     select(enrolled, treatment_arm, opioid_days_baseline, opioid_days_3mo,
