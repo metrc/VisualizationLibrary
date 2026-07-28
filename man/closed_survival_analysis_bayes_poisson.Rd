@@ -9,6 +9,7 @@ closed_survival_analysis_bayes_poisson(
   type_construct,
   days_construct,
   outcome_length = 365,
+  minimum_days = 0,
   cuts = c(0, 90, 180, 270, 365),
   ni_margin = 0.1,
   control_arm = "Group A",
@@ -36,6 +37,8 @@ closed_survival_analysis_bayes_poisson(
 \item{days_construct}{the name of the column of the analytic dataset that must include the number of days till check or event}
 
 \item{outcome_length}{number of days for this outcome (defaults to 365)}
+
+\item{minimum_days}{participants whose follow-up is at or below this many days are dropped before the interval split (defaults to 0). A participant with no follow-up time enters no interval, so the default drops only those. Raising it also drops any event that occurred at or before the threshold.}
 
 \item{cuts}{interval boundaries for the piecewise baseline hazard; must start at 0 and end at outcome_length.
 These should be selected and locked before unmasking (defaults to quarterly intervals c(0, 90, 180, 270, 365))}
