@@ -18,7 +18,7 @@
 #' }
 closed_injury_ankle_plateau_characteristics <- function(analytic){
    
-  confirm_stability_of_related_visual('injury_ankle_plateau_characteristics', '68edc8ea493959cf7857b150f5b2c075')
+  confirm_stability_of_related_visual('injury_ankle_plateau_characteristics', 'd2eaee9fc5d078169320c5795a7872d4')
   
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -145,7 +145,9 @@ closed_injury_characteristics_by_alternate_constructs <- function(analytic){
                       "NamedCategory['Yes' 'No' 'Missing']", 'Date', 'Category', 
                       "NamedCategory['Left' 'Right' 'Missing']", 'Category', 
                       "NamedCategory['Blunt' 'Penetrating' 'Missing']"))
-  
+
+  confirm_stability_of_related_visual('injury_characteristics_by_alternate_constructs', '71eb3dd93dc0f79c371af3b918bbd3c2')
+
   inner_injury_characteristics_by_alternate_constructs <- function(df) {
     total <- sum(df$enrolled)
     type_df <- df %>% 
@@ -309,7 +311,7 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
                       "Number", "Category", "Boolean", "NamedCategory['Active Military' 'Active Reserves' 'Not Active Duty' 'Missing']",
                       "TreatmentArm")) 
   
-  confirm_stability_of_related_visual("baseline_characteristics_percent", "a94af36b5ce50165af1612005be223db")
+  confirm_stability_of_related_visual("baseline_characteristics_percent", "7297d429b29f80b9dbb315fbf9d53bc2")
   
   sex_df <- tibble()
   age_df <- tibble()
@@ -395,9 +397,9 @@ closed_baseline_characteristics_percent <- function(analytic, sex="sex", race="e
       select(-order)%>% 
       mutate(Category = 'Race')
     
-    military_df <<- df %>% 
-      mutate(race = replace_na(race, "Missing")) %>% 
-      group_by(military) %>% 
+    military_df <<- df %>%
+      mutate(military = ifelse(is.na(military), "Missing", military)) %>%
+      group_by(military) %>%
       count(military) %>% 
       rename(number = n) %>% 
       mutate(percentage = format_count_percent(number, total)) %>% 
@@ -472,7 +474,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
                                                        education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", 
                                                                           "Refused / Don't know", "Missing")){
   
-  confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "fe7cb8b490a86eccd44baa0eaab32b6d")
+  confirm_stability_of_related_visual("baseline_characteristics_percent_nm", "8668d640e7765195b2c67b56693783d2")
   
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -623,7 +625,7 @@ closed_baseline_characteristics_percent_nm <- function(analytic, sex="sex", race
 #' closed_not_complete_sae_deviation_by_type("Replace with Analytic Tibble")
 #' 
 closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE, factors=list()){
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '572d5381c5396c90d999d63167508cf9')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type', '975d46816dd957ecaf02a9e6ba016177')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -917,7 +919,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
 #' }
 closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other"), include_ae=FALSE){
   
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', '5f953afe0d13fd14026876f8d88a8cb4')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', '2fbc335654f8621f9561f2772adc1b39')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -1151,9 +1153,9 @@ closed_complications_by_severity_relatedness <- function(analytic){
                                               example_constructs = c("complication_data", "treatment_arm"),
                                               example_types = c("(';new_row: ', '|')FollowupPeriod|Date|Category|Date|Category|Category|Boolean|Category|Character|Character", "TreatmentArm"))
   
-  #NOTE: NO OPEN VERSION STABILITY CONFIRMATION NOT APPLICABLE (2024-05-23)
-  
-  
+  confirm_stability_of_related_visual('complications_by_severity_relatedness', '700d582721890a426efbcfba0720f055')
+
+
   inner_closed_complications_by_severity_relatedness <- function(analytic){
     comp <- analytic %>%  select(study_id, complication_data) %>% 
       filter(!is.na(complication_data))
@@ -1633,7 +1635,9 @@ closed_certification_date_data <- function(analytic){
     analytic, 
     example_constructs = c('treatment_arm', "site_certification_data"), 
     example_types = c('TreatmentArm', 'FacilityCode;Date;Date;Boolean;Number'))
-  
+
+  confirm_stability_of_related_visual('certification_date_data', 'ec273479786ed418d9e7b40ff5a619d7')
+
   date_today <- Sys.Date()
   
   cols <- c('Facility', 'Local (or sIRB) Approval Date', 'DoD Approval Date',
@@ -2081,7 +2085,7 @@ closed_adherence_sextant <- function(analytic, footnotes=NULL){
     example_types = c("TreatmentArm", "Boolean", "Boolean", "Boolean", 
                       "Date", "Boolean")) 
   
-  confirm_stability_of_related_visual('adherence_sextant', 'dffdf49f31e7c00274374f2103141409')
+  confirm_stability_of_related_visual('adherence_sextant', '997c66e7a2b52dcd4c8cda00fbadeb4b')
   
   df_a <- analytic %>% 
     filter(treatment_arm=="Group A")
@@ -2126,7 +2130,7 @@ closed_characteristics_treatment <- function(analytic){
                            "df_pil_surgical_incision", "df_number_procedures", "adherence_to_intervention"),
     example_types = c('Boolean', 'Boolean', 'Date', 'Category-NS', 'Category-NS', 'Number-U2', 'Boolean'))
   
-  confirm_stability_of_related_visual('characteristics_treatment', '44d22be0a10be43b14ce93202f4f13ae')
+  confirm_stability_of_related_visual('characteristics_treatment', '7e2e0c4c9388ed93a37880c805cebac1')
   
   inner_characteristics_treatment <- function(df){
     total <- sum(df$enrolled, na.rm=T)
@@ -2353,7 +2357,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
     example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date",
                       "Boolean")) 
   
-  confirm_stability_of_related_visual('expected_and_followup_visit_overall', 'ba051129047046ea389939d95e034aa2')
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', 'a8c0b0ed170f28b517d378e7facfdae3')
   
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
@@ -2493,7 +2497,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
 #' closed_fracture_characteristics("Replace with Analytic Tibble")
 #' 
 closed_fracture_characteristics <- function(analytic){
-  confirm_stability_of_related_visual('fracture_characteristics', 'fe024116685f39115df0add9c2ad061b')
+  confirm_stability_of_related_visual('fracture_characteristics', 'fcc25c2806c7d9f9a469ec62ab6481b1')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -2617,7 +2621,7 @@ closed_fracture_characteristics <- function(analytic){
 #' closed_followup_form_at_timepoint_by_site("Replace with Analytic Tibble")
 #' 
 closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
-  confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', '878c411fde80fea78add23f5defe4c14')
+  confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', '6a2456bb4c37cdd1867fec6465c8f6e7')
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
                                               example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 'TreatmentArm'))
@@ -2774,7 +2778,7 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', 
                                                         included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'),
                                                         footnotes = NULL){
-  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', '8bd48058fce7d721f2d18b6e9308df50')
+  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', 'd54c216b2882543c6166efbdbf5ea20d')
   analytic <- if_needed_generate_example_data(analytic, 
                                           example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
                                           example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 
@@ -2941,7 +2945,7 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' closed_followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", c("Form 2", "Form 4"))
 #' 
 closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
-  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', '3b1ff938637e400445cd2f89a1ee6cdd')
+  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', 'e8a49a54a0eb3c2450c1cbd9ec81360a')
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
                                               example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 
@@ -3101,7 +3105,7 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
     example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
     example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", "TreatmentArm"))
   
-  confirm_stability_of_related_visual('followup_forms_all_timepoints', '1418b0b014673d1bd0dcc99f80bedee1')
+  confirm_stability_of_related_visual('followup_forms_all_timepoints', '27949b7079687998ff6b3e78257b4b40')
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
@@ -3306,7 +3310,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                            filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                            subcategory_constructs = c(), bottom_order_levels = c("Missing"),
                                            mean_sd = c()){
-  confirm_stability_of_related_visual('generic_characteristics', 'd9bb551e214e8d113cb93e9229148dce')
+  confirm_stability_of_related_visual('generic_characteristics', 'c4e7b58ce4cf89dd895b87a54796c602')
   
   out <- NULL
   index_vec <- c()
@@ -3614,7 +3618,7 @@ closed_enrollment_status_by_site <- function(analytic){
 #' closed_wbs_main_paper_all_characteristics("Replace with Analytic Tibble")
 #' 
 closed_wbs_main_paper_all_characteristics <- function(analytic){
-  confirm_stability_of_related_visual('wbs_main_paper_all_characteristics', 'b81f3bec87d18d6a958e40475bc82fb1')
+  confirm_stability_of_related_visual('wbs_main_paper_all_characteristics', '14cde0254184c406d64c17cd3a549db0')
   inner_wbs_characteristics <- function(df){
     total <- nrow(df)
     
@@ -3861,7 +3865,7 @@ closed_wbs_main_paper_all_characteristics <- function(analytic){
 #' closed_wbs_main_paper_bpi("Replace with Analytic Tibble")
 #' 
 closed_wbs_main_paper_bpi <- function(analytic){
-  confirm_stability_of_related_visual('wbs_main_paper_bpi', '626df079eec0adf354b321724317884a')
+  confirm_stability_of_related_visual('wbs_main_paper_bpi', '8a84c6eb589e2d5494b7a5b7a9ae00eb')
   inner_bpi <- function(df){
     sev <- df %>%
       select(starts_with("bpi_severity_score")) %>%
@@ -3971,7 +3975,7 @@ closed_wbs_main_paper_bpi <- function(analytic){
 #' closed_wbs_main_paper_aos("Replace with Analytic Tibble")
 #' 
 closed_wbs_main_paper_aos <- function(analytic){
-  confirm_stability_of_related_visual('wbs_main_paper_aos', 'bf41138721701da69e701770ecf89c77')
+  confirm_stability_of_related_visual('wbs_main_paper_aos', '9a72b7201ae021c5a18c8b0a29d82b22')
   inner_bpi <- function(df){
     overall <- df %>%
       select(starts_with("aos_score")) %>%
@@ -4107,7 +4111,9 @@ closed_promis_stats_by_time <- function(analytic){
                            'promis_pain_interference_6wk', 'promis_pain_interference_3mo', 'promis_pain_interference_6mo', 
                            'promis_pain_interference_12mo'), 
     example_types = c("Boolean", "TreatmentArm", "Number","Number","Number","Number","Number","Number","Number","Number"))
-  
+
+  confirm_stability_of_related_visual('promis_stats_by_time', 'f2c48bbef9d1db4bf01995900ce6c18d')
+
   df <- analytic %>%
     select(enrolled, treatment_arm,
            promis_pf_6wk, promis_pf_3mo, promis_pf_6mo, promis_pf_12mo, 
@@ -4202,7 +4208,7 @@ closed_promis_stats_by_time <- function(analytic){
 #' closed_survival_analysis_kaplan_meier("Replace with Analytic Tibble")
 #' 
 closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days_construct, outcome_length, pre_filter_constructs=NULL, remove_zero_day_events=TRUE, non_inferiority=FALSE, hazard_ratio=FALSE, arm_labels = c(`0` = "Control", `1` = "Treatment"), outcome_label="Outcome"){
-  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', '0854391e845938515b1f9a3198dbbdad')
+  confirm_stability_of_related_visual('survival_analysis_kaplan_meier', 'eebac2c7d5b5aaa31945191e4b40e628')
   # ── Prep data ───────────────────────────────────────────────────────────
   df <- analytic %>%
     filter(enrolled == 1) %>%
@@ -4336,6 +4342,8 @@ closed_survival_analysis_kaplan_meier <- function(analytic, type_construct, days
 #' \dontrun{
 #' }
 closed_pathogen_characteristics <- function(analytic){
+  confirm_stability_of_related_visual('pathogen_characteristics', '6ae6e920470e1c377c615a554d1cb34c')
+
   inner_analytic <- analytic %>% filter(enrolled == TRUE)
   enrolled_tot <- nrow(inner_analytic)
   a_tot <- inner_analytic %>% filter(treatment_arm=='Group A') %>% nrow()
@@ -4499,7 +4507,7 @@ closed_pathogen_characteristics <- function(analytic){
 #' @export
 closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, breakout_other=FALSE, cols_spec=NULL){
   
-  confirm_stability_of_related_visual('overall_complications', '51e8aca1cd0b0e17022209ec533fb163')
+  confirm_stability_of_related_visual('overall_complications', '472f5788831b0a590c14948270e9c270')
   
   if (is.null(WB)) {
     df <- analytic %>%
@@ -4702,3 +4710,468 @@ closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, disco
   
   return(out)
 }
+
+
+#' Closed Survival Analysis Bayesian Poisson Noninferiority
+#'
+#' @description This function divides the time to event (event or time to last observation) into
+#' prespecified intervals and performs a Bayesian Poisson regression (the Poisson representation of a
+#' piecewise-exponential proportional-hazards model) to estimate the hazard of an event through
+#' outcome_length days. Hazards are converted to proportions, and the group difference with its 95
+#' percent credible interval is used to apply a noninferiority decision rule.
+#'
+#' Requires the brms package (and the cmdstanr package when backend = "cmdstanr"; by default
+#' CmdStan itself is installed into the working directory before fitting via install_cmdstan).
+#' All installation, compilation, and sampling output is suppressed; the only output is the
+#' returned HTML table.
+#'
+#' @param analytic This is the analytic dataset that must include enrolled, treatment_arm, and study_id
+#' @param type_construct the name of the column of the analytic dataset that must include whether the outcome for that participant was a check or event
+#' @param days_construct the name of the column of the analytic dataset that must include the number of days till check or event
+#' @param outcome_length number of days for this outcome (defaults to 365)
+#' @param minimum_days participants whose follow-up is at or below this many days are dropped before the interval split (defaults to 0). A participant with no follow-up time enters no interval, so the default drops only those. Raising it also drops any event that occurred at or before the threshold.
+#' @param cuts interval boundaries for the piecewise baseline hazard; must start at 0 and end at outcome_length.
+#' These should be selected and locked before unmasking (defaults to quarterly intervals c(0, 90, 180, 270, 365))
+#' @param ni_margin noninferiority margin for the risk difference (defaults to 0.10)
+#' @param control_arm value of treatment_arm treated as the control group (defaults to "Group A")
+#' @param baseline_prior_mean prior mean for each log baseline-hazard interval coefficient (defaults to -8.15, near a 10 percent annual event risk)
+#' @param baseline_prior_sd prior standard deviation for each interval coefficient (defaults to 1.5, intentionally broad)
+#' @param treatment_prior_sd prior standard deviation for the treatment log hazard ratio, centered at no effect (defaults to 1)
+#' @param arm_labels named chr vec, c("0" = "Control", "1" = "Treatment")
+#' @param outcome_label label for the outcome row of the table
+#' @param chains number of MCMC chains (defaults to 4)
+#' @param iter total iterations per chain (defaults to 4000)
+#' @param warmup warmup iterations per chain (defaults to 2000)
+#' @param cores number of cores for sampling (defaults to 4)
+#' @param seed random seed for sampling (defaults to 20260713)
+#' @param adapt_delta target acceptance rate passed to the sampler (defaults to 0.95)
+#' @param backend brms backend, "cmdstanr" or "rstan" (defaults to "cmdstanr")
+#' @param install_cmdstan when TRUE and backend = "cmdstanr", installs CmdStan version 2.35.0
+#' into the working directory (quietly, overwriting any existing installation) before fitting.
+#' Set to FALSE to reuse an existing CmdStan installation (defaults to TRUE)
+#' @param blinded when TRUE, ignores the real treatment_arm and deterministically reassigns
+#' arms from the digit sum of study_id (even = "Group A", odd = "Group B") so the table can be
+#' produced without unmasking (defaults to FALSE)
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_survival_analysis_bayes_poisson("Replace with Analytic Tibble",
+#'                                        type_construct = "surgery_or_healed_type",
+#'                                        days_construct = "surgery_or_healed_days")
+#' }
+closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, days_construct,
+                                                   outcome_length = 365,
+                                                   minimum_days = 0,
+                                                   cuts = c(0, 90, 180, 270, 365),
+                                                   ni_margin = 0.10,
+                                                   control_arm = "Group A",
+                                                   baseline_prior_mean = -8.15,
+                                                   baseline_prior_sd = 1.5,
+                                                   treatment_prior_sd = 1,
+                                                   arm_labels = c(`0` = "Control", `1` = "Treatment"),
+                                                   outcome_label = "Outcome",
+                                                   chains = 4, iter = 4000, warmup = 2000, cores = 4,
+                                                   seed = 20260713, adapt_delta = 0.95,
+                                                   backend = "cmdstanr",
+                                                   install_cmdstan = TRUE,
+                                                   blinded = FALSE){
+  if (!requireNamespace("brms", quietly = TRUE)) {
+    stop("closed_survival_analysis_bayes_poisson requires the brms package; please install it.")
+  }
+  if (backend == "cmdstanr" && !requireNamespace("cmdstanr", quietly = TRUE)) {
+    stop("backend = \"cmdstanr\" requires the cmdstanr package; please install it or use backend = \"rstan\".")
+  }
+  if (cuts[1] != 0 || cuts[length(cuts)] != outcome_length) {
+    stop("cuts must start at 0 and end at outcome_length")
+  }
+  
+  if (backend == "cmdstanr" && install_cmdstan) {
+    invisible(utils::capture.output(suppressWarnings(suppressMessages(
+      cmdstanr::install_cmdstan(
+        dir = getwd(),
+        version = "2.35.0",
+        cores = 2, overwrite = TRUE,
+        quiet = TRUE
+      )
+    )), type = "output"))
+  }
+
+  # ── Blinded mode: deterministic dummy arms from study_id ────────────────
+  if (blinded) {
+    assign_group <- function(study_id) {
+      digit_sum <- sapply(
+        strsplit(gsub("[^0-9]", "", as.character(study_id)), ""),
+        function(d) sum(as.integer(d))
+      )
+      if_else(digit_sum %% 2 == 0, "Group A", "Group B")
+    }
+
+    analytic <- analytic %>%
+      mutate(treatment_arm = assign_group(study_id))
+  }
+  
+  analytic <- analytic %>%
+    select(study_id, enrolled, treatment_arm, !!sym(type_construct), !!sym(days_construct))
+
+  # ── Prep data ───────────────────────────────────────────────────────────
+  dat <- analytic %>%
+    filter(enrolled) %>%
+    rename(type = !!sym(type_construct),
+           days = !!sym(days_construct)) %>%
+    mutate(
+      days  = as.numeric(days),
+      # Treatment indicator: control arm = 0, treatment = 1
+      trt   = as.integer(treatment_arm != control_arm),
+      # Primary event must occur within outcome_length days
+      event = as.integer(type != "check" & !is.na(days) & days <= outcome_length),
+      # Follow-up time is event day for events;
+      # otherwise last known event-free day, capped at outcome_length
+      time  = ifelse(event == 1, days, pmin(days, outcome_length))
+    ) %>%
+    filter(!is.na(time) & !is.na(trt))
+
+  # Participants whose follow-up is at or below minimum_days are dropped. At the
+  # default of 0 this drops only participants with no follow-up time, who enter
+  # no interval and so contribute no exposure and no events and have no row in
+  # the interval split.
+  dat <- dat %>%
+    filter(time > minimum_days)
+
+  stopifnot(all(dat$trt %in% c(0, 1)))
+  stopifnot(all(dat$event %in% c(0, 1)))
+  stopifnot(all(dat$time >= 0 & dat$time <= outcome_length))
+
+  interval_start <- head(cuts, -1)
+  interval_stop  <- tail(cuts, -1)
+  interval_width <- interval_stop - interval_start
+  number_intervals <- length(interval_width)
+
+  # ── Convert each participant into interval records ─────────────────────
+  split_participant <- function(i) {
+
+    # Include every interval entered by this participant
+    entered <- interval_start < dat$time[i]
+
+    starts <- interval_start[entered]
+    stops  <- interval_stop[entered]
+
+    data.frame(
+      study_id = dat$study_id[i],
+      trt      = dat$trt[i],
+      interval = factor(
+        which(entered),
+        levels = seq_len(number_intervals)
+      ),
+
+      # Amount of time contributed during the interval
+      exposure = pmin(stops, dat$time[i]) - starts,
+
+      # Event occurs only in the interval containing the event time
+      event = as.integer(
+        dat$event[i] == 1 &
+          dat$time[i] > starts &
+          dat$time[i] <= stops
+      )
+    )
+  }
+  long_data <- do.call(
+    rbind,
+    lapply(seq_len(nrow(dat)), split_participant)
+  )
+
+  stopifnot(all(long_data$exposure > 0))
+
+  # ── Priors ──────────────────────────────────────────────────────────────
+  # Interval priors are broad log baseline-hazard priors; the treatment
+  # prior is centered at no treatment effect.
+  model_priors <- do.call(c, c(
+    lapply(seq_len(number_intervals), function(k) {
+      brms::prior_string(
+        sprintf("normal(%s, %s)", baseline_prior_mean, baseline_prior_sd),
+        class = "b", coef = paste0("interval", k)
+      )
+    }),
+    list(brms::prior_string(
+      sprintf("normal(0, %s)", treatment_prior_sd),
+      class = "b", coef = "trt"
+    ))
+  ))
+
+  # ── Fit the Bayesian piecewise-exponential model ────────────────────────
+  # capture.output + silent/refresh keep compilation and sampling progress
+  # off the console so the returned table is the only output
+  invisible(utils::capture.output(suppressWarnings(suppressMessages(
+    primary_fit <- brms::brm(
+      event ~ 0 + interval + trt + offset(log(exposure)),
+      data    = long_data,
+      family  = poisson(link = "log"),
+      prior   = model_priors,
+      chains  = chains,
+      iter    = iter,
+      warmup  = warmup,
+      cores   = cores,
+      seed    = seed,
+      backend = backend,
+      control = list(adapt_delta = adapt_delta),
+      silent  = 2,
+      refresh = 0
+    )
+  )), type = "output"))
+
+  # ── Posterior draws ─────────────────────────────────────────────────────
+  draws <- as.data.frame(primary_fit)
+
+  baseline_names <- paste0("b_interval", seq_len(number_intervals))
+
+  missing_parameters <- setdiff(c(baseline_names, "b_trt"), names(draws))
+  if (length(missing_parameters) > 0) {
+    stop(
+      "Expected posterior parameters were not found: ",
+      paste(missing_parameters, collapse = ", "),
+      ". Check the coefficient names produced by brms."
+    )
+  }
+
+  # ── Risks and risk difference ───────────────────────────────────────────
+  # Each interval coefficient is the log baseline hazard for the control
+  # group during that interval.
+  baseline_hazards <- exp(as.matrix(draws[, baseline_names, drop = FALSE]))
+
+  control_cumulative_hazard <- as.numeric(baseline_hazards %*% interval_width)
+
+  hazard_ratio_draws <- exp(draws$b_trt)
+
+  treatment_cumulative_hazard <- control_cumulative_hazard * hazard_ratio_draws
+
+  control_risk   <- 1 - exp(-control_cumulative_hazard)
+  treatment_risk <- 1 - exp(-treatment_cumulative_hazard)
+
+  # Primary estimand
+  risk_difference <- treatment_risk - control_risk
+
+  # ── Noninferiority decision rule ────────────────────────────────────────
+  upper_credible_limit <- unname(quantile(risk_difference, 0.975))
+  posterior_probability_below_margin <- mean(risk_difference < ni_margin)
+  noninferior <- upper_credible_limit < ni_margin
+
+  # ── Build table ─────────────────────────────────────────────────────────
+  make_cell <- function(x, percent = TRUE) {
+    scale <- if (percent) 100 else 1
+    sprintf("%.1f (%.1f, %.1f)",
+            scale * median(x),
+            scale * unname(quantile(x, 0.025)),
+            scale * unname(quantile(x, 0.975)))
+  }
+
+  n_counts <- dat %>% count(trt)
+  n_zero <- n_counts$n[n_counts$trt == 0]
+  n_one  <- n_counts$n[n_counts$trt == 1]
+
+  hdr_zero <- sprintf("%s (n=%d) (%%)", arm_labels["0"], n_zero)
+  hdr_one  <- sprintf("%s (n=%d) (%%)", arm_labels["1"], n_one)
+
+  out_tbl <- tibble(
+    " " = outcome_label,
+    !!hdr_one  := make_cell(treatment_risk),
+    !!hdr_zero := make_cell(control_risk),
+    "Difference (95% CrI)"   := make_cell(risk_difference),
+    "Hazard Ratio (95% CrI)" := make_cell(hazard_ratio_draws, percent = FALSE),
+    !!sprintf("Pr(Difference < %.0f%%)", 100 * ni_margin) := sprintf("%.4f", posterior_probability_below_margin),
+    "Noninferior" := ifelse(noninferior, "Yes", "No")
+  )
+
+  header <- c(" " = 1)
+  header[sprintf("Bayesian %d-Day Risk (95%% Credible Interval)", outcome_length)] <- 2
+  header["Treatment Effect"] <- 2
+  header["Noninferiority"] <- 2
+
+  table <- kable(out_tbl, format = "html", align = "l") %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+
+  return(table)
+}
+
+
+#' closed Persistent pain
+#'
+#' @description
+#' Returns the persistent pain shell for a trial's secondary outcomes, split by
+#' partially unmasked treatment assignment. BPI severity and BPI interference at 3,
+#' 6 and 12 months, reported as n, mean (SD), and the proportion with severe pain.
+#' Severe is a subscale score of 7 or above, per SAP section 11.2. This is the
+#' closed version of persistent_pain.
+#'
+#' @param analytic enrolled, treatment_arm, bpi_severity_score and bpi_interference_score 3mo - 12mo constructs
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_persistent_pain("Replace with Analytic Tibble")
+#'
+closed_persistent_pain <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('enrolled', 'treatment_arm',
+                           'bpi_severity_score_3mo', 'bpi_severity_score_6mo', 'bpi_severity_score_12mo',
+                           'bpi_interference_score_3mo', 'bpi_interference_score_6mo',
+                           'bpi_interference_score_12mo'),
+    example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Number",
+                      "Number", "Number", "Number"))
+
+  confirm_stability_of_related_visual('persistent_pain', '37e9750da248039593b40ebb1ce9c4aa')
+
+  df <- analytic %>%
+    select(enrolled, treatment_arm,
+           bpi_severity_score_3mo, bpi_severity_score_6mo, bpi_severity_score_12mo,
+           bpi_interference_score_3mo, bpi_interference_score_6mo, bpi_interference_score_12mo) %>%
+    filter(enrolled)
+
+  df_a <- df %>% filter(treatment_arm == 'Group A')
+  df_b <- df %>% filter(treatment_arm == 'Group B')
+
+  inner_data_extractor <- function(prefix, inner_df) {
+    recode_map <- setNames(c("3 Months", "6 Months", "12 Months"),
+                           paste0(prefix, c("3mo", "6mo", "12mo")))
+
+    long <- inner_df %>%
+      select(paste0(prefix, c("3mo", "6mo", "12mo"))) %>%
+      pivot_longer(cols = everything(), names_to = "timepoint", values_to = "score") %>%
+      mutate(timepoint = recode(timepoint, !!!recode_map),
+             score = as.numeric(score)) %>%
+      filter(!is.na(score))
+
+    # A timepoint with no observed scores in an arm must still produce a row, or
+    # the cbind against the other arm silently misaligns the timepoints.
+    stats <- long %>%
+      group_by(timepoint) %>%
+      summarise(n = n(),
+                mean_sd = format_mean_sd(score),
+                severe = paste0(sum(score >= 7), " (",
+                                trimws(format(round(100 * mean(score >= 7), 1), nsmall = 1)), "%)"),
+                .groups = 'drop')
+
+    tibble(timepoint = c("3 Months", "6 Months", "12 Months")) %>%
+      left_join(stats, by = 'timepoint') %>%
+      mutate(n = ifelse(is.na(n), 0, n),
+             mean_sd = ifelse(is.na(mean_sd), '-', mean_sd),
+             severe = ifelse(is.na(severe), '-', severe)) %>%
+      mutate(timepoint = factor(timepoint, c("3 Months", "6 Months", "12 Months"))) %>%
+      arrange(timepoint)
+  }
+
+  sev_a   <- inner_data_extractor('bpi_severity_score_', df_a)
+  sev_b   <- inner_data_extractor('bpi_severity_score_', df_b)[, 2:4]
+  sev_tot <- inner_data_extractor('bpi_severity_score_', df)[, 2:4]
+  sev_final <- cbind(sev_a, sev_b, sev_tot)
+
+  int_a   <- inner_data_extractor('bpi_interference_score_', df_a)
+  int_b   <- inner_data_extractor('bpi_interference_score_', df_b)[, 2:4]
+  int_tot <- inner_data_extractor('bpi_interference_score_', df)[, 2:4]
+  int_final <- cbind(int_a, int_b, int_tot)
+
+  final <- rbind(sev_final, int_final)
+
+  colnames(final) <- c('',
+                       'n (Group A)', 'Score, Mean (SD) (Group A)', 'Severe (7-10), n (%) (Group A)',
+                       'n (Group B)', 'Score, Mean (SD) (Group B)', 'Severe (7-10), n (%) (Group B)',
+                       'n ', 'Score, Mean (SD)', 'Severe (7-10), n (%)')
+
+  index_vec_a <- c("BPI Severity" = nrow(sev_final),
+                   "BPI Interference" = nrow(int_final))
+
+  border_rows <- c(0, cumsum(index_vec_a))
+
+  table_raw <- kable(final, format = "html", align = 'l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+
+  return(table_raw)
+}
+
+
+#' closed Opioid days
+#'
+#' @description
+#' Returns the opioid utilisation shell for a trial's secondary outcomes, split by
+#' partially unmasked treatment assignment. Total days of reported opioid use at
+#' baseline, 3, 6 and 12 months, reported as n and mean (SD). This is the closed
+#' version of opioid_days.
+#'
+#' @param analytic enrolled, treatment_arm, opioid_days baseline - 12mo constructs
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_opioid_days("Replace with Analytic Tibble")
+#'
+closed_opioid_days <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('enrolled', 'treatment_arm', 'opioid_days_baseline',
+                           'opioid_days_3mo', 'opioid_days_6mo', 'opioid_days_12mo'),
+    example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Number", "Number"))
+
+  confirm_stability_of_related_visual('opioid_days', '1334e478227e46e0e50b15b6c551ef3b')
+
+  df <- analytic %>%
+    select(enrolled, treatment_arm, opioid_days_baseline, opioid_days_3mo,
+           opioid_days_6mo, opioid_days_12mo) %>%
+    filter(enrolled)
+
+  df_a <- df %>% filter(treatment_arm == 'Group A')
+  df_b <- df %>% filter(treatment_arm == 'Group B')
+
+  inner_data_extractor <- function(inner_df) {
+    recode_map <- setNames(c("Baseline", "3 Months", "6 Months", "12 Months"),
+                           paste0('opioid_days_', c("baseline", "3mo", "6mo", "12mo")))
+
+    long <- inner_df %>%
+      select(paste0('opioid_days_', c("baseline", "3mo", "6mo", "12mo"))) %>%
+      pivot_longer(cols = everything(), names_to = "timepoint", values_to = "days") %>%
+      mutate(timepoint = recode(timepoint, !!!recode_map),
+             days = as.numeric(days)) %>%
+      filter(!is.na(days))
+
+    stats <- long %>%
+      group_by(timepoint) %>%
+      summarise(n = n(), mean_sd = format_mean_sd(days), .groups = 'drop')
+
+    tibble(timepoint = c("Baseline", "3 Months", "6 Months", "12 Months")) %>%
+      left_join(stats, by = 'timepoint') %>%
+      mutate(n = ifelse(is.na(n), 0, n),
+             mean_sd = ifelse(is.na(mean_sd), '-', mean_sd)) %>%
+      mutate(timepoint = factor(timepoint, c("Baseline", "3 Months", "6 Months", "12 Months"))) %>%
+      arrange(timepoint)
+  }
+
+  days_a   <- inner_data_extractor(df_a)
+  days_b   <- inner_data_extractor(df_b)[, 2:3]
+  days_tot <- inner_data_extractor(df)[, 2:3]
+
+  final <- cbind(days_a, days_b, days_tot)
+
+  colnames(final) <- c('',
+                       'n (Group A)', 'Opioid Days, Mean (SD) (Group A)',
+                       'n (Group B)', 'Opioid Days, Mean (SD) (Group B)',
+                       'n ', 'Opioid Days, Mean (SD)')
+
+  index_vec_a <- c("Days of Reported Opioid Use" = nrow(final))
+
+  border_rows <- c(0, cumsum(index_vec_a))
+
+  table_raw <- kable(final, format = "html", align = 'l') %>%
+    pack_rows(index = index_vec_a, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
+
+  return(table_raw)
+}
+
+
