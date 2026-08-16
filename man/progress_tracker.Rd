@@ -9,10 +9,10 @@ progress_tracker(
   style,
   showCheckPoints,
   trackers,
-  numeratorConstruct,
-  denominatorConstruct,
-  constructTrackerName,
-  constructUnits
+  numerator_construct = NA,
+  denominator_construct = NA,
+  construct_tracker_name = NA,
+  construct_units = NA
 )
 }
 \arguments{
@@ -20,18 +20,18 @@ progress_tracker(
 
 \item{style}{integers 1-5 indicating the type of style preffered for the progress indicator}
 
-\item{showCheckPoints}{boolean to render the names of the tasks next to the progress bar}
-
 \item{trackers}{a comma separated string of particular tracker names, use "ALL" for all trackers, full name doesnt need to be given}
 
-\item{numeratorConstruct}{the name of the construct you want to use as the numerator for your construct progress bar, 
+\item{numerator_construct}{the name of the construct you want to use as the numerator for your construct progress bar, 
 if denominator is NA this construct must be only TRUE or FALSE so it can be its own denominator}
 
-\item{denominatorConstruct}{optional denominator construct to allow the ratioing of one construct to another}
+\item{denominator_construct}{optional denominator construct to allow the ratioing of one construct to another}
 
-\item{constructTrackerName}{name of the tracker for the given construct params}
+\item{construct_tracker_name}{name of the tracker for the given construct params}
 
-\item{constructUnits}{the "units" that are being mesured within the given tracker}
+\item{construct_units}{the "units" that are being mesured within the given tracker}
+
+\item{show_check_points}{boolean to render the names of the tasks next to the progress bar}
 }
 \value{
 An HTML string that renders the progress bar with the associated settings
