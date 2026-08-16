@@ -2557,13 +2557,13 @@ library(gridExtra)
 #'
 #' @param analytic analytic data set that must include study_id, and the associated data set called progress_tracker (dummy column with all values set to TRUE)
 #' @param style integers 1-5 indicating the type of style preffered for the progress indicator
-#' @param showCheckPoints boolean to render the names of the tasks next to the progress bar
+#' @param show_check_points boolean to render the names of the tasks next to the progress bar
 #' @param trackers a comma separated string of particular tracker names, use "ALL" for all trackers, full name doesnt need to be given
-#' @param numeratorConstruct the name of the construct you want to use as the numerator for your construct progress bar, 
+#' @param numerator_construct the name of the construct you want to use as the numerator for your construct progress bar, 
 #' if denominator is NA this construct must be only TRUE or FALSE so it can be its own denominator
-#' @param denominatorConstruct optional denominator construct to allow the ratioing of one construct to another
-#' @param constructTrackerName name of the tracker for the given construct params
-#' @param constructUnits the "units" that are being mesured within the given tracker
+#' @param denominator_construct optional denominator construct to allow the ratioing of one construct to another
+#' @param construct_tracker_name name of the tracker for the given construct params
+#' @param construct_units the "units" that are being mesured within the given tracker
 #'
 #' @return An HTML string that renders the progress bar with the associated settings
 #' @export
@@ -2572,33 +2572,36 @@ library(gridExtra)
 #' progress_tracker(1, TRUE, "ALL")
 #' progress_tracker(5, FALSE, "FirstTracker, Sec")
 #' 
-progress_tracker <- function(analytic, style, showCheckPoints, trackers, numeratorConstruct, denominatorConstruct, constructTrackerName, constructUnits) {
+progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerator_construct = NA, denominator_construct = NA,
+                             construct_tracker_name = NA, construct_units = NA) {
   
   master_list <- list()
   
-  addProgressTracker <- function(master_list, name, tasks, statuses, done_values = "DONE", style = NA) {
-    
+  addProgressTracker <- function(master_list, name, tasks, statuses, done_values = "DONE", style = NA, units = NA) {
     if (length(tasks) != length(statuses)) {
       stop(paste0("addProgressTracker: 'tasks' and 'statuses' must be the same length (got ",
                   length(tasks), " tasks and ", length(statuses), " statuses) for tracker '", name, "'"))
     }
     
     if (name %in% names(master_list)) {
-      warning(paste0("addProgressTracker: a tracker named '", name, "' already exists and is being overwritten"))
+      stop(paste0("addProgressTracker: a tracker named '", name, "' already exists. ",
+                  "Every tracker needs its own unique name."))
     }
     
     normalized_status <- ifelse(statuses %in% done_values, "DONE", "PENDING")
     
     tracker_df <- data.frame(task = tasks, status = normalized_status, raw_status = statuses,
                              stringsAsFactors = FALSE)
-    
-    attr(tracker_df, "style") <- style   # reserved for future per-tracker styling
+    attr(tracker_df, "style") <- style
+    attr(tracker_df, "units") <- units
     
     master_list[[name]] <- tracker_df
     master_list
   }
   
-  ##if we have a progress tracker we can load for the analytic we load it and pass it through our new function to get the data the same way
+  
+  
+  #if we have a progress tracker we can load for the analytic we load it and pass it through our new function to get the data the same way
   if (file.exists("progress_tracker.csv")) {
     csv_data <- read_csv("progress_tracker.csv")
     
@@ -2622,19 +2625,137 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
     }
   }
   
+  numerator_provided <- !(length(numerator_construct) == 1 && is.na(numerator_construct))
   
+  if (numerator_provided) {
+    
+    #checks to make sure all arguments are supplied
+    if (length(denominator_construct) == 1 && is.na(denominator_construct)) {
+      stop("progress_tracker: numerator_construct was supplied, but denominator_construct was not.")
+    }
+    if (length(construct_tracker_name) == 1 && is.na(construct_tracker_name)) {
+      stop("progress_tracker: numerator_construct was supplied, but construct_tracker_name was not.")
+    }
+    if (length(construct_units) == 1 && is.na(construct_units)) {
+      stop("progress_tracker: numerator_construct was supplied, but construct_units was not.")
+    }
+    
+    
+    
+    resolveConstructTotals <- function(x, analytic) {
+      looks_numeric_here <- function(v) !is.na(suppressWarnings(as.numeric(v)))
+      
+      totals <- vapply(x, function(one_value) {
+        
+        if (looks_numeric_here(one_value)) {
+          return(as.numeric(one_value))
+        }
+        
+        if (!(one_value %in% names(analytic))) {
+          stop(paste0("resolveConstructTotals: '", one_value, "' is not a number and not a column found in `analytic`."))
+        }
+        
+        col_vals <- analytic[[one_value]]
+        
+        if (all(is.na(col_vals))) {
+          stop(paste0("resolveConstructTotals: analytic$", one_value, " has no non-NA values to sum."))
+        }
+        
+        sum(as.numeric(col_vals), na.rm = TRUE)
+        
+      }, numeric(1))
+      
+      counts <- vapply(x, function(one_value) {
+        if (looks_numeric_here(one_value)) {
+          return(1)   # a literal number isn't backed by rows, need to treat it as a single unit
+        }
+        
+        sum(!is.na(analytic[[one_value]]))
+        
+      }, numeric(1))
+      
+      list(total = totals, n = counts)
+    }
+    
+    # resolveConstruct(): resolves denominator_construct to a per-construct
+    # *multiplier* -- a literal number used as-is, or a column name whose
+    # mean is used as the per-row multiplier.
+    
+    resolveConstruct <- function(x, analytic) {
+      looks_numeric_here <- function(v) !is.na(suppressWarnings(as.numeric(v)))
+      
+      vapply(x, function(one_value) {
+        
+        if (looks_numeric_here(one_value)) {
+          return(as.numeric(one_value))
+        }
+        
+        if (!(one_value %in% names(analytic))) {
+          stop(paste0("resolveConstruct: '", one_value, "' is not a number and not a column found in `analytic`."))
+        }
+        
+        resolved_mean <- mean(analytic[[one_value]], na.rm = TRUE)
+        
+        if (is.nan(resolved_mean)) {
+          stop(paste0("resolveConstruct: analytic$", one_value, " has no non-NA values to average."))
+        }
+        
+        resolved_mean
+        
+      }, numeric(1))
+    }
+    
+    resolved_numerator_info         <- resolveConstructTotals(numerator_construct, analytic)
+    resolved_numerator              <- resolved_numerator_info$total
+    numerator_row_counts            <- resolved_numerator_info$n
+    resolved_denominator_multiplier <- resolveConstruct(denominator_construct, analytic)
+    
+    n_constructs <- length(resolved_numerator)
+    
+    check_construct_length <- function(x, param_name) {
+      if (!(length(x) == 1 || length(x) == n_constructs)) {
+        stop(paste0("progress_tracker: '", param_name, "' must have length 1 or length ",
+                    n_constructs, " (to match numerator_construct), but has length ", length(x), "."))
+      }
+    }
+    
+    check_construct_length(resolved_denominator_multiplier, "denominator_construct")
+    check_construct_length(construct_tracker_name, "construct_tracker_name")
+    check_construct_length(construct_units, "construct_units")
+    
+    # Recycle any length-1 constant up to n_constructs so every construct
+    # parameter lines up as n_constructs parallel vectors, uses rep to create a same size vector for each
+    recycle_construct <- function(x) if (length(x) == 1) rep(x, n_constructs) else x
+    
+    construct_numerators       <- recycle_construct(resolved_numerator)
+    denominator_multiplier_vec <- recycle_construct(resolved_denominator_multiplier)
+    construct_denominators     <- numerator_row_counts * denominator_multiplier_vec
+    construct_names            <- recycle_construct(construct_tracker_name)
+    construct_units_vec        <- recycle_construct(construct_units)
+    
+    
+    for (i in seq_len(n_constructs)) {
+      master_list <- addProgressTracker(
+        master_list,
+        name     = construct_names[i],
+        tasks    = construct_denominators[i],
+        statuses = construct_numerators[i],
+        units    = construct_units_vec[i]
+      )
+    }
+  
+  }
   
   target_trackers <- trimws(unlist(strsplit(trackers, ",")))
   global_style <- style   # the style this whole call was given; per-tracker overrides fall back to this
-  global_showNames <- showCheckPoints #need a secondary variable so things dont get messed up when switching for the 10/7 cases
+  revert_style <- FALSE
+  
   
   for (curr_tracker_name in names(master_list)) {
-    showCheckPoints <- global_showNames
     
-    if(trackers != "ALL"){
-      if(!any(startsWith(curr_tracker_name, target_trackers))){
-        next
-      }
+    #keeps styles only changing and changing back for numberStyle rendering
+    if(revert_style){
+      style <- global_style
     }
     
     #create simple standardized dataframe for each tracker that splits it into tasks and statuses
@@ -2643,9 +2764,20 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
     completions <- tracker_df$status
     raw_statuses <- tracker_df$raw_status   # pre-normalization values, used only by the ratio check below
     
+    #trackers only works to sort trackers that arent constructs, only contructs have units so this is why this works
+    if(is.na(attr(tracker_df, "units"))){
+      if(trackers != "ALL"){
+        if(!any(startsWith(curr_tracker_name, target_trackers))){
+          next
+        }
+      }
+    }
+    
     ##this logic is for future specific styling, we fall back on global style if this value is null
     tracker_style <- attr(tracker_df, "style")
     style <- if (!is.null(tracker_style) && !is.na(tracker_style)) tracker_style else global_style
+    
+    tracker_units <- attr(tracker_df, "units")
     
     total_tasks <- sum(tasks != "" & !is.na(tasks)) # recalculated below once the empty rows are actually filtered out
     completed_tasks <- 0
@@ -2673,9 +2805,8 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
     completed_tasks <- sum(df$status == "Completed", na.rm = TRUE)
     percent_complete <- (completed_tasks / total_tasks) * 100
     
-    #ratio format check
+    #ratio format check (if a progress bar is just 2 numbers we know how to handle it), will always be a ratio of the left number to the right
     looks_numeric <- function(x) !is.na(suppressWarnings(as.numeric(x)))
-    
     if (total_tasks == 1 && looks_numeric(df$task[1]) && looks_numeric(raw_statuses[valid_rows][1])) {
       ratio_total     <- round(as.numeric(df$task[1]))
       ratio_completed <- round(as.numeric(raw_statuses[valid_rows][1]))
@@ -2700,11 +2831,324 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
       total_tasks      <- ratio_total
       completed_tasks  <- ratio_completed
       percent_complete <- (completed_tasks / total_tasks) * 100
-      showCheckPoints  <- FALSE
+      
+      if (!(style %in% c(5, 7, 8))) {
+        style <- paste0("numberStyle", as.character(style))
+        revert_style <- TRUE
+      } else {
+        stop(paste0("progress_tracker: tracker '", curr_tracker_name, "' looks like a ratio (one numeric row), ",
+                    "but styles 5, 7, and 8 don't support ratio-style rendering. Progress trackers with ",
+                    "number-only rendering can only use styles 1, 2, 3, 4, or 6."))
+      }
+      
     }
     
+    #styling renders... 
     
-    if(style == 1){
+    if(style == "numberStyle1"){
+      #Subway bar converted
+      track_color   <- "#e5e7eb"
+      fill_color    <- "#10b981"
+      fill_color_dk <- "#059669"
+      
+      BAR_LENGTH <- 10   # fixed bar length in data units, independent of total_tasks
+      fraction <- completed_tasks / total_tasks
+      fill_end <- fraction * BAR_LENGTH
+      
+      tick_frac   <- seq(0, 1, length.out = 10)   # exactly even positions, 0 to 1 inclusive
+      tick_values <- round(tick_frac * total_tasks)  # nearest-whole-number label at each fixed position
+      tick_x <- tick_frac * BAR_LENGTH
+      
+      p <- ggplot() +
+        # Background empty track
+        annotate("segment", x = 0, xend = BAR_LENGTH, y = 0, yend = 0,
+                 color = track_color, linewidth = 14, lineend = "round")
+      
+      if (fraction > 0) {
+        p <- p + annotate("segment", x = 0, xend = ifelse (fraction != 1, fill_end - .4, fill_end), y = 0, yend = 0,
+                          color = fill_color, linewidth = 14, lineend = "round")
+      }
+      
+      p <- p +
+        # Tick marks + count labels along the bar
+        annotate("segment", x = tick_x, xend = tick_x, y = -0.32, yend = -0.18,
+                 color = "#9ca3af", linewidth = 0.7) +
+        annotate("text", x = tick_x, y = -0.55, label = tick_values,
+                 size = 3, fontface = "bold", color = "#6b7280") +
+        
+        # Percent badge, fixed just past the end of the (fixed-length) bar
+        annotate("point", x = BAR_LENGTH + 1.8, y = 0, size = 24, color = fill_color, alpha = 0.12) +
+        annotate("text", x = BAR_LENGTH + 1.8, y = 0, label = paste0(round(percent_complete), "%"),
+                 fontface = "bold", size = 6, color = fill_color_dk)
+      
+      #units
+      if (!is.na(tracker_units)) {
+        p <- p + annotate("text", x = BAR_LENGTH / 2, y = -0.9, label = paste0("(", tracker_units, ")"),
+                          fontface = "italic", size = 3.3, color = "#6b7280")
+      }
+      
+      p <- p +
+        coord_cartesian(ylim = c(-1.3, 1), xlim = c(-0.5, BAR_LENGTH + 2.7)) +
+        theme_void(base_size = 13) +
+        theme(
+          plot.background  = element_rect(fill = "white", color = NA),
+          panel.background = element_rect(fill = "white", color = NA),
+          plot.margin      = margin(24, 30, 22, 30),
+          plot.title       = element_text(face = "bold", size = 17, hjust = 0.5,
+                                          color = "#111827", margin = margin(b = 6)),
+          legend.position  = "none"
+        ) +
+        labs(title = curr_tracker_name)
+      
+    }
+    else if(style == "numberStyle2"){
+      #Donut style
+      ring_center <- 2.6
+      ring_width  <- 1.15
+      ring_outer  <- ring_center + ring_width / 2
+      
+      fraction <- completed_tasks / total_tasks
+      
+      #2 slices, filled and unfilled, ymin and ymax stay the same as before
+      ring_df <- data.frame(
+        status = factor(c("Completed", "Pending"), levels = c("Completed", "Pending")),
+        ymin   = c(0, fraction),
+        ymax   = c(fraction, 1)
+      )
+      
+      tick_frac   <- seq(0, 1, length.out = 10)   # exactly even angular positions around the ring
+      tick_values <- round(tick_frac * total_tasks)  # nearest-whole-number label at each fixed position
+      
+      tick_start <- ring_outer + 0.1
+      tick_end   <- tick_start + 0.35
+      
+      #near far labels just to avoid any future problems with collisons
+      label_near <- tick_end + 0.2
+      label_far  <- label_near + 0.5
+      label_radius <- ifelse(seq_along(tick_values) %% 2 == 1, label_near, label_far)
+      
+      tick_df <- data.frame(
+        frac    = tick_frac,
+        value   = tick_values,
+        x_start = tick_start,
+        x_end   = tick_end,
+        label_x = label_radius,
+        hjust   = ifelse(tick_frac < 0.5, 0, ifelse(tick_frac > 0.5, 1, 0.5))
+      )
+      
+      # y = 0.5 lands at the bottom of the ring (6 o'clock), since
+      # coord_polar's default start=0 puts y=0 at the top and sweeps
+      # clockwise -- halfway around from the top is straight down.
+      outer_radius <- max(tick_df$label_x) + 1 + ifelse(!is.na(tracker_units), 0.5, 0)
+      
+      p <- ggplot(ring_df) +
+        geom_rect(aes(xmin = ring_center - ring_width / 2, xmax = ring_center + ring_width / 2,
+                      ymin = ymin, ymax = ymax, fill = status), color = NA) +
+        coord_polar(theta = "y", start = 0) +
+        xlim(c(0, outer_radius)) +
+        scale_fill_manual(values = c("Completed" = "#3b82f6", "Pending" = "#e5e7eb")) +
+        geom_segment(data = tick_df, aes(x = x_start, xend = x_end, y = frac, yend = frac),
+                     inherit.aes = FALSE, color = "#9ca3af", linewidth = 0.6) +
+        geom_text(data = tick_df, aes(x = label_x, y = frac, label = value, hjust = hjust),
+                  inherit.aes = FALSE, size = 2.8, fontface = "bold", color = "#6b7280") +
+        annotate("text", x = 0, y = 0, label = paste0(round(percent_complete), "%"),
+                 size = 9, fontface = "bold", color = "#1f2937")
+      
+      #units
+      if (!is.na(tracker_units)) {
+        p <- p + annotate("text", x = outer_radius - 0.3, y = 0.5, label = paste0("(", tracker_units, ")"),
+                          fontface = "italic", size = 3.3, color = "#6b7280")
+      }
+      
+      p <- p +
+        theme_void(base_size = 13) +
+        theme(
+          plot.background  = element_rect(fill = "white", color = NA),
+          panel.background = element_rect(fill = "white", color = NA),
+          plot.margin      = margin(24, 30, 22, 30),
+          plot.title       = element_text(face = "bold", size = 17, hjust = 0.5,
+                                          color = "#111827", margin = margin(b = 6)),
+          legend.position  = "none"
+        ) +
+        labs(title = curr_tracker_name)
+      
+    }
+    else if(style == "numberStyle3"){
+      #Thermometer
+      tube_x <- 1.6
+      TUBE_HEIGHT <- 10   # fixed tube height in data units, independent of total_tasks
+      
+      fraction <- completed_tasks / total_tasks
+      fill_y <- fraction * TUBE_HEIGHT
+      
+      tick_frac   <- seq(0, 1, length.out = 10)   # exactly even positions, 0 to 1 inclusive
+      tick_values <- round(tick_frac * total_tasks)  # nearest-whole-number label at each fixed position
+      tick_y <- tick_frac * TUBE_HEIGHT
+      
+      p <- ggplot() +
+        annotate("segment", x = tube_x, xend = tube_x, y = 0, yend = TUBE_HEIGHT,
+                 color = "#cbd5e1", linewidth = 9, lineend = "round") +
+        annotate("segment", x = tube_x, xend = tube_x, y = 0, yend = TUBE_HEIGHT,
+                 color = "#f8fafc", linewidth = 6.4, lineend = "round")
+      
+      if (fraction > 0) {
+        p <- p + annotate("segment", x = tube_x, xend = tube_x, y = 0, yend = fill_y,
+                          color = "#ef4444", linewidth = 6.4, lineend = "round")
+      }
+      
+      p <- p +
+        annotate("segment", x = tube_x - 0.13, xend = tube_x - 0.13, y = 0.5, yend = TUBE_HEIGHT - 0.3,
+                 color = "white", alpha = 0.55, linewidth = 1.2, lineend = "round") +
+        annotate("point", x = tube_x, y = 0, size = 19, color = "#b91c1c") +
+        annotate("point", x = tube_x, y = 0, size = 16, color = "#ef4444") +
+        
+        # Tick marks + count labels along the tube's height
+        annotate("segment", x = tube_x + 0.55, xend = tube_x + 0.85, y = tick_y, yend = tick_y,
+                 color = "#111827", linewidth = 0.9) +
+        annotate("text", x = tube_x + 1.0, y = tick_y, label = tick_values,
+                 hjust = 0, size = 3.4, fontface = "bold", color = "#374151") +
+        annotate("point", x = tube_x - 1.15, y = TUBE_HEIGHT / 2, size = 28, color = "#ef4444", alpha = 0.10) +
+        annotate("text", x = tube_x - 1.15, y = TUBE_HEIGHT / 2,
+                 label = paste0(round(percent_complete), "%"),
+                 fontface = "bold", size = 6, color = "#b91c1c")
+      
+      #units
+      if (!is.na(tracker_units)) {
+        p <- p + annotate("text", x = tube_x + 2.8, y = TUBE_HEIGHT / 2, label = paste0("(", tracker_units, ")"),
+                          hjust = 0, fontface = "italic", size = 3.3, color = "#6b7280")
+      }
+      
+      p <- p +
+        coord_cartesian(xlim = c(tube_x - 2.1, tube_x + 5.6), ylim = c(-0.8, TUBE_HEIGHT + 0.8)) +
+        theme_void(base_size = 13) +
+        theme(
+          plot.background  = element_rect(fill = "white", color = NA),
+          panel.background = element_rect(fill = "white", color = NA),
+          plot.margin      = margin(24, 30, 22, 30),
+          plot.title       = element_text(face = "bold", size = 17, hjust = 0.5,
+                                          color = "#111827", margin = margin(b = 6)),
+          legend.position  = "none"
+        ) +
+        labs(title = curr_tracker_name)
+      
+    }
+    else if(style == "numberStyle4"){
+      #Fluid Battery
+      fraction <- completed_tasks / total_tasks
+      battery_fill <- if (percent_complete <= 33) "#ef4444" else if (percent_complete <= 66) "#f59e0b" else "#10b981"
+      battery_text <- if (percent_complete <= 33) "#b91c1c" else if (percent_complete <= 66) "#b45309" else "#047857"
+      
+      CASE_LENGTH <- 10   # fixed case length in data units, independent of total_tasks
+      fill_end <- fraction * CASE_LENGTH
+      
+      tick_frac   <- seq(0, 1, length.out = 10)   # exactly even positions, 0 to 1 inclusive
+      tick_values <- round(tick_frac * total_tasks)  # nearest-whole-number label at each fixed position
+      tick_x <- tick_frac * CASE_LENGTH
+      
+      p <- ggplot() +
+        annotate("rect", xmin = 0, xmax = CASE_LENGTH, ymin = -0.6, ymax = 0.6,
+                 fill = NA, color = "#374151", linewidth = 1.2) +
+        annotate("rect", xmin = CASE_LENGTH, xmax = CASE_LENGTH + 0.3, ymin = -0.25, ymax = 0.25,
+                 fill = "#374151", color = "#374151")
+      
+      if (fraction > 0) {
+        p <- p + annotate("rect", xmin = 0.08, xmax = fill_end, ymin = -0.48, ymax = 0.48,
+                          fill = battery_fill, color = NA)
+      }
+      
+      p <- p +
+        # Tick marks + count labels along the case
+        annotate("segment", x = tick_x, xend = tick_x, y = 0.6, yend = 0.85,
+                 color = "#9ca3af", linewidth = 0.7) +
+        annotate("text", x = tick_x, y = 1.15, label = tick_values,
+                 size = 3, fontface = "bold", color = "#6b7280") +
+        annotate("text", x = CASE_LENGTH + 1.6, y = 0.55, label = "⚡", size = 5) +
+        annotate("text", x = CASE_LENGTH + 1.6, y = 0, label = paste0(round(percent_complete), "%"),
+                 size = 6, fontface = "bold", color = battery_text)
+      
+      #units
+      if (!is.na(tracker_units)) {
+        p <- p + annotate("text", x = CASE_LENGTH / 2, y = -1.1, label = paste0("(", tracker_units, ")"),
+                          fontface = "italic", size = 3.3, color = "#6b7280")
+      }
+      
+      p <- p +
+        coord_cartesian(ylim = c(-1.6, 1.6), xlim = c(-0.2, CASE_LENGTH + 2.4)) +
+        theme_void(base_size = 13) +
+        theme(
+          plot.background  = element_rect(fill = "white", color = NA),
+          panel.background = element_rect(fill = "white", color = NA),
+          plot.margin      = margin(24, 30, 22, 30),
+          plot.title       = element_text(face = "bold", size = 17, hjust = 0.5,
+                                          color = "#111827", margin = margin(b = 6)),
+          legend.position  = "none"
+        ) +
+        labs(title = curr_tracker_name)
+    }
+    else if(style == "numberStyle6"){
+      #Throttle
+      fraction <- completed_tasks / total_tasks
+      
+      #2 slices again, filled and unfilled
+      dial_df <- data.frame(
+        status = factor(c("Completed", "Pending"), levels = c("Completed", "Pending")),
+        ymin   = c(0, fraction),
+        ymax   = c(fraction, 1)
+      )
+      
+      #needle is moved fluidly around the edge continously
+      needle_y  <- fraction
+      percent_y <- 1.5
+      
+      tick_frac   <- seq(0, 1, length.out = 10)   # exactly even positions along the half-circle sweep
+      tick_values <- round(tick_frac * total_tasks)  # nearest-whole-number label at each fixed position
+      tick_df <- data.frame(
+        frac  = tick_frac,
+        value = tick_values,
+        hjust = ifelse(tick_frac < 0.5, 1, ifelse(tick_frac > 0.5, 0, 0.5))
+      )
+      
+      p <- ggplot(dial_df) +
+        geom_rect(aes(xmin = 1.0, xmax = 3.0, ymin = ymin, ymax = ymax, fill = status), color = NA) +
+        
+        # Tick marks + count labels around the dial
+        geom_segment(data = tick_df, aes(x = 3.0, xend = 3.2, y = frac, yend = frac),
+                     inherit.aes = FALSE, color = "#9ca3af", linewidth = 0.8) +
+        geom_text(data = tick_df, aes(x = 3.4, y = frac, label = value, hjust = hjust),
+                  inherit.aes = FALSE, size = 2.8, fontface = "bold", color = "#6b7280") +
+        
+        # Needle hub + pointer
+        annotate("point", x = 0, y = 0, size = 9, color = "#1f2937") +
+        annotate("segment", x = 0.15, xend = 2.3, y = needle_y, yend = needle_y,
+                 color = "#1f2937", linewidth = 1.4, lineend = "round") +
+        
+        # Percent readout
+        annotate("text", x = 0.9, y = percent_y, label = paste0(round(percent_complete), "%"),
+                 size = 8, fontface = "bold", color = "#c2410c")
+      
+      #unit renders
+      if (!is.na(tracker_units)) {
+        p <- p + annotate("text", x = 1.9, y = percent_y, label = paste0("(", tracker_units, ")"),
+                          fontface = "italic", size = 3.3, color = "#6b7280")
+      }
+      
+      p <- p +
+        scale_fill_manual(values = c("Completed" = "#f97316", "Pending" = "#e5e7eb")) +
+        coord_polar(theta = "y", start = -pi / 2) +
+        ylim(c(0, 2)) +
+        xlim(c(0, 4.7)) +
+        theme_void(base_size = 13) +
+        theme(
+          plot.background  = element_rect(fill = "white", color = NA),
+          panel.background = element_rect(fill = "white", color = NA),
+          plot.margin      = margin(2, 8, 0, 8),
+          plot.title       = element_text(face = "bold", size = 17, hjust = 0.5,
+                                          color = "#111827", margin = margin(b = 6)),
+          legend.position  = "none"
+        ) +
+        labs(title = curr_tracker_name)
+    }
+    else if(style == 1){
       #Subway Style Bar
       track_color   <- "#e5e7eb"
       fill_color    <- "#10b981"
@@ -3247,8 +3691,8 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
     #print and then use ggplot to draw a thin rectangle below to seperate
     print(p)
     grid::grid.rect(
-      x = 0.5, y = 0.012, width = .94, height = 0.007,
-      gp = grid::gpar(fill = "black", col = NA)
+      x = 0.5, y = 0.012, width = .94, height = 0.004,
+      gp = grid::gpar(fill = "grey", col = NA)
     )
     
   }
