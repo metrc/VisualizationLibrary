@@ -2543,3 +2543,4 @@ adherence_by_id <- function(analytic, random_sample = NULL, facilitycodes = NULL
   return(img_tag)
 }
 
+
