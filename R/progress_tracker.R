@@ -80,14 +80,18 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
   if (numerator_provided) {
     
     #checks to make sure all arguments are supplied
-    if (length(denominator_construct) == 1 && is.na(denominator_construct)) {
-      stop("progress_tracker: numerator_construct was supplied, but denominator_construct was not.")
-    }
     if (length(construct_tracker_name) == 1 && is.na(construct_tracker_name)) {
       stop("progress_tracker: numerator_construct was supplied, but construct_tracker_name was not.")
     }
     if (length(construct_units) == 1 && is.na(construct_units)) {
       stop("progress_tracker: numerator_construct was supplied, but construct_units was not.")
+    }
+    
+    if (length(denominator_construct) == 1 && is.na(denominator_construct)) {
+      #single mode
+      
+    }else{
+      
     }
     
     
@@ -443,19 +447,19 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
       
       if (fraction > 0) {
         p <- p + annotate("segment", x = tube_x, xend = tube_x, y = 0, yend = fill_y,
-                          color = "#ef4444", linewidth = 6.4, lineend = "round")
+                          color = "#ef4444", linewidth = 6.3, lineend = "round")
       }
       
       p <- p +
         annotate("segment", x = tube_x - 0.13, xend = tube_x - 0.13, y = 0.5, yend = TUBE_HEIGHT - 0.3,
                  color = "white", alpha = 0.55, linewidth = 1.2, lineend = "round") +
-        annotate("point", x = tube_x, y = 0, size = 19, color = "#b91c1c") +
-        annotate("point", x = tube_x, y = 0, size = 16, color = "#ef4444") +
+        annotate("point", x = tube_x, y = -0.5 , size = 13, color = "#b91c1c") +
+        annotate("point", x = tube_x, y = -0.5, size = 10, color = "#ef4444") +
         
         # Tick marks + count labels along the tube's height
-        annotate("segment", x = tube_x + 0.55, xend = tube_x + 0.85, y = tick_y, yend = tick_y,
-                 color = "#111827", linewidth = 0.9) +
-        annotate("text", x = tube_x + 1.0, y = tick_y, label = tick_values,
+        annotate("segment", x = tube_x + 0.30, xend = tube_x + 0.60, y = tick_y, yend = tick_y,
+                 color = "#6b7280", linewidth = 0.7) +
+        annotate("text", x = tube_x + 0.75, y = tick_y, label = tick_values,
                  hjust = 0, size = 3.4, fontface = "bold", color = "#374151") +
         annotate("point", x = tube_x - 1.15, y = TUBE_HEIGHT / 2, size = 28, color = "#ef4444", alpha = 0.10) +
         annotate("text", x = tube_x - 1.15, y = TUBE_HEIGHT / 2,
@@ -773,15 +777,15 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
         annotate("segment", x = tube_x - 0.13, xend = tube_x - 0.13, y = 0.5, yend = total_tasks - 0.3,
                  color = "white", alpha = 0.55, linewidth = 1.2, lineend = "round") +
         # Bulb
-        annotate("point", x = tube_x, y = 0, size = 19, color = "#b91c1c") +
-        annotate("point", x = tube_x, y = 0, size = 16, color = "#ef4444")
+        annotate("point", x = tube_x, y = 0, size = 13, color = "#b91c1c") +
+        annotate("point", x = tube_x, y = 0, size = 10, color = "#ef4444")
       
       if(showCheckPoints){
         # Tick marks
-        p <- p + geom_segment(aes(x = tube_x + 0.55, xend = tube_x + 0.85, y = id - 0.5, yend = id - 0.5),
-                              color = "#111827", linewidth = 0.9) +
+        p <- p + geom_segment(aes(x = tube_x + 0.30, xend = tube_x + 0.60, y = id - 0.5, yend = id - 0.5),
+                              color = "#6b7280", linewidth = 0.7) +
           # Task labels
-          geom_text(aes(x = tube_x + 1.0, y = id - 0.5, label = task_wrap, color = status),
+          geom_text(aes(x = tube_x + .75, y = id - 0.5, label = task_wrap, color = status),
                     hjust = 0, size = 3.8, fontface = "bold", lineheight = 0.9)
       }
       
