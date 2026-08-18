@@ -1867,6 +1867,206 @@ consort_diagram_wb_publication <- function(analytic){
 
 
 
+#' NSAID Consort Diagram: publication
+#'
+#' @description
+#' Visualizes the flow of patients from screening through the primary and per-protocol
+#' analyses in the style of a publication CONSORT diagram. Treatment arms are pooled,
+#' making this the open companion of closed_consort_diagram_nsaid_publication.
+#'
+#' This consort diagram was made for the NSAID study, and so is unlikely to work for yours.
+#'
+#' For other consort diagrams that may better fit your study, refer to: consort_diagram, consort_diagram_no_definitive_event,
+#' dsmb_consort_diagram, dsmb_consort_diagram_pre_no_def, dsmb_consort_diagram_pre_no_def_shifted_consent,
+#' dsmb_consort_diagram_pre_shifted_consent, dsmb_nsaid_consort_diagram.
+#'
+#' @param analytic analytic data set that must include
+#' study_id, screened, ineligible, ineligibility_reasons, refused, constraint_48hrs,
+#' constraint_admin, constraint_noconsent, constraint_other, non_enrolled_other, randomized,
+#' adjudicated_inappropriate_enrollment, adjudicated_late_ineligible, surgery_or_healed_type,
+#' surgery_or_healed_days, crossover
+#' @param outcome_day day at which the primary outcome status is assessed, defaults to 365
+#'
+#' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
+#' @export
+#'
+#' @examples
+#' consort_diagram_nsaid_publication("Replace with Analytic Tibble")
+#'
+consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
+
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("screened", "ineligible", "ineligibility_reasons", "refused", "constraint_48hrs",
+                           "constraint_admin", "constraint_noconsent", "constraint_other", "non_enrolled_other",
+                           "randomized", "adjudicated_inappropriate_enrollment", "adjudicated_late_ineligible",
+                           "surgery_or_healed_type", "surgery_or_healed_days", "crossover"),
+    example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean",
+                      "Boolean", "Boolean", "Boolean", "Boolean",
+                      "Boolean", "Boolean", "Boolean",
+                      "NamedCategory['check' 'favorable_event' 'unfavorable_event']", "Number-U365", "Boolean"))
+
+  df <- analytic %>%
+    select(study_id, screened, ineligible, ineligibility_reasons, refused, constraint_48hrs,
+           constraint_admin, constraint_noconsent, constraint_other, non_enrolled_other,
+           randomized, adjudicated_inappropriate_enrollment, adjudicated_late_ineligible,
+           surgery_or_healed_type, surgery_or_healed_days, crossover) %>%
+    filter(screened)
+
+  ir_count <- df %>%
+    select(study_id, ineligibility_reasons) %>%
+    filter(!is.na(ineligibility_reasons)) %>%
+    separate_rows(ineligibility_reasons, sep = '; ') %>%
+    count(ineligibility_reasons) %>%
+    arrange(desc(n))
+
+  top_reasons <- ir_count %>%
+    pull(ineligibility_reasons)
+  top_reasons <- top_reasons[1:6]
+
+  ir_count_raw <- df %>%
+    select(study_id, ineligibility_reasons) %>%
+    filter(!is.na(ineligibility_reasons)) %>%
+    count(ineligibility_reasons)
+
+  top_reasons_count <- ir_count_raw %>%
+    filter(ineligibility_reasons %in% top_reasons) %>%
+    arrange(desc(n))
+
+  other_count <- sum(ir_count_raw$n) - sum(top_reasons_count$n)
+
+  other_row <- tibble(
+    ineligibility_reasons = 'Had other reasons',
+    n = other_count
+  )
+
+  top_reasons_count <- rbind(top_reasons_count, other_row)
+
+  constraint_48hrs <- sum(df$constraint_48hrs, na.rm = TRUE)
+  constraint_admin <- sum(df$constraint_admin, na.rm = TRUE)
+  constraint_noconsent <- sum(df$constraint_noconsent, na.rm = TRUE)
+  constraint_other <- sum(df$constraint_other | df$non_enrolled_other, na.rm = TRUE)
+
+  screened <- sum(df$screened, na.rm = TRUE)
+  ineligible <- sum(df$ineligible, na.rm = TRUE)
+  refused <- sum(df$refused, na.rm = TRUE)
+  not_enrolled_other <- sum(df$constraint_48hrs | df$constraint_admin | df$constraint_noconsent |
+                              df$constraint_other | df$non_enrolled_other, na.rm = TRUE)
+  excluded <- ineligible + refused + not_enrolled_other
+
+  randomized <- sum(df$randomized, na.rm = TRUE)
+
+  inappropriately_enrolled <- sum(df$randomized & df$adjudicated_inappropriate_enrollment, na.rm = TRUE)
+  late_ineligible <- sum(df$randomized & df$adjudicated_late_ineligible &
+                           (!df$adjudicated_inappropriate_enrollment | is.na(df$adjudicated_inappropriate_enrollment)), na.rm = TRUE)
+
+  itt_df <- df %>%
+    filter(randomized) %>%
+    filter(!adjudicated_inappropriate_enrollment | is.na(adjudicated_inappropriate_enrollment)) %>%
+    filter(!adjudicated_late_ineligible | is.na(adjudicated_late_ineligible))
+
+  itt <- nrow(itt_df)
+  surgery_or_healed_days_num <- suppressWarnings(as.numeric(itt_df$surgery_or_healed_days))
+  known_outcome <- sum(itt_df$surgery_or_healed_type %in% c('favorable_event', 'unfavorable_event') |
+                         (itt_df$surgery_or_healed_type == 'check' & surgery_or_healed_days_num >= 365), na.rm = TRUE)
+  unknown_outcome <- itt - known_outcome
+  adjudicated_healed <- sum(itt_df$surgery_or_healed_type == 'favorable_event', na.rm = TRUE)
+  non_adherent <- sum(itt_df$crossover, na.rm = TRUE)
+  per_protocol <- itt - non_adherent
+
+  consort_diagram <- grViz(paste0('
+    digraph g {
+      graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
+
+      title [style="filled", fillcolor="white", color="black", pos="2,5.5!", shape = box, width=2.4, height=.5,
+        label = "', screened, ' Patients were assessed for eligibility"];
+
+      box1 [style="filled", fillcolor="white", color="black", pos="4.5,3.25!", shape = box, width=2.4, height=.5,
+      labeljust=l,
+      label = <
+        <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+          <TR><TD ALIGN="LEFT">', excluded, ' Were excluded</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;    ', ineligible, ' Did not meet eligibility criteria</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[1], ' ', top_reasons_count$ineligibility_reasons[1], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[2], ' ', top_reasons_count$ineligibility_reasons[2], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[3], ' ', top_reasons_count$ineligibility_reasons[3], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[4], ' ', top_reasons_count$ineligibility_reasons[4], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[5], ' ', top_reasons_count$ineligibility_reasons[5], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[6], ' ', top_reasons_count$ineligibility_reasons[6], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[7], ' ', top_reasons_count$ineligibility_reasons[7], '</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;    ', refused, ' Declined consent</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;    ', not_enrolled_other, ' Were not enrolled for other reasons</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', constraint_admin, ' Had administrative reasons</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', constraint_noconsent, ' Had no consent given</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', constraint_48hrs, ' Were not enrolled within 48 hours</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', constraint_other, ' Had other or unknown reasons</TD></TR>
+        </TABLE>
+      >];
+
+      title2 [style="filled", fillcolor="white", color="black", pos="2,1!", shape = box, width=2.4, height=.5,
+        label = "', randomized, ' Underwent randomization"];
+
+      box2 [style="filled", fillcolor="white", color="black", pos="2,-0.35!", shape = box, width=2.4, height=.5, labeljust=l,
+        label = <
+          <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+            <TR><TD ALIGN="LEFT">', inappropriately_enrolled, ' Were determined to be inappropriately</TD></TR>
+            <TR><TD ALIGN="LEFT">enrolled by blinded adjudication committee</TD></TR>
+            <TR><TD ALIGN="LEFT">', late_ineligible, ' Were determined to be late ineligible by</TD></TR>
+            <TR><TD ALIGN="LEFT">blinded adjudication committee</TD></TR>
+          </TABLE>
+        >];
+
+      box3 [style="filled", fillcolor="white", color="black", pos="2,-1.6!", shape = box, width=2.4, height=.5,
+        label = "', itt, ' Were included in the intention-to-treat analysis"];
+
+      box4 [style="filled", fillcolor="white", color="black", pos="2,-3.1!", shape = box, width=2.4, height=.5, labeljust=l,
+        label = <
+          <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+            <TR><TD ALIGN="LEFT">', known_outcome, ' Had a known primary outcome status</TD></TR>
+            <TR><TD ALIGN="LEFT">at day ', outcome_day, '</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', adjudicated_healed, ' Were adjudicated as healed at the</TD></TR>
+            <TR><TD ALIGN="LEFT">final follow-up x ray and are counted as</TD></TR>
+            <TR><TD ALIGN="LEFT">having 365 days of event-free follow-up</TD></TR>
+            <TR><TD ALIGN="LEFT">', unknown_outcome, ' Had an unknown primary outcome</TD></TR>
+            <TR><TD ALIGN="LEFT">status at day ', outcome_day, ' and were censored at</TD></TR>
+            <TR><TD ALIGN="LEFT">last contact</TD></TR>
+          </TABLE>
+        >];
+
+      box5 [style="filled", fillcolor="white", color="black", pos="2,-5.15!", shape = box, width=2.4, height=.5, labeljust=l,
+        label = <
+          <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+            <TR><TD ALIGN="LEFT">', per_protocol, ' Were included in the per-protocol</TD></TR>
+            <TR><TD ALIGN="LEFT">analysis</TD></TR>
+            <TR><TD ALIGN="LEFT">', non_adherent, ' Were excluded from the per-protocol</TD></TR>
+            <TR><TD ALIGN="LEFT">analysis due to non-adherence</TD></TR>
+          </TABLE>
+        >]
+
+      midpoint [style=invis, pos="1.34,3.125!, width=0, height=0"]
+
+      # Relationships
+      title -> title2
+      midpoint -> box1
+      title2 -> box2
+      box2 -> box3
+      box3 -> box4
+      box4 -> box5
+    }
+  '))
+  svg_content <- DiagrammeRsvg::export_svg(consort_diagram)
+  temp_svg_path <- tempfile(fileext = ".svg")
+  writeLines(svg_content, temp_svg_path)
+  temp_png_path <- tempfile(fileext = ".png")
+  rsvg::rsvg_png(temp_svg_path, temp_png_path, width = 1200, height = 1200)
+  image_data <- base64enc::base64encode(temp_png_path)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" alt="Consort Diagram" style="max-width: 100%%; width: 1200px;">', image_data)
+  file.remove(c(temp_svg_path, temp_png_path))
+  return(img_tag)
+}
+
+
+
 #' Visualization Library: Issues per site (Basic)
 #'
 #' @description Visualizes the number of open and untouched issues per site,
