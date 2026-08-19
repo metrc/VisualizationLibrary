@@ -8,10 +8,11 @@ consort_diagram_nsaid_publication(analytic, outcome_day = 365)
 }
 \arguments{
 \item{analytic}{analytic data set that must include
-study_id, screened, ineligible, ineligibility_reasons, refused, constraint_48hrs,
-constraint_admin, constraint_noconsent, constraint_other, non_enrolled_other, randomized,
-adjudicated_inappropriate_enrollment, adjudicated_late_ineligible, surgery_or_healed_type,
-surgery_or_healed_days, crossover}
+study_id, screened, eligible, ineligibility_reasons, refused, not_consented, consented,
+constraint_48hrs, constraint_admin, constraint_noconsent, constraint_other,
+nonparticipation_other_study_coenrolled, nonparticipation_other_reason, randomized,
+adjudicated_inappropriate_enrollment, adjudicated_late_ineligible, adjudicated_late_refusal,
+adjudicated_physician_withdrawn, df_surg_start_date, surgery_or_healed_type, surgery_or_healed_days, crossover}
 
 \item{outcome_day}{day at which the primary outcome status is assessed, defaults to 365}
 }

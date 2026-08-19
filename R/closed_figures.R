@@ -264,10 +264,12 @@ closed_consort_diagram_wb_publication <- function(analytic){
 #' This consort diagram was made for the NSAID study, and so is unlikely to work for yours.
 #'
 #' @param analytic analytic data set that must include
-#' study_id, screened, ineligible, ineligibility_reasons, refused, constraint_48hrs,
-#' constraint_admin, constraint_noconsent, constraint_other, non_enrolled_other, randomized,
-#' adjudicated_inappropriate_enrollment, adjudicated_late_ineligible, surgery_or_healed_type,
-#' surgery_or_healed_days, crossover, treatment_arm
+#' study_id, screened, eligible, ineligibility_reasons, refused, not_consented, consented,
+#' constraint_48hrs, constraint_admin, constraint_noconsent, constraint_other,
+#' nonparticipation_other_study_coenrolled, nonparticipation_other_reason, randomized,
+#' adjudicated_inappropriate_enrollment, adjudicated_late_ineligible, adjudicated_late_refusal,
+#' adjudicated_physician_withdrawn, df_surg_start_date, surgery_or_healed_type, surgery_or_healed_days,
+#' crossover, treatment_arm
 #' @param outcome_day day at which the primary outcome status is assessed, defaults to 365
 #' @param arm_a_str label for the Group A treatment arm, defaults to "Group A"
 #' @param arm_b_str label for the Group B treatment arm, defaults to "Group B"
@@ -280,23 +282,29 @@ closed_consort_diagram_wb_publication <- function(analytic){
 #'
 closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, arm_a_str="Group A", arm_b_str="Group B"){
 
-  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', 'bbfc65ed48c40edca38d6fc6c128d493')
+  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', 'd1a71290767318615b950cfa27238fa0')
 
   analytic <- if_needed_generate_example_data(
     analytic,
-    example_constructs = c("screened", "ineligible", "ineligibility_reasons", "refused", "constraint_48hrs",
-                           "constraint_admin", "constraint_noconsent", "constraint_other", "non_enrolled_other",
+    example_constructs = c("screened", "eligible", "ineligibility_reasons", "refused", "not_consented",
+                           "consented", "constraint_48hrs", "constraint_admin", "constraint_noconsent",
+                           "constraint_other", "nonparticipation_other_study_coenrolled", "nonparticipation_other_reason",
                            "randomized", "adjudicated_inappropriate_enrollment", "adjudicated_late_ineligible",
+                           "adjudicated_late_refusal", "adjudicated_physician_withdrawn", "df_surg_start_date",
                            "surgery_or_healed_type", "surgery_or_healed_days", "crossover", "treatment_arm"),
     example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean",
+                      "Boolean", "Boolean", "Boolean",
+                      "Boolean", "Boolean", "Date",
                       "NamedCategory['check' 'favorable_event' 'unfavorable_event']", "Number-U365", "Boolean", "TreatmentArm"))
 
   df <- analytic %>%
-    select(study_id, screened, ineligible, ineligibility_reasons, refused, constraint_48hrs,
-           constraint_admin, constraint_noconsent, constraint_other, non_enrolled_other,
+    select(study_id, screened, eligible, ineligibility_reasons, refused, not_consented, consented,
+           constraint_48hrs, constraint_admin, constraint_noconsent, constraint_other,
+           nonparticipation_other_study_coenrolled, nonparticipation_other_reason,
            randomized, adjudicated_inappropriate_enrollment, adjudicated_late_ineligible,
+           adjudicated_late_refusal, adjudicated_physician_withdrawn, df_surg_start_date,
            surgery_or_healed_type, surgery_or_healed_days, crossover, treatment_arm) %>%
     filter(screened)
 
@@ -320,39 +328,68 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
     filter(ineligibility_reasons %in% top_reasons) %>%
     arrange(desc(n))
 
-  other_count <- sum(ir_count_raw$n) - sum(top_reasons_count$n)
+  other_count <- sum(df$screened, na.rm = TRUE) - sum(df$eligible, na.rm = TRUE) - sum(top_reasons_count$n)
 
   other_row <- tibble(
     ineligibility_reasons = 'Had other reasons',
     n = other_count
   )
 
-  top_reasons_count <- rbind(top_reasons_count, other_row)
+  top_reasons_count <- rbind(top_reasons_count, other_row) %>%
+    filter(!is.na(ineligibility_reasons))
 
-  constraint_48hrs <- sum(df$constraint_48hrs, na.rm = TRUE)
-  constraint_admin <- sum(df$constraint_admin, na.rm = TRUE)
-  constraint_noconsent <- sum(df$constraint_noconsent, na.rm = TRUE)
-  constraint_other <- sum(df$constraint_other | df$non_enrolled_other, na.rm = TRUE)
+  reason_rows <- paste0('<TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n, ' ',
+                        top_reasons_count$ineligibility_reasons, '</TD></TR>', collapse = '')
 
   screened <- sum(df$screened, na.rm = TRUE)
-  ineligible <- sum(df$ineligible, na.rm = TRUE)
-  refused <- sum(df$refused, na.rm = TRUE)
-  not_enrolled_other <- sum(df$constraint_48hrs | df$constraint_admin | df$constraint_noconsent |
-                              df$constraint_other | df$non_enrolled_other, na.rm = TRUE)
-  excluded <- ineligible + refused + not_enrolled_other
+  eligible <- sum(df$eligible, na.rm = TRUE)
+  ineligible <- screened - eligible
 
-  randomized <- sum(df$randomized, na.rm = TRUE)
+  eligible_df <- df %>% filter(eligible)
+  refused <- sum(eligible_df$refused, na.rm = TRUE)
+  not_enrolled_other <- sum(eligible_df$not_consented, na.rm = TRUE)
+
+  ne_reasons <- eligible_df %>%
+    filter(not_consented) %>%
+    mutate(ne_reason = case_when(
+      constraint_admin %in% TRUE ~ 'admin',
+      constraint_noconsent %in% TRUE ~ 'noconsent',
+      constraint_48hrs %in% TRUE ~ '48hrs',
+      constraint_other %in% TRUE ~ 'other_constraint',
+      nonparticipation_other_study_coenrolled %in% TRUE ~ 'coenrolled',
+      nonparticipation_other_reason %in% TRUE ~ 'other_nonparticipation',
+      TRUE ~ 'unknown')) %>%
+    pull(ne_reason)
+  constraint_admin <- sum(ne_reasons == 'admin')
+  constraint_noconsent <- sum(ne_reasons == 'noconsent')
+  constraint_48hrs <- sum(ne_reasons == '48hrs')
+  constraint_other <- sum(ne_reasons == 'other_constraint')
+  coenrolled <- sum(ne_reasons == 'coenrolled')
+  other_nonparticipation <- sum(ne_reasons == 'other_nonparticipation')
+  ne_unknown <- sum(ne_reasons == 'unknown')
+
+  rand_df <- eligible_df %>%
+    filter(consented) %>%
+    filter(randomized)
+  randomized <- nrow(rand_df)
+  excluded <- screened - randomized
 
   arm_counts <- function(inner_df) {
-    assigned <- sum(inner_df$randomized, na.rm = TRUE)
-    inappropriately_enrolled <- sum(inner_df$randomized & inner_df$adjudicated_inappropriate_enrollment, na.rm = TRUE)
-    late_ineligible <- sum(inner_df$randomized & inner_df$adjudicated_late_ineligible &
-                             (!inner_df$adjudicated_inappropriate_enrollment | is.na(inner_df$adjudicated_inappropriate_enrollment)), na.rm = TRUE)
+    assigned <- nrow(inner_df)
+    inappropriately_enrolled <- sum(inner_df$adjudicated_inappropriate_enrollment, na.rm = TRUE)
+    late_ineligible <- sum(inner_df$adjudicated_late_ineligible, na.rm = TRUE)
+    late_refusal <- sum(inner_df$adjudicated_late_refusal, na.rm = TRUE)
+    physician_withdrawn <- sum(inner_df$adjudicated_physician_withdrawn, na.rm = TRUE)
 
     itt_df <- inner_df %>%
-      filter(randomized) %>%
       filter(!adjudicated_inappropriate_enrollment | is.na(adjudicated_inappropriate_enrollment)) %>%
-      filter(!adjudicated_late_ineligible | is.na(adjudicated_late_ineligible))
+      filter(!adjudicated_late_ineligible | is.na(adjudicated_late_ineligible)) %>%
+      filter(!adjudicated_late_refusal | is.na(adjudicated_late_refusal)) %>%
+      filter(!adjudicated_physician_withdrawn | is.na(adjudicated_physician_withdrawn))
+
+    no_definitive_fixation <- sum(is.na(itt_df$df_surg_start_date))
+    itt_df <- itt_df %>%
+      filter(!is.na(df_surg_start_date))
 
     itt <- nrow(itt_df)
     surgery_or_healed_days_num <- suppressWarnings(as.numeric(itt_df$surgery_or_healed_days))
@@ -365,6 +402,9 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
       assigned = assigned,
       inappropriately_enrolled = inappropriately_enrolled,
       late_ineligible = late_ineligible,
+      late_refusal = late_refusal,
+      physician_withdrawn = physician_withdrawn,
+      no_definitive_fixation = no_definitive_fixation,
       itt = itt,
       known_outcome = known_outcome,
       unknown_outcome = itt - known_outcome,
@@ -374,12 +414,17 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
     )
   }
 
-  a <- arm_counts(df %>% filter(treatment_arm == 'Group A'))
-  b <- arm_counts(df %>% filter(treatment_arm == 'Group B'))
+  a <- arm_counts(rand_df %>% filter(treatment_arm == 'Group A'))
+  b <- arm_counts(rand_df %>% filter(treatment_arm == 'Group B'))
+
+  show_no_df <- (a$no_definitive_fixation + b$no_definitive_fixation) > 0
 
   arm_column <- function(arm, arm_str, x, suffix) {
+    no_df_row <- ifelse(show_no_df,
+                        paste0('<TR><TD ALIGN="LEFT">&#8203;    ', arm$no_definitive_fixation, ' Did not complete definitive fixation</TD></TR>'),
+                        '')
     paste0('
-      assigned', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-0.35!", shape = box, width=2.4, height=.5, labeljust=l,
+      assigned', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-1.5!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', arm$assigned, ' Were assigned to receive ', arm_str, '</TD></TR>
@@ -387,10 +432,15 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
             <TR><TD ALIGN="LEFT">enrolled by blinded adjudication committee</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', arm$late_ineligible, ' Were determined to be late ineligible by</TD></TR>
             <TR><TD ALIGN="LEFT">blinded adjudication committee</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$late_refusal, ' Were determined to be late refusals by</TD></TR>
+            <TR><TD ALIGN="LEFT">blinded adjudication committee</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$physician_withdrawn, ' Were determined to be physician</TD></TR>
+            <TR><TD ALIGN="LEFT">withdrawn by blinded adjudication committee</TD></TR>
+            ', no_df_row, '
           </TABLE>
         >];
 
-      itt', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-1.85!", shape = box, width=2.4, height=.5, labeljust=l,
+      itt', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-3.4!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', arm$itt, ' Were included in the intention-to-treat</TD></TR>
@@ -398,7 +448,7 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
           </TABLE>
         >];
 
-      outcome', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-3.5!", shape = box, width=2.4, height=.5, labeljust=l,
+      outcome', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-5.3!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', arm$known_outcome, ' Had a known primary outcome status</TD></TR>
@@ -412,7 +462,7 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
           </TABLE>
         >];
 
-      pp', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-5.55!", shape = box, width=2.4, height=.5, labeljust=l,
+      pp', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-7.5!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', arm$per_protocol, ' Were included in the per-protocol</TD></TR>
@@ -428,41 +478,42 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
     digraph g {
       graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
 
-      title [style="filled", fillcolor="white", color="black", pos="2,5.5!", shape = box, width=2.4, height=.5,
+      title [style="filled", fillcolor="white", color="black", pos="2,7.2!", shape = box, width=2.4, height=.5,
         label = "', screened, ' Patients were assessed for eligibility"];
 
-      box1 [style="filled", fillcolor="white", color="black", pos="4.5,3.25!", shape = box, width=2.4, height=.5,
+      box1 [style="filled", fillcolor="white", color="black", pos="5.4,3.8!", shape = box, width=2.4, height=.5,
       labeljust=l,
       label = <
         <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
           <TR><TD ALIGN="LEFT">', excluded, ' Were excluded</TD></TR>
           <TR><TD ALIGN="LEFT">&#8203;    ', ineligible, ' Did not meet eligibility criteria</TD></TR>
-          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[1], ' ', top_reasons_count$ineligibility_reasons[1], '</TD></TR>
-          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[2], ' ', top_reasons_count$ineligibility_reasons[2], '</TD></TR>
-          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[3], ' ', top_reasons_count$ineligibility_reasons[3], '</TD></TR>
-          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[4], ' ', top_reasons_count$ineligibility_reasons[4], '</TD></TR>
-          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[5], ' ', top_reasons_count$ineligibility_reasons[5], '</TD></TR>
-          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[6], ' ', top_reasons_count$ineligibility_reasons[6], '</TD></TR>
-          <TR><TD ALIGN="LEFT">&#8203;        ', top_reasons_count$n[7], ' ', top_reasons_count$ineligibility_reasons[7], '</TD></TR>
+          ', reason_rows, '
           <TR><TD ALIGN="LEFT">&#8203;    ', refused, ' Declined consent</TD></TR>
           <TR><TD ALIGN="LEFT">&#8203;    ', not_enrolled_other, ' Were not enrolled for other reasons</TD></TR>
           <TR><TD ALIGN="LEFT">&#8203;        ', constraint_admin, ' Had administrative reasons</TD></TR>
-          <TR><TD ALIGN="LEFT">&#8203;        ', constraint_noconsent, ' Had no consent given</TD></TR>
-          <TR><TD ALIGN="LEFT">&#8203;        ', constraint_48hrs, ' Were not enrolled within 48 hours</TD></TR>
-          <TR><TD ALIGN="LEFT">&#8203;        ', constraint_other, ' Had other or unknown reasons</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', constraint_noconsent, ' Had no one there to consent them</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', constraint_48hrs, ' Were more than 48 hours post</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;            definitive fixation surgery</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', constraint_other, ' Had other constraints</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', coenrolled, ' Were enrolled in a study that does</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;            not allow co-enrollment</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', other_nonparticipation, ' Were not able to participate for</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;            other reasons</TD></TR>
+          <TR><TD ALIGN="LEFT">&#8203;        ', ne_unknown, ' Had other or unknown reasons</TD></TR>
         </TABLE>
       >];
 
-      title2 [style="filled", fillcolor="white", color="black", pos="2,1!", shape = box, width=2.4, height=.5,
+      title2 [style="filled", fillcolor="white", color="black", pos="2,0.4!", shape = box, width=2.4, height=.5,
         label = "', randomized, ' Underwent randomization"];
     ',
     arm_column(a, arm_a_str, '-0.85', '_a'),
     arm_column(b, arm_b_str, '4.85', '_b'),
     '
-      midpoint [style=invis, pos="1.34,3.125!, width=0, height=0"]
+      midpoint [style=invis, pos="2,3.8!", width=0, height=0, fixedsize=true]
 
       # Relationships
-      title -> title2
+      title -> midpoint [arrowhead=none]
+      midpoint -> title2
       midpoint -> box1
       title2 -> assigned_a
       title2 -> assigned_b
