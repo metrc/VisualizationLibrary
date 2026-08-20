@@ -282,7 +282,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
 #'
 closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, arm_a_str="Group A", arm_b_str="Group B"){
 
-  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '84b6146b119aee6b3f1699dbd84ee0d8')
+  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '28b37a77576262fd3ebe308788574a30')
 
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -454,16 +454,15 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
       outcome', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-5.3!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
-            <TR><TD ALIGN="LEFT">', arm$known_outcome, ' Had a known primary outcome status</TD></TR>
-            <TR><TD ALIGN="LEFT">at day ', outcome_day, '</TD></TR>
+            <TR><TD ALIGN="LEFT">', arm$known_outcome, ' Had ', outcome_day, ' days of follow-up without</TD></TR>
+            <TR><TD ALIGN="LEFT">a surgery to promote union</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', arm$adjudicated_healed, ' Were adjudicated as healed at the</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    final follow-up x ray and are counted as</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    having 365 days of event-free follow-up</TD></TR>
-            <TR><TD ALIGN="LEFT">', arm$unfavorable_event, ' Were adjudicated to have had a</TD></TR>
-            <TR><TD ALIGN="LEFT">surgery to promote union</TD></TR>
-            <TR><TD ALIGN="LEFT">', arm$unknown_outcome, ' Had an unknown primary outcome</TD></TR>
-            <TR><TD ALIGN="LEFT">status at day ', outcome_day, ' and were censored at</TD></TR>
-            <TR><TD ALIGN="LEFT">last contact</TD></TR>
+            <TR><TD ALIGN="LEFT">', arm$unfavorable_event, ' Had a surgery to promote union</TD></TR>
+            <TR><TD ALIGN="LEFT">', arm$unknown_outcome, ' Had less than ', outcome_day, ' days of follow-up</TD></TR>
+            <TR><TD ALIGN="LEFT">without a surgery to promote union and</TD></TR>
+            <TR><TD ALIGN="LEFT">were censored at last contact</TD></TR>
           </TABLE>
         >];
 
