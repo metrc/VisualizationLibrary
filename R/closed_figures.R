@@ -282,7 +282,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
 #'
 closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, arm_a_str="Group A", arm_b_str="Group B"){
 
-  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', 'd1a71290767318615b950cfa27238fa0')
+  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '84b6146b119aee6b3f1699dbd84ee0d8')
 
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -393,9 +393,11 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
 
     itt <- nrow(itt_df)
     surgery_or_healed_days_num <- suppressWarnings(as.numeric(itt_df$surgery_or_healed_days))
-    known_outcome <- sum(itt_df$surgery_or_healed_type %in% c('favorable_event', 'unfavorable_event') |
-                           (itt_df$surgery_or_healed_type == 'check' & surgery_or_healed_days_num >= 365), na.rm = TRUE)
-    adjudicated_healed <- sum(itt_df$surgery_or_healed_type == 'favorable_event', na.rm = TRUE)
+    full_follow_up <- !is.na(surgery_or_healed_days_num) & surgery_or_healed_days_num >= 365
+    known_outcome <- sum(itt_df$surgery_or_healed_type %in% 'favorable_event' |
+                           (itt_df$surgery_or_healed_type %in% 'check' & full_follow_up))
+    adjudicated_healed <- sum(itt_df$surgery_or_healed_type %in% 'favorable_event')
+    unfavorable_event <- sum(itt_df$surgery_or_healed_type %in% 'unfavorable_event')
     non_adherent <- sum(itt_df$crossover, na.rm = TRUE)
 
     list(
@@ -407,7 +409,8 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
       no_definitive_fixation = no_definitive_fixation,
       itt = itt,
       known_outcome = known_outcome,
-      unknown_outcome = itt - known_outcome,
+      unfavorable_event = unfavorable_event,
+      unknown_outcome = itt - known_outcome - unfavorable_event,
       adjudicated_healed = adjudicated_healed,
       per_protocol = itt - non_adherent,
       non_adherent = non_adherent
@@ -454,8 +457,10 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
             <TR><TD ALIGN="LEFT">', arm$known_outcome, ' Had a known primary outcome status</TD></TR>
             <TR><TD ALIGN="LEFT">at day ', outcome_day, '</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', arm$adjudicated_healed, ' Were adjudicated as healed at the</TD></TR>
-            <TR><TD ALIGN="LEFT">final follow-up x ray and are counted as</TD></TR>
-            <TR><TD ALIGN="LEFT">having 365 days of event-free follow-up</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    final follow-up x ray and are counted as</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    having 365 days of event-free follow-up</TD></TR>
+            <TR><TD ALIGN="LEFT">', arm$unfavorable_event, ' Were adjudicated to have had a</TD></TR>
+            <TR><TD ALIGN="LEFT">surgery to promote union</TD></TR>
             <TR><TD ALIGN="LEFT">', arm$unknown_outcome, ' Had an unknown primary outcome</TD></TR>
             <TR><TD ALIGN="LEFT">status at day ', outcome_day, ' and were censored at</TD></TR>
             <TR><TD ALIGN="LEFT">last contact</TD></TR>

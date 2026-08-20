@@ -2007,10 +2007,12 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
 
   itt <- nrow(itt_df)
   surgery_or_healed_days_num <- suppressWarnings(as.numeric(itt_df$surgery_or_healed_days))
-  known_outcome <- sum(itt_df$surgery_or_healed_type %in% c('favorable_event', 'unfavorable_event') |
-                         (itt_df$surgery_or_healed_type == 'check' & surgery_or_healed_days_num >= 365), na.rm = TRUE)
-  unknown_outcome <- itt - known_outcome
-  adjudicated_healed <- sum(itt_df$surgery_or_healed_type == 'favorable_event', na.rm = TRUE)
+  full_follow_up <- !is.na(surgery_or_healed_days_num) & surgery_or_healed_days_num >= 365
+  known_outcome <- sum(itt_df$surgery_or_healed_type %in% 'favorable_event' |
+                         (itt_df$surgery_or_healed_type %in% 'check' & full_follow_up))
+  adjudicated_healed <- sum(itt_df$surgery_or_healed_type %in% 'favorable_event')
+  unfavorable_event <- sum(itt_df$surgery_or_healed_type %in% 'unfavorable_event')
+  unknown_outcome <- itt - known_outcome - unfavorable_event
   non_adherent <- sum(itt_df$crossover, na.rm = TRUE)
   per_protocol <- itt - non_adherent
 
@@ -2070,8 +2072,10 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
             <TR><TD ALIGN="LEFT">', known_outcome, ' Had a known primary outcome status</TD></TR>
             <TR><TD ALIGN="LEFT">at day ', outcome_day, '</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', adjudicated_healed, ' Were adjudicated as healed at the</TD></TR>
-            <TR><TD ALIGN="LEFT">final follow-up x ray and are counted as</TD></TR>
-            <TR><TD ALIGN="LEFT">having 365 days of event-free follow-up</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    final follow-up x ray and are counted as</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    having 365 days of event-free follow-up</TD></TR>
+            <TR><TD ALIGN="LEFT">', unfavorable_event, ' Were adjudicated to have had a</TD></TR>
+            <TR><TD ALIGN="LEFT">surgery to promote union</TD></TR>
             <TR><TD ALIGN="LEFT">', unknown_outcome, ' Had an unknown primary outcome</TD></TR>
             <TR><TD ALIGN="LEFT">status at day ', outcome_day, ' and were censored at</TD></TR>
             <TR><TD ALIGN="LEFT">last contact</TD></TR>
