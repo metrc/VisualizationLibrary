@@ -2069,16 +2069,15 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
       box4 [style="filled", fillcolor="white", color="black", pos="2,-4.9!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
-            <TR><TD ALIGN="LEFT">', known_outcome, ' Had a known primary outcome status</TD></TR>
-            <TR><TD ALIGN="LEFT">at day ', outcome_day, '</TD></TR>
+            <TR><TD ALIGN="LEFT">', known_outcome, ' Had ', outcome_day, ' days of follow-up without</TD></TR>
+            <TR><TD ALIGN="LEFT">a surgery to promote union</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', adjudicated_healed, ' Were adjudicated as healed at the</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    final follow-up x ray and are counted as</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    having 365 days of event-free follow-up</TD></TR>
-            <TR><TD ALIGN="LEFT">', unfavorable_event, ' Were adjudicated to have had a</TD></TR>
-            <TR><TD ALIGN="LEFT">surgery to promote union</TD></TR>
-            <TR><TD ALIGN="LEFT">', unknown_outcome, ' Had an unknown primary outcome</TD></TR>
-            <TR><TD ALIGN="LEFT">status at day ', outcome_day, ' and were censored at</TD></TR>
-            <TR><TD ALIGN="LEFT">last contact</TD></TR>
+            <TR><TD ALIGN="LEFT">', unfavorable_event, ' Had a surgery to promote union</TD></TR>
+            <TR><TD ALIGN="LEFT">', unknown_outcome, ' Had less than ', outcome_day, ' days of follow-up</TD></TR>
+            <TR><TD ALIGN="LEFT">without a surgery to promote union and</TD></TR>
+            <TR><TD ALIGN="LEFT">were censored at last contact</TD></TR>
           </TABLE>
         >];
 
