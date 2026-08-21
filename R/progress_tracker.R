@@ -52,24 +52,32 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
   
   
   #if we have a progress tracker we can load for the analytic we load it and pass it through our new function to get the data the same way
+  sheet_data <- NULL
   if (file.exists("progress_tracker.csv")) {
-    csv_data <- read_csv("progress_tracker.csv")
+    sheet_data <- read_csv("progress_tracker.csv")
+  } else if (file.exists("progress_tracker.xlsx")) {
+    sheet_data <- readxl::read_excel("progress_tracker.xlsx")
+  }
+  
+  if (!is.null(sheet_data)) {
+    sheet_total_cols <- ncol(sheet_data)
     
-    csv_total_cols <- ncol(csv_data)
-    if (csv_total_cols %% 2 != 0) {
+    if (sheet_total_cols %% 2 != 0) {
       stop("Must have an even number of colums, check to see if each tracker has a task column and status column")
     }
-    csv_status_count <- sum(grepl("status", colnames(csv_data), ignore.case = TRUE))
-    if (csv_status_count != csv_total_cols / 2) {
+    
+    sheet_status_count <- sum(grepl("status", colnames(sheet_data), ignore.case = TRUE))
+    
+    if (sheet_status_count != sheet_total_cols / 2) {
       stop("Not enough 'status' columns! Please check that for every task column there is a column that has status next to it")
     }
     
-    for (col_i in seq(1, csv_total_cols, by = 2)) {
+    for (col_i in seq(1, sheet_total_cols, by = 2)) {
       master_list <- addProgressTracker(
         master_list,
-        name        = names(csv_data)[col_i],
-        tasks       = csv_data[[col_i]],
-        statuses    = csv_data[[col_i + 1]],
+        name        = names(sheet_data)[col_i],
+        tasks       = sheet_data[[col_i]],
+        statuses    = sheet_data[[col_i + 1]],
         done_values = "DONE"
       )
     }
@@ -87,22 +95,38 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
       stop("progress_tracker: numerator_construct was supplied, but construct_units was not.")
     }
     
-    if (length(denominator_construct) == 1 && is.na(denominator_construct)) {
-      #single mode
-      
-    }else{
-      
-    }
+    #single mode activates if there is no denominator
+    single_mode <- length(denominator_construct) == 1 && is.na(denominator_construct)
     
-    
-    
-    resolveConstructTotals <- function(x, analytic) {
+    # --------------------------------------------------------------------
+    # resolveConstructTotals(): the ONE function that resolves BOTH
+    # numerator_construct and denominator_construct -- they're the same
+    # underlying operation (literal number passes through; column name
+    # gets summed), so there's no need for two separate resolvers. Every
+    # element of `x` is resolved independently, returning three parallel
+    # numbers/flags:
+    #
+    #   - total: the number itself (literal), or sum(column, na.rm=TRUE).
+    #     TRUE/FALSE columns sum as their count of TRUE, since
+    #     as.numeric(TRUE) == 1 -- same math, no special-casing needed.
+    #   - n: 1 for a literal (not backed by any rows), or the count of
+    #     non-NA values in the column.
+    #   - is_literal: TRUE for a literal number, FALSE for a resolved
+    #     column. This is what lets the SAME `total` mean two different
+    #     things depending on whether it's being used as a numerator or a
+    #     denominator -- see how it's used just below.
+    #
+    # `require_boolean = TRUE` is single mode's extra requirement: literal
+    # numbers aren't allowed at all here (every element must be a real
+    # column), and that column must be TRUE/FALSE (or an equivalent 0/1
+    # numeric column).
+    # --------------------------------------------------------------------
+    resolveConstructTotals <- function(x, analytic, require_boolean = FALSE) {
       looks_numeric_here <- function(v) !is.na(suppressWarnings(as.numeric(v)))
       
-      totals <- vapply(x, function(one_value) {
-        
-        if (looks_numeric_here(one_value)) {
-          return(as.numeric(one_value))
+      resolve_one <- function(one_value) {
+        if (!require_boolean && looks_numeric_here(one_value)) {
+          return(list(total = as.numeric(one_value), n = 1, is_literal = TRUE))
         }
         
         if (!(one_value %in% names(analytic))) {
@@ -111,58 +135,54 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
         
         col_vals <- analytic[[one_value]]
         
+        # A column has to actually be summable. Real numeric/logical types
+        # pass immediately; a character/factor column also passes IF every
+        # one of its non-NA values converts cleanly to a number (e.g. a
+        # column storing "90" as text) -- that's still safe to sum. What
+        # this still catches is a column that's genuinely not numeric at
+        # all (e.g. "yes"/"no", names, free text), which would otherwise
+        # get silently coerced to all-NA by as.numeric(), with
+        # sum(NA, na.rm=TRUE) quietly returning 0 and no error at all.
+        is_summable <- is.numeric(col_vals) || is.logical(col_vals)
+        if (!is_summable) {
+          non_na <- col_vals[!is.na(col_vals)]
+          is_summable <- length(non_na) > 0 && !anyNA(suppressWarnings(as.numeric(as.character(non_na))))
+        }
+        
+        if (!is_summable) {
+          stop(paste0("resolveConstructTotals: analytic$", one_value, " must be numeric, TRUE/FALSE, or ",
+                      "numeric-looking text, to be summed -- but it has non-convertible values, and is ",
+                      class(col_vals)[1], "."))
+        }
+        
         if (all(is.na(col_vals))) {
-          stop(paste0("resolveConstructTotals: analytic$", one_value, " has no non-NA values to sum."))
+          stop(paste0("resolveConstructTotals: analytic$", one_value, " has no non-NA values to summarize."))
         }
         
-        sum(as.numeric(col_vals), na.rm = TRUE)
-        
-      }, numeric(1))
-      
-      counts <- vapply(x, function(one_value) {
-        if (looks_numeric_here(one_value)) {
-          return(1)   # a literal number isn't backed by rows, need to treat it as a single unit
+        if (require_boolean) {
+          # col_vals is already confirmed summable above 
+          is_boolean_like <- is.logical(col_vals) || all(col_vals[!is.na(col_vals)] %in% c(0, 1))
+          if (!is_boolean_like) {
+            stop(paste0("resolveConstructTotals: analytic$", one_value, " must be TRUE/FALSE (or an ",
+                        "equivalent 0/1 column) for single-mode trackers (no denominator_construct given), ",
+                        "but it is ", class(col_vals)[1], "."))
+          }
         }
         
-        sum(!is.na(analytic[[one_value]]))
-        
-      }, numeric(1))
+        list(total = sum(as.numeric(col_vals), na.rm = TRUE), n = sum(!is.na(col_vals)), is_literal = FALSE)
+      }
       
-      list(total = totals, n = counts)
+      results <- lapply(x, resolve_one)
+      list(
+        total      = vapply(results, function(r) r$total, numeric(1)),
+        n          = vapply(results, function(r) r$n, numeric(1)),
+        is_literal = vapply(results, function(r) r$is_literal, logical(1))
+      )
     }
     
-    # resolveConstruct(): resolves denominator_construct to a per-construct
-    # *multiplier* -- a literal number used as-is, or a column name whose
-    # mean is used as the per-row multiplier.
-    
-    resolveConstruct <- function(x, analytic) {
-      looks_numeric_here <- function(v) !is.na(suppressWarnings(as.numeric(v)))
-      
-      vapply(x, function(one_value) {
-        
-        if (looks_numeric_here(one_value)) {
-          return(as.numeric(one_value))
-        }
-        
-        if (!(one_value %in% names(analytic))) {
-          stop(paste0("resolveConstruct: '", one_value, "' is not a number and not a column found in `analytic`."))
-        }
-        
-        resolved_mean <- mean(analytic[[one_value]], na.rm = TRUE)
-        
-        if (is.nan(resolved_mean)) {
-          stop(paste0("resolveConstruct: analytic$", one_value, " has no non-NA values to average."))
-        }
-        
-        resolved_mean
-        
-      }, numeric(1))
-    }
-    
-    resolved_numerator_info         <- resolveConstructTotals(numerator_construct, analytic)
-    resolved_numerator              <- resolved_numerator_info$total
-    numerator_row_counts            <- resolved_numerator_info$n
-    resolved_denominator_multiplier <- resolveConstruct(denominator_construct, analytic)
+    numerator_info       <- resolveConstructTotals(numerator_construct, analytic, require_boolean = single_mode)
+    resolved_numerator   <- numerator_info$total
+    numerator_row_counts <- numerator_info$n
     
     n_constructs <- length(resolved_numerator)
     
@@ -173,7 +193,12 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
       }
     }
     
-    check_construct_length(resolved_denominator_multiplier, "denominator_construct")
+    # denominator_construct has nothing to length-check in single mode --
+    # it's just NA, on purpose, not a per-construct value.
+    if (!single_mode) {
+      check_construct_length(denominator_construct, "denominator_construct")
+    }
+    
     check_construct_length(construct_tracker_name, "construct_tracker_name")
     check_construct_length(construct_units, "construct_units")
     
@@ -181,11 +206,37 @@ progress_tracker <- function(analytic, style, showCheckPoints, trackers, numerat
     # parameter lines up as n_constructs parallel vectors, uses rep to create a same size vector for each
     recycle_construct <- function(x) if (length(x) == 1) rep(x, n_constructs) else x
     
-    construct_numerators       <- recycle_construct(resolved_numerator)
-    denominator_multiplier_vec <- recycle_construct(resolved_denominator_multiplier)
-    construct_denominators     <- numerator_row_counts * denominator_multiplier_vec
-    construct_names            <- recycle_construct(construct_tracker_name)
-    construct_units_vec        <- recycle_construct(construct_units)
+    construct_numerators <- recycle_construct(resolved_numerator)
+    construct_names      <- recycle_construct(construct_tracker_name)
+    construct_units_vec  <- recycle_construct(construct_units)
+    
+    if (single_mode) {
+      #denom will be the total amount of numerator_construct non na values
+      construct_denominators <- numerator_row_counts
+    } else {
+      denominator_info      <- resolveConstructTotals(denominator_construct, analytic)
+      denom_total_vec        <- recycle_construct(denominator_info$total)
+      denom_is_literal_vec   <- recycle_construct(denominator_info$is_literal)
+      
+      # A literal denominator is a per-row rate, scaled up by how many
+      # numerator rows there are (e.g. "3.5 expected visits" x "85
+      # participants answered" = 297.5 total expected). A column
+      # denominator is already a real total on its own -- summed exactly
+      # like the numerator, and used directly with no scaling at all.
+      construct_denominators <- ifelse(denom_is_literal_vec,
+                                       denom_total_vec * numerator_row_counts,
+                                       denom_total_vec)
+    }
+    
+    # A denominator of 0 (or less) isn't a valid "out of" total, and would
+    # otherwise silently turn into NaN/Inf several steps later in the
+    # render loop's percentage math with no clue why -- caught here,
+    # immediately, right at the source.
+    if (any(construct_denominators <= 0)) {
+      stop("progress_tracker: a construct tracker resolved to a denominator of 0 or less, which isn't a ",
+           "valid 'out of' total. Check numerator_construct/denominator_construct and the analytic ",
+           "columns they point to.")
+    }
     
     
     for (i in seq_len(n_constructs)) {
