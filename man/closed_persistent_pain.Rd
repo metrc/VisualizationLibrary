@@ -4,10 +4,13 @@
 \alias{closed_persistent_pain}
 \title{closed Persistent pain}
 \usage{
-closed_persistent_pain(analytic)
+closed_persistent_pain(analytic, include_severe = TRUE)
 }
 \arguments{
 \item{analytic}{enrolled, treatment_arm, bpi_severity_score and bpi_interference_score 3mo - 12mo constructs}
+
+\item{include_severe}{include the categorised Severe (7-10) columns (defaults to TRUE).
+Set FALSE for a trial whose SAP analyses BPI only as a continuous scale.}
 }
 \value{
 An HTML table.

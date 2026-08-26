@@ -7309,6 +7309,8 @@ oct_readings_table <- function(analytic, mode, include_per_participant_values = 
 #' section 11.2, which classifies 0-6 as mild or moderate and 7-10 as severe.
 #'
 #' @param analytic enrolled, bpi_severity_score and bpi_interference_score 3mo - 12mo constructs
+#' @param include_severe include the categorised Severe (7-10) column (defaults to TRUE).
+#' Set FALSE for a trial whose SAP analyses BPI only as a continuous scale.
 #'
 #' @return An HTML table.
 #' @export
@@ -7316,7 +7318,7 @@ oct_readings_table <- function(analytic, mode, include_per_participant_values = 
 #' @examples
 #' persistent_pain("Replace with Analytic Tibble")
 #'
-persistent_pain <- function(analytic){
+persistent_pain <- function(analytic, include_severe = TRUE){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c('enrolled',
@@ -7361,7 +7363,15 @@ persistent_pain <- function(analytic){
 
   final <- rbind(sev_final, int_final)
 
-  colnames(final) <- c('', 'n', 'Score, Mean (SD)', 'Severe (7-10), n (%)')
+  if (!include_severe) {
+    final <- final %>% select(-severe)
+  }
+
+  colnames(final) <- if (include_severe) {
+    c('', 'n', 'Score, Mean (SD)', 'Severe (7-10), n (%)')
+  } else {
+    c('', 'n', 'Score, Mean (SD)')
+  }
 
   index_vec_a <- c("BPI Severity" = nrow(sev_final),
                    "BPI Interference" = nrow(int_final))

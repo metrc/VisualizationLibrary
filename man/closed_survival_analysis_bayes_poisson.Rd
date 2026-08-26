@@ -13,8 +13,8 @@ closed_survival_analysis_bayes_poisson(
   cuts = c(0, 90, 180, 270, 365),
   ni_margin = 0.1,
   control_arm = "Group A",
-  baseline_prior_mean = -8.15,
-  baseline_prior_sd = 1.5,
+  baseline_prior_mean = -8.24,
+  baseline_prior_sd = 0.75,
   treatment_prior_sd = 1,
   arm_labels = c(`0` = "Control", `1` = "Treatment"),
   outcome_label = "Outcome",
@@ -38,7 +38,7 @@ closed_survival_analysis_bayes_poisson(
 
 \item{outcome_length}{number of days for this outcome (defaults to 365)}
 
-\item{minimum_days}{participants whose follow-up is at or below this many days are dropped before the interval split (defaults to 0). A participant with no follow-up time enters no interval, so the default drops only those. Raising it also drops any event that occurred at or before the threshold.}
+\item{minimum_days}{participants whose follow-up is at or below this many days are dropped before the interval split (defaults to 0). A participant with no follow-up time enters no interval, so the default drops only those. Raising it also drops any event that occurred at or before the threshold, and applies delayed entry: follow-up before minimum_days contributes no person-time, interval boundaries at or below it are dropped, and the baseline hazard (and the risk it integrates to) starts at minimum_days.}
 
 \item{cuts}{interval boundaries for the piecewise baseline hazard; must start at 0 and end at outcome_length.
 These should be selected and locked before unmasking (defaults to quarterly intervals c(0, 90, 180, 270, 365))}
@@ -47,9 +47,9 @@ These should be selected and locked before unmasking (defaults to quarterly inte
 
 \item{control_arm}{value of treatment_arm treated as the control group (defaults to "Group A")}
 
-\item{baseline_prior_mean}{prior mean for each log baseline-hazard interval coefficient (defaults to -8.15, near a 10 percent annual event risk)}
+\item{baseline_prior_mean}{prior mean for each log baseline-hazard interval coefficient (defaults to -8.24, the SAP's prospectively calibrated center anchored to the 8.25 percent planning risk)}
 
-\item{baseline_prior_sd}{prior standard deviation for each interval coefficient (defaults to 1.5, intentionally broad)}
+\item{baseline_prior_sd}{prior standard deviation for each interval coefficient (defaults to 0.75, per the SAP)}
 
 \item{treatment_prior_sd}{prior standard deviation for the treatment log hazard ratio, centered at no effect (defaults to 1)}
 

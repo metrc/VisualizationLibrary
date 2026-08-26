@@ -4729,13 +4729,13 @@ closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, disco
 #' @param type_construct the name of the column of the analytic dataset that must include whether the outcome for that participant was a check or event
 #' @param days_construct the name of the column of the analytic dataset that must include the number of days till check or event
 #' @param outcome_length number of days for this outcome (defaults to 365)
-#' @param minimum_days participants whose follow-up is at or below this many days are dropped before the interval split (defaults to 0). A participant with no follow-up time enters no interval, so the default drops only those. Raising it also drops any event that occurred at or before the threshold.
+#' @param minimum_days participants whose follow-up is at or below this many days are dropped before the interval split (defaults to 0). A participant with no follow-up time enters no interval, so the default drops only those. Raising it also drops any event that occurred at or before the threshold, and applies delayed entry: follow-up before minimum_days contributes no person-time, interval boundaries at or below it are dropped, and the baseline hazard (and the risk it integrates to) starts at minimum_days.
 #' @param cuts interval boundaries for the piecewise baseline hazard; must start at 0 and end at outcome_length.
 #' These should be selected and locked before unmasking (defaults to quarterly intervals c(0, 90, 180, 270, 365))
 #' @param ni_margin noninferiority margin for the risk difference (defaults to 0.10)
 #' @param control_arm value of treatment_arm treated as the control group (defaults to "Group A")
-#' @param baseline_prior_mean prior mean for each log baseline-hazard interval coefficient (defaults to -8.15, near a 10 percent annual event risk)
-#' @param baseline_prior_sd prior standard deviation for each interval coefficient (defaults to 1.5, intentionally broad)
+#' @param baseline_prior_mean prior mean for each log baseline-hazard interval coefficient (defaults to -8.24, the SAP's prospectively calibrated center anchored to the 8.25 percent planning risk)
+#' @param baseline_prior_sd prior standard deviation for each interval coefficient (defaults to 0.75, per the SAP)
 #' @param treatment_prior_sd prior standard deviation for the treatment log hazard ratio, centered at no effect (defaults to 1)
 #' @param arm_labels named chr vec, c("0" = "Control", "1" = "Treatment")
 #' @param outcome_label label for the outcome row of the table
@@ -4768,8 +4768,8 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
                                                    cuts = c(0, 90, 180, 270, 365),
                                                    ni_margin = 0.10,
                                                    control_arm = "Group A",
-                                                   baseline_prior_mean = -8.15,
-                                                   baseline_prior_sd = 1.5,
+                                                   baseline_prior_mean = -8.24,
+                                                   baseline_prior_sd = 0.75,
                                                    treatment_prior_sd = 1,
                                                    arm_labels = c(`0` = "Control", `1` = "Treatment"),
                                                    outcome_label = "Outcome",
@@ -4825,8 +4825,9 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
       days  = as.numeric(days),
       # Treatment indicator: control arm = 0, treatment = 1
       trt   = as.integer(treatment_arm != control_arm),
-      # Primary event must occur within outcome_length days
-      event = as.integer(type != "check" & !is.na(days) & days <= outcome_length),
+      # Primary event must occur within outcome_length days. A favorable_event
+      # (healed carry-forward) is event-free follow-up, not an event.
+      event = as.integer(!type %in% c("check", "favorable_event") & !is.na(days) & days <= outcome_length),
       # Follow-up time is event day for events;
       # otherwise last known event-free day, capped at outcome_length
       time  = ifelse(event == 1, days, pmin(days, outcome_length))
@@ -4839,6 +4840,13 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
   # the interval split.
   dat <- dat %>%
     filter(time > minimum_days)
+
+  # Delayed entry: follow-up before minimum_days contributes no person-time, so
+  # the piecewise baseline hazard begins at minimum_days and cut points at or
+  # below it are dropped. With minimum_days = 0 the cuts are unchanged. The
+  # posterior risks then integrate the hazard over (minimum_days, outcome_length]
+  # only, so no interval is left with exposure but structurally zero events.
+  cuts <- c(minimum_days, cuts[cuts > minimum_days])
 
   stopifnot(all(dat$trt %in% c(0, 1)))
   stopifnot(all(dat$event %in% c(0, 1)))
@@ -5006,6 +5014,8 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
 #' closed version of persistent_pain.
 #'
 #' @param analytic enrolled, treatment_arm, bpi_severity_score and bpi_interference_score 3mo - 12mo constructs
+#' @param include_severe include the categorised Severe (7-10) columns (defaults to TRUE).
+#' Set FALSE for a trial whose SAP analyses BPI only as a continuous scale.
 #'
 #' @return An HTML table.
 #' @export
@@ -5013,7 +5023,7 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
 #' @examples
 #' closed_persistent_pain("Replace with Analytic Tibble")
 #'
-closed_persistent_pain <- function(analytic){
+closed_persistent_pain <- function(analytic, include_severe = TRUE){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c('enrolled', 'treatment_arm',
@@ -5023,7 +5033,7 @@ closed_persistent_pain <- function(analytic){
     example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Number",
                       "Number", "Number", "Number"))
 
-  confirm_stability_of_related_visual('persistent_pain', '37e9750da248039593b40ebb1ce9c4aa')
+  confirm_stability_of_related_visual('persistent_pain', 'f214e3dfb779c808e402085333c32ed6')
 
   df <- analytic %>%
     select(enrolled, treatment_arm,
@@ -5076,10 +5086,22 @@ closed_persistent_pain <- function(analytic){
 
   final <- rbind(sev_final, int_final)
 
-  colnames(final) <- c('',
-                       'n (Group A)', 'Score, Mean (SD) (Group A)', 'Severe (7-10), n (%) (Group A)',
-                       'n (Group B)', 'Score, Mean (SD) (Group B)', 'Severe (7-10), n (%) (Group B)',
-                       'n ', 'Score, Mean (SD)', 'Severe (7-10), n (%)')
+  # The severe columns sit at positions 4, 7 and 10 of the three cbound blocks.
+  if (!include_severe) {
+    final <- final[, -c(4, 7, 10)]
+  }
+
+  colnames(final) <- if (include_severe) {
+    c('',
+      'n (Group A)', 'Score, Mean (SD) (Group A)', 'Severe (7-10), n (%) (Group A)',
+      'n (Group B)', 'Score, Mean (SD) (Group B)', 'Severe (7-10), n (%) (Group B)',
+      'n ', 'Score, Mean (SD)', 'Severe (7-10), n (%)')
+  } else {
+    c('',
+      'n (Group A)', 'Score, Mean (SD) (Group A)',
+      'n (Group B)', 'Score, Mean (SD) (Group B)',
+      'n ', 'Score, Mean (SD)')
+  }
 
   index_vec_a <- c("BPI Severity" = nrow(sev_final),
                    "BPI Interference" = nrow(int_final))
