@@ -5197,3 +5197,122 @@ closed_opioid_days <- function(analytic){
 }
 
 
+
+
+#' closed Reported side effects
+#'
+#' @description
+#' Returns the analgesic side effect burden shell split by partially unmasked
+#' treatment assignment: the number and percentage of enrolled participants in each
+#' arm, and overall, reporting each category of side effect through three months.
+#' Categories, the major-row composition, the day-90 window, and the None row all
+#' match reported_side_effects, of which this is the closed version; the Total
+#' column reproduces it exactly. Participants with a missing treatment_arm appear
+#' in the Total column only.
+#'
+#' @param analytic enrolled, treatment_arm, clinical_events_data constructs
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_reported_side_effects("Replace with Analytic Tibble")
+#' }
+closed_reported_side_effects <- function(analytic){
+  confirm_stability_of_related_visual('reported_side_effects', 'c36d740b752328c3317f098d9802bf17')
+
+  # SAP Safety Outcomes: major is renal impairment and/or gastric ulcer. Add
+  # 'Bleeding' here if the secondary outcomes table reading is adopted instead.
+  major_categories <- c('Renal', 'Gastric')
+  named_categories <- c('Bleeding', 'Renal', 'Thromboembolic', 'Gastric', 'Allergy', 'Minor Allergy')
+  other_categories <- c('Surgical/Wound', 'NEEDS REVIEW', 'UNMAPPED')
+
+  row_order <- c('None', 'Major NSAID Related', named_categories, 'All Others')
+
+  arm_counts <- function(df){
+    event_category_counts(
+      unpack_clinical_events(df),
+      df %>% filter(enrolled) %>% nrow(),
+      row_order,
+      composites = list(`Major NSAID Related` = major_categories),
+      other_label = 'All Others', other_categories = other_categories,
+      max_days = 90, none_label = 'None') %>%
+      select(Category, pct)
+  }
+
+  final <- arm_counts(analytic %>% filter(treatment_arm == 'Group A')) %>%
+    left_join(arm_counts(analytic %>% filter(treatment_arm == 'Group B')), by = 'Category') %>%
+    left_join(arm_counts(analytic), by = 'Category')
+
+  colnames(final) <- c('', 'N (%) (Group A)', 'N (%) (Group B)', 'N (%)')
+
+  table_raw <- kable(final, format = "html", align = 'l') %>%
+    pack_rows(index = c("Reported Side Effects, through 3 Months" = nrow(final)),
+              label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(c(0, nrow(final)), extra_css = "border-bottom: 1px solid;")
+
+  return(table_raw)
+}
+
+
+#' closed Adverse events
+#'
+#' @description
+#' Returns the adverse event shell split by partially unmasked treatment
+#' assignment: the number and percentage of enrolled participants in each arm, and
+#' overall, with an event in each category across the whole study period. Deaths
+#' come from the dead construct, as in adverse_events, of which this is the closed
+#' version; the Total column reproduces it exactly. Participants with a missing
+#' treatment_arm appear in the Total column only.
+#'
+#' @param analytic enrolled, treatment_arm, dead, clinical_events_data constructs
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_adverse_events("Replace with Analytic Tibble")
+#' }
+closed_adverse_events <- function(analytic){
+  confirm_stability_of_related_visual('adverse_events', '3ed1d4cddef1146b97865feb30dfb89d')
+
+  named_categories <- c('Surgical/Wound', 'Thromboembolic', 'Renal', 'Gastric', 'Bleeding')
+  other_categories <- c('Allergy', 'Minor Allergy', 'NEEDS REVIEW', 'UNMAPPED')
+
+  row_order <- c(named_categories, 'Other Medical')
+
+  arm_final <- function(df){
+    enrolled_df <- df %>% filter(enrolled)
+    denominator <- nrow(enrolled_df)
+
+    counts <- event_category_counts(
+      unpack_clinical_events(df), denominator, row_order,
+      other_label = 'Other Medical', other_categories = other_categories) %>%
+      select(Category, pct)
+
+    deaths_n <- sum(enrolled_df$dead %in% TRUE)
+    deaths <- tibble(Category = 'Deaths',
+                     pct = paste0(deaths_n, " (",
+                                  trimws(format(round(ifelse(denominator > 0, 100 * deaths_n / denominator, 0), 1),
+                                                nsmall = 1)), "%)"))
+
+    bind_rows(deaths, counts)
+  }
+
+  final <- arm_final(analytic %>% filter(treatment_arm == 'Group A')) %>%
+    left_join(arm_final(analytic %>% filter(treatment_arm == 'Group B')), by = 'Category') %>%
+    left_join(arm_final(analytic), by = 'Category')
+
+  colnames(final) <- c('', 'N (%) (Group A)', 'N (%) (Group B)', 'N (%)')
+
+  table_raw <- kable(final, format = "html", align = 'l') %>%
+    pack_rows(index = c("Adverse Events, Whole Study" = nrow(final)),
+              label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = 'left') %>%
+    row_spec(c(0, nrow(final)), extra_css = "border-bottom: 1px solid;")
+
+  return(table_raw)
+}
