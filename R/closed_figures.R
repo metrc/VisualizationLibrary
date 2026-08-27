@@ -282,7 +282,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
 #'
 closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, arm_a_str="Group A", arm_b_str="Group B"){
 
-  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '28b37a77576262fd3ebe308788574a30')
+  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '8488c08648e830245a39b54b8313cb51')
 
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -291,13 +291,19 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
                            "constraint_other", "nonparticipation_other_study_coenrolled", "nonparticipation_other_reason",
                            "randomized", "adjudicated_inappropriate_enrollment", "adjudicated_late_ineligible",
                            "adjudicated_late_refusal", "adjudicated_physician_withdrawn", "df_surg_start_date",
-                           "surgery_or_healed_type", "surgery_or_healed_days", "crossover", "treatment_arm"),
+                           "surgery_or_healed_type", "surgery_or_healed_days", "crossover", "treatment_arm",
+                           "dead", "withdrawn_consent", "not_completed_reason",
+                           "bpi_severity_score_3mo", "bpi_interference_score_3mo",
+                           "opioid_days_baseline", "opioid_days_3mo", "opioid_days_6mo", "opioid_days_12mo"),
     example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Date",
-                      "NamedCategory['check' 'favorable_event' 'unfavorable_event']", "Number-U365", "Boolean", "TreatmentArm"))
+                      "NamedCategory['check' 'favorable_event' 'unfavorable_event']", "Number-U365", "Boolean", "TreatmentArm",
+                      "Boolean", "Boolean", "NamedCategory['Unreachable' 'Other']",
+                      "Number", "Number",
+                      "Number", "Number", "Number", "Number"))
 
   df <- analytic %>%
     select(study_id, screened, eligible, ineligibility_reasons, refused, not_consented, consented,
@@ -305,7 +311,10 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
            nonparticipation_other_study_coenrolled, nonparticipation_other_reason,
            randomized, adjudicated_inappropriate_enrollment, adjudicated_late_ineligible,
            adjudicated_late_refusal, adjudicated_physician_withdrawn, df_surg_start_date,
-           surgery_or_healed_type, surgery_or_healed_days, crossover, treatment_arm) %>%
+           surgery_or_healed_type, surgery_or_healed_days, crossover, treatment_arm,
+           dead, withdrawn_consent, not_completed_reason,
+           bpi_severity_score_3mo, bpi_interference_score_3mo,
+           opioid_days_baseline, opioid_days_3mo, opioid_days_6mo, opioid_days_12mo) %>%
     filter(screened)
 
   ir_count <- df %>%
@@ -400,7 +409,36 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
     unfavorable_event <- sum(itt_df$surgery_or_healed_type %in% 'unfavorable_event')
     non_adherent <- sum(itt_df$crossover, na.rm = TRUE)
 
+    # Amended SAP section 3 elements, per arm. Risk-set entry and person-time
+    # describe the primary analysis, so they run on the intention-to-treat set;
+    # the day-180/365 statuses and the dispositions run on all randomized in the
+    # arm. Days count from Time Zero; the SAP phrases the status days as
+    # following discharge, recorded in SAP_Issues_and_Questions.md.
+    risk_set_n <- sum(!is.na(surgery_or_healed_days_num) & surgery_or_healed_days_num > 90)
+    person_days <- sum(pmax(0, pmin(surgery_or_healed_days_num, 365) - 90), na.rm = TRUE)
+
+    rand_days <- suppressWarnings(as.numeric(inner_df$surgery_or_healed_days))
+    status_at <- function(d) {
+      event_by <- inner_df$surgery_or_healed_type %in% 'unfavorable_event' & !is.na(rand_days) & rand_days <= d
+      free_through <- !event_by & !is.na(rand_days) & rand_days >= d
+      c(event = sum(event_by), free = sum(free_through),
+        unknown = nrow(inner_df) - sum(event_by) - sum(free_through))
+    }
+
     list(
+      s180 = status_at(180),
+      s365 = status_at(365),
+      risk_set_n = risk_set_n,
+      person_days = person_days,
+      deaths_n = sum(inner_df$dead %in% TRUE),
+      withdrew_n = sum(inner_df$withdrawn_consent %in% TRUE),
+      ltfu_n = sum(inner_df$not_completed_reason %in% 'Unreachable'),
+      bpi_sev_n = sum(!is.na(suppressWarnings(as.numeric(itt_df$bpi_severity_score_3mo)))),
+      bpi_int_n = sum(!is.na(suppressWarnings(as.numeric(itt_df$bpi_interference_score_3mo)))),
+      opioid_n = sum(!is.na(suppressWarnings(as.numeric(itt_df$opioid_days_baseline))) |
+                       !is.na(suppressWarnings(as.numeric(itt_df$opioid_days_3mo))) |
+                       !is.na(suppressWarnings(as.numeric(itt_df$opioid_days_6mo))) |
+                       !is.na(suppressWarnings(as.numeric(itt_df$opioid_days_12mo)))),
       assigned = assigned,
       inappropriately_enrolled = inappropriately_enrolled,
       late_ineligible = late_ineligible,
@@ -475,6 +513,37 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
             <TR><TD ALIGN="LEFT">analysis due to non-adherence</TD></TR>
           </TABLE>
         >];
+
+      sap1', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-10.1!", shape = box, width=2.4, height=.5, labeljust=l,
+        label = <
+          <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+            <TR><TD ALIGN="LEFT">Primary analysis accounting</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$risk_set_n, ' Entered the day-90 risk set</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', format(arm$person_days, big.mark = ","), ' Person-days in (90, 365]</TD></TR>
+            <TR><TD ALIGN="LEFT">Status at day 180:</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$s180['event'], ' Surgery to promote union</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$s180['free'], ' Known event-free</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$s180['unknown'], ' Status unknown</TD></TR>
+            <TR><TD ALIGN="LEFT">Status at day 365:</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$s365['event'], ' Surgery to promote union</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$s365['free'], ' Known event-free</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$s365['unknown'], ' Status unknown</TD></TR>
+          </TABLE>
+        >];
+
+      sap2', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-12.7!", shape = box, width=2.4, height=.5, labeljust=l,
+        label = <
+          <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+            <TR><TD ALIGN="LEFT">Dispositions among randomized</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$deaths_n, ' Died</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$withdrew_n, ' Withdrew consent</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$ltfu_n, ' Lost to follow-up</TD></TR>
+            <TR><TD ALIGN="LEFT">Included in secondary analyses:</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$bpi_sev_n, ' Day-90 BPI pain intensity</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$bpi_int_n, ' Day-90 BPI pain interference</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$opioid_n, ' Reported opioid use</TD></TR>
+          </TABLE>
+        >];
     ')
   }
 
@@ -527,6 +596,10 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
       assigned_b -> itt_b
       itt_b -> outcome_b
       outcome_b -> pp_b
+      pp_a -> sap1_a [style=dashed, arrowhead=none]
+      sap1_a -> sap2_a [style=dashed, arrowhead=none]
+      pp_b -> sap1_b [style=dashed, arrowhead=none]
+      sap1_b -> sap2_b [style=dashed, arrowhead=none]
     }
   '))
   svg_content <- DiagrammeRsvg::export_svg(consort_diagram)

@@ -1885,7 +1885,9 @@ consort_diagram_wb_publication <- function(analytic){
 #' constraint_48hrs, constraint_admin, constraint_noconsent, constraint_other,
 #' nonparticipation_other_study_coenrolled, nonparticipation_other_reason, randomized,
 #' adjudicated_inappropriate_enrollment, adjudicated_late_ineligible, adjudicated_late_refusal,
-#' adjudicated_physician_withdrawn, df_surg_start_date, surgery_or_healed_type, surgery_or_healed_days, crossover
+#' adjudicated_physician_withdrawn, df_surg_start_date, surgery_or_healed_type, surgery_or_healed_days, crossover,
+#' dead, withdrawn_consent, not_completed_reason, bpi_severity_score_3mo, bpi_interference_score_3mo,
+#' opioid_days_baseline, opioid_days_3mo, opioid_days_6mo, opioid_days_12mo
 #' @param outcome_day day at which the primary outcome status is assessed, defaults to 365
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
@@ -1903,13 +1905,19 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
                            "constraint_other", "nonparticipation_other_study_coenrolled", "nonparticipation_other_reason",
                            "randomized", "adjudicated_inappropriate_enrollment", "adjudicated_late_ineligible",
                            "adjudicated_late_refusal", "adjudicated_physician_withdrawn", "df_surg_start_date",
-                           "surgery_or_healed_type", "surgery_or_healed_days", "crossover"),
+                           "surgery_or_healed_type", "surgery_or_healed_days", "crossover",
+                           "dead", "withdrawn_consent", "not_completed_reason",
+                           "bpi_severity_score_3mo", "bpi_interference_score_3mo",
+                           "opioid_days_baseline", "opioid_days_3mo", "opioid_days_6mo", "opioid_days_12mo"),
     example_types = c("Boolean", "Boolean", "Category-NS", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Date",
-                      "NamedCategory['check' 'favorable_event' 'unfavorable_event']", "Number-U365", "Boolean"))
+                      "NamedCategory['check' 'favorable_event' 'unfavorable_event']", "Number-U365", "Boolean",
+                      "Boolean", "Boolean", "NamedCategory['Unreachable' 'Other']",
+                      "Number", "Number",
+                      "Number", "Number", "Number", "Number"))
 
   df <- analytic %>%
     select(study_id, screened, eligible, ineligibility_reasons, refused, not_consented, consented,
@@ -1917,7 +1925,10 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
            nonparticipation_other_study_coenrolled, nonparticipation_other_reason,
            randomized, adjudicated_inappropriate_enrollment, adjudicated_late_ineligible,
            adjudicated_late_refusal, adjudicated_physician_withdrawn, df_surg_start_date,
-           surgery_or_healed_type, surgery_or_healed_days, crossover) %>%
+           surgery_or_healed_type, surgery_or_healed_days, crossover,
+           dead, withdrawn_consent, not_completed_reason,
+           bpi_severity_score_3mo, bpi_interference_score_3mo,
+           opioid_days_baseline, opioid_days_3mo, opioid_days_6mo, opioid_days_12mo) %>%
     filter(screened)
 
   ir_count <- df %>%
@@ -2016,6 +2027,38 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
   non_adherent <- sum(itt_df$crossover, na.rm = TRUE)
   per_protocol <- itt - non_adherent
 
+  # Amended SAP section 3 elements. Risk-set entry and person-time are computed
+  # over the intention-to-treat set, since they describe the primary analysis;
+  # the day-180/365 statuses and the dispositions are computed over all
+  # randomized participants, since the SAP asks for the status of the
+  # randomized patients. Days are counted from Time Zero; the SAP phrases the
+  # status days as following discharge, and that difference is recorded in
+  # SAP_Issues_and_Questions.md for confirmation.
+  itt_days <- surgery_or_healed_days_num
+  risk_set_n <- sum(!is.na(itt_days) & itt_days > 90)
+  person_days <- sum(pmax(0, pmin(itt_days, 365) - 90), na.rm = TRUE)
+
+  rand_days <- suppressWarnings(as.numeric(rand_df$surgery_or_healed_days))
+  status_at <- function(d) {
+    event_by <- rand_df$surgery_or_healed_type %in% 'unfavorable_event' & !is.na(rand_days) & rand_days <= d
+    free_through <- !event_by & !is.na(rand_days) & rand_days >= d
+    c(event = sum(event_by), free = sum(free_through),
+      unknown = nrow(rand_df) - sum(event_by) - sum(free_through))
+  }
+  s180 <- status_at(180)
+  s365 <- status_at(365)
+
+  deaths_n <- sum(rand_df$dead %in% TRUE)
+  withdrew_n <- sum(rand_df$withdrawn_consent %in% TRUE)
+  ltfu_n <- sum(rand_df$not_completed_reason %in% 'Unreachable')
+
+  bpi_sev_n <- sum(!is.na(suppressWarnings(as.numeric(itt_df$bpi_severity_score_3mo))))
+  bpi_int_n <- sum(!is.na(suppressWarnings(as.numeric(itt_df$bpi_interference_score_3mo))))
+  opioid_n <- sum(!is.na(suppressWarnings(as.numeric(itt_df$opioid_days_baseline))) |
+                    !is.na(suppressWarnings(as.numeric(itt_df$opioid_days_3mo))) |
+                    !is.na(suppressWarnings(as.numeric(itt_df$opioid_days_6mo))) |
+                    !is.na(suppressWarnings(as.numeric(itt_df$opioid_days_12mo))))
+
   consort_diagram <- grViz(paste0('
     digraph g {
       graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
@@ -2091,6 +2134,53 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
           </TABLE>
         >]
 
+      sap_accounting [style="filled", fillcolor="white", color="black", pos="6.2,-3.1!", shape = box, width=2.6, height=.5, labeljust=l,
+        label = <
+          <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+            <TR><TD ALIGN="LEFT">Primary analysis accounting</TD></TR>
+            <TR><TD ALIGN="LEFT">', risk_set_n, ' Entered the day-90 risk set</TD></TR>
+            <TR><TD ALIGN="LEFT">', format(person_days, big.mark = ","), ' Person-days contributed in the</TD></TR>
+            <TR><TD ALIGN="LEFT">(90, 365] primary window</TD></TR>
+          </TABLE>
+        >];
+
+      sap_status [style="filled", fillcolor="white", color="black", pos="6.2,-5.4!", shape = box, width=2.6, height=.5, labeljust=l,
+        label = <
+          <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+            <TR><TD ALIGN="LEFT">Status of randomized participants</TD></TR>
+            <TR><TD ALIGN="LEFT">At day 180:</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', s180['event'], ' Had a surgery to promote union</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', s180['free'], ' Known event-free through day 180</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', s180['unknown'], ' Status unknown at day 180</TD></TR>
+            <TR><TD ALIGN="LEFT">At day 365:</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', s365['event'], ' Had a surgery to promote union</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', s365['free'], ' Known event-free through day 365</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', s365['unknown'], ' Status unknown at day 365</TD></TR>
+          </TABLE>
+        >];
+
+      sap_disp [style="filled", fillcolor="white", color="black", pos="6.2,-7.6!", shape = box, width=2.6, height=.5, labeljust=l,
+        label = <
+          <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+            <TR><TD ALIGN="LEFT">Dispositions among randomized</TD></TR>
+            <TR><TD ALIGN="LEFT">', deaths_n, ' Died</TD></TR>
+            <TR><TD ALIGN="LEFT">', withdrew_n, ' Withdrew consent</TD></TR>
+            <TR><TD ALIGN="LEFT">', ltfu_n, ' Lost to follow-up</TD></TR>
+            <TR><TD ALIGN="LEFT">Physician withdrawals appear in the</TD></TR>
+            <TR><TD ALIGN="LEFT">adjudication box above</TD></TR>
+          </TABLE>
+        >];
+
+      sap_secondary [style="filled", fillcolor="white", color="black", pos="6.2,-9.3!", shape = box, width=2.6, height=.5, labeljust=l,
+        label = <
+          <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
+            <TR><TD ALIGN="LEFT">Included in secondary-outcome analyses</TD></TR>
+            <TR><TD ALIGN="LEFT">', bpi_sev_n, ' Day-90 BPI pain intensity</TD></TR>
+            <TR><TD ALIGN="LEFT">', bpi_int_n, ' Day-90 BPI pain interference</TD></TR>
+            <TR><TD ALIGN="LEFT">', opioid_n, ' Reported opioid use at any timepoint</TD></TR>
+          </TABLE>
+        >];
+
       midpoint [style=invis, pos="2,3.8!", width=0, height=0, fixedsize=true]
 
       # Relationships
@@ -2101,6 +2191,10 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
       box2 -> box3
       box3 -> box4
       box4 -> box5
+      box3 -> sap_accounting [style=dashed, arrowhead=none]
+      box4 -> sap_status [style=dashed, arrowhead=none]
+      sap_status -> sap_disp [style=dashed, arrowhead=none]
+      sap_disp -> sap_secondary [style=dashed, arrowhead=none]
     }
   '))
   svg_content <- DiagrammeRsvg::export_svg(consort_diagram)

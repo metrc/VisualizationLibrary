@@ -12,7 +12,9 @@ study_id, screened, eligible, ineligibility_reasons, refused, not_consented, con
 constraint_48hrs, constraint_admin, constraint_noconsent, constraint_other,
 nonparticipation_other_study_coenrolled, nonparticipation_other_reason, randomized,
 adjudicated_inappropriate_enrollment, adjudicated_late_ineligible, adjudicated_late_refusal,
-adjudicated_physician_withdrawn, df_surg_start_date, surgery_or_healed_type, surgery_or_healed_days, crossover}
+adjudicated_physician_withdrawn, df_surg_start_date, surgery_or_healed_type, surgery_or_healed_days, crossover,
+dead, withdrawn_consent, not_completed_reason, bpi_severity_score_3mo, bpi_interference_score_3mo,
+opioid_days_baseline, opioid_days_3mo, opioid_days_6mo, opioid_days_12mo}
 
 \item{outcome_day}{day at which the primary outcome status is assessed, defaults to 365}
 }
