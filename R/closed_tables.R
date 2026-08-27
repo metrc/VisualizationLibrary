@@ -690,7 +690,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
       filter(!is.na(type)) %>% 
       mutate(type = as.character(type)) %>% 
       mutate(cat_order=5)
-    if (nrow(sae_df) == 0) sae_df <- tibble(type = sae_label, n = 0, cat_order=6)
+    if (nrow(sae_df) == 0) sae_df <- tibble(type = sae_label, n = 0, cat_order=5)
     
     # --- AE (optional)
     if (include_ae) {
@@ -703,7 +703,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
         filter(!is.na(type)) %>% 
         mutate(type = as.character(type)) %>% 
         mutate(cat_order=7)
-      if (nrow(ae_df) == 0) ae_df <- tibble(type = "AE", n = 0, cat_order=8)
+      if (nrow(ae_df) == 0) ae_df <- tibble(type = "AE", n = 0, cat_order=7)
     }
     
     # --- Consented count “separator” row
@@ -822,11 +822,20 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
   table_full <- table_full %>% 
     mutate(o = seq(nrow(table_full)))
   
-  df_final <- full_join(full_join(table_a %>% select(-cat_order), table_b %>% select(-cat_order)), 
-                        table_full) %>% 
+  # Join on (cat_order, type): type alone is not unique - "Other" can appear as a
+  # not-completed reason, an administrative deviation, and a free-text deviation,
+  # and joining on type alone pairs every such row with every other one across
+  # sections (a many-to-many explosion that also drags deviation-denominator
+  # percentages into the wrong section). cat_order identifies the section, and
+  # within a section every label is unique because the inner tables are count()
+  # outputs. Display order comes from table_full's row order (o), which covers
+  # every joined key because the full population is a superset of both arms; an
+  # arm missing a row gets its columns filled as 0 (0%).
+  df_final <- full_join(full_join(table_a, table_b, by = c("cat_order", "type")),
+                        table_full, by = c("cat_order", "type")) %>% 
     arrange(o) %>% 
     select(-o) %>% 
-    mutate_all(replace_na, "0 (0%)") %>%
+    mutate(across(c(n_a, n_b, n_total), ~ replace_na(., "0 (0%)"))) %>%
     mutate(type = if_else(str_detect(type, "^Other"), "Other", type))
   
   total_saes <- sum(as.numeric(analytic$sae_count[analytic$enrolled == TRUE]), na.rm = TRUE)
