@@ -2,13 +2,13 @@
 % Please edit documentation in R/closed_tables.R
 \name{closed_ih_and_dc_crossover_monitoring_by_site}
 \alias{closed_ih_and_dc_crossover_monitoring_by_site}
-\title{Closed crossover monitoring by site}
+\title{Closed adherence monitoring by site}
 \usage{
 closed_ih_and_dc_crossover_monitoring_by_site(analytic, footnotes = NULL)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, df_surg_completed, 
-ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, and treatment_arm}
+ih_discharge_date, adherence_inpatient, adherence_discharge, ih_discharge_date_on_time_zero, facilitycode, and treatment_arm}
 }
 \value{
 An HTML table.

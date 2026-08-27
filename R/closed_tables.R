@@ -1564,14 +1564,14 @@ closed_appendix_D_protocol_deviation <- function(analytic){
 
 
 
-#' Closed crossover monitoring by site
+#' Closed adherence monitoring by site
 #'
 #' @description 
 #' This is the closed version of the ih_and_dc_crossover_monitoring_by_site function; see its documentation
 #' for details.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
-#' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, and treatment_arm
+#' ih_discharge_date, adherence_inpatient, adherence_discharge, ih_discharge_date_on_time_zero, facilitycode, and treatment_arm
 #'
 #' @return An HTML table.
 #' @export
@@ -1585,7 +1585,7 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('facilitycode', 'enrolled', 'df_surg_completed', 'ih_discharge_date', 
-                           'crossover_inpatient', 'crossover_discharge', 'ih_discharge_date_on_time_zero', 
+                           'adherence_inpatient', 'adherence_discharge', 'ih_discharge_date_on_time_zero', 
                            'treatment_arm'), 
     example_types = c('FacilityCode', 'Boolean', 'Boolean', 'Date', 'Boolean', "Boolean", 'Boolean', 
                       'TreatmentArm'))
@@ -2280,16 +2280,16 @@ closed_enrollment_status_by_site_var_discontinued <- function(analytic, disconti
 }
 
 
-#' Crossover monitoring by site since 01/01/2024
+#' Closed adherence monitoring by site since 01/01/2024
 #'
-#' @description Visualizes the crossovers by site in hospital and at discharge 
-#' after 01/01/2021, by site.
+#' @description Visualizes phase-level treatment non-adherence by site in hospital and at
+#' discharge after 01/01/2021, by site.
 #' 
 #' This is a closed version of ih_and_dc_crossover_monitoring_by_site_cutoff_date, request if ih_and_dc_crossover_monitoring_by_site_cutoff_date is present in your study. 
 #' See ih_and_dc_crossover_monitoring_by_site_cutoff_date for more information.
 #'
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
-#' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, treatment_arm
+#' ih_discharge_date, adherence_inpatient, adherence_discharge, ih_discharge_date_on_time_zero, facilitycode, treatment_arm
 #'
 #' @return html table
 #' @export
@@ -2303,7 +2303,7 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic, 
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c("enrolled", "df_surg_completed", "ih_discharge_date", 
-                           "crossover_inpatient", "crossover_discharge", "ih_discharge_date_on_time_zero",
+                           "adherence_inpatient", "adherence_discharge", "ih_discharge_date_on_time_zero",
                            "facilitycode", "treatment_arm"), 
     example_types = c("Boolean", "Boolean", "Date", 
                       "Boolean", "Boolean", "Boolean",
@@ -4729,7 +4729,8 @@ closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, disco
 #' @param type_construct the name of the column of the analytic dataset that must include whether the outcome for that participant was a check or event
 #' @param days_construct the name of the column of the analytic dataset that must include the number of days till check or event
 #' @param outcome_length number of days for this outcome (defaults to 365)
-#' @param minimum_days participants whose follow-up is at or below this many days are dropped before the interval split (defaults to 0). A participant with no follow-up time enters no interval, so the default drops only those. Raising it also drops any event that occurred at or before the threshold, and applies delayed entry: follow-up before minimum_days contributes no person-time, interval boundaries at or below it are dropped, and the baseline hazard (and the risk it integrates to) starts at minimum_days.
+#' @param minimum_days participants whose follow-up is at or below this many days are dropped before the interval split (defaults to 0). A participant with no follow-up time enters no interval, so the default drops only those. Raising it also drops any event that occurred at or before the threshold, and applies delayed entry: follow-up before minimum_days contributes no person-time, interval boundaries at or below it are dropped, and the baseline hazard (and the risk it integrates to) starts at minimum_days. Ignored when entry_construct is supplied.
+#' @param entry_construct optional name of a column holding each participant's risk-entry DAY on the analysis time scale (e.g. definitive-fixation day 90 expressed on the Time Zero clock). When supplied, entry is participant-specific and the entry day itself is inclusive: risk begins at the start of that day, so an event on the entry day has nonzero exposure. Participants with a qualifying event before their entry day are excluded from the risk set (the event ends primary follow-up), as are participants censored before entry. The first hazard interval runs from each participant's entry to the first value of cuts and so has participant-specific width; cuts must then be the fixed interval stop points ONLY (e.g. c(180, 270, 365)), strictly increasing, ending at outcome_length, with every value greater than every entry day. Posterior risks are standardized over the participant-specific risk-window widths, averaged across all risk-set participants.
 #' @param cuts interval boundaries for the piecewise baseline hazard; must start at 0 and end at outcome_length.
 #' These should be selected and locked before unmasking (defaults to quarterly intervals c(0, 90, 180, 270, 365))
 #' @param ni_margin noninferiority margin for the risk difference (defaults to 0.10)
@@ -4765,6 +4766,7 @@ closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, disco
 closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, days_construct,
                                                    outcome_length = 365,
                                                    minimum_days = 0,
+                                                   entry_construct = NULL,
                                                    cuts = c(0, 90, 180, 270, 365),
                                                    ni_margin = 0.10,
                                                    control_arm = "Group A",
@@ -4784,8 +4786,14 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
   if (backend == "cmdstanr" && !requireNamespace("cmdstanr", quietly = TRUE)) {
     stop("backend = \"cmdstanr\" requires the cmdstanr package; please install it or use backend = \"rstan\".")
   }
-  if (cuts[1] != 0 || cuts[length(cuts)] != outcome_length) {
-    stop("cuts must start at 0 and end at outcome_length")
+  if (is.null(entry_construct)) {
+    if (cuts[1] != 0 || cuts[length(cuts)] != outcome_length) {
+      stop("cuts must start at 0 and end at outcome_length")
+    }
+  } else {
+    if (any(diff(cuts) <= 0) || cuts[length(cuts)] != outcome_length) {
+      stop("with entry_construct, cuts must be strictly increasing fixed stop points ending at outcome_length")
+    }
   }
   
   if (backend == "cmdstanr" && install_cmdstan) {
@@ -4814,7 +4822,8 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
   }
   
   analytic <- analytic %>%
-    select(study_id, enrolled, treatment_arm, !!sym(type_construct), !!sym(days_construct))
+    select(study_id, enrolled, treatment_arm, !!sym(type_construct), !!sym(days_construct),
+           any_of(entry_construct))
 
   # ── Prep data ───────────────────────────────────────────────────────────
   dat <- analytic %>%
@@ -4834,36 +4843,66 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
     ) %>%
     filter(!is.na(time) & !is.na(trt))
 
-  # Participants whose follow-up is at or below minimum_days are dropped. At the
-  # default of 0 this drops only participants with no follow-up time, who enter
-  # no interval and so contribute no exposure and no events and have no row in
-  # the interval split.
-  dat <- dat %>%
-    filter(time > minimum_days)
+  if (is.null(entry_construct)) {
+    # Participants whose follow-up is at or below minimum_days are dropped. At the
+    # default of 0 this drops only participants with no follow-up time, who enter
+    # no interval and so contribute no exposure and no events and have no row in
+    # the interval split.
+    dat <- dat %>%
+      filter(time > minimum_days)
 
-  # Delayed entry: follow-up before minimum_days contributes no person-time, so
-  # the piecewise baseline hazard begins at minimum_days and cut points at or
-  # below it are dropped. With minimum_days = 0 the cuts are unchanged. The
-  # posterior risks then integrate the hazard over (minimum_days, outcome_length]
-  # only, so no interval is left with exposure but structurally zero events.
-  cuts <- c(minimum_days, cuts[cuts > minimum_days])
+    # Delayed entry: follow-up before minimum_days contributes no person-time, so
+    # the piecewise baseline hazard begins at minimum_days and cut points at or
+    # below it are dropped. With minimum_days = 0 the cuts are unchanged. The
+    # posterior risks then integrate the hazard over (minimum_days, outcome_length]
+    # only, so no interval is left with exposure but structurally zero events.
+    cuts <- c(minimum_days, cuts[cuts > minimum_days])
+
+    dat <- dat %>% mutate(entry_boundary = cuts[1])
+  } else {
+    # Participant-specific delayed entry. The entry day itself is inclusive, so
+    # the continuous risk boundary is the start of the entry day: entry_day - 1.
+    # A qualifying event before the entry day ends primary follow-up and the
+    # participant never enters the risk set; a censoring at or before the
+    # boundary contributes nothing.
+    dat <- dat %>%
+      mutate(entry_day = suppressWarnings(as.numeric(.data[[entry_construct]])),
+             entry_boundary = entry_day - 1) %>%
+      filter(!is.na(entry_day)) %>%
+      filter(!(event == 1 & time < entry_day)) %>%
+      filter(time > entry_boundary)
+
+    if (nrow(dat) > 0 && any(cuts[1] <= max(dat$entry_boundary))) {
+      stop("with entry_construct, every value of cuts must exceed every participant's entry boundary")
+    }
+  }
 
   stopifnot(all(dat$trt %in% c(0, 1)))
   stopifnot(all(dat$event %in% c(0, 1)))
-  stopifnot(all(dat$time >= 0 & dat$time <= outcome_length))
+  stopifnot(all(dat$time <= outcome_length))
 
-  interval_start <- head(cuts, -1)
-  interval_stop  <- tail(cuts, -1)
+  if (is.null(entry_construct)) {
+    interval_start <- head(cuts, -1)
+    interval_stop  <- tail(cuts, -1)
+  } else {
+    # First interval runs from each participant's own entry boundary to cuts[1];
+    # its start is participant-specific, so only the stops are global here.
+    interval_start <- c(NA_real_, head(cuts, -1))
+    interval_stop  <- cuts
+  }
   interval_width <- interval_stop - interval_start
-  number_intervals <- length(interval_width)
+  number_intervals <- length(interval_stop)
 
   # ── Convert each participant into interval records ─────────────────────
   split_participant <- function(i) {
 
-    # Include every interval entered by this participant
-    entered <- interval_start < dat$time[i]
+    starts_i <- interval_start
+    if (!is.null(entry_construct)) starts_i[1] <- dat$entry_boundary[i]
 
-    starts <- interval_start[entered]
+    # Include every interval entered by this participant
+    entered <- starts_i < dat$time[i]
+
+    starts <- starts_i[entered]
     stops  <- interval_stop[entered]
 
     data.frame(
@@ -4948,14 +4987,28 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
   # group during that interval.
   baseline_hazards <- exp(as.matrix(draws[, baseline_names, drop = FALSE]))
 
-  control_cumulative_hazard <- as.numeric(baseline_hazards %*% interval_width)
-
   hazard_ratio_draws <- exp(draws$b_trt)
 
-  treatment_cumulative_hazard <- control_cumulative_hazard * hazard_ratio_draws
+  if (is.null(entry_construct)) {
+    control_cumulative_hazard <- as.numeric(baseline_hazards %*% interval_width)
 
-  control_risk   <- 1 - exp(-control_cumulative_hazard)
-  treatment_risk <- 1 - exp(-treatment_cumulative_hazard)
+    treatment_cumulative_hazard <- control_cumulative_hazard * hazard_ratio_draws
+
+    control_risk   <- 1 - exp(-control_cumulative_hazard)
+    treatment_risk <- 1 - exp(-treatment_cumulative_hazard)
+  } else {
+    # Interval hazards are integrated over each participant's risk-window widths
+    # (the first width is participant-specific), and arm-level posterior risks
+    # are the average of those participant-level risks over every risk-set
+    # participant, per the revised SAP. width_matrix is participants x intervals.
+    width_matrix <- matrix(rep(interval_width, each = nrow(dat)), nrow = nrow(dat))
+    width_matrix[, 1] <- interval_stop[1] - dat$entry_boundary
+
+    cumulative_hazard_by_participant <- baseline_hazards %*% t(width_matrix)  # draws x participants
+
+    control_risk   <- rowMeans(1 - exp(-cumulative_hazard_by_participant))
+    treatment_risk <- rowMeans(1 - exp(-cumulative_hazard_by_participant * hazard_ratio_draws))
+  }
 
   # Primary estimand
   risk_difference <- treatment_risk - control_risk

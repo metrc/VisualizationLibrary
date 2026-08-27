@@ -2,20 +2,24 @@
 % Please edit documentation in R/gray_tables.R
 \name{ih_and_dc_crossover_monitoring_by_site}
 \alias{ih_and_dc_crossover_monitoring_by_site}
-\title{Crossover Monitoring by Site}
+\title{Adherence Monitoring by Site}
 \usage{
 ih_and_dc_crossover_monitoring_by_site(analytic)
 }
 \arguments{
 \item{analytic}{analytic data set that must include enrolled, df_surg_completed, ih_discharge_date, 
-crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode}
+adherence_inpatient, adherence_discharge, ih_discharge_date_on_time_zero, and facilitycode}
 }
 \value{
 HTML table
 }
 \description{
-Visualizes hospital discharges and patient crossovers out of the number of patients enrolled. Data
-is organized per site.
+Visualizes hospital discharges and phase-level treatment non-adherence out of the number of
+patients enrolled, organized per site. The adherence_inpatient and adherence_discharge input
+constructs are TRUE when the participant met the assigned arm's criteria in that phase; the
+table displays their complement as non-adherence, and an undetermined (NA) adherence is not
+counted as non-adherence. Under the revised NSAID SAP, "crossover" names adherence to the
+opposite arm, a different and rarer state, shown in its own columns from the crossover_inpatient and crossover_discharge constructs (revised definition).
 }
 \examples{
 ih_and_dc_crossover_monitoring_by_site("Replace with Analytic Tibble")

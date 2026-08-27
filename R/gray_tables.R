@@ -1,11 +1,15 @@
-#' Crossover Monitoring by Site
+#' Adherence Monitoring by Site
 #'
 #' @description 
-#' Visualizes hospital discharges and patient crossovers out of the number of patients enrolled. Data
-#' is organized per site.
+#' Visualizes hospital discharges and phase-level treatment non-adherence out of the number of
+#' patients enrolled, organized per site. The adherence_inpatient and adherence_discharge input
+#' constructs are TRUE when the participant met the assigned arm's criteria in that phase; the
+#' table displays their complement as non-adherence, and an undetermined (NA) adherence is not
+#' counted as non-adherence. Under the revised NSAID SAP, "crossover" names adherence to the
+#' opposite arm, a different and rarer state, shown in its own columns from the crossover_inpatient and crossover_discharge constructs (revised definition).
 #'
 #' @param analytic analytic data set that must include enrolled, df_surg_completed, ih_discharge_date, 
-#' crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
+#' adherence_inpatient, adherence_discharge, ih_discharge_date_on_time_zero, and facilitycode
 #'
 #' @return HTML table
 #' @export
@@ -16,14 +20,15 @@
 ih_and_dc_crossover_monitoring_by_site <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic, 
-    example_constructs = c("facilitycode", "enrolled", "df_surg_completed", "ih_discharge_date", "crossover_inpatient",
-                           "crossover_discharge", "ih_discharge_date_on_time_zero"),
-    example_types = c("FacilityCode", "Boolean", "Boolean", "Date", "Boolean", "Boolean", "Boolean"))
+    example_constructs = c("facilitycode", "enrolled", "df_surg_completed", "ih_discharge_date", "adherence_inpatient",
+                           "adherence_discharge", "crossover_inpatient", "crossover_discharge", "ih_discharge_date_on_time_zero"),
+    example_types = c("FacilityCode", "Boolean", "Boolean", "Date", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean"))
   
   df <- analytic %>% 
-    select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, crossover_inpatient, 
-           crossover_discharge, ih_discharge_date_on_time_zero) %>% 
-    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, adherence_inpatient, 
+           adherence_discharge, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero) %>% 
+    mutate(across(where(is.logical) & !any_of(c('adherence_inpatient', 'adherence_discharge', 'crossover_inpatient', 'crossover_discharge')),
+                  ~ifelse(is.na(.), FALSE, .))) %>% 
     rename(Facility = facilitycode) %>% 
     filter(enrolled) %>% 
     mutate(ih_discharge_date = !is.na(ih_discharge_date)) %>% 
@@ -32,8 +37,10 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
               "Definitive Fixation Complete" = sum(df_surg_completed), 
               "Discharged from Index Hospitalization" = sum(ih_discharge_date),
               "Discharged on Randomization Date" = sum(ih_discharge_date_on_time_zero),
-              "Inpatient Crossover" = sum(crossover_inpatient),
-              "Discharge Crossover" = sum(crossover_discharge)) 
+              "Inpatient Non-Adherence" = sum(adherence_inpatient %in% FALSE),
+              "Discharge Non-Adherence" = sum(adherence_discharge %in% FALSE),
+              "Inpatient Crossover" = sum(crossover_inpatient %in% TRUE),
+              "Discharge Crossover" = sum(crossover_discharge %in% TRUE)) 
   
   
   table_raw <- df %>% 
@@ -44,27 +51,32 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
     mutate(`Definitive Fixation Complete` = format_count_percent(`Definitive Fixation Complete`, `Enrolled`)) %>% 
     mutate(`Discharged from Index Hospitalization` = format_count_percent(`Discharged from Index Hospitalization`, `Enrolled`)) %>%
     mutate(`Discharged on Randomization Date` = format_count_percent(`Discharged on Randomization Date`, `Enrolled`)) %>%
-    mutate(`Inpatient Crossover` = format_count_percent(`Inpatient Crossover`, `Enrolled`)) %>% 
+    mutate(`Inpatient Non-Adherence` = format_count_percent(`Inpatient Non-Adherence`, `Enrolled`)) %>% 
+    mutate(`Discharge Non-Adherence` = format_count_percent(`Discharge Non-Adherence`, `Enrolled`)) %>%
+    mutate(`Inpatient Crossover` = format_count_percent(`Inpatient Crossover`, `Enrolled`)) %>%
     mutate(`Discharge Crossover` = format_count_percent(`Discharge Crossover`, `Enrolled`))
   
   
   table<- kable(table_raw, format="html",, align='l') %>%
-    kable_styling("striped", full_width = F, position="left")
+    kable_styling("striped", full_width = F, position="left") %>%
+    add_footnote(c("Inpatient and Discharge Non-Adherence are the same monitored quantities previously labeled Inpatient and Discharge Crossover, unchanged in definition and directly comparable with earlier DSMB reports.", "Inpatient and Discharge Crossover use the revised SAP definition - adherence to the opposite arm - and are NOT comparable with columns of the same name in reports before the revision."), notation = "number")
   
   return(table)
 }
 
 
 
-#' Crossover Monitoring by Site since 01/01/2024
+#' Adherence Monitoring by Site since 01/01/2024
 #'
-#' @description Visualizes the crossovers by site in hospital and at discharge 
-#' after 01/01/2021, by site.
+#' @description Visualizes phase-level treatment non-adherence by site in hospital and at
+#' discharge after 01/01/2021. Inputs are the adherence_inpatient and adherence_discharge constructs (TRUE = adherent),
+#' displayed as their non-adherence complement; see
+#' ih_and_dc_crossover_monitoring_by_site.
 #' 
 #' For a visualization of the same data not by site, see: ih_and_dc_crossover_monitoring_cutoff_date
 #'
 #' @param analytic This is the analytic data set that must include enrolled, df_surg_completed, 
-#' ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode
+#' ih_discharge_date, adherence_inpatient, adherence_discharge, ih_discharge_date_on_time_zero, and facilitycode
 #'
 #' @return html table
 #' @export
@@ -75,15 +87,16 @@ ih_and_dc_crossover_monitoring_by_site <- function(analytic){
 ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
   analytic <- if_needed_generate_example_data(
     analytic,
-    example_constructs = c("enrolled", "df_surg_completed", "ih_discharge_date", "crossover_inpatient", 
-                           "crossover_discharge",
+    example_constructs = c("enrolled", "df_surg_completed", "ih_discharge_date", "adherence_inpatient", 
+                           "adherence_discharge", "crossover_inpatient", "crossover_discharge",
                            "ih_discharge_date_on_time_zero", "facilitycode"),
-    example_types = c("Boolean", "Boolean", "Date", "Boolean", "Boolean", "Boolean", "FacilityCode")) 
+    example_types = c("Boolean", "Boolean", "Date", "Boolean", "Boolean", "Boolean", "Boolean", "Boolean", "FacilityCode")) 
   
   df <- analytic %>% 
-    select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero)  %>% 
+    select(facilitycode, enrolled, df_surg_completed, ih_discharge_date, adherence_inpatient, adherence_discharge, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero)  %>% 
     filter(as.Date(ih_discharge_date) > as.Date("2024-01-01")) %>% 
-    mutate_if(is.logical, ~ifelse(is.na(.), FALSE, .)) %>% 
+    mutate(across(where(is.logical) & !any_of(c('adherence_inpatient', 'adherence_discharge', 'crossover_inpatient', 'crossover_discharge')),
+                  ~ifelse(is.na(.), FALSE, .))) %>% 
     rename(Facility = facilitycode) %>% 
     filter(enrolled) %>% 
     mutate(ih_discharge_date = !is.na(ih_discharge_date)) %>% 
@@ -92,8 +105,10 @@ ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
               "Definitive Fixation Complete" = sum(df_surg_completed), 
               "Discharged from Index Hospitalization" = sum(ih_discharge_date),
               "Discharged on Randomization Date" = sum(ih_discharge_date_on_time_zero),
-              "Inpatient Crossover" = sum(crossover_inpatient),
-              "Discharge Crossover" = sum(crossover_discharge)) 
+              "Inpatient Non-Adherence" = sum(adherence_inpatient %in% FALSE),
+              "Discharge Non-Adherence" = sum(adherence_discharge %in% FALSE),
+              "Inpatient Crossover" = sum(crossover_inpatient %in% TRUE),
+              "Discharge Crossover" = sum(crossover_discharge %in% TRUE)) 
   
   
   table_raw <- df %>% 
@@ -104,12 +119,15 @@ ih_and_dc_crossover_monitoring_by_site_cutoff_date <- function(analytic){
     mutate(`Definitive Fixation Complete` = format_count_percent(`Definitive Fixation Complete`, `Enrolled`)) %>% 
     mutate(`Discharged from Index Hospitalization` = format_count_percent(`Discharged from Index Hospitalization`, `Enrolled`)) %>%
     mutate(`Discharged on Randomization Date` = format_count_percent(`Discharged on Randomization Date`, `Enrolled`)) %>%
-    mutate(`Inpatient Crossover` = format_count_percent(`Inpatient Crossover`, `Enrolled`)) %>% 
+    mutate(`Inpatient Non-Adherence` = format_count_percent(`Inpatient Non-Adherence`, `Enrolled`)) %>% 
+    mutate(`Discharge Non-Adherence` = format_count_percent(`Discharge Non-Adherence`, `Enrolled`)) %>%
+    mutate(`Inpatient Crossover` = format_count_percent(`Inpatient Crossover`, `Enrolled`)) %>%
     mutate(`Discharge Crossover` = format_count_percent(`Discharge Crossover`, `Enrolled`))
   
   
   table<- kable(table_raw, format="html",, align='l') %>%
-    kable_styling("striped", full_width = F, position="left")
+    kable_styling("striped", full_width = F, position="left") %>%
+    add_footnote(c("Inpatient and Discharge Non-Adherence are the same monitored quantities previously labeled Inpatient and Discharge Crossover, unchanged in definition and directly comparable with earlier DSMB reports.", "Inpatient and Discharge Crossover use the revised SAP definition - adherence to the opposite arm - and are NOT comparable with columns of the same name in reports before the revision."), notation = "number")
   
   return(table)
 }

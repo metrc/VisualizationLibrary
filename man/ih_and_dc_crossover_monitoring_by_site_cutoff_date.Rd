@@ -2,20 +2,22 @@
 % Please edit documentation in R/gray_tables.R
 \name{ih_and_dc_crossover_monitoring_by_site_cutoff_date}
 \alias{ih_and_dc_crossover_monitoring_by_site_cutoff_date}
-\title{Crossover Monitoring by Site since 01/01/2024}
+\title{Adherence Monitoring by Site since 01/01/2024}
 \usage{
 ih_and_dc_crossover_monitoring_by_site_cutoff_date(analytic)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, df_surg_completed, 
-ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, and facilitycode}
+ih_discharge_date, adherence_inpatient, adherence_discharge, ih_discharge_date_on_time_zero, and facilitycode}
 }
 \value{
 html table
 }
 \description{
-Visualizes the crossovers by site in hospital and at discharge 
-after 01/01/2021, by site.
+Visualizes phase-level treatment non-adherence by site in hospital and at
+discharge after 01/01/2021. Inputs are the adherence_inpatient and adherence_discharge constructs (TRUE = adherent),
+displayed as their non-adherence complement; see
+ih_and_dc_crossover_monitoring_by_site.
 
 For a visualization of the same data not by site, see: ih_and_dc_crossover_monitoring_cutoff_date
 }

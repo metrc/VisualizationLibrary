@@ -2,7 +2,7 @@
 % Please edit documentation in R/closed_tables.R
 \name{closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date}
 \alias{closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date}
-\title{Crossover monitoring by site since 01/01/2024}
+\title{Closed adherence monitoring by site since 01/01/2024}
 \usage{
 closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date(
   analytic,
@@ -11,14 +11,14 @@ closed_ih_and_dc_crossover_monitoring_by_site_cutoff_date(
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include enrolled, df_surg_completed, 
-ih_discharge_date, crossover_inpatient, crossover_discharge, ih_discharge_date_on_time_zero, facilitycode, treatment_arm}
+ih_discharge_date, adherence_inpatient, adherence_discharge, ih_discharge_date_on_time_zero, facilitycode, treatment_arm}
 }
 \value{
 html table
 }
 \description{
-Visualizes the crossovers by site in hospital and at discharge 
-after 01/01/2021, by site.
+Visualizes phase-level treatment non-adherence by site in hospital and at
+discharge after 01/01/2021, by site.
 
 This is a closed version of ih_and_dc_crossover_monitoring_by_site_cutoff_date, request if ih_and_dc_crossover_monitoring_by_site_cutoff_date is present in your study. 
 See ih_and_dc_crossover_monitoring_by_site_cutoff_date for more information.

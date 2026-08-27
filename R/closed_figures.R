@@ -282,7 +282,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
 #'
 closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, arm_a_str="Group A", arm_b_str="Group B"){
 
-  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '8488c08648e830245a39b54b8313cb51')
+  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '5a01eff3f658a08b3c13af9d5d82c75f')
 
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -291,7 +291,8 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
                            "constraint_other", "nonparticipation_other_study_coenrolled", "nonparticipation_other_reason",
                            "randomized", "adjudicated_inappropriate_enrollment", "adjudicated_late_ineligible",
                            "adjudicated_late_refusal", "adjudicated_physician_withdrawn", "df_surg_start_date",
-                           "surgery_or_healed_type", "surgery_or_healed_days", "crossover", "treatment_arm",
+                           "surgery_or_healed_type", "surgery_or_healed_days", "crossover", "adherent", "treatment_arm",
+                           "primary_entry_day",
                            "dead", "withdrawn_consent", "not_completed_reason",
                            "bpi_severity_score_3mo", "bpi_interference_score_3mo",
                            "opioid_days_baseline", "opioid_days_3mo", "opioid_days_6mo", "opioid_days_12mo"),
@@ -300,7 +301,8 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
                       "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Boolean",
                       "Boolean", "Boolean", "Date",
-                      "NamedCategory['check' 'favorable_event' 'unfavorable_event']", "Number-U365", "Boolean", "TreatmentArm",
+                      "NamedCategory['check' 'favorable_event' 'unfavorable_event']", "Number-U365", "Boolean", "Boolean", "TreatmentArm",
+                      "Number",
                       "Boolean", "Boolean", "NamedCategory['Unreachable' 'Other']",
                       "Number", "Number",
                       "Number", "Number", "Number", "Number"))
@@ -311,7 +313,8 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
            nonparticipation_other_study_coenrolled, nonparticipation_other_reason,
            randomized, adjudicated_inappropriate_enrollment, adjudicated_late_ineligible,
            adjudicated_late_refusal, adjudicated_physician_withdrawn, df_surg_start_date,
-           surgery_or_healed_type, surgery_or_healed_days, crossover, treatment_arm,
+           surgery_or_healed_type, surgery_or_healed_days, crossover, any_of("adherent"), treatment_arm,
+           primary_entry_day,
            dead, withdrawn_consent, not_completed_reason,
            bpi_severity_score_3mo, bpi_interference_score_3mo,
            opioid_days_baseline, opioid_days_3mo, opioid_days_6mo, opioid_days_12mo) %>%
@@ -407,15 +410,28 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
                            (itt_df$surgery_or_healed_type %in% 'check' & full_follow_up))
     adjudicated_healed <- sum(itt_df$surgery_or_healed_type %in% 'favorable_event')
     unfavorable_event <- sum(itt_df$surgery_or_healed_type %in% 'unfavorable_event')
-    non_adherent <- sum(itt_df$crossover, na.rm = TRUE)
+    if ("adherent" %in% names(itt_df)) {
+      pp_n <- sum(itt_df$adherent %in% TRUE)
+      non_adherent <- itt - pp_n
+    } else {
+      non_adherent <- sum(itt_df$crossover, na.rm = TRUE)
+    }
+    crossover_n <- sum(itt_df$crossover %in% TRUE)
 
     # Amended SAP section 3 elements, per arm. Risk-set entry and person-time
     # describe the primary analysis, so they run on the intention-to-treat set;
     # the day-180/365 statuses and the dispositions run on all randomized in the
     # arm. Days count from Time Zero; the SAP phrases the status days as
     # following discharge, recorded in SAP_Issues_and_Questions.md.
-    risk_set_n <- sum(!is.na(surgery_or_healed_days_num) & surgery_or_healed_days_num > 90)
-    person_days <- sum(pmax(0, pmin(surgery_or_healed_days_num, 365) - 90), na.rm = TRUE)
+    # Participant-specific primary risk entry, revised SAP; missing entry falls
+    # back to day 90. An event before entry never enters the risk set.
+    entry_num <- suppressWarnings(as.numeric(itt_df$primary_entry_day))
+    entry_num <- ifelse(is.na(entry_num), 90, entry_num)
+    entry_boundary <- entry_num - 1
+    itt_event <- itt_df$surgery_or_healed_type %in% 'unfavorable_event'
+    in_risk <- !is.na(surgery_or_healed_days_num) & surgery_or_healed_days_num > entry_boundary & !(itt_event & surgery_or_healed_days_num < entry_num)
+    risk_set_n <- sum(in_risk)
+    person_days <- sum(pmax(0, pmin(surgery_or_healed_days_num[in_risk], 365) - entry_boundary[in_risk]), na.rm = TRUE)
 
     rand_days <- suppressWarnings(as.numeric(inner_df$surgery_or_healed_days))
     status_at <- function(d) {
@@ -451,7 +467,8 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
       unknown_outcome = itt - known_outcome - unfavorable_event,
       adjudicated_healed = adjudicated_healed,
       per_protocol = itt - non_adherent,
-      non_adherent = non_adherent
+      non_adherent = non_adherent,
+      crossover_n = crossover_n
     )
   }
 
@@ -511,6 +528,8 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
             <TR><TD ALIGN="LEFT">analysis</TD></TR>
             <TR><TD ALIGN="LEFT">', arm$non_adherent, ' Were excluded from the per-protocol</TD></TR>
             <TR><TD ALIGN="LEFT">analysis due to non-adherence</TD></TR>
+            <TR><TD ALIGN="LEFT">', arm$crossover_n, ' Met the opposite arm&#39;s adherence</TD></TR>
+            <TR><TD ALIGN="LEFT">criteria (crossover, revised definition)</TD></TR>
           </TABLE>
         >];
 
@@ -518,8 +537,8 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">Primary analysis accounting</TD></TR>
-            <TR><TD ALIGN="LEFT">&#8203;    ', arm$risk_set_n, ' Entered the day-90 risk set</TD></TR>
-            <TR><TD ALIGN="LEFT">&#8203;    ', format(arm$person_days, big.mark = ","), ' Person-days in (90, 365]</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', arm$risk_set_n, ' Entered the primary risk set</TD></TR>
+            <TR><TD ALIGN="LEFT">&#8203;    ', format(arm$person_days, big.mark = ","), ' Primary likelihood person-days</TD></TR>
             <TR><TD ALIGN="LEFT">Status at day 180:</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', arm$s180['event'], ' Surgery to promote union</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', arm$s180['free'], ' Known event-free</TD></TR>

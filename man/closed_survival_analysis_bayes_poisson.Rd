@@ -10,6 +10,7 @@ closed_survival_analysis_bayes_poisson(
   days_construct,
   outcome_length = 365,
   minimum_days = 0,
+  entry_construct = NULL,
   cuts = c(0, 90, 180, 270, 365),
   ni_margin = 0.1,
   control_arm = "Group A",
@@ -38,7 +39,9 @@ closed_survival_analysis_bayes_poisson(
 
 \item{outcome_length}{number of days for this outcome (defaults to 365)}
 
-\item{minimum_days}{participants whose follow-up is at or below this many days are dropped before the interval split (defaults to 0). A participant with no follow-up time enters no interval, so the default drops only those. Raising it also drops any event that occurred at or before the threshold, and applies delayed entry: follow-up before minimum_days contributes no person-time, interval boundaries at or below it are dropped, and the baseline hazard (and the risk it integrates to) starts at minimum_days.}
+\item{minimum_days}{participants whose follow-up is at or below this many days are dropped before the interval split (defaults to 0). A participant with no follow-up time enters no interval, so the default drops only those. Raising it also drops any event that occurred at or before the threshold, and applies delayed entry: follow-up before minimum_days contributes no person-time, interval boundaries at or below it are dropped, and the baseline hazard (and the risk it integrates to) starts at minimum_days. Ignored when entry_construct is supplied.}
+
+\item{entry_construct}{optional name of a column holding each participant's risk-entry DAY on the analysis time scale (e.g. definitive-fixation day 90 expressed on the Time Zero clock). When supplied, entry is participant-specific and the entry day itself is inclusive: risk begins at the start of that day, so an event on the entry day has nonzero exposure. Participants with a qualifying event before their entry day are excluded from the risk set (the event ends primary follow-up), as are participants censored before entry. The first hazard interval runs from each participant's entry to the first value of cuts and so has participant-specific width; cuts must then be the fixed interval stop points ONLY (e.g. c(180, 270, 365)), strictly increasing, ending at outcome_length, with every value greater than every entry day. Posterior risks are standardized over the participant-specific risk-window widths, averaged across all risk-set participants.}
 
 \item{cuts}{interval boundaries for the piecewise baseline hazard; must start at 0 and end at outcome_length.
 These should be selected and locked before unmasking (defaults to quarterly intervals c(0, 90, 180, 270, 365))}
