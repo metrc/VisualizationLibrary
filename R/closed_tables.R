@@ -4934,7 +4934,7 @@ closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, disco
 #' percent credible interval is used to apply a noninferiority decision rule.
 #'
 #' Requires the brms package (and the cmdstanr package when backend = "cmdstanr"; by default
-#' CmdStan itself is installed into the working directory before fitting via install_cmdstan).
+#' CmdStan must already be installed and configured; the function never installs it).
 #' All installation, compilation, and sampling output is suppressed; the only output is the
 #' returned HTML table.
 #'
@@ -4960,9 +4960,10 @@ closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, disco
 #' @param seed random seed for sampling (defaults to 20260713)
 #' @param adapt_delta target acceptance rate passed to the sampler (defaults to 0.95)
 #' @param backend brms backend, "cmdstanr" or "rstan" (defaults to "cmdstanr")
-#' @param install_cmdstan when TRUE and backend = "cmdstanr", installs CmdStan version 2.35.0
-#' into the working directory (quietly, overwriting any existing installation) before fitting.
-#' Set to FALSE to reuse an existing CmdStan installation (defaults to TRUE)
+#' @param return_fit when TRUE, return a list carrying the fitted brms object, the
+#'   person- and interval-level data the model saw, the transformed posterior draws,
+#'   sampler diagnostics, and all settings, alongside the result table (as
+#'   \code{result_table}). Defaults to FALSE, returning only the HTML table.
 #' @param blinded when TRUE, ignores the real treatment_arm and deterministically reassigns
 #' arms from the digit sum of study_id (even = "Group A", odd = "Group B") so the table can be
 #' produced without unmasking (defaults to FALSE)
@@ -4991,8 +4992,8 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
                                                    chains = 4, iter = 4000, warmup = 2000, cores = 4,
                                                    seed = 20260713, adapt_delta = 0.95,
                                                    backend = "cmdstanr",
-                                                   install_cmdstan = TRUE,
-                                                   blinded = FALSE){
+                                                   blinded = FALSE,
+                                                   return_fit = FALSE){
   if (!requireNamespace("brms", quietly = TRUE)) {
     stop("closed_survival_analysis_bayes_poisson requires the brms package; please install it.")
   }
@@ -5009,16 +5010,9 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
     }
   }
   
-  if (backend == "cmdstanr" && install_cmdstan) {
-    invisible(utils::capture.output(suppressWarnings(suppressMessages(
-      cmdstanr::install_cmdstan(
-        dir = getwd(),
-        version = "2.35.0",
-        cores = 2, overwrite = TRUE,
-        quiet = TRUE
-      )
-    )), type = "output"))
-  }
+  # CmdStan itself is deliberately NOT installed here: runtime installation
+  # belongs in environment setup, not inside the statistical workhorse. With
+  # backend = "cmdstanr", a working CmdStan toolchain is a precondition.
 
   # ── Blinded mode: deterministic dummy arms from study_id ────────────────
   if (blinded) {
@@ -5037,6 +5031,20 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
   analytic <- analytic %>%
     select(study_id, enrolled, treatment_arm, !!sym(type_construct), !!sym(days_construct),
            any_of(entry_construct))
+
+  # ── Validate the arm labels ─────────────────────────────────────────────
+  # Every non-control level would otherwise be treated as the treatment arm,
+  # which silently misclassifies a typo or an unexpected third level. The
+  # estimand is treatment minus control, so the mapping must be exact.
+  arm_levels <- unique(stats::na.omit(analytic %>% filter(enrolled) %>% pull(treatment_arm)))
+  if (!control_arm %in% arm_levels) {
+    stop(sprintf("control_arm \"%s\" does not appear in treatment_arm (levels found: %s)",
+                 control_arm, paste(arm_levels, collapse = ", ")))
+  }
+  if (length(arm_levels) != 2) {
+    stop(sprintf("expected exactly two treatment arms, found %d (%s)",
+                 length(arm_levels), paste(arm_levels, collapse = ", ")))
+  }
 
   # ── Prep data ───────────────────────────────────────────────────────────
   dat <- analytic %>%
@@ -5090,6 +5098,15 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
     }
   }
 
+  if (anyDuplicated(dat$study_id) > 0) {
+    stop("duplicate study_id rows in the analysis data; each participant must appear exactly once")
+  }
+  if (any(is.infinite(dat$time))) {
+    stop("non-finite follow-up times in the analysis data")
+  }
+  if (length(unique(dat$trt)) < 2) {
+    stop("after delayed-entry filtering, only one treatment arm remains in the risk set")
+  }
   stopifnot(all(dat$trt %in% c(0, 1)))
   stopifnot(all(dat$event %in% c(0, 1)))
   stopifnot(all(dat$time <= outcome_length))
@@ -5144,6 +5161,14 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
 
   stopifnot(all(long_data$exposure > 0))
 
+  # SAP 11.3: every event must appear exactly once, and summed interval
+  # exposure must equal each participant's observed primary risk time.
+  exposure_sums <- tapply(long_data$exposure, as.character(long_data$study_id), sum)
+  expected_time <- setNames(dat$time - dat$entry_boundary, as.character(dat$study_id))
+  stopifnot(max(abs(exposure_sums[names(expected_time)] - expected_time)) < 1e-8)
+  event_sums <- tapply(long_data$event, as.character(long_data$study_id), sum)
+  stopifnot(all(event_sums[as.character(dat$study_id)] == dat$event))
+
   # ── Priors ──────────────────────────────────────────────────────────────
   # Interval priors are broad log baseline-hazard priors; the treatment
   # prior is centered at no treatment effect.
@@ -5163,7 +5188,9 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
   # ── Fit the Bayesian piecewise-exponential model ────────────────────────
   # capture.output + silent/refresh keep compilation and sampling progress
   # off the console so the returned table is the only output
-  invisible(utils::capture.output(suppressWarnings(suppressMessages(
+  # Compilation/progress chatter is captured, but sampler WARNINGS are not
+  # suppressed: a warning from the sampler is evidence about the fit.
+  invisible(utils::capture.output(suppressMessages(
     primary_fit <- brms::brm(
       event ~ 0 + interval + trt + offset(log(exposure)),
       data    = long_data,
@@ -5179,10 +5206,11 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
       silent  = 2,
       refresh = 0
     )
-  )), type = "output"))
+  ), type = "output"))
 
-  # ── Posterior draws ─────────────────────────────────────────────────────
-  draws <- as.data.frame(primary_fit)
+  # ── Posterior draws (chain structure retained for diagnostics) ──────────
+  dd <- posterior::as_draws_df(primary_fit)
+  draws <- as.data.frame(dd)
 
   baseline_names <- paste0("b_interval", seq_len(number_intervals))
 
@@ -5231,6 +5259,78 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
   posterior_probability_below_margin <- mean(risk_difference < ni_margin)
   noninferior <- upper_credible_limit < ni_margin
 
+  # ── Diagnostic gate (fail-closed, always on) ────────────────────────────
+  # Criteria originate in the study statistician's analysis package,
+  # strengthened per SAP_Issues_and_Questions.md section 5. A fit that cannot
+  # demonstrate trustworthy sampling must not produce a reported result, so
+  # any failure stops with an explanation instead of returning a table.
+  # Failed diagnostic extraction counts as failure, never as a pass.
+  gate_failures <- character(0)
+  gate <- function(ok, msg) if (!isTRUE(ok)) gate_failures <<- c(gate_failures, msg)
+
+  np <- tryCatch(brms::nuts_params(primary_fit), error = function(e) NULL)
+  if (is.null(np)) {
+    gate(FALSE, "sampler diagnostics could not be extracted")
+    divergences <- NA_real_; treedepth_hits <- NA_real_; ebfmi <- NA_real_
+  } else {
+    divergences    <- sum(np$Value[np$Parameter == "divergent__"])
+    treedepth_hits <- sum(np$Value[np$Parameter == "treedepth__"] >= 10)
+    en    <- np[np$Parameter == "energy__", ]
+    ebfmi <- sapply(split(en$Value, en$Chain),
+                    function(e) sum(diff(e)^2) / length(e) / stats::var(e))
+    gate(divergences == 0, sprintf("divergent transitions: %d (must be 0)", divergences))
+    gate(treedepth_hits == 0, sprintf("maximum-treedepth hits: %d (must be 0)", treedepth_hits))
+    gate(all(is.finite(ebfmi)) && all(ebfmi >= 0.2),
+         sprintf("E-BFMI by chain: %s (every chain must be >= 0.2)",
+                 paste(round(ebfmi, 2), collapse = ", ")))
+  }
+
+  par_summary <- tryCatch(posterior::summarise_draws(
+    posterior::subset_draws(posterior::as_draws_array(primary_fit),
+                            variable = c(baseline_names, "b_trt")),
+    "rhat", "ess_bulk", "ess_tail"), error = function(e) NULL)
+  derived_draws <- tryCatch(posterior::as_draws_df(data.frame(
+    .chain = dd$.chain, .iteration = dd$.iteration, .draw = dd$.draw,
+    control_risk = control_risk, treatment_risk = treatment_risk,
+    risk_difference = risk_difference)), error = function(e) NULL)
+  derived_summary <- tryCatch(posterior::summarise_draws(
+    derived_draws, "rhat", "ess_bulk", "ess_tail"), error = function(e) NULL)
+
+  for (summ in list(model = par_summary, derived = derived_summary)) {
+    if (is.null(summ)) {
+      gate(FALSE, "R-hat / effective-sample-size diagnostics could not be computed")
+    } else {
+      gate(all(is.finite(summ$rhat)) && all(summ$rhat <= 1.01),
+           sprintf("R-hat above 1.01: %s",
+                   paste(sprintf("%s=%.3f", summ$variable, summ$rhat)[!is.finite(summ$rhat) | summ$rhat > 1.01], collapse = ", ")))
+      gate(all(is.finite(summ$ess_bulk)) && all(summ$ess_bulk >= 400),
+           sprintf("bulk effective sample size below 400: %s",
+                   paste(sprintf("%s=%.0f", summ$variable, summ$ess_bulk)[!is.finite(summ$ess_bulk) | summ$ess_bulk < 400], collapse = ", ")))
+      gate(all(is.finite(summ$ess_tail)) && all(summ$ess_tail >= 400),
+           sprintf("tail effective sample size below 400: %s",
+                   paste(sprintf("%s=%.0f", summ$variable, summ$ess_tail)[!is.finite(summ$ess_tail) | summ$ess_tail < 400], collapse = ", ")))
+    }
+  }
+
+  # The decision must be simulation-stable: if the risk difference's 97.5th
+  # percentile sits within 3 Monte Carlo standard errors of the margin,
+  # sampling noise could change the verdict - sample more instead of reporting.
+  mcse_q975 <- tryCatch(unname(posterior::mcse_quantile(
+    posterior::extract_variable_matrix(derived_draws, "risk_difference"),
+    probs = 0.975)), error = function(e) NA_real_)
+  gate(is.finite(mcse_q975),
+       "the Monte Carlo standard error of the risk-difference 97.5th percentile could not be computed")
+  if (is.finite(mcse_q975)) {
+    gate(abs(upper_credible_limit - ni_margin) > 3 * mcse_q975,
+         sprintf("the risk-difference 97.5th percentile (%.4f) is within 3 Monte Carlo standard errors (MCSE %.5f) of the %.2f margin; increase iter until the noninferiority decision is simulation-stable",
+                 upper_credible_limit, mcse_q975, ni_margin))
+  }
+
+  if (length(gate_failures) > 0) {
+    stop("Diagnostic gate failed - the fit must not produce a reported result:\n- ",
+         paste(gate_failures, collapse = "\n- "))
+  }
+
   # ── Build table ─────────────────────────────────────────────────────────
   make_cell <- function(x, percent = TRUE) {
     scale <- if (percent) 100 else 1
@@ -5265,6 +5365,55 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
   table <- kable(out_tbl, format = "html", align = "l") %>%
     add_header_above(header) %>%
     kable_styling("striped", full_width = FALSE, position = "left")
+
+  if (return_fit) {
+    # Opt-in analysis object: the fitted model, the exact data it saw, the
+    # transformed posterior, sampler diagnostics, and every setting - what a
+    # reviewer needs to check, reproduce, or explain the result. The default
+    # return stays the HTML table so existing callers are untouched.
+    diagnostics <- list(
+      model_summary   = par_summary,
+      derived_summary = derived_summary,
+      divergences     = divergences,
+      treedepth_hits  = treedepth_hits,
+      ebfmi           = ebfmi,
+      mcse_rd_q975    = mcse_q975,
+      gate            = "passed"
+    )
+    return(list(
+      result_table  = table,
+      fit           = primary_fit,
+      person_data   = dat,
+      interval_data = long_data,
+      posterior = list(
+        control_risk    = control_risk,
+        treatment_risk  = treatment_risk,
+        risk_difference = risk_difference,
+        hazard_ratio    = hazard_ratio_draws,
+        upper_credible_limit = upper_credible_limit,
+        posterior_probability_below_margin = posterior_probability_below_margin,
+        noninferior     = noninferior
+      ),
+      diagnostics = diagnostics,
+      settings = list(
+        type_construct = type_construct, days_construct = days_construct,
+        entry_construct = entry_construct, cuts = cuts, outcome_length = outcome_length,
+        minimum_days = minimum_days, ni_margin = ni_margin, control_arm = control_arm,
+        arm_labels = arm_labels, baseline_prior_mean = baseline_prior_mean,
+        baseline_prior_sd = baseline_prior_sd, treatment_prior_sd = treatment_prior_sd,
+        chains = chains, iter = iter, warmup = warmup, cores = cores, seed = seed,
+        backend = backend, adapt_delta = adapt_delta, blinded = blinded,
+        versions = list(
+          R = as.character(getRversion()),
+          VisualizationLibrary = tryCatch(as.character(utils::packageVersion("VisualizationLibrary")), error = function(e) NA_character_),
+          brms = tryCatch(as.character(utils::packageVersion("brms")), error = function(e) NA_character_),
+          backend_pkg = tryCatch(as.character(utils::packageVersion(backend)), error = function(e) NA_character_)
+        ),
+        person_data_hash   = tryCatch(rlang::hash(dat), error = function(e) NA_character_),
+        interval_data_hash = tryCatch(rlang::hash(long_data), error = function(e) NA_character_)
+      )
+    ))
+  }
 
   return(table)
 }
