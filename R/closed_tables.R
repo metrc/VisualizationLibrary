@@ -3519,7 +3519,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                            filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                            subcategory_constructs = c(), bottom_order_levels = c("Missing"),
                                            mean_sd = c(), include_overall = FALSE){
-  confirm_stability_of_related_visual('generic_characteristics', 'ddc614a1496406d0f4a7a2dd7fb1c66a')
+  confirm_stability_of_related_visual('generic_characteristics', 'a91ba779f134254335bf0052dd1d2480')
   
   out <- NULL
   index_vec <- c()
@@ -3757,7 +3757,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
     vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
       add_indent(c(seq(nrow(out)))) %>% 
       { if(length(border_rows) > 0) row_spec(., border_rows, extra_css = "border-top: 1px solid") else . } %>%  
-      pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+      pack_rows(index = index_vec, label_row_css = "text-align:left", escape = FALSE) %>% 
       kable_styling("striped", full_width = F, position="left")
   }else{
     vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
@@ -3765,7 +3765,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       add_indent(sub_index_vec) %>% 
       row_spec(sub_bold_index_vec, bold = TRUE) %>% 
       { if(length(border_rows) > 0) row_spec(., border_rows, extra_css = "border-top: 1px solid") else . } %>%  
-      pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+      pack_rows(index = index_vec, label_row_css = "text-align:left", escape = FALSE) %>% 
       kable_styling("striped", full_width = F, position="left")
   }
   

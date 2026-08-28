@@ -2083,12 +2083,14 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
 
   consort_diagram <- grViz(paste0('
     digraph g {
-      graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
+      graph [layout=fdp, overlap = true, fontsize=1, splines=polyline, bgcolor="white"]
+      node [fontname="Helvetica", fontsize=12, margin="0.14,0.08"]
+      edge [color="#5B6B7C", penwidth=1.1, arrowsize=0.7]
 
-      title [style="filled", fillcolor="white", color="black", pos="2,7.2!", shape = box, width=2.4, height=.5,
+      title [style="rounded,filled", fillcolor="#DDE9F5", color="#2E5F8A", penwidth=1.5, pos="2,7.2!", shape = box, width=2.4, height=.5,
         label = "', screened, ' Patients were assessed for eligibility"];
 
-      box1 [style="filled", fillcolor="white", color="black", pos="5.4,3.8!", shape = box, width=2.4, height=.5,
+      box1 [style="rounded,filled", fillcolor="#EEF1F5", color="#8A93A0", penwidth=1.2, pos="5.4,3.8!", shape = box, width=2.4, height=.5,
       labeljust=l,
       label = <
         <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
@@ -2110,10 +2112,10 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
         </TABLE>
       >];
 
-      title2 [style="filled", fillcolor="white", color="black", pos="2,0.4!", shape = box, width=2.4, height=.5,
+      title2 [style="rounded,filled", fillcolor="#DDE9F5", color="#2E5F8A", penwidth=1.5, pos="2,0.4!", shape = box, width=2.4, height=.5,
         label = "', randomized, ' Underwent randomization"];
 
-      box2 [style="filled", fillcolor="white", color="black", pos="2,-1.3!", shape = box, width=2.4, height=.5, labeljust=l,
+      box2 [style="rounded,filled", fillcolor="#DDE9F5", color="#2E5F8A", penwidth=1.5, pos="2,-1.3!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', inappropriately_enrolled, ' Were determined to be inappropriately</TD></TR>
@@ -2128,10 +2130,10 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
           </TABLE>
         >];
 
-      box3 [style="filled", fillcolor="white", color="black", pos="2,-3.1!", shape = box, width=2.4, height=.5,
+      box3 [style="rounded,filled", fillcolor="#DDE9F5", color="#2E5F8A", penwidth=1.5, pos="2,-3.1!", shape = box, width=2.4, height=.5,
         label = "', itt, ' Were included in the intention-to-treat analysis"];
 
-      box4 [style="filled", fillcolor="white", color="black", pos="2,-4.9!", shape = box, width=2.4, height=.5, labeljust=l,
+      box4 [style="rounded,filled", fillcolor="#E3F1E7", color="#2E7D4F", penwidth=1.5, pos="2,-4.9!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', known_outcome, ' Had ', outcome_day, ' days of follow-up without</TD></TR>
@@ -2146,7 +2148,7 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
           </TABLE>
         >];
 
-      box5 [style="filled", fillcolor="white", color="black", pos="2,-7.1!", shape = box, width=2.4, height=.5, labeljust=l,
+      box5 [style="rounded,filled", fillcolor="#E3F1E7", color="#2E7D4F", penwidth=1.5, pos="2,-7.1!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', per_protocol, ' Were included in the per-protocol</TD></TR>
@@ -2158,7 +2160,7 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
           </TABLE>
         >]
 
-      sap_accounting [style="filled", fillcolor="white", color="black", pos="6.2,-3.1!", shape = box, width=2.6, height=.5, labeljust=l,
+      sap_accounting [style="rounded,filled", fillcolor="#FAF3DF", color="#B08A2E", penwidth=1.2, pos="6.2,-3.1!", shape = box, width=2.6, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">Primary analysis accounting</TD></TR>
@@ -2168,7 +2170,7 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
           </TABLE>
         >];
 
-      sap_status [style="filled", fillcolor="white", color="black", pos="6.2,-5.4!", shape = box, width=2.6, height=.5, labeljust=l,
+      sap_status [style="rounded,filled", fillcolor="#FAF3DF", color="#B08A2E", penwidth=1.2, pos="6.2,-5.4!", shape = box, width=2.6, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">Status of randomized participants</TD></TR>
@@ -2183,7 +2185,7 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
           </TABLE>
         >];
 
-      sap_disp [style="filled", fillcolor="white", color="black", pos="6.2,-7.6!", shape = box, width=2.6, height=.5, labeljust=l,
+      sap_disp [style="rounded,filled", fillcolor="#FAF3DF", color="#B08A2E", penwidth=1.2, pos="6.2,-7.6!", shape = box, width=2.6, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">Dispositions among randomized</TD></TR>
@@ -2195,7 +2197,7 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
           </TABLE>
         >];
 
-      sap_secondary [style="filled", fillcolor="white", color="black", pos="6.2,-9.3!", shape = box, width=2.6, height=.5, labeljust=l,
+      sap_secondary [style="rounded,filled", fillcolor="#FAF3DF", color="#B08A2E", penwidth=1.2, pos="6.2,-9.3!", shape = box, width=2.6, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">Included in secondary-outcome analyses</TD></TR>

@@ -2633,7 +2633,7 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
     vis <- kable(out, format="html", align='l', col.names = c('', '')) %>%
       add_indent(c(seq(nrow(out)))) %>% 
       { if(length(border_rows) > 0) row_spec(., border_rows, extra_css = "border-top: 1px solid") else . } %>%  
-      pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+      pack_rows(index = index_vec, label_row_css = "text-align:left", escape = FALSE) %>% 
       kable_styling("striped", full_width = F, position="left")
   } else{
     vis <- kable(out, format="html", align='l', col.names = c('', '')) %>%
@@ -2641,7 +2641,7 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
       add_indent(sub_index_vec) %>% 
       row_spec(sub_bold_index_vec, bold = TRUE) %>% 
       { if(length(border_rows) > 0) row_spec(., border_rows, extra_css = "border-top: 1px solid") else . } %>%  
-      pack_rows(index = index_vec, label_row_css = "text-align:left") %>% 
+      pack_rows(index = index_vec, label_row_css = "text-align:left", escape = FALSE) %>% 
       kable_styling("striped", full_width = F, position="left")
   }
   return(vis)

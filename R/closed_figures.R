@@ -282,7 +282,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
 #'
 closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, arm_a_str="Group A", arm_b_str="Group B"){
 
-  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '5a01eff3f658a08b3c13af9d5d82c75f')
+  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '6072312f625d86a6a45c170bd0b9426e')
 
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -482,7 +482,7 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
                         paste0('<TR><TD ALIGN="LEFT">&#8203;    ', arm$no_definitive_fixation, ' Did not complete definitive fixation</TD></TR>'),
                         '')
     paste0('
-      assigned', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-1.5!", shape = box, width=2.4, height=.5, labeljust=l,
+      assigned', suffix, ' [style="rounded,filled", fillcolor="#DDE9F5", color="#2E5F8A", penwidth=1.5, pos="', x, ',-1.5!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', arm$assigned, ' Were assigned to receive ', arm_str, '</TD></TR>
@@ -498,7 +498,7 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
           </TABLE>
         >];
 
-      itt', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-3.4!", shape = box, width=2.4, height=.5, labeljust=l,
+      itt', suffix, ' [style="rounded,filled", fillcolor="#DDE9F5", color="#2E5F8A", penwidth=1.5, pos="', x, ',-3.4!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', arm$itt, ' Were included in the intention-to-treat</TD></TR>
@@ -506,7 +506,7 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
           </TABLE>
         >];
 
-      outcome', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-5.3!", shape = box, width=2.4, height=.5, labeljust=l,
+      outcome', suffix, ' [style="rounded,filled", fillcolor="#E3F1E7", color="#2E7D4F", penwidth=1.5, pos="', x, ',-5.3!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', arm$known_outcome, ' Had ', outcome_day, ' days of follow-up without</TD></TR>
@@ -521,7 +521,7 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
           </TABLE>
         >];
 
-      pp', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-7.5!", shape = box, width=2.4, height=.5, labeljust=l,
+      pp', suffix, ' [style="rounded,filled", fillcolor="#E3F1E7", color="#2E7D4F", penwidth=1.5, pos="', x, ',-7.5!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">', arm$per_protocol, ' Were included in the per-protocol</TD></TR>
@@ -533,7 +533,7 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
           </TABLE>
         >];
 
-      sap1', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-10.1!", shape = box, width=2.4, height=.5, labeljust=l,
+      sap1', suffix, ' [style="rounded,filled", fillcolor="#FAF3DF", color="#B08A2E", penwidth=1.2, pos="', x, ',-10.1!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">Primary analysis accounting</TD></TR>
@@ -550,7 +550,7 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
           </TABLE>
         >];
 
-      sap2', suffix, ' [style="filled", fillcolor="white", color="black", pos="', x, ',-12.7!", shape = box, width=2.4, height=.5, labeljust=l,
+      sap2', suffix, ' [style="rounded,filled", fillcolor="#FAF3DF", color="#B08A2E", penwidth=1.2, pos="', x, ',-12.7!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
             <TR><TD ALIGN="LEFT">Dispositions among randomized</TD></TR>
@@ -568,12 +568,14 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
 
   consort_diagram <- grViz(paste0('
     digraph g {
-      graph [layout=fdp, overlap = true, fontsize=1, splines=polyline]
+      graph [layout=fdp, overlap = true, fontsize=1, splines=polyline, bgcolor="white"]
+      node [fontname="Helvetica", fontsize=12, margin="0.14,0.08"]
+      edge [color="#5B6B7C", penwidth=1.1, arrowsize=0.7]
 
-      title [style="filled", fillcolor="white", color="black", pos="2,7.2!", shape = box, width=2.4, height=.5,
+      title [style="rounded,filled", fillcolor="#DDE9F5", color="#2E5F8A", penwidth=1.5, pos="2,7.2!", shape = box, width=2.4, height=.5,
         label = "', screened, ' Patients were assessed for eligibility"];
 
-      box1 [style="filled", fillcolor="white", color="black", pos="5.4,3.8!", shape = box, width=2.4, height=.5,
+      box1 [style="rounded,filled", fillcolor="#EEF1F5", color="#8A93A0", penwidth=1.2, pos="5.4,3.8!", shape = box, width=2.4, height=.5,
       labeljust=l,
       label = <
         <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
@@ -595,7 +597,7 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
         </TABLE>
       >];
 
-      title2 [style="filled", fillcolor="white", color="black", pos="2,0.4!", shape = box, width=2.4, height=.5,
+      title2 [style="rounded,filled", fillcolor="#DDE9F5", color="#2E5F8A", penwidth=1.5, pos="2,0.4!", shape = box, width=2.4, height=.5,
         label = "', randomized, ' Underwent randomization"];
     ',
     arm_column(a, arm_a_str, '-0.85', '_a'),
