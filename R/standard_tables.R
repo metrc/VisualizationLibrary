@@ -1135,6 +1135,174 @@ baseline_characteristics_percent_nm <- function(analytic, sex="sex", race="ethni
 } 
 
 
+#' Baseline characteristics percent plus insurance
+#'
+#' @description
+#' Visualizes the categorical distribution of baseline characteristics
+#' sex, age, race, education, military, insurance, enrolled. See below as this is a generic visualization and includes meta construct for each of the
+#' analysis outputs. You may also specify the levels that these outputs have in the function call.
+#' Every categorical characteristic always shows a "Missing" row, including the age_group characteristic,
+#' whose "Missing" row is always ordered last.
+#' Outputs two columns: type (sex, age, race, education, military, insurance), and their respective counts and percentages.
+#'
+#' @param analytic analytic data set that must include enrolled, age, age_group, and the constructs specified
+#' in the following parameters.
+#' @param sex is a meta construct that is required that defaults to "sex"
+#' @param race is a meta construct that is required that defaults to "ethnicity_race"
+#' @param education is a meta construct that is required that defaults to "education_level"
+#' @param military is a meta construct that is required that defaults to "military_status"
+#' @param insurance is a meta construct that is required that defaults to "insurance"
+#' @param sex_levels sets default values and orders for sex meta construct
+#' @param race_levels sets default values and orders for race meta construct
+#' @param education_levels sets default values and orders for education meta construct
+#' @param military_levels sets default values and orders for military meta construct
+#' @param insurance_levels sets default values and orders for insurance meta construct
+#'
+#' @return html table
+#' @export
+#'
+#' @examples
+#' baseline_characteristics_percent_plus("Replace with Analytic Tibble")
+#' baseline_characteristics_percent_plus("Replace with Analytic Tibble", insurance_levels=c("Yes", "No", "Missing"))
+#' baseline_characteristics_percent_plus("Replace with Analytic Tibble", sex_levels=c("Male", "Female", "Missing"))
+#'
+baseline_characteristics_percent_plus <- function(
+    analytic, sex="sex", race="ethnicity_race", education="education_level", military="military_status", insurance="insurance",
+    sex_levels=c("Female","Male", "Missing"),
+    race_levels=c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic", "Other", "Missing"),
+    education_levels=c("Less than High School", "GED or High School Diploma", "More than High School", "Refused / Don't know", "Missing"),
+    military_levels=c("Active Military", "Active Reserves", "Not Active Duty","Missing"),
+    insurance_levels=c("Yes", "No", "Missing")){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("sex", "ethnicity_race", "education_level", 'military_status', "insurance", "age", "age_group",
+                           "enrolled"),
+    example_types = c("NamedCategory['Female' 'Male' 'Missing']", "NamedCategory['Non-Hispanic White' 'Non-Hispanic Black' 'Hispanic' 'Other' 'Missing']",
+                      "NamedCategory['Less than High School' 'GED or High School Diploma' 'More than High School' 'Refused / Don't know' 'Missing']",
+                      "NamedCategory['Active Military' 'Active Reserves' 'Not Active Duty' 'Missing']", "NamedCategory['Yes' 'No' 'Missing']",
+                      "Number", "Category", "Boolean"))
+
+  constructs <- c(sex, race, education, military, insurance)
+
+  sex_default <- tibble(type=sex_levels)
+  race_default <- tibble(type=race_levels)
+  education_default <- tibble(type=education_levels)
+  military_default <- tibble(type=military_levels)
+  insurance_default <- tibble(type=insurance_levels)
+  age_group_default <- tibble(type="Missing")
+
+
+  df <- analytic %>%
+    select(enrolled, age_group, age, all_of(constructs)) %>%
+    filter(enrolled) %>%
+    rename(sex = !!sym(sex)) %>%
+    rename(race = !!sym(race)) %>%
+    rename(education = !!sym(education)) %>%
+    rename(military = !!sym(military)) %>%
+    rename(insurance = !!sym(insurance)) %>%
+    mutate(age = as.numeric(age))
+
+  total <- sum(df$enrolled)
+
+  sex_df <- df %>%
+    mutate(sex = replace_na(sex, "Missing")) %>%
+    group_by(sex) %>%
+    count(sex) %>%
+    rename(number = n) %>%
+    mutate(percentage = format_count_percent(number, total)) %>%
+    select(-number) %>%
+    rename(type = sex) %>%
+    full_join(sex_default) %>%
+    mutate(order = factor(type, sex_levels)) %>%
+    arrange(order) %>%
+    select(-order)
+
+  age_df <- df %>%
+    summarize( type = 'Mean (SD)', percentage = format_mean_sd(age))
+
+
+  age_group_df <- df %>%
+    mutate(age_group = replace_na(age_group, "Missing")) %>%
+    group_by(age_group) %>%
+    count(age_group) %>%
+    rename(number = n) %>%
+    mutate(percentage = format_count_percent(number, total)) %>%
+    select(-number) %>%
+    rename(type = age_group) %>%
+    full_join(age_group_default) %>%
+    mutate(order = type == "Missing") %>%
+    arrange(order) %>%
+    select(-order)
+
+  education_df <- df %>%
+    mutate(education = replace_na(education, "Missing")) %>%
+    group_by(education) %>%
+    count(education) %>%
+    rename(number = n) %>%
+    mutate(percentage = format_count_percent(number, total)) %>%
+    select(-number) %>%
+    rename(type = education) %>%
+    full_join(education_default) %>%
+    mutate(order = factor(type, education_levels)) %>%
+    arrange(order) %>%
+    select(-order)
+
+  race_df <- df %>%
+    mutate(race = replace_na(race, "Missing")) %>%
+    group_by(race) %>%
+    count(race) %>%
+    rename(number = n) %>%
+    mutate(percentage = format_count_percent(number, total)) %>%
+    select(-number) %>%
+    rename(type = race) %>%
+    full_join(race_default) %>%
+    mutate(order = factor(type, race_levels)) %>%
+    arrange(order) %>%
+    select(-order)
+
+  military_df <- df %>%
+    mutate(military = ifelse(is.na(military), "Missing", military)) %>%
+    group_by(military) %>%
+    count(military) %>%
+    rename(number = n) %>%
+    mutate(percentage = format_count_percent(number, total)) %>%
+    select(-number) %>%
+    rename(type = military) %>%
+    full_join(military_default) %>%
+    mutate(order = factor(type, military_levels)) %>%
+    arrange(order) %>%
+    select(-order)
+
+  insurance_df <- df %>%
+    mutate(insurance = replace_na(insurance, "Missing")) %>%
+    group_by(insurance) %>%
+    count(insurance) %>%
+    rename(number = n) %>%
+    mutate(percentage = format_count_percent(number, total)) %>%
+    select(-number) %>%
+    rename(type = insurance) %>%
+    full_join(insurance_default) %>%
+    mutate(order = factor(type, insurance_levels)) %>%
+    arrange(order) %>%
+    select(-order)
+
+  df_final <- rbind(sex_df, age_df, age_group_df, race_df, education_df, military_df, insurance_df) %>%
+    mutate_all(replace_na, "0 (0%)")
+
+  cnames <- c(' ', paste('n = ', total))
+  header <- c(1,1)
+  names(header)<-cnames
+
+  vis <- kable(df_final, format="html", align='l',  col.names = NULL) %>%
+    add_header_above(header) %>%
+    pack_rows(index = c('Sex' = nrow(sex_df), 'Age' = (nrow(age_df) + nrow(age_group_df)), 'Race/Ethnicity' = nrow(race_df),
+                        'Education' = nrow(education_df), 'Military' = nrow(military_df), 'Insurance' = nrow(insurance_df)), label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = F, position="left")
+
+  return(vis)
+}
+
+
 
 
 
@@ -1854,7 +2022,8 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
              `Other Reasons` = otherreasons) %>% 
       arrange(desc(Screened)) %>% 
       mutate(Ineligible = format_count_percent(Ineligible, Screened)) %>%
-      mutate(across(4:(n_top_reasons+3), ~ format_count_percent(.x, Screened)))
+      mutate(across(4:(n_top_reasons+3), ~ format_count_percent(.x, Screened))) %>%
+      mutate(`Other Reasons` = format_count_percent(`Other Reasons`, Screened))
     
     if(pre_screened){
       output <- output %>% 
@@ -2274,6 +2443,7 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #' must be empty or specify a subcategory construct (or NA) for each construct (length of constructs == length of subcategory_constructs)
 #' @param bottom_order_levels A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".
 #' @param mean_sd A vector of construct names. If a construct is included here, it will be displayed as "Mean [SD]" with its calculated values, instead of categorical counts.
+#' @param include_overall When TRUE and subcategory_constructs is used, an "All Sites" block computed over every subcategory together is shown before the per-subcategory blocks.
 #'
 #' @return html table
 #' @export
@@ -2286,7 +2456,7 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                     subcategory_constructs = c(), bottom_order_levels = c("Missing"),
-                                    mean_sd = c()){
+                                    mean_sd = c(), include_overall = FALSE){
   
   out <- NULL
   index_vec <- c()
@@ -2378,8 +2548,12 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
     custom_levels <- c(numeric_sort_list, non_numeric_sort_list, bottom_order_levels)
     
     if(!is.na(sub_construct)){
+      if (include_overall) {
+        inner <- bind_rows(inner %>% mutate(sub_temp = "All Sites"), inner)
+      }
       sub_cats <- sort(unique(inner$sub_temp))
       sub_cats <- c(sub_cats[!sub_cats %in% bottom_order_levels], intersect(bottom_order_levels, sub_cats))
+      if (include_overall) sub_cats <- c("All Sites", sub_cats[sub_cats != "All Sites"])
       row_count <- ifelse(is.null(out),0,nrow(out))
       new_row_count <- 0
       for(sub_cat in sub_cats){
