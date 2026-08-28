@@ -26,8 +26,8 @@ closed_survival_analysis_bayes_poisson(
   seed = 20260713,
   adapt_delta = 0.95,
   backend = "cmdstanr",
-  install_cmdstan = TRUE,
-  blinded = FALSE
+  blinded = FALSE,
+  return_fit = FALSE
 )
 }
 \arguments{
@@ -74,13 +74,14 @@ These should be selected and locked before unmasking (defaults to quarterly inte
 
 \item{backend}{brms backend, "cmdstanr" or "rstan" (defaults to "cmdstanr")}
 
-\item{install_cmdstan}{when TRUE and backend = "cmdstanr", installs CmdStan version 2.35.0
-into the working directory (quietly, overwriting any existing installation) before fitting.
-Set to FALSE to reuse an existing CmdStan installation (defaults to TRUE)}
-
 \item{blinded}{when TRUE, ignores the real treatment_arm and deterministically reassigns
 arms from the digit sum of study_id (even = "Group A", odd = "Group B") so the table can be
 produced without unmasking (defaults to FALSE)}
+
+\item{return_fit}{when TRUE, return a list carrying the fitted brms object, the
+person- and interval-level data the model saw, the transformed posterior draws,
+sampler diagnostics, and all settings, alongside the result table (as
+\code{result_table}). Defaults to FALSE, returning only the HTML table.}
 }
 \value{
 An HTML table.
@@ -93,7 +94,7 @@ outcome_length days. Hazards are converted to proportions, and the group differe
 percent credible interval is used to apply a noninferiority decision rule.
 
 Requires the brms package (and the cmdstanr package when backend = "cmdstanr"; by default
-CmdStan itself is installed into the working directory before fitting via install_cmdstan).
+CmdStan must already be installed and configured; the function never installs it).
 All installation, compilation, and sampling output is suppressed; the only output is the
 returned HTML table.
 }

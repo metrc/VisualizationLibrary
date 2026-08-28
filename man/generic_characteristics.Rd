@@ -13,7 +13,8 @@ generic_characteristics(
   splits = NULL,
   subcategory_constructs = c(),
   bottom_order_levels = c("Missing"),
-  mean_sd = c()
+  mean_sd = c(),
+  include_overall = FALSE
 )
 }
 \arguments{
@@ -35,6 +36,8 @@ must be empty or specify a subcategory construct (or NA) for each construct (len
 \item{bottom_order_levels}{A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".}
 
 \item{mean_sd}{A vector of construct names. If a construct is included here, it will be displayed as "Mean [SD]" with its calculated values, instead of categorical counts.}
+
+\item{include_overall}{When TRUE and subcategory_constructs is used, an "All Sites" block computed over every subcategory together is shown before the per-subcategory blocks.}
 }
 \value{
 html table
