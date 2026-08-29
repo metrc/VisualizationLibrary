@@ -1182,6 +1182,13 @@ baseline_characteristics_percent_plus <- function(
                       "NamedCategory['Active Military' 'Active Reserves' 'Not Active Duty' 'Missing']", "NamedCategory['Yes' 'No' 'Missing']",
                       "Number", "Category", "Boolean"))
 
+  # A logical insurance construct renders as TRUE/FALSE, which is not a
+  # publication label; map it to the Yes/No levels the table expects.
+  if (is.logical(analytic[[insurance]])) {
+    analytic[[insurance]] <- ifelse(is.na(analytic[[insurance]]), NA_character_,
+                                    ifelse(analytic[[insurance]], "Yes", "No"))
+  }
+
   constructs <- c(sex, race, education, military, insurance)
 
   sex_default <- tibble(type=sex_levels)
@@ -2444,6 +2451,9 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 #' @param bottom_order_levels A vector of category names (e.g., "Missing", "Refused") to force to the bottom of the table, maintaining their order. Defaults to "Missing".
 #' @param mean_sd A vector of construct names. If a construct is included here, it will be displayed as "Mean [SD]" with its calculated values, instead of categorical counts.
 #' @param include_overall When TRUE and subcategory_constructs is used, an "All Sites" block computed over every subcategory together is shown before the per-subcategory blocks.
+#' @param collapse_other_entries single flag or per-construct vector; TRUE collapses
+#' free-text Other entries for that construct before counting - as a whole value for
+#' an unsplit construct, and inside the list for a split one
 #'
 #' @return html table
 #' @export
@@ -2456,7 +2466,8 @@ injury_characteristics_by_alternate_constructs <- function(analytic){
 generic_characteristics <- function(analytic, constructs = c(), names_vec = c(), 
                                     filter_cols = c("enrolled"), titlecase = FALSE, splits=NULL,
                                     subcategory_constructs = c(), bottom_order_levels = c("Missing"),
-                                    mean_sd = c(), include_overall = FALSE){
+                                    mean_sd = c(), include_overall = FALSE,
+                                    collapse_other_entries = FALSE){
   
   out <- NULL
   index_vec <- c()
@@ -2469,6 +2480,22 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
   } else{
     if(length(splits) == 1) {
       splits <- rep(splits, length(constructs))
+    }
+  }
+
+  if(length(collapse_other_entries) == 1) {
+    collapse_other_entries <- rep(collapse_other_entries, length(constructs))
+  }
+  for (coe_i in seq_along(constructs)) {
+    if (isTRUE(collapse_other_entries[coe_i])) {
+      # An unsplit construct's Other free text may itself contain the split
+      # character, so it is collapsed as a whole value; a split construct
+      # collapses the Other terms inside its list.
+      analytic[[constructs[coe_i]]] <- if (is.na(splits[coe_i])) {
+        collapse_other(analytic[[constructs[coe_i]]])
+      } else {
+        collapse_other_multi(analytic[[constructs[coe_i]]])
+      }
     }
   }
   
