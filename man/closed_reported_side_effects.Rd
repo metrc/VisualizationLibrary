@@ -4,7 +4,12 @@
 \alias{closed_reported_side_effects}
 \title{closed Reported side effects}
 \usage{
-closed_reported_side_effects(analytic)
+closed_reported_side_effects(
+  analytic,
+  max_days = 90,
+  include_deaths = FALSE,
+  group_label = NULL
+)
 }
 \arguments{
 \item{analytic}{enrolled, treatment_arm, clinical_events_data constructs}

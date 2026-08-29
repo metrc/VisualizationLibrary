@@ -5667,26 +5667,44 @@ closed_opioid_days <- function(analytic){
 #' \dontrun{
 #' closed_reported_side_effects("Replace with Analytic Tibble")
 #' }
-closed_reported_side_effects <- function(analytic){
+closed_reported_side_effects <- function(analytic, max_days = 90, include_deaths = FALSE, group_label = NULL){
   confirm_stability_of_related_visual('reported_side_effects', 'c36d740b752328c3317f098d9802bf17')
 
   # SAP Safety Outcomes: major is renal impairment and/or gastric ulcer. Add
   # 'Bleeding' here if the secondary outcomes table reading is adopted instead.
+  # With include_deaths = TRUE the table is the combined "side effects and
+  # adverse events" presentation (8/29 team decision): whole period when
+  # max_days = NULL (undated events included), Surgical/Wound broken out, and
+  # a Deaths row from the dead construct appended.
   major_categories <- c('Renal', 'Gastric')
   named_categories <- c('Bleeding', 'Renal', 'Thromboembolic', 'Gastric', 'Allergy', 'Minor Allergy')
   other_categories <- c('Surgical/Wound', 'NEEDS REVIEW', 'UNMAPPED')
+  if (include_deaths) {
+    named_categories <- c('Surgical/Wound', named_categories)
+    other_categories <- setdiff(other_categories, 'Surgical/Wound')
+  }
 
   row_order <- c('None', 'Major NSAID Related', named_categories, 'All Others')
 
   arm_counts <- function(df){
-    event_category_counts(
+    enrolled_df <- df %>% filter(enrolled)
+    denominator <- nrow(enrolled_df)
+    counts <- event_category_counts(
       unpack_clinical_events(df),
-      df %>% filter(enrolled) %>% nrow(),
+      denominator,
       row_order,
       composites = list(`Major NSAID Related` = major_categories),
       other_label = 'All Others', other_categories = other_categories,
-      max_days = 90, none_label = 'None') %>%
+      max_days = max_days, none_label = 'None') %>%
       select(Category, pct)
+    if (include_deaths) {
+      deaths_n <- sum(enrolled_df$dead %in% TRUE)
+      counts <- bind_rows(counts, tibble(Category = 'Deaths',
+                       pct = paste0(deaths_n, " (",
+                                    trimws(format(round(ifelse(denominator > 0, 100 * deaths_n / denominator, 0), 1),
+                                                  nsmall = 1)), "%)")))
+    }
+    counts
   }
 
   final <- arm_counts(analytic %>% filter(treatment_arm == 'Group A')) %>%
@@ -5695,8 +5713,14 @@ closed_reported_side_effects <- function(analytic){
 
   colnames(final) <- c('', 'N (%) (Group A)', 'N (%) (Group B)', 'N (%)')
 
+  if (is.null(group_label)) {
+    group_label <- if (is.null(max_days)) "Reported Side Effects and Adverse Events, Whole Study"
+                   else sprintf("Reported Side Effects, through %d Days", as.integer(max_days))
+    if (!is.null(max_days) && max_days == 90) group_label <- "Reported Side Effects, through 3 Months"
+  }
+
   table_raw <- kable(final, format = "html", align = 'l') %>%
-    pack_rows(index = c("Reported Side Effects, through 3 Months" = nrow(final)),
+    pack_rows(index = setNames(nrow(final), group_label),
               label_row_css = "text-align:left") %>%
     kable_styling("striped", full_width = FALSE, position = 'left') %>%
     row_spec(c(0, nrow(final)), extra_css = "border-bottom: 1px solid;")
