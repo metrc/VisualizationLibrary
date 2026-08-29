@@ -14,7 +14,8 @@ closed_generic_characteristics(
   subcategory_constructs = c(),
   bottom_order_levels = c("Missing"),
   mean_sd = c(),
-  include_overall = FALSE
+  include_overall = FALSE,
+  collapse_other_entries = FALSE
 )
 }
 \arguments{
@@ -38,6 +39,10 @@ must be empty or specify a subcategory construct (or NA) for each construct (len
 \item{mean_sd}{A vector of construct names. If a construct is included here, it will be displayed as "Mean [SD]" with its calculated values, instead of categorical counts.}
 
 \item{include_overall}{When TRUE and subcategory_constructs is used, an "All Sites" block computed over every subcategory together is shown before the per-subcategory blocks.}
+
+\item{collapse_other_entries}{single flag or per-construct vector; TRUE collapses
+free-text Other entries for that construct before counting - as a whole value for
+an unsplit construct, and inside the list for a split one}
 }
 \value{
 html table
