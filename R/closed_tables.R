@@ -6047,15 +6047,18 @@ legpain_field <- function(x, i) {
 # inverted 1-to-10 scale (1 = worst pain, 10 = none), or treatment or
 # medications for that pain during the previous year. Uses the chronic_pain
 # construct when the dataset carries it; otherwise computes from
-# preinjury_legpain. Missing records count as no chronic pain, per
-# SAP_Issues_and_Questions.md.
+# preinjury_legpain. Three-valued: NA when the participant has no severity and
+# no treatment field at all - patient-reported missing stays missing, per the
+# study PI's 8/29 ruling.
 sap_chronic_pain <- function(analytic) {
   if ("chronic_pain" %in% names(analytic)) {
-    return(analytic$chronic_pain %in% TRUE)
+    return(as.logical(analytic$chronic_pain))
   }
   sev <- suppressWarnings(as.numeric(legpain_field(analytic$preinjury_legpain, 3)))
   trt <- legpain_field(analytic$preinjury_legpain, 5)
-  (!is.na(sev) & sev <= 4) | trt %in% "Treatment"
+  trt[!is.na(trt) & trt == ""] <- NA_character_
+  known <- !is.na(sev) | !is.na(trt)
+  ifelse(!known, NA, (!is.na(sev) & sev <= 4) | (!is.na(trt) & trt == "Treatment"))
 }
 
 
@@ -6122,12 +6125,12 @@ closed_preinjury_clinical_characteristics <- function(analytic) {
 #' @description
 #' Builds the SAP section 12 subgroup variables and returns them with the
 #' subgroup specification the report iterates over: open versus closed
-#' fracture (Gustilo value comparison; missing enters neither stratum),
-#' pre-existing chronic pain (SAP definition via the chronic_pain construct or
-#' preinjury_legpain; missing counts as no chronic pain), smoking history and
-#' nicotine use (both from tobacco_use; missing counts as never / not
-#' current). All definitional assumptions are recorded in
-#' SAP_Issues_and_Questions.md.
+#' fracture (Gustilo value comparison), pre-existing chronic pain (SAP
+#' definition via the chronic_pain construct or preinjury_legpain), smoking
+#' history and nicotine use (both from tobacco_use). Missing classifications
+#' enter no stratum in any subgroup, per the study PI's 8/29 ruling
+#' (patient-reported missing stays missing); the statistician's seven-code
+#' validation harness implements the same convention.
 #'
 #' @param analytic analytic data set that must include injury_gustilo,
 #' tobacco_use, and chronic_pain or preinjury_legpain
@@ -6149,9 +6152,12 @@ closed_nsaid_subgroups <- function(analytic) {
       sg_fracture     = case_when(injury_gustilo %in% "Closed" ~ "Closed fracture",
                                   !is.na(injury_gustilo)       ~ "Open fracture",
                                   TRUE                         ~ NA_character_),
-      sg_chronic_pain = ifelse(sap_chronic_pain(analytic), "Chronic pain", "No chronic pain"),
-      sg_smoking      = ifelse(tobacco_use %in% c("Current", "Former"), "Ever smoker", "Never smoker"),
-      sg_nicotine     = ifelse(tobacco_use %in% "Current", "Current nicotine use", "No current nicotine use"))
+      sg_chronic_pain = ifelse(is.na(sap_chronic_pain(analytic)), NA_character_,
+                               ifelse(sap_chronic_pain(analytic), "Chronic pain", "No chronic pain")),
+      sg_smoking      = ifelse(tobacco_use %in% c("Current", "Former"), "Ever smoker",
+                               ifelse(tobacco_use %in% c("Never", "Never smoker"), "Never smoker", NA_character_)),
+      sg_nicotine     = ifelse(tobacco_use %in% "Current", "Current nicotine use",
+                               ifelse(tobacco_use %in% c("Former", "Never", "Never smoker"), "No current nicotine use", NA_character_)))
   spec <- list(
     list(col = "sg_fracture",     label = "Open versus Closed Fracture",  number = "8.7"),
     list(col = "sg_chronic_pain", label = "Pre-Existing Chronic Pain",    number = "8.8"),
@@ -6194,6 +6200,67 @@ closed_ni_early_censored_ids <- function(analytic, entry_construct = "primary_en
            days > entry_day - 1, days < outcome_length) %>%
     arrange(study_id) %>%
     pull(study_id)
+}
+
+
+#' Arm-differential tipping selection
+#'
+#' @description
+#' Selects the early-censored participants a tipping scenario reclassifies as
+#' events, per the statistician's 8/29 arm-differential design: within each
+#' arm's early-censored pool (from closed_ni_early_censored_ids), candidates
+#' are ordered by a reproducible uniform rank and the first ceiling(p * n) are
+#' taken. Selection runs on the arm the models fit: the real treatment_arm
+#' column when blinded = FALSE, the study_id digit-sum dummy when blinded =
+#' TRUE, mirroring closed_survival_analysis_bayes_poisson. The pool is sorted
+#' by study_id before ranking so selection is reproducible across engines
+#' given the same seed.
+#'
+#' @param analytic analytic data set that must include enrolled, treatment_arm,
+#' surgery_or_healed_type, surgery_or_healed_days, and the entry column
+#' @param p_control fraction of the control-coded arm's pool to reclassify
+#' @param p_treatment fraction of the treatment-coded arm's pool to reclassify
+#' @param seed selection seed
+#' @param blinded when TRUE, selects on the study_id digit-sum dummy arm
+#' @param control_arm treatment_arm value coded control
+#' @param entry_construct participant-specific entry-day column
+#' @param outcome_length upper follow-up horizon in days
+#'
+#' @return character vector of study ids to reclassify.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_ni_tipping_ids(analytic, p_control = 0, p_treatment = 0.25, seed = 20260830)
+#' }
+closed_ni_tipping_ids <- function(analytic, p_control, p_treatment, seed,
+                                  blinded = FALSE, control_arm = "Group A",
+                                  entry_construct = "primary_entry_day", outcome_length = 365) {
+  pool_ids <- closed_ni_early_censored_ids(analytic, entry_construct, outcome_length)
+  pool <- analytic %>%
+    filter(study_id %in% pool_ids) %>%
+    arrange(study_id)
+
+  if (blinded) {
+    digit_sum <- sapply(strsplit(gsub("[^0-9]", "", as.character(pool$study_id)), ""),
+                        function(d) sum(as.integer(d)))
+    pool <- pool %>% mutate(selection_arm = ifelse(digit_sum %% 2 == 0, "Group A", "Group B"))
+  } else {
+    pool <- pool %>% mutate(selection_arm = treatment_arm)
+  }
+
+  set.seed(seed)
+  pool <- pool %>% mutate(random_rank = stats::runif(dplyr::n()))
+
+  pick <- function(is_control, p) {
+    sub <- pool %>%
+      filter((selection_arm == control_arm) == is_control) %>%
+      arrange(random_rank)
+    n_take <- if (p <= 0) 0L else as.integer(ceiling(p * nrow(sub)))
+    if (n_take == 0L) character(0) else as.character(sub$study_id[seq_len(n_take)])
+  }
+
+  c(pick(TRUE, p_control), pick(FALSE, p_treatment))
 }
 
 
