@@ -2042,9 +2042,10 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
 
   # Amended SAP section 3 elements. Risk-set entry and person-time are computed
   # over the intention-to-treat set, since they describe the primary analysis;
-  # the day-180/365 statuses and the dispositions are computed over all
-  # randomized participants, since the SAP asks for the status of the
-  # randomized patients. Days are counted from Time Zero; the SAP phrases the
+  # the day-180/365 statuses and the dispositions also run on the
+  # intention-to-treat set: per the study PI (8/28), the CONSORT separates
+  # pathways, so participants branched out in the adjudication-exclusions box
+  # must not re-enter downstream boxes. Days are counted from Time Zero; the SAP phrases the
   # status days as following discharge, and that difference is recorded in
   # SAP_Issues_and_Questions.md for confirmation.
   # Participant-specific primary risk entry, revised SAP: fixation day 90 on the
@@ -2060,19 +2061,18 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
   risk_set_n <- sum(in_risk)
   person_days <- sum(pmax(0, pmin(itt_days[in_risk], 365) - entry_boundary[in_risk]), na.rm = TRUE)
 
-  rand_days <- suppressWarnings(as.numeric(rand_df$surgery_or_healed_days))
   status_at <- function(d) {
-    event_by <- rand_df$surgery_or_healed_type %in% 'unfavorable_event' & !is.na(rand_days) & rand_days <= d
-    free_through <- !event_by & !is.na(rand_days) & rand_days >= d
+    event_by <- itt_df$surgery_or_healed_type %in% 'unfavorable_event' & !is.na(itt_days) & itt_days <= d
+    free_through <- !event_by & !is.na(itt_days) & itt_days >= d
     c(event = sum(event_by), free = sum(free_through),
-      unknown = nrow(rand_df) - sum(event_by) - sum(free_through))
+      unknown = nrow(itt_df) - sum(event_by) - sum(free_through))
   }
   s180 <- status_at(180)
   s365 <- status_at(365)
 
-  deaths_n <- sum(rand_df$dead %in% TRUE)
-  withdrew_n <- sum(rand_df$withdrawn_consent %in% TRUE)
-  ltfu_n <- sum(rand_df$not_completed_reason %in% 'Unreachable')
+  deaths_n <- sum(itt_df$dead %in% TRUE)
+  withdrew_n <- sum(itt_df$withdrawn_consent %in% TRUE)
+  ltfu_n <- sum(itt_df$not_completed_reason %in% 'Unreachable')
 
   bpi_sev_n <- sum(!is.na(suppressWarnings(as.numeric(itt_df$bpi_severity_score_3mo))))
   bpi_int_n <- sum(!is.na(suppressWarnings(as.numeric(itt_df$bpi_interference_score_3mo))))
@@ -2188,7 +2188,7 @@ consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
       sap_disp [style="rounded,filled", fillcolor="#FAF3DF", color="#B08A2E", penwidth=1.2, pos="6.2,-7.6!", shape = box, width=2.6, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
-            <TR><TD ALIGN="LEFT">Dispositions among randomized</TD></TR>
+            <TR><TD ALIGN="LEFT">Dispositions (intention-to-treat)</TD></TR>
             <TR><TD ALIGN="LEFT">', deaths_n, ' Died</TD></TR>
             <TR><TD ALIGN="LEFT">', withdrew_n, ' Withdrew consent</TD></TR>
             <TR><TD ALIGN="LEFT">', ltfu_n, ' Lost to follow-up</TD></TR>

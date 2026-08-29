@@ -282,7 +282,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
 #'
 closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, arm_a_str="Group A", arm_b_str="Group B"){
 
-  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '6072312f625d86a6a45c170bd0b9426e')
+  confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '3015ae6abfb00e915281b11b16abc1a6')
 
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -420,8 +420,10 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
 
     # Amended SAP section 3 elements, per arm. Risk-set entry and person-time
     # describe the primary analysis, so they run on the intention-to-treat set;
-    # the day-180/365 statuses and the dispositions run on all randomized in the
-    # arm. Days count from Time Zero; the SAP phrases the status days as
+    # the day-180/365 statuses and the dispositions also run on the arm's
+    # intention-to-treat set: per the study PI (8/28), participants branched out
+    # in the adjudication-exclusions box must not re-enter downstream boxes.
+    # Days count from Time Zero; the SAP phrases the status days as
     # following discharge, recorded in SAP_Issues_and_Questions.md.
     # Participant-specific primary risk entry, revised SAP; missing entry falls
     # back to day 90. An event before entry never enters the risk set.
@@ -433,12 +435,11 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
     risk_set_n <- sum(in_risk)
     person_days <- sum(pmax(0, pmin(surgery_or_healed_days_num[in_risk], 365) - entry_boundary[in_risk]), na.rm = TRUE)
 
-    rand_days <- suppressWarnings(as.numeric(inner_df$surgery_or_healed_days))
     status_at <- function(d) {
-      event_by <- inner_df$surgery_or_healed_type %in% 'unfavorable_event' & !is.na(rand_days) & rand_days <= d
-      free_through <- !event_by & !is.na(rand_days) & rand_days >= d
+      event_by <- itt_df$surgery_or_healed_type %in% 'unfavorable_event' & !is.na(surgery_or_healed_days_num) & surgery_or_healed_days_num <= d
+      free_through <- !event_by & !is.na(surgery_or_healed_days_num) & surgery_or_healed_days_num >= d
       c(event = sum(event_by), free = sum(free_through),
-        unknown = nrow(inner_df) - sum(event_by) - sum(free_through))
+        unknown = nrow(itt_df) - sum(event_by) - sum(free_through))
     }
 
     list(
@@ -446,9 +447,9 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
       s365 = status_at(365),
       risk_set_n = risk_set_n,
       person_days = person_days,
-      deaths_n = sum(inner_df$dead %in% TRUE),
-      withdrew_n = sum(inner_df$withdrawn_consent %in% TRUE),
-      ltfu_n = sum(inner_df$not_completed_reason %in% 'Unreachable'),
+      deaths_n = sum(itt_df$dead %in% TRUE),
+      withdrew_n = sum(itt_df$withdrawn_consent %in% TRUE),
+      ltfu_n = sum(itt_df$not_completed_reason %in% 'Unreachable'),
       bpi_sev_n = sum(!is.na(suppressWarnings(as.numeric(itt_df$bpi_severity_score_3mo)))),
       bpi_int_n = sum(!is.na(suppressWarnings(as.numeric(itt_df$bpi_interference_score_3mo)))),
       opioid_n = sum(!is.na(suppressWarnings(as.numeric(itt_df$opioid_days_baseline))) |
@@ -553,7 +554,7 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
       sap2', suffix, ' [style="rounded,filled", fillcolor="#FAF3DF", color="#B08A2E", penwidth=1.2, pos="', x, ',-12.7!", shape = box, width=2.4, height=.5, labeljust=l,
         label = <
           <TABLE BORDER="0" CELLBORDER="0" CELLPADDING="0">
-            <TR><TD ALIGN="LEFT">Dispositions among randomized</TD></TR>
+            <TR><TD ALIGN="LEFT">Dispositions (intention-to-treat)</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', arm$deaths_n, ' Died</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', arm$withdrew_n, ' Withdrew consent</TD></TR>
             <TR><TD ALIGN="LEFT">&#8203;    ', arm$ltfu_n, ' Lost to follow-up</TD></TR>

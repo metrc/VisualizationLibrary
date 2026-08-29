@@ -1587,7 +1587,7 @@ closed_appendix_A_SAEs <- function(analytic){
   output_text <- output_df %>% pull(text) %>% 
     paste(collapse = "<br />\n")
   
-  return(output_text)
+  return(paste0(output_text, "<br />\n<i>Treatment Received reads Yes when the event was treated in any way, including medication management; it is not limited to operative treatment.</i><br />\n"))
 }
 
 
@@ -1645,7 +1645,7 @@ closed_appendix_B_deaths <- function(analytic){
   output_text <- output_df$text %>% 
     paste(collapse = "<br />\n")
   
-  return(output_text)
+  return(paste0(output_text, "<br />\n<i>Treatment Received reads Yes when the event was treated in any way, including medication management; it is not limited to operative treatment.</i><br />\n"))
 }
 
 #' Appendix C: Listing of any Not Expected and Not completed cases for closed report
