@@ -5343,18 +5343,22 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
   n_counts <- dat %>% count(trt)
   n_zero <- n_counts$n[n_counts$trt == 0]
   n_one  <- n_counts$n[n_counts$trt == 1]
+  ev_zero <- sum(dat$event[dat$trt == 0])
+  ev_one  <- sum(dat$event[dat$trt == 1])
 
   hdr_zero <- sprintf("%s (n=%d) (%%)", arm_labels["0"], n_zero)
   hdr_one  <- sprintf("%s (n=%d) (%%)", arm_labels["1"], n_one)
 
+  # First row carries the raw observed counts so the modeled risks below can
+  # always be read against the data that produced them.
   out_tbl <- tibble(
-    " " = outcome_label,
-    !!hdr_one  := make_cell(treatment_risk),
-    !!hdr_zero := make_cell(control_risk),
-    "Difference (95% CrI)"   := make_cell(risk_difference),
-    "Hazard Ratio (95% CrI)" := make_cell(hazard_ratio_draws, percent = FALSE),
-    !!sprintf("Pr(Difference < %.0f%%)", 100 * ni_margin) := sprintf("%.4f", posterior_probability_below_margin),
-    "Noninferior" := ifelse(noninferior, "Yes", "No")
+    " " = c("Observed events / n", outcome_label),
+    !!hdr_one  := c(sprintf("%d / %d", ev_one, n_one), make_cell(treatment_risk)),
+    !!hdr_zero := c(sprintf("%d / %d", ev_zero, n_zero), make_cell(control_risk)),
+    "Difference (95% CrI)"   := c("", make_cell(risk_difference)),
+    "Hazard Ratio (95% CrI)" := c("", make_cell(hazard_ratio_draws, percent = FALSE)),
+    !!sprintf("Pr(Difference < %.0f%%)", 100 * ni_margin) := c("", sprintf("%.4f", posterior_probability_below_margin)),
+    "Noninferior" := c("", ifelse(noninferior, "Yes", "No"))
   )
 
   header <- c(" " = 1)
@@ -5730,4 +5734,398 @@ closed_adverse_events <- function(analytic){
     row_spec(c(0, nrow(final)), extra_css = "border-bottom: 1px solid;")
 
   return(table_raw)
+}
+
+
+#' Preflight check for the delayed-entry noninferiority model
+#'
+#' @description
+#' Mirrors the filters closed_survival_analysis_bayes_poisson applies in
+#' entry_construct mode so a stratum that cannot support a fit is reported as
+#' such instead of halting a knit. The entry day itself is inclusive; a
+#' qualifying event before the entry day ends primary follow-up and the
+#' participant never enters the risk set.
+#'
+#' @param analytic analytic data set that must include enrolled, treatment_arm,
+#' surgery_or_healed_type, surgery_or_healed_days, and the entry column
+#' @param entry_col name of the participant-specific entry-day column
+#' @param outcome_length upper follow-up horizon in days
+#'
+#' @return list(ok, n, reason): ok is TRUE when a two-arm fit is possible,
+#' n is the risk-set size, reason explains a FALSE.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_ni_fit_preflight(analytic)
+#' }
+closed_ni_fit_preflight <- function(analytic, entry_col = "primary_entry_day", outcome_length = 365) {
+  d <- analytic %>%
+    filter(enrolled) %>%
+    mutate(days  = suppressWarnings(as.numeric(surgery_or_healed_days)),
+           event = as.integer(!surgery_or_healed_type %in% c("check", "favorable_event") &
+                                !is.na(days) & days <= outcome_length),
+           time  = ifelse(event == 1, days, pmin(days, outcome_length)),
+           entry_day = suppressWarnings(as.numeric(.data[[entry_col]]))) %>%
+    filter(!is.na(time), !is.na(entry_day)) %>%
+    filter(!(event == 1 & time < entry_day)) %>%
+    filter(time > entry_day - 1)
+
+  if (nrow(d) == 0) {
+    return(list(ok = FALSE, n = 0,
+                reason = "no participants enter the participant-specific primary risk set"))
+  }
+  arm_count <- length(unique(stats::na.omit(d$treatment_arm)))
+  if (arm_count < 2) {
+    return(list(ok = FALSE, n = nrow(d), reason = "only one treatment arm is represented"))
+  }
+  list(ok = TRUE, n = nrow(d), reason = NA_character_)
+}
+
+
+#' Supportive Bayesian Cox proportional-hazards model
+#'
+#' @description
+#' The SAP's supportive hazard ratio: a brms Cox-family model with
+#' participant-specific delayed entry via trunc(), right censoring via cens(),
+#' and a Normal(0, treatment_prior_sd) prior on the treatment log hazard
+#' ratio. Reports the hazard ratio only; the SAP applies no noninferiority
+#' margin to the hazard ratio. Carries a minimal fail-closed diagnostic gate
+#' (R-hat, bulk and tail effective sample sizes on the treatment effect, zero
+#' divergences) and does not suppress sampler warnings. Written for the NSAID
+#' report and not statistician-provided; requires statistician review before
+#' any unblinded use.
+#'
+#' @param analytic analytic data set that must include enrolled, treatment_arm,
+#' the outcome constructs, and the entry column
+#' @param type_construct outcome type column name
+#' @param days_construct outcome day column name
+#' @param outcome_length upper follow-up horizon in days
+#' @param entry_construct participant-specific entry-day column
+#' @param control_arm treatment_arm value coded 0
+#' @param treatment_prior_sd prior standard deviation on the treatment log hazard ratio
+#' @param chains,iter,warmup,cores,seed,adapt_delta sampler settings
+#' @param blinded when TRUE, refits on the study_id digit-sum dummy arm
+#'
+#' @return An HTML table (hazard ratio and per-arm events / n).
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_bayes_cox_supportive(analytic, 'surgery_or_healed_type', 'surgery_or_healed_days')
+#' }
+closed_bayes_cox_supportive <- function(analytic, type_construct, days_construct,
+                                        outcome_length = 365, entry_construct = "primary_entry_day",
+                                        control_arm = "Group A", treatment_prior_sd = 1,
+                                        chains = 4, iter = 4000, warmup = 2000, cores = 4,
+                                        seed = 20260713, adapt_delta = 0.95, blinded = FALSE) {
+
+  # Mirrors the blinding in closed_survival_analysis_bayes_poisson so the supportive
+  # model runs on the same dummy arm as the tables above.
+  if (blinded) {
+    digit_sum <- sapply(strsplit(gsub("[^0-9]", "", as.character(analytic$study_id)), ""),
+                        function(d) sum(as.integer(d)))
+    analytic <- analytic %>% mutate(treatment_arm = ifelse(digit_sum %% 2 == 0, "Group A", "Group B"))
+  }
+
+  dat <- analytic %>%
+    filter(enrolled) %>%
+    rename(type = !!sym(type_construct), days = !!sym(days_construct)) %>%
+    mutate(days  = as.numeric(days),
+           trt   = as.integer(treatment_arm != control_arm),
+           event = as.integer(!type %in% c("check", "favorable_event") & !is.na(days) & days <= outcome_length),
+           time  = ifelse(event == 1, days, pmin(days, outcome_length))) %>%
+    mutate(entry_day = suppressWarnings(as.numeric(.data[[entry_construct]])) - 1) %>%
+    # brms resolves the trunc() addition term inside the data, not this function's
+    # environment, so the participant-specific entry boundary travels as a column.
+    # The entry day itself is inclusive; a qualifying event before it ends primary
+    # follow-up, so that participant never enters the risk set.
+    filter(!is.na(time), !is.na(trt), !is.na(entry_day)) %>%
+    filter(!(event == 1 & time < entry_day + 1)) %>%
+    filter(time > entry_day)
+
+  # Compilation chatter is captured, but sampler WARNINGS are not suppressed:
+  # a warning from the sampler is evidence about the fit.
+  invisible(utils::capture.output(suppressMessages(
+    cox_fit <- brms::brm(time | cens(1 - event) + trunc(lb = entry_day) ~ trt,
+                         data    = dat,
+                         family  = brms::brmsfamily("cox"),
+                         prior   = brms::prior_string(sprintf("normal(0, %s)", treatment_prior_sd),
+                                                      class = "b", coef = "trt"),
+                         chains  = chains, iter = iter, warmup = warmup, cores = cores,
+                         seed    = seed, backend = "rstan",
+                         control = list(adapt_delta = adapt_delta),
+                         silent  = 2, refresh = 0)
+  ), type = "output"))
+
+  # Minimal diagnostic gate, same fail-closed philosophy as the piecewise
+  # workhorse: the supportive Cox must not report from an untrustworthy fit.
+  np <- tryCatch(brms::nuts_params(cox_fit), error = function(e) NULL)
+  divergences <- if (is.null(np)) NA_real_ else sum(np$Value[np$Parameter == "divergent__"])
+  trt_summ <- tryCatch(posterior::summarise_draws(
+    posterior::subset_draws(posterior::as_draws_array(cox_fit), variable = "b_trt"),
+    "rhat", "ess_bulk", "ess_tail"), error = function(e) NULL)
+  problems <- c(
+    if (is.null(np) || is.na(divergences)) "sampler diagnostics could not be extracted"
+    else if (divergences > 0) sprintf("divergent transitions: %d", divergences),
+    if (is.null(trt_summ)) "R-hat and effective sample sizes could not be computed"
+    else c(if (!is.finite(trt_summ$rhat) || trt_summ$rhat > 1.01) sprintf("R-hat %.3f on the treatment effect", trt_summ$rhat),
+           if (!is.finite(trt_summ$ess_bulk) || trt_summ$ess_bulk < 400) sprintf("bulk effective sample size %.0f", trt_summ$ess_bulk),
+           if (!is.finite(trt_summ$ess_tail) || trt_summ$ess_tail < 400) sprintf("tail effective sample size %.0f", trt_summ$ess_tail)))
+  if (length(problems) > 0) {
+    stop("Cox diagnostic gate failed - the fit must not produce a reported result: ",
+         paste(problems, collapse = "; "))
+  }
+
+  hazard_ratio <- exp(as.data.frame(cox_fit)$b_trt)
+
+  ev_counts <- dat %>% group_by(trt) %>% summarise(ev = sum(event), n = dplyr::n())
+  out_tbl <- tibble(
+    " " = "Secondary Surgery to Promote Union",
+    "Treatment (events / n)" = sprintf("%d / %d", ev_counts$ev[ev_counts$trt == 1], ev_counts$n[ev_counts$trt == 1]),
+    "Control (events / n)"   = sprintf("%d / %d", ev_counts$ev[ev_counts$trt == 0], ev_counts$n[ev_counts$trt == 0]),
+    "Hazard Ratio (95% CrI)" = sprintf("%.2f (%.2f, %.2f)",
+                                       median(hazard_ratio),
+                                       unname(quantile(hazard_ratio, 0.025)),
+                                       unname(quantile(hazard_ratio, 0.975))))
+
+  kable(out_tbl, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+}
+
+
+#' Death as a competing event: Aalen-Johansen cumulative incidence
+#'
+#' @description
+#' The SAP's supportive cumulative-incidence analysis: death before qualifying
+#' surgery treated as a competing event, nonparametric Aalen-Johansen
+#' estimates at the outcome horizon with participant-specific delayed entry.
+#' The death day is the participant's observed last day, which the derivation
+#' already caps at the death boundary; a death after an in-window qualifying
+#' surgery is not a competing event because the surgery state is reached
+#' first. Written for the NSAID report and not statistician-provided; requires
+#' statistician review before any unblinded use.
+#'
+#' @param analytic analytic data set that must include enrolled, treatment_arm,
+#' dead, the outcome constructs, and the entry column
+#' @param entry_construct participant-specific entry-day column
+#' @param outcome_length upper follow-up horizon in days
+#' @param blinded when TRUE, uses the study_id digit-sum dummy arm
+#'
+#' @return An HTML table, or invisible NULL when no two-arm risk set exists
+#' (the calling report prints its own placeholder).
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_competing_risk_cif(analytic)
+#' }
+closed_competing_risk_cif <- function(analytic, entry_construct = "primary_entry_day",
+                                      outcome_length = 365, blinded = FALSE) {
+  cr <- analytic %>%
+    filter(enrolled) %>%
+    mutate(days  = suppressWarnings(as.numeric(surgery_or_healed_days)),
+           event = as.integer(!surgery_or_healed_type %in% c("check", "favorable_event") & !is.na(days) & days <= outcome_length),
+           time  = ifelse(event == 1, days, pmin(days, outcome_length)),
+           state = case_when(event == 1 ~ "surgery",
+                             dead %in% TRUE & time < outcome_length ~ "death",
+                             TRUE ~ "censor"),
+           entry_boundary = suppressWarnings(as.numeric(.data[[entry_construct]])) - 1) %>%
+    filter(!is.na(time), !is.na(entry_boundary)) %>%
+    filter(!(event == 1 & time < entry_boundary + 1)) %>%
+    filter(time > entry_boundary) %>%
+    mutate(state = factor(state, c("censor", "surgery", "death")))
+
+  if (blinded) {
+    digit_sum <- sapply(strsplit(gsub("[^0-9]", "", as.character(cr$study_id)), ""),
+                        function(d) sum(as.integer(d)))
+    cr <- cr %>% mutate(dummy_arm = ifelse(digit_sum %% 2 == 0, "Group A", "Group B"))
+  } else {
+    cr <- cr %>% mutate(dummy_arm = treatment_arm)
+  }
+
+  if (nrow(cr) == 0 || length(unique(cr$dummy_arm)) < 2) {
+    return(invisible(NULL))
+  }
+
+  cif_fit <- survival::survfit(survival::Surv(entry_boundary, time, state) ~ dummy_arm,
+                               data = cr, id = study_id)
+  cif_sum <- summary(cif_fit, times = outcome_length, extend = TRUE)
+  i_surg  <- which(cif_sum$states == "surgery")
+  i_death <- which(cif_sum$states == "death")
+
+  cif_tbl <- tibble(
+    " " = gsub("dummy_arm=", "", cif_sum$strata),
+    "N (in primary risk set)" = as.integer(cif_sum$n),
+    "Cumulative Incidence, Qualifying Surgery (95% CI)" = sprintf("%.1f%% (%.1f%%, %.1f%%)",
+        100 * cif_sum$pstate[, i_surg], 100 * cif_sum$lower[, i_surg], 100 * cif_sum$upper[, i_surg]),
+    "Cumulative Incidence, Death (95% CI)" = sprintf("%.1f%% (%.1f%%, %.1f%%)",
+        100 * cif_sum$pstate[, i_death], 100 * cif_sum$lower[, i_death], 100 * cif_sum$upper[, i_death]))
+
+  kable(cif_tbl, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+}
+
+
+#' Endpoint candidate disposition confirmation
+#'
+#' @description
+#' The revised SAP requires every endpoint candidate to have a final
+#' disposition before the OTA or final analysis. This builds that
+#' confirmation: enrolled participants with a CRF09-flagged candidate surgery
+#' and no adjudicated CRF13 disposition, which must be zero. CRF08b-reported
+#' candidates funnel into the CRF09 pathway per the study team's data-query
+#' verification.
+#'
+#' @param analytic analytic data set that must include enrolled, time_zero, events_data
+#'
+#' @return An HTML paragraph stating the confirmation, as a character string
+#' for the calling report to cat().
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_endpoint_disposition_confirmation(analytic)
+#' }
+closed_endpoint_disposition_confirmation <- function(analytic) {
+  ev_long <- analytic %>%
+    filter(enrolled) %>%
+    select(study_id, time_zero, events_data) %>%
+    filter(!is.na(events_data)) %>%
+    separate_rows(events_data, sep = ";") %>%
+    separate(events_data, into = c("period", "name", "form", "type", "date"), sep = ",", fill = "right")
+
+  unresolved_ids <- setdiff(ev_long %>% filter(form == "CRF09") %>% pull(study_id),
+                            ev_long %>% filter(form == "CRF13adj") %>% pull(study_id))
+
+  if (length(unresolved_ids) == 0) {
+    '<p><b>Endpoint candidate disposition confirmation (revised SAP section 11.1).</b> Zero enrolled participants have a CRF09-flagged candidate surgery without an adjudicated CRF13 disposition. All endpoint candidates have a final disposition at this data cut.</p>'
+  } else {
+    sprintf('<p><b>Endpoint candidate disposition confirmation (revised SAP section 11.1).</b> %d enrolled participants have a CRF09-flagged candidate surgery without an adjudicated CRF13 disposition. The revised SAP requires every endpoint candidate to have a final disposition before the OTA or final analysis: these must be adjudicated before this data cut can be analyzed.</p>',
+            length(unresolved_ids))
+  }
+}
+
+
+# Field extractor for the packed preinjury_legpain construct
+# ("pain,side,severity,limit,treatment" from CRF02 q.70-74).
+legpain_field <- function(x, i) {
+  vapply(strsplit(as.character(x), ",", fixed = TRUE),
+         function(p) if (length(p) >= i) trimws(p[i]) else NA_character_, character(1))
+}
+
+# SAP section 12 chronic pain: pre-injury leg-pain severity <= 4 on the CRF's
+# inverted 1-to-10 scale (1 = worst pain, 10 = none), or treatment or
+# medications for that pain during the previous year. Uses the chronic_pain
+# construct when the dataset carries it; otherwise computes from
+# preinjury_legpain. Missing records count as no chronic pain, per
+# SAP_Issues_and_Questions.md.
+sap_chronic_pain <- function(analytic) {
+  if ("chronic_pain" %in% names(analytic)) {
+    return(analytic$chronic_pain %in% TRUE)
+  }
+  sev <- suppressWarnings(as.numeric(legpain_field(analytic$preinjury_legpain, 3)))
+  trt <- legpain_field(analytic$preinjury_legpain, 5)
+  (!is.na(sev) & sev <= 4) | trt %in% "Treatment"
+}
+
+
+#' Pre-injury clinical characteristics table (NSAID, table 2.2 layout)
+#'
+#' @description
+#' The NSAID report's pre-injury clinical characteristics table: Charlson
+#' banded 0 / 1-2 / 3-4 / 5 or more; the yes/no pre-injury conditions
+#' collapsed to one row per condition (Chronic Pain by the SAP section 12
+#' definition via the chronic_pain construct or preinjury_legpain, Chronic
+#' Opioid Use, Alcohol and Drug Use Disorders, Previous Injury to the
+#' Affected Leg); the check-all-that-apply comorbidity lists split one row per
+#' selection; tobacco use; VR-1; and BMI as Mean [SD]. Condition columns are
+#' read as logical or "Yes"/"No". Footnotes and caption are the caller's.
+#'
+#' @param analytic analytic data set that must include treatment_arm, enrolled,
+#' charlson_index, comorbidities_chronic_opioid_use, substance_abuse_alcohol,
+#' substance_abuse_drug, preinjury_previnj, comorbidities_psychiatric,
+#' comorbidities_diabetes, comorbidities_musculoskeletal, tobacco_use,
+#' preinjury_health, bmi, and chronic_pain or preinjury_legpain
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_preinjury_clinical_characteristics(analytic)
+#' }
+closed_preinjury_clinical_characteristics <- function(analytic) {
+  cond_labels <- c(chronic_pain_sap = "Chronic Pain",
+                   comorbidities_chronic_opioid_use = "Chronic Opioid Use",
+                   substance_abuse_alcohol = "Alcohol Use Disorder",
+                   substance_abuse_drug = "Drug Use Disorder",
+                   preinjury_previnj = "Previous Injury to Affected Leg")
+  cc_base <- analytic %>% mutate(chronic_pain_sap = sap_chronic_pain(analytic))
+  cond_mat <- sapply(names(cond_labels), function(cn) cc_base[[cn]] %in% c(TRUE, "Yes"))
+  ans_mat  <- sapply(names(cond_labels), function(cn) !is.na(cc_base[[cn]]))
+  cc_analytic <- cc_base %>%
+    mutate(preinjury_conditions = apply(cond_mat, 1, function(r) paste(cond_labels[r], collapse = "; ")),
+           preinjury_conditions = ifelse(nzchar(preinjury_conditions), preinjury_conditions,
+                                         ifelse(rowSums(ans_mat) > 0, "None", NA_character_)),
+           charlson_n = suppressWarnings(as.numeric(charlson_index)),
+           charlson_band = ifelse(is.na(charlson_n), NA_character_,
+                            ifelse(charlson_n == 0, "0",
+                            ifelse(charlson_n <= 2, "1-2",
+                            ifelse(charlson_n <= 4, "3-4", "5 or more")))))
+
+  closed_generic_characteristics(cc_analytic,
+        constructs = c("charlson_band", "preinjury_conditions",
+                       "comorbidities_psychiatric", "comorbidities_diabetes", "comorbidities_musculoskeletal",
+                       "tobacco_use", "preinjury_health", "bmi"),
+        names_vec = c("Charlson Comorbidity Index<sup>1</sup>", "Pre-Injury Conditions<sup>2</sup>",
+                      "Psychiatric Disorders<sup>4</sup>", "Diabetes<sup>4</sup>", "Musculoskeletal Conditions<sup>3,4</sup>",
+                      "Tobacco Use", "Pre-Injury Health Status (VR-1)", "Body Mass Index<sup>6</sup>"),
+        filter_cols = "enrolled", mean_sd = "bmi",
+        bottom_order_levels = c("Other", "None", "Missing"),
+        splits = c(NA, "; ", "; ", "; ", "; ", NA, NA, NA))
+}
+
+
+#' NSAID subgroup frame and specification
+#'
+#' @description
+#' Builds the SAP section 12 subgroup variables and returns them with the
+#' subgroup specification the report iterates over: open versus closed
+#' fracture (Gustilo value comparison; missing enters neither stratum),
+#' pre-existing chronic pain (SAP definition via the chronic_pain construct or
+#' preinjury_legpain; missing counts as no chronic pain), smoking history and
+#' nicotine use (both from tobacco_use; missing counts as never / not
+#' current). All definitional assumptions are recorded in
+#' SAP_Issues_and_Questions.md.
+#'
+#' @param analytic analytic data set that must include injury_gustilo,
+#' tobacco_use, and chronic_pain or preinjury_legpain
+#'
+#' @return list(data, spec): data is the analytic tibble with sg_ columns;
+#' spec is a list of (col, label, number) entries for tables 8.7-8.10.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_nsaid_subgroups(analytic)
+#' }
+closed_nsaid_subgroups <- function(analytic) {
+  data <- analytic %>%
+    mutate(
+      # gic_gustilo code 1 is "Closed", so injury_gustilo is populated for closed
+      # fractures too - open versus closed is a value comparison, not a missingness
+      # test.
+      sg_fracture     = case_when(injury_gustilo %in% "Closed" ~ "Closed fracture",
+                                  !is.na(injury_gustilo)       ~ "Open fracture",
+                                  TRUE                         ~ NA_character_),
+      sg_chronic_pain = ifelse(sap_chronic_pain(analytic), "Chronic pain", "No chronic pain"),
+      sg_smoking      = ifelse(tobacco_use %in% c("Current", "Former"), "Ever smoker", "Never smoker"),
+      sg_nicotine     = ifelse(tobacco_use %in% "Current", "Current nicotine use", "No current nicotine use"))
+  spec <- list(
+    list(col = "sg_fracture",     label = "Open versus Closed Fracture",  number = "8.7"),
+    list(col = "sg_chronic_pain", label = "Pre-Existing Chronic Pain",    number = "8.8"),
+    list(col = "sg_smoking",      label = "Smoking History",              number = "8.9"),
+    list(col = "sg_nicotine",     label = "Nicotine Use",                 number = "8.10"))
+  list(data = data, spec = spec)
 }

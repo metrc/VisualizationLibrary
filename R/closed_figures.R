@@ -633,3 +633,119 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
   file.remove(c(temp_svg_path, temp_png_path))
   return(img_tag)
 }
+
+
+#' Posterior figure of the risk difference behind a noninferiority table
+#'
+#' @description
+#' Renders the exact risk-difference posterior behind a return_fit = TRUE result of
+#' closed_survival_analysis_bayes_poisson: the same draws as the table it accompanies,
+#' no additional fit. Density over the risk-difference draws with the median, the 95%
+#' credible bounds, the zero line, and the noninferiority margin with the region past
+#' it shaded, the margin read from the fit's settings. The caption belongs to the
+#' calling report via VisualizationTools::figure().
+#'
+#' @param survival_result the list returned by closed_survival_analysis_bayes_poisson
+#' with return_fit = TRUE
+#'
+#' @return An HTML img tag with the figure embedded as a data URI.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_risk_difference_posterior_figure(survival_result)
+#' }
+closed_risk_difference_posterior_figure <- function(survival_result) {
+  rd     <- 100 * survival_result$posterior$risk_difference
+  rd_med <- median(rd)
+  rd_lo  <- unname(quantile(rd, 0.025))
+  rd_hi  <- unname(quantile(rd, 0.975))
+  margin_pct <- 100 * survival_result$settings$ni_margin
+  p_fig <- ggplot2::ggplot(data.frame(rd = rd), ggplot2::aes(x = rd)) +
+    ggplot2::annotate("rect", xmin = margin_pct, xmax = Inf, ymin = -Inf, ymax = Inf,
+                      fill = "#D62828", alpha = 0.08) +
+    ggplot2::geom_density(fill = "#DDE9F5", color = "#17365D", linewidth = 0.9, adjust = 1.2) +
+    ggplot2::geom_vline(xintercept = 0, color = "#8A93A0", linewidth = 0.4) +
+    ggplot2::geom_vline(xintercept = c(rd_lo, rd_hi), color = "#2E5F8A", linewidth = 0.4) +
+    ggplot2::geom_vline(xintercept = rd_med, color = "#17365D", linewidth = 0.8) +
+    ggplot2::geom_vline(xintercept = margin_pct, color = "#D62828", linewidth = 0.9) +
+    ggplot2::annotate("text", x = margin_pct, y = Inf,
+                      label = sprintf("+%.0f point noninferiority margin", margin_pct),
+                      hjust = 1.05, vjust = 2, color = "#D62828", size = 3.4, fontface = "bold") +
+    ggplot2::labs(x = "Absolute risk difference, treatment minus control (percentage points)", y = NULL,
+                  subtitle = sprintf("Median %+.1f  |  95%% credible interval %+.1f to %+.1f  |  97.5th percentile %+.1f",
+                                     rd_med, rd_lo, rd_hi, rd_hi)) +
+    ggplot2::scale_y_continuous(expand = ggplot2::expansion(mult = c(0, 0.05))) +
+    ggplot2::theme_minimal(base_family = "Helvetica", base_size = 12) +
+    ggplot2::theme(axis.text.y = ggplot2::element_blank(),
+                   panel.grid.minor = ggplot2::element_blank(),
+                   panel.grid.major.y = ggplot2::element_blank(),
+                   plot.subtitle = ggplot2::element_text(color = "#17365D", face = "bold", size = 10))
+  fig_path <- tempfile(fileext = ".png")
+  ggplot2::ggsave(fig_path, p_fig, width = 8.5, height = 3.4, dpi = 150, bg = "white")
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" style="max-width:100%%" alt="Posterior distribution of the risk difference"/>',
+                     base64enc::base64encode(fig_path))
+  file.remove(fig_path)
+  return(img_tag)
+}
+
+
+#' Summary forest of noninferiority analyses
+#'
+#' @description
+#' Forest figure of the median and 95% credible interval of the risk-difference
+#' posterior for a set of noninferiority fits, read against the noninferiority margin
+#' and color-coded by verdict. Each entry carries a return_fit = TRUE result of
+#' closed_survival_analysis_bayes_poisson, so the forest is built from the same fits
+#' as the tables it summarizes; no additional model runs. The margin is read from the
+#' first entry's settings. The caption belongs to the calling report via
+#' VisualizationTools::figure().
+#'
+#' @param analyses list of entries, each a list with number (the analysis's table
+#' number), label (its display name), and result (its return_fit = TRUE result of
+#' closed_survival_analysis_bayes_poisson)
+#'
+#' @return An HTML img tag with the figure embedded as a data URI, or invisible NULL
+#' when analyses is empty.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_noninferiority_forest(list(list(number = "8.3", label = "Primary Analysis", result = survival_result)))
+#' }
+closed_noninferiority_forest <- function(analyses) {
+  if (length(analyses) == 0) {
+    return(invisible(NULL))
+  }
+  fr <- do.call(rbind, lapply(analyses, function(a) {
+    rd <- 100 * a$result$posterior$risk_difference
+    data.frame(number = a$number, label = a$label,
+               med = median(rd),
+               lo  = unname(quantile(rd, 0.025)),
+               hi  = unname(quantile(rd, 0.975)),
+               verdict = ifelse(a$result$posterior$noninferior, "Yes", "No"))
+  }))
+  margin_pct <- 100 * analyses[[1]]$result$settings$ni_margin
+  fr$axis_label <- sprintf("%s   (%s)", fr$label, fr$number)
+  fr$axis_label <- factor(fr$axis_label, levels = rev(fr$axis_label))
+  p_forest <- ggplot2::ggplot(fr, ggplot2::aes(x = med, y = axis_label)) +
+    ggplot2::annotate("rect", xmin = margin_pct, xmax = Inf, ymin = -Inf, ymax = Inf,
+                      fill = "#D62828", alpha = 0.08) +
+    ggplot2::geom_vline(xintercept = 0, color = "#8A93A0", linewidth = 0.4) +
+    ggplot2::geom_vline(xintercept = margin_pct, color = "#D62828", linewidth = 0.9) +
+    ggplot2::geom_segment(ggplot2::aes(x = lo, xend = hi, yend = axis_label, color = verdict), linewidth = 1.1) +
+    ggplot2::geom_point(ggplot2::aes(color = verdict), size = 2.4) +
+    ggplot2::scale_color_manual(values = c(Yes = "#17365D", No = "#D62828"), name = "Noninferior") +
+    ggplot2::labs(x = "Absolute risk difference, treatment minus control (percentage points)", y = NULL) +
+    ggplot2::theme_minimal(base_family = "Helvetica", base_size = 12) +
+    ggplot2::theme(panel.grid.minor = ggplot2::element_blank(),
+                   legend.position = "top",
+                   axis.text.y = ggplot2::element_text(color = "#17365D"))
+  fig_path <- tempfile(fileext = ".png")
+  ggplot2::ggsave(fig_path, p_forest, width = 9.5, height = 1.4 + 0.34 * nrow(fr),
+                  dpi = 150, bg = "white", limitsize = FALSE)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" style="max-width:100%%" alt="Forest plot of all noninferiority analyses"/>',
+                     base64enc::base64encode(fig_path))
+  file.remove(fig_path)
+  return(img_tag)
+}
