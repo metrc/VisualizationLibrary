@@ -17,12 +17,12 @@ spec is a list of (col, label, number) entries for tables 8.7-8.10.
 \description{
 Builds the SAP section 12 subgroup variables and returns them with the
 subgroup specification the report iterates over: open versus closed
-fracture (Gustilo value comparison; missing enters neither stratum),
-pre-existing chronic pain (SAP definition via the chronic_pain construct or
-preinjury_legpain; missing counts as no chronic pain), smoking history and
-nicotine use (both from tobacco_use; missing counts as never / not
-current). All definitional assumptions are recorded in
-SAP_Issues_and_Questions.md.
+fracture (Gustilo value comparison), pre-existing chronic pain (SAP
+definition via the chronic_pain construct or preinjury_legpain), smoking
+history and nicotine use (both from tobacco_use). Missing classifications
+enter no stratum in any subgroup, per the study PI's 8/29 ruling
+(patient-reported missing stays missing); the statistician's seven-code
+validation harness implements the same convention.
 }
 \examples{
 \dontrun{
