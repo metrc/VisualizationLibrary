@@ -12,12 +12,10 @@ closed_bayes_cox_supportive(
   entry_construct = "primary_entry_day",
   control_arm = "Group A",
   treatment_prior_sd = 1,
-  chains = 4,
-  iter = 4000,
-  warmup = 2000,
-  cores = 4,
-  seed = 20260713,
-  adapt_delta = 0.95,
+  grid_range = 12,
+  grid_step = 0.001,
+  boundary_drop_min = 30,
+  boundary_mass_max = 1e-08,
   blinded = FALSE
 )
 }
@@ -37,7 +35,11 @@ the outcome constructs, and the entry column}
 
 \item{treatment_prior_sd}{prior standard deviation on the treatment log hazard ratio}
 
-\item{chains, iter, warmup, cores, seed, adapt_delta}{sampler settings}
+\item{grid_range, grid_step}{the log-hazard-ratio grid runs from -grid_range to
+grid_range in steps of grid_step}
+
+\item{boundary_drop_min, boundary_mass_max}{the statistician-confirmed
+boundary-check thresholds}
 
 \item{blinded}{when TRUE, refits on the study_id digit-sum dummy arm}
 }
@@ -45,15 +47,20 @@ the outcome constructs, and the entry column}
 An HTML table (hazard ratio and per-arm events / n).
 }
 \description{
-The SAP's supportive hazard ratio: a brms Cox-family model with
-participant-specific delayed entry via trunc(), right censoring via cens(),
-and a Normal(0, treatment_prior_sd) prior on the treatment log hazard
-ratio. Reports the hazard ratio only; the SAP applies no noninferiority
-margin to the hazard ratio. Carries a minimal fail-closed diagnostic gate
-(R-hat, bulk and tail effective sample sizes on the treatment effect, zero
-divergences) and does not suppress sampler warnings. Written for the NSAID
-report and not statistician-provided; requires statistician review before
-any unblinded use.
+The SAP's supportive hazard ratio, computed with the study statistician's
+own estimator (ported verbatim 8/29 from his seven-code validation harness,
+settings confirmed by him the same day): a deterministic one-dimensional
+grid posterior over the Breslow partial likelihood with participant-specific
+left truncation and a Normal(0, treatment_prior_sd) prior on the treatment
+log hazard ratio. Reports the hazard ratio only; the SAP applies no
+noninferiority margin to it. Deterministic: identical inputs give identical
+output, no sampling. Replaces the brms full-likelihood Cox, which both
+analysis engines found non-convergent at this trial's event count (R-hat
+near 3.7, bulk ESS near 4, every draw at maximum treedepth). Fail-closed:
+the statistician's boundary checks (posterior log-density drop from the
+grid maximum to the grid edges above boundary_drop_min, and total posterior
+mass in the outermost 100 grid points on each side below boundary_mass_max)
+stop the run instead of returning a table.
 }
 \examples{
 \dontrun{

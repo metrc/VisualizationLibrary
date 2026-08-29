@@ -5815,15 +5815,20 @@ closed_ni_fit_preflight <- function(analytic, entry_col = "primary_entry_day", o
 #' Supportive Bayesian Cox proportional-hazards model
 #'
 #' @description
-#' The SAP's supportive hazard ratio: a brms Cox-family model with
-#' participant-specific delayed entry via trunc(), right censoring via cens(),
-#' and a Normal(0, treatment_prior_sd) prior on the treatment log hazard
-#' ratio. Reports the hazard ratio only; the SAP applies no noninferiority
-#' margin to the hazard ratio. Carries a minimal fail-closed diagnostic gate
-#' (R-hat, bulk and tail effective sample sizes on the treatment effect, zero
-#' divergences) and does not suppress sampler warnings. Written for the NSAID
-#' report and not statistician-provided; requires statistician review before
-#' any unblinded use.
+#' The SAP's supportive hazard ratio, computed with the study statistician's
+#' own estimator (ported verbatim 8/29 from his seven-code validation harness,
+#' settings confirmed by him the same day): a deterministic one-dimensional
+#' grid posterior over the Breslow partial likelihood with participant-specific
+#' left truncation and a Normal(0, treatment_prior_sd) prior on the treatment
+#' log hazard ratio. Reports the hazard ratio only; the SAP applies no
+#' noninferiority margin to it. Deterministic: identical inputs give identical
+#' output, no sampling. Replaces the brms full-likelihood Cox, which both
+#' analysis engines found non-convergent at this trial's event count (R-hat
+#' near 3.7, bulk ESS near 4, every draw at maximum treedepth). Fail-closed:
+#' the statistician's boundary checks (posterior log-density drop from the
+#' grid maximum to the grid edges above boundary_drop_min, and total posterior
+#' mass in the outermost 100 grid points on each side below boundary_mass_max)
+#' stop the run instead of returning a table.
 #'
 #' @param analytic analytic data set that must include enrolled, treatment_arm,
 #' the outcome constructs, and the entry column
@@ -5833,7 +5838,10 @@ closed_ni_fit_preflight <- function(analytic, entry_col = "primary_entry_day", o
 #' @param entry_construct participant-specific entry-day column
 #' @param control_arm treatment_arm value coded 0
 #' @param treatment_prior_sd prior standard deviation on the treatment log hazard ratio
-#' @param chains,iter,warmup,cores,seed,adapt_delta sampler settings
+#' @param grid_range,grid_step the log-hazard-ratio grid runs from -grid_range to
+#' grid_range in steps of grid_step
+#' @param boundary_drop_min,boundary_mass_max the statistician-confirmed
+#' boundary-check thresholds
 #' @param blinded when TRUE, refits on the study_id digit-sum dummy arm
 #'
 #' @return An HTML table (hazard ratio and per-arm events / n).
@@ -5846,8 +5854,9 @@ closed_ni_fit_preflight <- function(analytic, entry_col = "primary_entry_day", o
 closed_bayes_cox_supportive <- function(analytic, type_construct, days_construct,
                                         outcome_length = 365, entry_construct = "primary_entry_day",
                                         control_arm = "Group A", treatment_prior_sd = 1,
-                                        chains = 4, iter = 4000, warmup = 2000, cores = 4,
-                                        seed = 20260713, adapt_delta = 0.95, blinded = FALSE) {
+                                        grid_range = 12, grid_step = 0.001,
+                                        boundary_drop_min = 30, boundary_mass_max = 1e-8,
+                                        blinded = FALSE) {
 
   # Mirrors the blinding in closed_survival_analysis_bayes_poisson so the supportive
   # model runs on the same dummy arm as the tables above.
@@ -5864,49 +5873,57 @@ closed_bayes_cox_supportive <- function(analytic, type_construct, days_construct
            trt   = as.integer(treatment_arm != control_arm),
            event = as.integer(!type %in% c("check", "favorable_event") & !is.na(days) & days <= outcome_length),
            time  = ifelse(event == 1, days, pmin(days, outcome_length))) %>%
-    mutate(entry_day = suppressWarnings(as.numeric(.data[[entry_construct]])) - 1) %>%
-    # brms resolves the trunc() addition term inside the data, not this function's
-    # environment, so the participant-specific entry boundary travels as a column.
+    mutate(entry_boundary = suppressWarnings(as.numeric(.data[[entry_construct]])) - 1) %>%
     # The entry day itself is inclusive; a qualifying event before it ends primary
     # follow-up, so that participant never enters the risk set.
-    filter(!is.na(time), !is.na(trt), !is.na(entry_day)) %>%
-    filter(!(event == 1 & time < entry_day + 1)) %>%
-    filter(time > entry_day)
+    filter(!is.na(time), !is.na(trt), !is.na(entry_boundary)) %>%
+    filter(!(event == 1 & time < entry_boundary + 1)) %>%
+    filter(time > entry_boundary)
 
-  # Compilation chatter is captured, but sampler WARNINGS are not suppressed:
-  # a warning from the sampler is evidence about the fit.
-  invisible(utils::capture.output(suppressMessages(
-    cox_fit <- brms::brm(time | cens(1 - event) + trunc(lb = entry_day) ~ trt,
-                         data    = dat,
-                         family  = brms::brmsfamily("cox"),
-                         prior   = brms::prior_string(sprintf("normal(0, %s)", treatment_prior_sd),
-                                                      class = "b", coef = "trt"),
-                         chains  = chains, iter = iter, warmup = warmup, cores = cores,
-                         seed    = seed, backend = "rstan",
-                         control = list(adapt_delta = adapt_delta),
-                         silent  = 2, refresh = 0)
-  ), type = "output"))
-
-  # Minimal diagnostic gate, same fail-closed philosophy as the piecewise
-  # workhorse: the supportive Cox must not report from an untrustworthy fit.
-  np <- tryCatch(brms::nuts_params(cox_fit), error = function(e) NULL)
-  divergences <- if (is.null(np)) NA_real_ else sum(np$Value[np$Parameter == "divergent__"])
-  trt_summ <- tryCatch(posterior::summarise_draws(
-    posterior::subset_draws(posterior::as_draws_array(cox_fit), variable = "b_trt"),
-    "rhat", "ess_bulk", "ess_tail"), error = function(e) NULL)
-  problems <- c(
-    if (is.null(np) || is.na(divergences)) "sampler diagnostics could not be extracted"
-    else if (divergences > 0) sprintf("divergent transitions: %d", divergences),
-    if (is.null(trt_summ)) "R-hat and effective sample sizes could not be computed"
-    else c(if (!is.finite(trt_summ$rhat) || trt_summ$rhat > 1.01) sprintf("R-hat %.3f on the treatment effect", trt_summ$rhat),
-           if (!is.finite(trt_summ$ess_bulk) || trt_summ$ess_bulk < 400) sprintf("bulk effective sample size %.0f", trt_summ$ess_bulk),
-           if (!is.finite(trt_summ$ess_tail) || trt_summ$ess_tail < 400) sprintf("tail effective sample size %.0f", trt_summ$ess_tail)))
-  if (length(problems) > 0) {
-    stop("Cox diagnostic gate failed - the fit must not produce a reported result: ",
-         paste(problems, collapse = "; "))
+  if (nrow(dat) == 0 || length(unique(dat$trt)) != 2) {
+    stop("Supportive Cox model has an empty or one-arm risk set.", call. = FALSE)
   }
 
-  hazard_ratio <- exp(as.data.frame(cox_fit)$b_trt)
+  event_times <- sort(unique(dat$time[dat$event == 1]))
+  if (length(event_times) == 0) stop("Supportive Cox model has no events.", call. = FALSE)
+
+  # The statistician's estimator, verbatim: delayed-entry risk sets by event day,
+  # Breslow handling for tied event days, one-dimensional grid posterior.
+  risk0 <- risk1 <- deaths <- death_trt <- numeric(length(event_times))
+  for (j in seq_along(event_times)) {
+    at_risk <- dat$entry_boundary < event_times[j] & dat$time >= event_times[j]
+    at_event <- dat$event == 1 & dat$time == event_times[j]
+    risk0[j] <- sum(at_risk & dat$trt == 0)
+    risk1[j] <- sum(at_risk & dat$trt == 1)
+    deaths[j] <- sum(at_event)
+    death_trt[j] <- sum(dat$trt[at_event])
+  }
+  if (any(risk0 + risk1 < deaths)) stop("Invalid delayed-entry Cox risk sets.", call. = FALSE)
+
+  beta <- seq(-grid_range, grid_range, by = grid_step)
+  log_likelihood <- beta * sum(death_trt)
+  for (j in seq_along(event_times)) {
+    log_likelihood <- log_likelihood -
+      deaths[j] * log(risk0[j] + risk1[j] * exp(beta))
+  }
+  log_posterior <- log_likelihood +
+    stats::dnorm(beta, mean = 0, sd = treatment_prior_sd, log = TRUE)
+  weights <- exp(log_posterior - max(log_posterior))
+  weights <- weights / sum(weights)
+  cdf <- cumsum(weights)
+  qbeta_grid <- function(p) {
+    stats::approx(c(0, cdf), c(beta[1], beta), xout = p, ties = "ordered")$y
+  }
+  hr <- exp(c(median = qbeta_grid(0.50), lower = qbeta_grid(0.025), upper = qbeta_grid(0.975)))
+
+  # Fail-closed boundary gate, thresholds confirmed by the statistician 8/29.
+  boundary_drop <- max(log_posterior) -
+    max(log_posterior[c(1, length(log_posterior))])
+  boundary_mass <- sum(weights[c(seq_len(100), (length(weights) - 99):length(weights))])
+  if (!(is.finite(boundary_drop) && boundary_drop > boundary_drop_min && boundary_mass < boundary_mass_max)) {
+    stop("Cox grid gate failed - the fit must not produce a reported result: boundary log-density drop=",
+         signif(boundary_drop, 6), "; boundary mass=", signif(boundary_mass, 6), call. = FALSE)
+  }
 
   ev_counts <- dat %>% group_by(trt) %>% summarise(ev = sum(event), n = dplyr::n())
   out_tbl <- tibble(
@@ -5914,9 +5931,7 @@ closed_bayes_cox_supportive <- function(analytic, type_construct, days_construct
     "Treatment (events / n)" = sprintf("%d / %d", ev_counts$ev[ev_counts$trt == 1], ev_counts$n[ev_counts$trt == 1]),
     "Control (events / n)"   = sprintf("%d / %d", ev_counts$ev[ev_counts$trt == 0], ev_counts$n[ev_counts$trt == 0]),
     "Hazard Ratio (95% CrI)" = sprintf("%.2f (%.2f, %.2f)",
-                                       median(hazard_ratio),
-                                       unname(quantile(hazard_ratio, 0.025)),
-                                       unname(quantile(hazard_ratio, 0.975))))
+                                       hr["median"], hr["lower"], hr["upper"]))
 
   kable(out_tbl, format = "html", align = "l") %>%
     kable_styling("striped", full_width = FALSE, position = "left")
