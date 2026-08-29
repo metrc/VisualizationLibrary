@@ -3530,7 +3530,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                            subcategory_constructs = c(), bottom_order_levels = c("Missing"),
                                            mean_sd = c(), include_overall = FALSE,
                                            collapse_other_entries = FALSE){
-  confirm_stability_of_related_visual('generic_characteristics', 'ecbdbe9c884b91af65768a07b2b274c0')
+  confirm_stability_of_related_visual('generic_characteristics', '10b0d14ace6fca7a516ef7657e90fcc9')
   
   out <- NULL
   index_vec <- c()
@@ -3550,7 +3550,9 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
     collapse_other_entries <- rep(collapse_other_entries, length(constructs))
   }
   for (coe_i in seq_along(constructs)) {
-    if (isTRUE(collapse_other_entries[coe_i])) {
+    # A construct absent from the data is left for the construct selection below,
+    # which names the missing column in its error instead of a recycling failure.
+    if (isTRUE(collapse_other_entries[coe_i]) && constructs[coe_i] %in% names(analytic)) {
       # An unsplit construct's Other free text may itself contain the split
       # character, so it is collapsed as a whole value; a split construct
       # collapses the Other terms inside its list.

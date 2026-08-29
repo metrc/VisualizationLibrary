@@ -2487,7 +2487,9 @@ generic_characteristics <- function(analytic, constructs = c(), names_vec = c(),
     collapse_other_entries <- rep(collapse_other_entries, length(constructs))
   }
   for (coe_i in seq_along(constructs)) {
-    if (isTRUE(collapse_other_entries[coe_i])) {
+    # A construct absent from the data is left for the construct selection below,
+    # which names the missing column in its error instead of a recycling failure.
+    if (isTRUE(collapse_other_entries[coe_i]) && constructs[coe_i] %in% names(analytic)) {
       # An unsplit construct's Other free text may itself contain the split
       # character, so it is collapsed as a whole value; a split construct
       # collapses the Other terms inside its list.
