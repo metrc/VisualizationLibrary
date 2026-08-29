@@ -6157,3 +6157,106 @@ closed_nsaid_subgroups <- function(analytic) {
     list(col = "sg_nicotine",     label = "Nicotine Use",                 number = "8.10"))
   list(data = data, spec = spec)
 }
+
+
+#' Early-censored pool for the tipping-point sensitivity
+#'
+#' @description
+#' The participants a censoring tipping-point scenario may reclassify: enrolled,
+#' censored ("check") after their participant-specific risk entry and before the
+#' outcome horizon. Mirrors the risk-set filters of
+#' closed_survival_analysis_bayes_poisson in entry_construct mode, and parses the
+#' day columns itself: analytic columns arrive as character. Returned in fixed
+#' study_id order so escalating scenarios stay nested, each a superset of the
+#' last rather than an unrelated draw.
+#'
+#' @param analytic analytic data set that must include study_id, enrolled,
+#' surgery_or_healed_type, surgery_or_healed_days, and the entry column
+#' @param entry_construct participant-specific entry-day column
+#' @param outcome_length upper follow-up horizon in days
+#'
+#' @return character vector of study ids, sorted.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_ni_early_censored_ids(analytic)
+#' }
+closed_ni_early_censored_ids <- function(analytic, entry_construct = "primary_entry_day", outcome_length = 365) {
+  analytic %>%
+    mutate(days = suppressWarnings(as.numeric(surgery_or_healed_days)),
+           entry_day = suppressWarnings(as.numeric(.data[[entry_construct]]))) %>%
+    filter(enrolled,
+           surgery_or_healed_type %in% "check",
+           !is.na(days), !is.na(entry_day),
+           days > entry_day - 1, days < outcome_length) %>%
+    arrange(study_id) %>%
+    pull(study_id)
+}
+
+
+#' Healed carry-forward sensitivity scenario
+#'
+#' @description
+#' The alternative healed-status carry-forward assumption of the SAP Missing
+#' Data section: a healed participant is censored at the actual
+#' healing-assessment day (the extended-outcome date on the Time Zero scale)
+#' instead of being carried forward to the outcome horizon. Parses the date and
+#' day columns itself: analytic columns arrive as character. A healed assessment
+#' on or before the risk entry then removes the participant from the
+#' delayed-entry risk set entirely, which is the informative-censoring cost the
+#' carry-forward decision avoids.
+#'
+#' @param analytic analytic data set that must include enrolled,
+#' surgery_or_healed_type, surgery_or_healed_days,
+#' surgery_or_healed_outcome_extended_date, and time_zero
+#' @param outcome_length upper follow-up horizon in days
+#'
+#' @return list(data, affected_n): data is the analytic tibble with
+#' surgery_or_healed_days rewritten under the scenario (and cf_affected
+#' marking the rewritten rows); affected_n is how many rows were rewritten.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_healed_carry_forward_scenario(analytic)
+#' }
+closed_healed_carry_forward_scenario <- function(analytic, outcome_length = 365) {
+  data <- analytic %>%
+    mutate(healed_assess_day = suppressWarnings(as.numeric(
+             as.Date(surgery_or_healed_outcome_extended_date) - as.Date(time_zero))),
+           cf_affected = enrolled & surgery_or_healed_type %in% "favorable_event" &
+             !is.na(healed_assess_day) & healed_assess_day < outcome_length,
+           surgery_or_healed_days = ifelse(cf_affected, healed_assess_day,
+                                           suppressWarnings(as.numeric(surgery_or_healed_days))))
+  list(data = data, affected_n = sum(data$cf_affected, na.rm = TRUE))
+}
+
+
+#' Mean percentage of adherent days by arm
+#'
+#' @description
+#' The SAP section 2 adherence summary: among enrolled participants, the mean
+#' percentage of the first total_days days on which the participant met the
+#' assigned arm's criteria, from the adherent_days construct, by treatment arm.
+#' Parses the day column itself: analytic columns arrive as character.
+#'
+#' @param analytic analytic data set that must include enrolled, treatment_arm,
+#' and adherent_days
+#' @param total_days the adherence window length in days
+#'
+#' @return named character vector of formatted percentages, one per arm.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_adherent_days_percent(analytic)
+#' }
+closed_adherent_days_percent <- function(analytic, total_days = 21) {
+  arms <- sort(unique(stats::na.omit(analytic %>% filter(enrolled) %>% pull(treatment_arm))))
+  vapply(arms, function(arm) {
+    p <- analytic %>% filter(enrolled, treatment_arm == arm) %>%
+      mutate(p = suppressWarnings(as.numeric(adherent_days)) / total_days) %>% pull(p)
+    paste0(format(round(100 * mean(p, na.rm = TRUE), 1), nsmall = 1), "%")
+  }, character(1))
+}
