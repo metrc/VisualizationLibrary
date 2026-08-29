@@ -16,7 +16,7 @@ and adherent_days}
 named character vector of formatted percentages, one per arm.
 }
 \description{
-The SAP section 2 adherence summary: among enrolled participants, the mean
+The SAP section 5 adherence summary: among enrolled participants, the mean
 percentage of the first total_days days on which the participant met the
 assigned arm's criteria, from the adherent_days construct, by treatment arm.
 Parses the day column itself: analytic columns arrive as character.
