@@ -4993,6 +4993,12 @@ closed_enrollment_status_by_site_var_discontinued_ii <- function(analytic, disco
 #'   person- and interval-level data the model saw, the transformed posterior draws,
 #'   sampler diagnostics, and all settings, alongside the result table (as
 #'   \code{result_table}). Defaults to FALSE, returning only the HTML table.
+#' @param show_ni_decision when TRUE (the default), the result table carries the
+#'   Noninferior Yes/No verdict column. Set FALSE for supportive, sensitivity,
+#'   and subgroup tables: the noninferiority decision applies only to the
+#'   primary analysis, so those tables keep Pr(Difference < margin) but drop
+#'   the verdict cell. Display-only: the model, the diagnostic gate, and the
+#'   returned posterior (including \code{noninferior}) are unchanged.
 #' @param blinded when TRUE, ignores the real treatment_arm and deterministically reassigns
 #' arms from the digit sum of study_id (even = "Group A", odd = "Group B") so the table can be
 #' produced without unmasking (defaults to FALSE)
@@ -5022,6 +5028,7 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
                                                    seed = 20260713, adapt_delta = 0.95,
                                                    backend = "cmdstanr",
                                                    blinded = FALSE,
+                                                   show_ni_decision = TRUE,
                                                    return_fit = FALSE){
   if (!requireNamespace("brms", quietly = TRUE)) {
     stop("closed_survival_analysis_bayes_poisson requires the brms package; please install it.")
@@ -5386,14 +5393,21 @@ closed_survival_analysis_bayes_poisson <- function(analytic, type_construct, day
     !!hdr_zero := c(sprintf("%d / %d", ev_zero, n_zero), make_cell(control_risk)),
     "Difference (95% CrI)"   := c("", make_cell(risk_difference)),
     "Hazard Ratio (95% CrI)" := c("", make_cell(hazard_ratio_draws, percent = FALSE)),
-    !!sprintf("Pr(Difference < %.0f%%)", 100 * ni_margin) := c("", sprintf("%.4f", posterior_probability_below_margin)),
-    "Noninferior" := c("", ifelse(noninferior, "Yes", "No"))
+    !!sprintf("Pr(Difference < %.0f%%)", 100 * ni_margin) := c("", sprintf("%.4f", posterior_probability_below_margin))
   )
+  # The Noninferior Yes/No verdict cell appears only when requested: the
+  # decision rule belongs to the primary analysis alone (8/30 statistician
+  # direction). The posterior probability against the margin stays in every
+  # table; only the verdict is primary-specific.
+  if (show_ni_decision) {
+    out_tbl <- out_tbl %>%
+      mutate("Noninferior" := c("", ifelse(noninferior, "Yes", "No")))
+  }
 
   header <- c(" " = 1)
   header[sprintf("Bayesian %d-Day Risk (95%% Credible Interval)", outcome_length)] <- 2
   header["Treatment Effect"] <- 2
-  header["Noninferiority"] <- 2
+  header["Noninferiority"] <- if (show_ni_decision) 2 else 1
 
   table <- kable(out_tbl, format = "html", align = "l") %>%
     add_header_above(header) %>%
@@ -5959,6 +5973,403 @@ closed_bayes_cox_supportive <- function(analytic, type_construct, days_construct
 
   kable(out_tbl, format = "html", align = "l") %>%
     kable_styling("striped", full_width = FALSE, position = "left")
+}
+
+
+#' Analysis-specific covariate balance (absolute standardized mean differences)
+#'
+#' @description
+#' The balance table behind the draft SAP covariate-adjustment section
+#' (statistician's 8/30 request): absolute standardized mean differences with
+#' the Austin (2009) pooled-standard-deviation definitions, one column per
+#' analytic population, no significance tests. Continuous covariates use
+#' (m1 - m0) / sqrt((s1^2 + s0^2) / 2) over non-missing values; every level of
+#' a categorical or check-all covariate becomes a binary indicator with
+#' (p1 - p0) / sqrt((p1(1-p1) + p0(1-p0)) / 2); each covariate also gets a
+#' missingness-indicator row. Values at or above flag_threshold are marked
+#' with an asterisk. Population columns show per-arm Ns. Equivalent to cobalt
+#' with binary = "std", continuous = "std", s.d.denom = "pooled".
+#'
+#' @param population_list named list of data frames; each must carry smd_arm
+#' (0 = control-coded, 1 = treatment-coded) plus the covariate columns
+#' @param covariates list of list(construct, label, type) entries with type one
+#' of "continuous", "categorical", or "multi" (a "; "-separated check-all field)
+#' @param flag_threshold absolute SMD at or above which a value is flagged
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_covariate_balance_smd(population_list, covariates)
+#' }
+closed_covariate_balance_smd <- function(population_list, covariates, flag_threshold = 0.10) {
+  smd_continuous <- function(x, arm) {
+    keep <- !is.na(x)
+    x <- x[keep]; arm <- arm[keep]
+    if (sum(arm == 1) < 2 || sum(arm == 0) < 2) return(NA_real_)
+    m1 <- mean(x[arm == 1]); m0 <- mean(x[arm == 0])
+    s1 <- stats::sd(x[arm == 1]); s0 <- stats::sd(x[arm == 0])
+    pooled <- sqrt((s1^2 + s0^2) / 2)
+    if (!is.finite(pooled) || pooled == 0) return(NA_real_)
+    abs(m1 - m0) / pooled
+  }
+  smd_binary <- function(ind, arm) {
+    keep <- !is.na(ind)
+    ind <- ind[keep]; arm <- arm[keep]
+    if (sum(arm == 1) == 0 || sum(arm == 0) == 0) return(NA_real_)
+    p1 <- mean(ind[arm == 1]); p0 <- mean(ind[arm == 0])
+    pooled <- sqrt((p1 * (1 - p1) + p0 * (1 - p0)) / 2)
+    if (!is.finite(pooled) || pooled == 0) return(if (p1 == p0) 0 else NA_real_)
+    abs(p1 - p0) / pooled
+  }
+  fmt <- function(v) ifelse(is.na(v), "",
+                            paste0(trimws(format(round(v, 3), nsmall = 3)),
+                                   ifelse(v >= flag_threshold, "*", "")))
+
+  # Level universes come from all populations together so every column shares rows.
+  level_values <- function(cov) {
+    vals <- unlist(lapply(population_list, function(d) as.character(d[[cov$construct]])))
+    vals <- vals[!is.na(vals)]
+    if (cov$type == "multi") {
+      vals <- unlist(strsplit(vals, ";"))
+      vals <- trimws(vals)
+      vals <- vals[nzchar(vals)]
+    }
+    sort(unique(vals))
+  }
+
+  rows <- list(); group_index <- c()
+  n_header <- vapply(population_list, function(d)
+    sprintf("(n = %d / %d)", sum(d$smd_arm == 0), sum(d$smd_arm == 1)), character(1))
+
+  for (cov in covariates) {
+    cov_rows <- list()
+    if (cov$type == "continuous") {
+      cov_rows[["Mean difference"]] <- vapply(population_list, function(d)
+        smd_continuous(suppressWarnings(as.numeric(d[[cov$construct]])), d$smd_arm), numeric(1))
+    } else {
+      for (lvl in level_values(cov)) {
+        cov_rows[[lvl]] <- vapply(population_list, function(d) {
+          raw <- as.character(d[[cov$construct]])
+          ind <- if (cov$type == "multi") {
+            ifelse(is.na(raw), NA,
+                   vapply(strsplit(raw, ";"), function(p) lvl %in% trimws(p), logical(1)))
+          } else {
+            ifelse(is.na(raw), NA, raw == lvl)
+          }
+          smd_binary(ind, d$smd_arm)
+        }, numeric(1))
+      }
+    }
+    cov_rows[["Missing"]] <- vapply(population_list, function(d)
+      smd_binary(is.na(d[[cov$construct]]) * 1L, d$smd_arm), numeric(1))
+    for (nm in names(cov_rows)) {
+      rows[[length(rows) + 1]] <- c(nm, fmt(cov_rows[[nm]]))
+    }
+    group_index <- c(group_index, stats::setNames(length(cov_rows), cov$label))
+  }
+
+  final <- as.data.frame(do.call(rbind, rows), stringsAsFactors = FALSE)
+  colnames(final) <- c(" ", paste0(names(population_list), "<br>", n_header))
+
+  kable(final, format = "html", align = "l", escape = FALSE, row.names = FALSE) %>%
+    pack_rows(index = group_index, label_row_css = "text-align:left") %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    row_spec(0, extra_css = "border-bottom: 1px solid;")
+}
+
+
+#' NSAID analysis-specific covariate balance table
+#'
+#' @description
+#' Builds the five NSAID analytic populations of the draft covariate-adjustment
+#' section and hands them to closed_covariate_balance_smd with the
+#' pre-randomization covariates of the report's baseline tables: ITT (enrolled),
+#' adherer per-protocol (adherent), as-treated (adherers to either regimen,
+#' grouped by treatment received), and the two BPI day-90 responder
+#' populations. ITT, per-protocol, and BPI populations group by randomized
+#' assignment; as-treated groups by treatment received. Check-all covariates
+#' collapse free-text Other entries before level indicators are built.
+#'
+#' @param analytic analytic data set with the baseline-table constructs plus
+#' enrolled, treatment_arm, adherent, crossover, and the day-90 BPI scores
+#' @param control_arm treatment_arm value coded 0
+#' @param blinded when TRUE, uses the study_id digit-sum dummy arm
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_nsaid_covariate_balance(analytic)
+#' }
+closed_nsaid_covariate_balance <- function(analytic, control_arm = "Group A", blinded = FALSE) {
+  if (blinded) {
+    digit_sum <- sapply(strsplit(gsub("[^0-9]", "", as.character(analytic$study_id)), ""),
+                        function(d) sum(as.integer(d)))
+    analytic <- analytic %>% mutate(treatment_arm = ifelse(digit_sum %% 2 == 0, "Group A", "Group B"))
+  }
+
+  base <- analytic %>%
+    filter(enrolled) %>%
+    mutate(smd_arm = as.integer(treatment_arm != control_arm),
+           chronic_pain_balance = sap_chronic_pain(.),
+           across(any_of(c("comorbidities_psychiatric", "comorbidities_diabetes",
+                           "comorbidities_musculoskeletal", "fracture_location")),
+                  collapse_other_multi),
+           across(any_of("injury_mechanism"), collapse_other))
+
+  as_treated <- base %>%
+    filter(adherent %in% TRUE | crossover %in% TRUE) %>%
+    mutate(smd_arm = ifelse(crossover %in% TRUE, 1L - smd_arm, smd_arm))
+
+  population_list <- list(
+    "ITT" = base,
+    "Per-Protocol" = base %>% filter(adherent %in% TRUE),
+    "As-Treated" = as_treated,
+    "BPI Intensity" = base %>% filter(is.finite(suppressWarnings(as.numeric(bpi_severity_score_3mo)))),
+    "BPI Interference" = base %>% filter(is.finite(suppressWarnings(as.numeric(bpi_interference_score_3mo))))
+  )
+
+  covariates <- list(
+    list(construct = "age", label = "Age", type = "continuous"),
+    list(construct = "sex", label = "Sex", type = "categorical"),
+    list(construct = "ethnicity_race", label = "Race and Ethnicity", type = "categorical"),
+    list(construct = "education_level", label = "Education", type = "categorical"),
+    list(construct = "military_status", label = "Military Status", type = "categorical"),
+    list(construct = "insurance", label = "Insurance", type = "categorical"),
+    list(construct = "bmi", label = "Body Mass Index", type = "continuous"),
+    list(construct = "charlson_index", label = "Charlson Comorbidity Index", type = "continuous"),
+    list(construct = "chronic_pain_balance", label = "Chronic Pain (SAP definition)", type = "categorical"),
+    list(construct = "comorbidities_chronic_opioid_use", label = "Chronic Opioid Use", type = "categorical"),
+    list(construct = "substance_abuse_alcohol", label = "Alcohol Use Disorder", type = "categorical"),
+    list(construct = "substance_abuse_drug", label = "Drug Use Disorder", type = "categorical"),
+    list(construct = "preinjury_previnj", label = "Previous Injury to Affected Leg", type = "categorical"),
+    list(construct = "comorbidities_psychiatric", label = "Psychiatric Disorders", type = "multi"),
+    list(construct = "comorbidities_diabetes", label = "Diabetes", type = "multi"),
+    list(construct = "comorbidities_musculoskeletal", label = "Musculoskeletal Conditions", type = "multi"),
+    list(construct = "tobacco_use", label = "Tobacco Use", type = "categorical"),
+    list(construct = "preinjury_health", label = "Pre-Injury Health Status (VR-1)", type = "categorical"),
+    list(construct = "injury_mechanism", label = "Injury Mechanism", type = "categorical"),
+    list(construct = "injury_side", label = "Side of Injury", type = "categorical"),
+    list(construct = "fracture_location", label = "Fracture Type (AO/OTA)", type = "multi"),
+    list(construct = "injury_gustilo", label = "Gustilo Classification", type = "categorical"),
+    list(construct = "injury_classification_tscherne", label = "Tscherne Classification", type = "categorical"),
+    list(construct = "injury_iss", label = "Injury Severity Score", type = "continuous"),
+    list(construct = "injury_plat_artic", label = "Plateau Articular Involvement", type = "categorical"),
+    list(construct = "injury_pil_artic", label = "Pilon Articular Involvement", type = "categorical")
+  )
+
+  closed_covariate_balance_smd(population_list, covariates)
+}
+
+
+#' Day-90 BPI treatment-effect model (Bayesian Gaussian regression)
+#'
+#' @description
+#' The signed SAP section 11.4 secondary outcome: a day-90 BPI score (pain
+#' intensity or pain interference) analyzed as a continuous 0-10 scale. The
+#' model specification is the study statistician's (8/30 four-analyses script;
+#' the SAP defines the outcome, not the model): Bayesian Gaussian regression
+#' with randomized treatment as the sole predictor, a Normal(0,
+#' treatment_prior_sd) prior on the treatment effect, a Normal(5, 2.5) prior
+#' on the intercept, and a half-Student-t(3, 0, 2.5) prior on sigma. This is
+#' an independent implementation of that specification for engine
+#' cross-validation; arm means and their difference are derived directly from
+#' the intercept and treatment-effect draws, which for this model equals the
+#' statistician's posterior_epred construction exactly. No decision rule: the
+#' SAP plans no categorized analysis and no hypothesis test. Fail-closed
+#' diagnostic gate as in the primary workhorse; sampler warnings are never
+#' suppressed.
+#'
+#' @param analytic analytic data set that must include enrolled, treatment_arm,
+#' and the score construct
+#' @param score_construct day-90 BPI score column name
+#' (e.g. bpi_severity_score_3mo or bpi_interference_score_3mo)
+#' @param outcome_label outcome label inside the table
+#' @param control_arm treatment_arm value coded 0
+#' @param treatment_prior_sd prior standard deviation on the treatment effect
+#' @param intercept_prior_mean,intercept_prior_sd intercept prior
+#' @param sigma_prior_df,sigma_prior_scale half-Student-t sigma prior
+#' @param baseline_construct optional baseline score column for the ANCOVA
+#' variant: the baseline is validated to 0-10, mean-imputed when missing (so
+#' the analysis population is identical to the unadjusted model), centered,
+#' and added as a covariate; NULL fits the statistician's unadjusted model
+#' @param baseline_prior_sd prior standard deviation on the baseline slope
+#' @param chains,iter,warmup,cores,seed,adapt_delta sampler settings
+#' @param backend brms backend
+#' @param blinded when TRUE, refits on the study_id digit-sum dummy arm
+#' @param return_fit when TRUE, returns the fit, draws, diagnostics, and
+#' settings instead of the table
+#'
+#' @return An HTML table, or the analysis list when return_fit = TRUE.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_bpi_day90_gaussian(analytic, "bpi_severity_score_3mo", "BPI Pain Intensity, Day 90")
+#' }
+closed_bpi_day90_gaussian <- function(analytic, score_construct, outcome_label,
+                                      control_arm = "Group A",
+                                      treatment_prior_sd = 1,
+                                      intercept_prior_mean = 5, intercept_prior_sd = 2.5,
+                                      sigma_prior_df = 3, sigma_prior_scale = 2.5,
+                                      baseline_construct = NULL, baseline_prior_sd = 1,
+                                      chains = 4, iter = 4000, warmup = 2000, cores = 4,
+                                      seed = 20260713, adapt_delta = 0.95,
+                                      backend = "rstan",
+                                      blinded = FALSE, return_fit = FALSE) {
+
+  # Mirrors the blinding in closed_survival_analysis_bayes_poisson.
+  if (blinded) {
+    digit_sum <- sapply(strsplit(gsub("[^0-9]", "", as.character(analytic$study_id)), ""),
+                        function(d) sum(as.integer(d)))
+    analytic <- analytic %>% mutate(treatment_arm = ifelse(digit_sum %% 2 == 0, "Group A", "Group B"))
+  }
+
+  dat <- analytic %>%
+    filter(enrolled) %>%
+    mutate(score = suppressWarnings(as.numeric(.data[[score_construct]])),
+           trt   = as.integer(treatment_arm != control_arm)) %>%
+    filter(is.finite(score), !is.na(trt))
+  n_baseline_imputed <- NA_integer_
+  if (!is.null(baseline_construct)) {
+    # ANCOVA: mean-impute a missing baseline (unbiased under randomization) so
+    # the analysis population matches the unadjusted model, then center so the
+    # intercept keeps its control-arm-mean interpretation.
+    baseline_raw <- suppressWarnings(as.numeric(dat[[baseline_construct]]))
+    baseline_raw[!is.finite(baseline_raw) | baseline_raw < 0 | baseline_raw > 10] <- NA_real_
+    n_baseline_imputed <- sum(is.na(baseline_raw))
+    baseline_raw[is.na(baseline_raw)] <- mean(baseline_raw, na.rm = TRUE)
+    dat <- dat %>% mutate(baseline_centered = baseline_raw - mean(baseline_raw)) %>%
+      select(study_id, trt, score, baseline_centered)
+  } else {
+    dat <- dat %>% select(study_id, trt, score)
+  }
+
+  if (nrow(dat) == 0 || length(unique(dat$trt)) != 2) {
+    stop("Day-90 BPI model has no valid observations or only one arm.", call. = FALSE)
+  }
+  if (any(dat$score < 0 | dat$score > 10)) {
+    stop("Day-90 BPI contains a score outside 0-10.", call. = FALSE)
+  }
+
+  model_priors <- c(
+    brms::prior_string(sprintf("normal(0, %s)", treatment_prior_sd), class = "b", coef = "trt"),
+    brms::prior_string(sprintf("normal(%s, %s)", intercept_prior_mean, intercept_prior_sd),
+                       class = "Intercept"),
+    brms::prior_string(sprintf("student_t(%s, 0, %s)", sigma_prior_df, sigma_prior_scale),
+                       class = "sigma"))
+  model_formula <- score ~ 1 + trt
+  if (!is.null(baseline_construct)) {
+    model_formula <- score ~ 1 + trt + baseline_centered
+    model_priors <- c(model_priors,
+      brms::prior_string(sprintf("normal(0, %s)", baseline_prior_sd),
+                         class = "b", coef = "baseline_centered"))
+  }
+
+  # Compilation chatter is captured, but sampler WARNINGS are not suppressed.
+  invisible(utils::capture.output(suppressMessages(
+    bpi_fit <- brms::brm(model_formula, data = dat, family = stats::gaussian(),
+                         prior = model_priors,
+                         chains = chains, iter = iter, warmup = warmup, cores = cores,
+                         seed = seed, backend = backend,
+                         control = list(adapt_delta = adapt_delta),
+                         silent = 2, refresh = 0)
+  ), type = "output"))
+
+  dd <- posterior::as_draws_df(bpi_fit)
+  draws <- as.data.frame(dd)
+  required_pars <- c("b_Intercept", "b_trt", "sigma",
+                     if (!is.null(baseline_construct)) "b_baseline_centered")
+  if (!all(required_pars %in% names(draws))) {
+    stop("Day-90 BPI model posterior extraction failed.", call. = FALSE)
+  }
+  control_mean   <- draws$b_Intercept
+  treatment_mean <- draws$b_Intercept + draws$b_trt
+  mean_difference <- draws$b_trt
+
+  # Fail-closed gate, same philosophy and thresholds as the primary workhorse.
+  gate_failures <- character(0)
+  add_gate <- function(ok, msg) if (!isTRUE(ok)) gate_failures <<- c(gate_failures, msg)
+  np <- tryCatch(brms::nuts_params(bpi_fit), error = function(e) NULL)
+  if (is.null(np)) {
+    add_gate(FALSE, "sampler diagnostics could not be extracted")
+  } else {
+    divergences <- sum(np$Value[np$Parameter == "divergent__"])
+    treedepth_hits <- sum(np$Value[np$Parameter == "treedepth__"] >= 10)
+    add_gate(divergences == 0, sprintf("divergent transitions: %s", divergences))
+    add_gate(treedepth_hits == 0, sprintf("maximum-treedepth hits: %s", treedepth_hits))
+    energy <- np[np$Parameter == "energy__", ]
+    ebfmi <- vapply(split(energy$Value, energy$Chain),
+                    function(e) { d <- diff(e); mean(d^2) / stats::var(e) }, numeric(1))
+    add_gate(all(is.finite(ebfmi)) && all(ebfmi >= 0.2),
+             paste0("E-BFMI by chain: ", paste(round(ebfmi, 3), collapse = ", ")))
+  }
+  par_summary <- tryCatch(posterior::summarise_draws(
+    posterior::subset_draws(posterior::as_draws_array(bpi_fit),
+                            variable = required_pars),
+    "rhat", "ess_bulk", "ess_tail"), error = function(e) NULL)
+  derived_summary <- tryCatch(posterior::summarise_draws(posterior::as_draws_df(data.frame(
+    .chain = dd$.chain, .iteration = dd$.iteration, .draw = dd$.draw,
+    control_mean = control_mean, treatment_mean = treatment_mean,
+    mean_difference = mean_difference)), "rhat", "ess_bulk", "ess_tail"),
+    error = function(e) NULL)
+  if (is.null(par_summary) || is.null(derived_summary)) {
+    add_gate(FALSE, "R-hat or effective-sample-size diagnostics could not be computed")
+  } else {
+    all_summ <- rbind(par_summary, derived_summary)
+    add_gate(all(is.finite(all_summ$rhat)) && max(all_summ$rhat) <= 1.01,
+             sprintf("maximum R-hat %.4f", max(all_summ$rhat)))
+    add_gate(all(is.finite(all_summ$ess_bulk)) && min(all_summ$ess_bulk) >= 400,
+             sprintf("minimum bulk effective sample size %.0f", min(all_summ$ess_bulk)))
+    add_gate(all(is.finite(all_summ$ess_tail)) && min(all_summ$ess_tail) >= 400,
+             sprintf("minimum tail effective sample size %.0f", min(all_summ$ess_tail)))
+  }
+  if (length(gate_failures) > 0) {
+    stop("Diagnostic gate failed - the fit must not produce a reported result:\n- ",
+         paste(gate_failures, collapse = "\n- "), call. = FALSE)
+  }
+
+  make_cell <- function(v) sprintf("%.2f (%.2f, %.2f)", median(v),
+                                   unname(quantile(v, 0.025)), unname(quantile(v, 0.975)))
+  n_one <- sum(dat$trt == 1); n_zero <- sum(dat$trt == 0)
+  out_tbl <- tibble(
+    " " = outcome_label,
+    "Treatment (n)" = n_one,
+    "Control (n)"   = n_zero,
+    "Treatment Mean (95% CrI)" = make_cell(treatment_mean),
+    "Control Mean (95% CrI)"   = make_cell(control_mean),
+    "Difference (95% CrI)"     = make_cell(mean_difference))
+
+  result_table <- kable(out_tbl, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+
+  if (!return_fit) return(result_table)
+
+  list(
+    result_table = result_table,
+    fit = bpi_fit,
+    person_data = dat,
+    posterior = list(control_mean = control_mean, treatment_mean = treatment_mean,
+                     mean_difference = mean_difference),
+    diagnostics = list(model_summary = par_summary, derived_summary = derived_summary,
+                       gate = "passed"),
+    settings = list(score_construct = score_construct, control_arm = control_arm,
+                    baseline_construct = baseline_construct,
+                    baseline_prior_sd = baseline_prior_sd,
+                    n_baseline_imputed = n_baseline_imputed,
+                    treatment_prior_sd = treatment_prior_sd,
+                    intercept_prior_mean = intercept_prior_mean,
+                    intercept_prior_sd = intercept_prior_sd,
+                    sigma_prior_df = sigma_prior_df, sigma_prior_scale = sigma_prior_scale,
+                    chains = chains, iter = iter, warmup = warmup, cores = cores,
+                    seed = seed, backend = backend, adapt_delta = adapt_delta,
+                    blinded = blinded,
+                    versions = list(
+                      brms = tryCatch(as.character(utils::packageVersion("brms")), error = function(e) NA_character_)),
+                    person_data_hash = tryCatch(rlang::hash(dat), error = function(e) NA_character_)))
 }
 
 

@@ -4,12 +4,16 @@
 \alias{closed_noninferiority_forest}
 \title{Summary forest of noninferiority analyses}
 \usage{
-closed_noninferiority_forest(analyses)
+closed_noninferiority_forest(analyses, show_margin = TRUE)
 }
 \arguments{
 \item{analyses}{list of entries, each a list with number (the analysis's table
 number), label (its display name), and result (its return_fit = TRUE result of
 closed_survival_analysis_bayes_poisson)}
+
+\item{show_margin}{when TRUE (the default), draws the noninferiority-margin
+reference line and shades the region beyond it; when FALSE only the
+no-difference line is drawn}
 }
 \value{
 An HTML img tag with the figure embedded as a data URI, or invisible NULL
@@ -17,12 +21,17 @@ when analyses is empty.
 }
 \description{
 Forest figure of the median and 95% credible interval of the risk-difference
-posterior for a set of noninferiority fits, read against the noninferiority margin
-and color-coded by verdict. Each entry carries a return_fit = TRUE result of
-closed_survival_analysis_bayes_poisson, so the forest is built from the same fits
-as the tables it summarizes; no additional model runs. The margin is read from the
-first entry's settings. The caption belongs to the calling report via
-VisualizationTools::figure().
+posterior for a set of noninferiority fits. Each entry carries a
+return_fit = TRUE result of closed_survival_analysis_bayes_poisson, so the
+forest is built from the same fits as the tables it summarizes; no additional
+model runs. Points are posterior medians and lines are 95% credible
+intervals; a vertical line marks no difference, and — only when show_margin
+is TRUE — a second line marks the noninferiority margin read from the first
+entry's settings. Per the 8/30 statistician direction, the margin belongs
+only to the primary-and-supportive figure (manuscript Figure 2); subgroup
+and secondary-outcome forests show the zero line alone, and no
+per-analysis noninferiority verdict is displayed. The caption belongs to
+the calling report via VisualizationTools::figure().
 }
 \examples{
 \dontrun{

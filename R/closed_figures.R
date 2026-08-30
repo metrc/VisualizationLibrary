@@ -695,16 +695,24 @@ closed_risk_difference_posterior_figure <- function(survival_result) {
 #'
 #' @description
 #' Forest figure of the median and 95% credible interval of the risk-difference
-#' posterior for a set of noninferiority fits, read against the noninferiority margin
-#' and color-coded by verdict. Each entry carries a return_fit = TRUE result of
-#' closed_survival_analysis_bayes_poisson, so the forest is built from the same fits
-#' as the tables it summarizes; no additional model runs. The margin is read from the
-#' first entry's settings. The caption belongs to the calling report via
-#' VisualizationTools::figure().
+#' posterior for a set of noninferiority fits. Each entry carries a
+#' return_fit = TRUE result of closed_survival_analysis_bayes_poisson, so the
+#' forest is built from the same fits as the tables it summarizes; no additional
+#' model runs. Points are posterior medians and lines are 95% credible
+#' intervals; a vertical line marks no difference, and — only when show_margin
+#' is TRUE — a second line marks the noninferiority margin read from the first
+#' entry's settings. Per the 8/30 statistician direction, the margin belongs
+#' only to the primary-and-supportive figure (manuscript Figure 2); subgroup
+#' and secondary-outcome forests show the zero line alone, and no
+#' per-analysis noninferiority verdict is displayed. The caption belongs to
+#' the calling report via VisualizationTools::figure().
 #'
 #' @param analyses list of entries, each a list with number (the analysis's table
 #' number), label (its display name), and result (its return_fit = TRUE result of
 #' closed_survival_analysis_bayes_poisson)
+#' @param show_margin when TRUE (the default), draws the noninferiority-margin
+#' reference line and shades the region beyond it; when FALSE only the
+#' no-difference line is drawn
 #'
 #' @return An HTML img tag with the figure embedded as a data URI, or invisible NULL
 #' when analyses is empty.
@@ -714,7 +722,7 @@ closed_risk_difference_posterior_figure <- function(survival_result) {
 #' \dontrun{
 #' closed_noninferiority_forest(list(list(number = "8.3", label = "Primary Analysis", result = survival_result)))
 #' }
-closed_noninferiority_forest <- function(analyses) {
+closed_noninferiority_forest <- function(analyses, show_margin = TRUE) {
   if (length(analyses) == 0) {
     return(invisible(NULL))
   }
@@ -723,29 +731,89 @@ closed_noninferiority_forest <- function(analyses) {
     data.frame(number = a$number, label = a$label,
                med = median(rd),
                lo  = unname(quantile(rd, 0.025)),
-               hi  = unname(quantile(rd, 0.975)),
-               verdict = ifelse(a$result$posterior$noninferior, "Yes", "No"))
+               hi  = unname(quantile(rd, 0.975)))
   }))
   margin_pct <- 100 * analyses[[1]]$result$settings$ni_margin
   fr$axis_label <- sprintf("%s   (%s)", fr$label, fr$number)
   fr$axis_label <- factor(fr$axis_label, levels = rev(fr$axis_label))
-  p_forest <- ggplot2::ggplot(fr, ggplot2::aes(x = med, y = axis_label)) +
-    ggplot2::annotate("rect", xmin = margin_pct, xmax = Inf, ymin = -Inf, ymax = Inf,
-                      fill = "#D62828", alpha = 0.08) +
+  p_forest <- ggplot2::ggplot(fr, ggplot2::aes(x = med, y = axis_label))
+  if (show_margin) {
+    p_forest <- p_forest +
+      ggplot2::annotate("rect", xmin = margin_pct, xmax = Inf, ymin = -Inf, ymax = Inf,
+                        fill = "#D62828", alpha = 0.08) +
+      ggplot2::geom_vline(xintercept = margin_pct, color = "#D62828", linewidth = 0.9)
+  }
+  p_forest <- p_forest +
     ggplot2::geom_vline(xintercept = 0, color = "#8A93A0", linewidth = 0.4) +
-    ggplot2::geom_vline(xintercept = margin_pct, color = "#D62828", linewidth = 0.9) +
-    ggplot2::geom_segment(ggplot2::aes(x = lo, xend = hi, yend = axis_label, color = verdict), linewidth = 1.1) +
-    ggplot2::geom_point(ggplot2::aes(color = verdict), size = 2.4) +
-    ggplot2::scale_color_manual(values = c(Yes = "#17365D", No = "#D62828"), name = "Noninferior") +
+    ggplot2::geom_segment(ggplot2::aes(x = lo, xend = hi, yend = axis_label),
+                          color = "#17365D", linewidth = 1.1) +
+    ggplot2::geom_point(color = "#17365D", size = 2.4) +
     ggplot2::labs(x = "Absolute risk difference, treatment minus control (percentage points)", y = NULL) +
     ggplot2::theme_minimal(base_family = "Helvetica", base_size = 12) +
     ggplot2::theme(panel.grid.minor = ggplot2::element_blank(),
-                   legend.position = "top",
+                   legend.position = "none",
                    axis.text.y = ggplot2::element_text(color = "#17365D"))
   fig_path <- tempfile(fileext = ".png")
   ggplot2::ggsave(fig_path, p_forest, width = 9.5, height = 1.4 + 0.34 * nrow(fr),
                   dpi = 150, bg = "white", limitsize = FALSE)
-  img_tag <- sprintf('<img src="data:image/png;base64,%s" style="max-width:100%%" alt="Forest plot of all noninferiority analyses"/>',
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" style="max-width:100%%" alt="Forest plot of noninferiority analyses"/>',
+                     base64enc::base64encode(fig_path))
+  file.remove(fig_path)
+  return(img_tag)
+}
+
+
+#' Forest of secondary-outcome mean differences
+#'
+#' @description
+#' Forest figure of the median and 95% credible interval of the between-group
+#' mean-difference posterior for a set of Gaussian secondary-outcome fits
+#' (manuscript Figure 3). Each entry carries a return_fit = TRUE result of
+#' closed_bpi_day90_gaussian, so the forest is built from the same fits as the
+#' tables it summarizes; no additional model runs. A single vertical line marks
+#' no difference; no noninferiority margin applies on this scale, and negative
+#' values favor the treatment arm because higher scores are worse. The caption
+#' belongs to the calling report via VisualizationTools::figure().
+#'
+#' @param analyses list of entries, each a list with number (the analysis's table
+#' number), label (its display name), and result (its return_fit = TRUE result of
+#' closed_bpi_day90_gaussian)
+#'
+#' @return An HTML img tag with the figure embedded as a data URI, or invisible NULL
+#' when analyses is empty.
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' closed_mean_difference_forest(list(list(number = "9.1a", label = "BPI Pain Intensity, Day 90", result = bpi_result)))
+#' }
+closed_mean_difference_forest <- function(analyses) {
+  if (length(analyses) == 0) {
+    return(invisible(NULL))
+  }
+  fr <- do.call(rbind, lapply(analyses, function(a) {
+    md <- a$result$posterior$mean_difference
+    data.frame(number = a$number, label = a$label,
+               med = median(md),
+               lo  = unname(quantile(md, 0.025)),
+               hi  = unname(quantile(md, 0.975)))
+  }))
+  fr$axis_label <- sprintf("%s   (%s)", fr$label, fr$number)
+  fr$axis_label <- factor(fr$axis_label, levels = rev(fr$axis_label))
+  p_forest <- ggplot2::ggplot(fr, ggplot2::aes(x = med, y = axis_label)) +
+    ggplot2::geom_vline(xintercept = 0, color = "#8A93A0", linewidth = 0.4) +
+    ggplot2::geom_segment(ggplot2::aes(x = lo, xend = hi, yend = axis_label),
+                          color = "#17365D", linewidth = 1.1) +
+    ggplot2::geom_point(color = "#17365D", size = 2.4) +
+    ggplot2::labs(x = "Mean difference, treatment minus control (scale points)", y = NULL) +
+    ggplot2::theme_minimal(base_family = "Helvetica", base_size = 12) +
+    ggplot2::theme(panel.grid.minor = ggplot2::element_blank(),
+                   legend.position = "none",
+                   axis.text.y = ggplot2::element_text(color = "#17365D"))
+  fig_path <- tempfile(fileext = ".png")
+  ggplot2::ggsave(fig_path, p_forest, width = 9.5, height = 1.4 + 0.5 * nrow(fr),
+                  dpi = 150, bg = "white", limitsize = FALSE)
+  img_tag <- sprintf('<img src="data:image/png;base64,%s" style="max-width:100%%" alt="Forest plot of secondary-outcome mean differences"/>',
                      base64enc::base64encode(fig_path))
   file.remove(fig_path)
   return(img_tag)

@@ -27,6 +27,7 @@ closed_survival_analysis_bayes_poisson(
   adapt_delta = 0.95,
   backend = "cmdstanr",
   blinded = FALSE,
+  show_ni_decision = TRUE,
   return_fit = FALSE
 )
 }
@@ -77,6 +78,13 @@ These should be selected and locked before unmasking (defaults to quarterly inte
 \item{blinded}{when TRUE, ignores the real treatment_arm and deterministically reassigns
 arms from the digit sum of study_id (even = "Group A", odd = "Group B") so the table can be
 produced without unmasking (defaults to FALSE)}
+
+\item{show_ni_decision}{when TRUE (the default), the result table carries the
+Noninferior Yes/No verdict column. Set FALSE for supportive, sensitivity,
+and subgroup tables: the noninferiority decision applies only to the
+primary analysis, so those tables keep Pr(Difference < margin) but drop
+the verdict cell. Display-only: the model, the diagnostic gate, and the
+returned posterior (including \code{noninferior}) are unchanged.}
 
 \item{return_fit}{when TRUE, return a list carrying the fitted brms object, the
 person- and interval-level data the model saw, the transformed posterior draws,
