@@ -5881,8 +5881,14 @@ closed_ni_fit_preflight <- function(analytic, entry_col = "primary_entry_day", o
 #' @param boundary_drop_min,boundary_mass_max the statistician-confirmed
 #' boundary-check thresholds
 #' @param blinded when TRUE, refits on the study_id digit-sum dummy arm
+#' @param return_fit when TRUE, returns the audit record alongside the table:
+#' the exact person-level data, the full grid posterior, the boundary
+#' diagnostics, and all settings including the package version and
+#' input-data hash (the frozen-stack requirement of the unblinding memo).
+#' Defaults to FALSE, returning only the HTML table.
 #'
-#' @return An HTML table (hazard ratio and per-arm events / n).
+#' @return An HTML table (hazard ratio and per-arm events / n), or the audit
+#' record list when return_fit = TRUE (the table as \code{result_table}).
 #' @export
 #'
 #' @examples
@@ -5894,7 +5900,7 @@ closed_bayes_cox_supportive <- function(analytic, type_construct, days_construct
                                         control_arm = "Group A", treatment_prior_sd = 1,
                                         grid_range = 12, grid_step = 0.001,
                                         boundary_drop_min = 30, boundary_mass_max = 1e-8,
-                                        blinded = FALSE) {
+                                        blinded = FALSE, return_fit = FALSE) {
 
   # Mirrors the blinding in closed_survival_analysis_bayes_poisson so the supportive
   # model runs on the same dummy arm as the tables above.
@@ -5971,8 +5977,29 @@ closed_bayes_cox_supportive <- function(analytic, type_construct, days_construct
     "Hazard Ratio (95% CrI)" = sprintf("%.2f (%.2f, %.2f)",
                                        hr["median"], hr["lower"], hr["upper"]))
 
-  kable(out_tbl, format = "html", align = "l") %>%
+  result_table <- kable(out_tbl, format = "html", align = "l") %>%
     kable_styling("striped", full_width = FALSE, position = "left")
+
+  if (!return_fit) return(result_table)
+
+  # Audit record for the frozen-stack requirement of the unblinding memo:
+  # deterministic estimator, so the grid posterior itself plus the input-data
+  # hash and code version fully reproduce the result.
+  list(
+    result_table = result_table,
+    person_data = dat,
+    posterior = list(hazard_ratio = hr, grid = beta, weights = weights),
+    diagnostics = list(boundary_drop = boundary_drop, boundary_mass = boundary_mass,
+                       gate = "passed"),
+    settings = list(type_construct = type_construct, days_construct = days_construct,
+                    outcome_length = outcome_length, entry_construct = entry_construct,
+                    control_arm = control_arm, treatment_prior_sd = treatment_prior_sd,
+                    grid_range = grid_range, grid_step = grid_step,
+                    boundary_drop_min = boundary_drop_min, boundary_mass_max = boundary_mass_max,
+                    blinded = blinded,
+                    versions = list(
+                      VisualizationLibrary = tryCatch(as.character(utils::packageVersion("VisualizationLibrary")), error = function(e) NA_character_)),
+                    person_data_hash = tryCatch(rlang::hash(dat), error = function(e) NA_character_)))
 }
 
 

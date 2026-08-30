@@ -16,7 +16,8 @@ closed_bayes_cox_supportive(
   grid_step = 0.001,
   boundary_drop_min = 30,
   boundary_mass_max = 1e-08,
-  blinded = FALSE
+  blinded = FALSE,
+  return_fit = FALSE
 )
 }
 \arguments{
@@ -42,9 +43,16 @@ grid_range in steps of grid_step}
 boundary-check thresholds}
 
 \item{blinded}{when TRUE, refits on the study_id digit-sum dummy arm}
+
+\item{return_fit}{when TRUE, returns the audit record alongside the table:
+the exact person-level data, the full grid posterior, the boundary
+diagnostics, and all settings including the package version and
+input-data hash (the frozen-stack requirement of the unblinding memo).
+Defaults to FALSE, returning only the HTML table.}
 }
 \value{
-An HTML table (hazard ratio and per-arm events / n).
+An HTML table (hazard ratio and per-arm events / n), or the audit
+record list when return_fit = TRUE (the table as \code{result_table}).
 }
 \description{
 The SAP's supportive hazard ratio, computed with the study statistician's
