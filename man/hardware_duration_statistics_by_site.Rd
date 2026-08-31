@@ -22,3 +22,8 @@ by site.
 
 Candidate for general visualization which interprets numeric constructs into buckets
 }
+\examples{
+\dontrun{
+hardware_duration_statistics_by_site("Replace with Analytic Tibble")
+}
+}

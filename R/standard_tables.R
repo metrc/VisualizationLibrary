@@ -6347,7 +6347,9 @@ hardware_duration_statistics <- function(analytic, delta = FALSE){
 #' @export
 #'
 #' @examples
-#' 
+#' \dontrun{
+#' hardware_duration_statistics_by_site("Replace with Analytic Tibble")
+#' }
 hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
   if (delta) {
     df1 <- analytic %>%  
