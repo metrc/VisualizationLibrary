@@ -784,8 +784,17 @@ closed_baseline_characteristics_percent_plus <- function(analytic, sex="sex", ra
     df_final
   }
 
-  df_a <- analytic %>% filter(treatment_arm=="Group A")
-  df_b <- analytic %>% filter(treatment_arm=="Group B")
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # rendering a table of zeros.
+  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
+
+  df_a <- analytic %>% filter(treatment_arm == arms[1])
+  df_b <- analytic %>% filter(treatment_arm == arms[2])
 
   output_a <- inner_baseline_characteristics_percent_plus(df_a) %>% mutate(percentage = replace_na(percentage, "NA"))
   output_b <- inner_baseline_characteristics_percent_plus(df_b) %>% mutate(percentage = replace_na(percentage, "NA"))
@@ -799,7 +808,7 @@ closed_baseline_characteristics_percent_plus <- function(analytic, sex="sex", ra
     arrange(o) %>%
     select(-o)
 
-  colnames(full_output) <- c(" ", paste0("Group A (n=",nrow(df_a %>% filter(enrolled)),")"), paste0("Group B (n=",nrow(df_b %>% filter(enrolled)),")"), paste0("Total (n=",nrow(df_a %>% filter(enrolled))+nrow(df_b %>% filter(enrolled)),")"))
+  colnames(full_output) <- c(" ", paste0(arms[1], " (n=",nrow(df_a %>% filter(enrolled)),")"), paste0(arms[2], " (n=",nrow(df_b %>% filter(enrolled)),")"), paste0("Total (n=",nrow(df_a %>% filter(enrolled))+nrow(df_b %>% filter(enrolled)),")"))
 
   vis <- kable(full_output, format="html", align='l') %>%
     pack_rows(index = c('Sex' = nrow(sex_df), 'Age' = (nrow(age_df) + nrow(age_group_df)), 'Race/Ethnicity' = nrow(race_df),
@@ -850,11 +859,20 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
   
   df_full <- analytic
   
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # rendering a table of zeros.
+  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
+
   df_a <- analytic  %>%
-    filter(treatment_arm=="Group A")
+    filter(treatment_arm == arms[1])
   
   df_b <- analytic %>% 
-    filter(treatment_arm=="Group B")
+    filter(treatment_arm == arms[2])
   
 
   inner_closed_not_complete_sae_deviation_by_type <- function(inner_analytic, group){
@@ -1022,8 +1040,8 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
     df_final
   }
   
-  table_a <- inner_closed_not_complete_sae_deviation_by_type(df_a, 'Group A') %>% rename(n_a = n)
-  table_b <- inner_closed_not_complete_sae_deviation_by_type(df_b, 'Group B') %>% rename(n_b = n)
+  table_a <- inner_closed_not_complete_sae_deviation_by_type(df_a, arms[1]) %>% rename(n_a = n)
+  table_b <- inner_closed_not_complete_sae_deviation_by_type(df_b, arms[2]) %>% rename(n_b = n)
   table_full <- inner_closed_not_complete_sae_deviation_by_type(df_full, 'Total') %>% rename(n_total = n)
   table_full <- table_full %>% 
     mutate(o = seq(nrow(table_full)))
@@ -1085,8 +1103,8 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
   vis <- knitr::kable(df_final %>% select(type, n_a, n_b, n_total),
                       format = "html", align = 'l',
                       col.names = c(' ',
-                                    paste0("Group A (n=", nrow(df_a %>% filter(enrolled)), ", enrolled)"), 
-                                    paste0("Group B (n=", nrow(df_b %>% filter(enrolled)), ", enrolled)"), 
+                                    paste0(arms[1], " (n=", nrow(df_a %>% filter(enrolled)), ", enrolled)"),
+                                    paste0(arms[2], " (n=", nrow(df_b %>% filter(enrolled)), ", enrolled)"),
                                     paste0("Total (n=",  nrow(df_full %>% filter(enrolled)), ", enrolled)")),
                       escape = FALSE) %>%
     kableExtra::add_indent(indent_idx) %>%
@@ -2581,15 +2599,24 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
     mutate(status = as.character(status)) %>% 
     mutate(across(where(is.character), ~ na_if(.x, "NA")))
   
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # rendering a table of zeros.
+  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
+
   df_a <- pull %>%
-    filter(treatment_arm=='Group A')
+    filter(treatment_arm == arms[1])
   df_b <- pull %>%
-    filter(treatment_arm=='Group B')
+    filter(treatment_arm == arms[2])
   
   fu_levels <- pull$followup_period %>% unique()
   fu_levels <- fu_levels[!is.na(fu_levels)]
 
-  split_arm <- list('Group A' = c(), 'Group B' = c())
+  split_arm <- setNames(list(c(), c()), arms)
   
   arm_statuses <- function(df) {
     result_list <- list()
@@ -2682,7 +2709,7 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
   
   vis <- kable(combined_statuses, format = "html", align = 'l') %>%
     add_indent(c(4, 5)) %>%
-    add_header_above(c(' ', 'Group A' = length(a_cols)-1, 'Group B' = length(b_cols)-1)) %>%
+    add_header_above(setNames(c(1, length(a_cols)-1, length(b_cols)-1), c(' ', arms[1], arms[2]))) %>%
     kable_styling("striped", full_width = F, position = 'left')
   
   if (!is.null(pretty_cols)) {
@@ -3533,6 +3560,15 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
   confirm_stability_of_related_visual('generic_characteristics', '10b0d14ace6fca7a516ef7657e90fcc9')
   
   out <- NULL
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # rendering a table of zeros.
+  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
+
   index_vec <- c()
   sub_index_vec <- c()
   sub_bold_index_vec <- c()
@@ -3589,15 +3625,15 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       }
     }
     total <- nrow(inner_analytic)
-    a_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group A"))
-    b_total <- nrow(inner_analytic %>% filter(treatment_arm=="Group B"))
+    a_total <- nrow(inner_analytic %>% filter(treatment_arm == arms[1]))
+    b_total <- nrow(inner_analytic %>% filter(treatment_arm == arms[2]))
     
     if (construct %in% mean_sd) {
       vec_all <- suppressWarnings(as.numeric(inner_analytic[[construct]]))
-      vec_a <- suppressWarnings(as.numeric(inner_analytic %>% filter(treatment_arm == "Group A") %>% pull(!!sym(construct))))
-      vec_b <- suppressWarnings(as.numeric(inner_analytic %>% filter(treatment_arm == "Group B") %>% pull(!!sym(construct))))
+      vec_a <- suppressWarnings(as.numeric(inner_analytic %>% filter(treatment_arm == arms[1]) %>% pull(!!sym(construct))))
+      vec_b <- suppressWarnings(as.numeric(inner_analytic %>% filter(treatment_arm == arms[2]) %>% pull(!!sym(construct))))
       
-      inner <- tibble::tibble(temp = "Mean [SD]", header = name_str, `Group A` = format_mean_sd(vec_a), `Group B` = format_mean_sd(vec_b), Total = format_mean_sd(vec_all))
+      inner <- tibble::tibble(temp = "Mean [SD]", header = name_str, !!arms[1] := format_mean_sd(vec_a), !!arms[2] := format_mean_sd(vec_b), Total = format_mean_sd(vec_all))
       
       if (is.na(name_str) || name_str == "") {
         if (length(index_vec) > 0) {
@@ -3606,7 +3642,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           new <- 1; names(new) <- " "; index_vec <- c(index_vec, new); has_border <- c(has_border, FALSE)
         }
       } else {
-        new <- 1; names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')'); index_vec <- c(index_vec, new); has_border <- c(has_border, FALSE)
+        new <- 1; names(new) <- paste0(name_str, ' (', arms[1], '=',a_total,', ', arms[2], '=',b_total,', n=', total, ')'); index_vec <- c(index_vec, new); has_border <- c(has_border, FALSE)
       }
       
       if (is.null(out)) out <- inner else out <- rbind(out, inner)
@@ -3673,18 +3709,18 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           mutate(temp = as.character(temp))
         
         category_tot <- sum(category_df_all$n)
-        category_tot_a <- sum(category_df %>% filter(treatment_arm=="Group A") %>% pull(n))
-        category_tot_b <- sum(category_df %>% filter(treatment_arm=="Group B") %>% pull(n))
+        category_tot_a <- sum(category_df %>% filter(treatment_arm == arms[1]) %>% pull(n))
+        category_tot_b <- sum(category_df %>% filter(treatment_arm == arms[2]) %>% pull(n))
         tot_df <- tibble(temp=sub_cat, header=name_str,
-                         "Group A"=format_count_percent(category_tot_a, a_total),
-                         "Group B"=format_count_percent(category_tot_b, b_total),
+                         !!arms[1] := format_count_percent(category_tot_a, a_total),
+                         !!arms[2] := format_count_percent(category_tot_b, b_total),
                          Total=format_count_percent(category_tot, total))
         
         category_df <- category_df    %>% 
           mutate(percentage = 
-                   ifelse(treatment_arm == 'Group A', 
+                   ifelse(treatment_arm == arms[1], 
                           format_count_percent(n,  category_tot_a),
-                          ifelse(treatment_arm == 'Group B', format_count_percent(n,  category_tot_b), NA)
+                          ifelse(treatment_arm == arms[2], format_count_percent(n,  category_tot_b), NA)
                    )
           ) %>% 
           select(-n) %>%
@@ -3697,17 +3733,17 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         
         category_df <- full_join(category_df_all %>% select(-n), category_df)
         
-        if(!"Group A" %in% colnames(category_df)){
+        if(!arms[1] %in% colnames(category_df)){
           category_df <- category_df %>% 
-            mutate("Group A" = "0 (0%)")
+            mutate(!!arms[1] := "0 (0%)")
         }
-        if(!"Group B" %in% colnames(category_df)){
+        if(!arms[2] %in% colnames(category_df)){
           category_df <- category_df %>% 
-            mutate("Group B" = "0 (0%)")
+            mutate(!!arms[2] := "0 (0%)")
         }
         
         category_df <- category_df %>%
-          select(temp, header, `Group A`, `Group B`, Total)
+          select(temp, header, all_of(arms), Total)
         
         if (titlecase) {
           category_df <- category_df %>%
@@ -3725,7 +3761,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         new_row_count <- new_row_count + nrow(category_df) + 1
       }
       new <- new_row_count
-      names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')')
+      names(new) <- paste0(name_str, ' (', arms[1], '=',a_total,', ', arms[2], '=',b_total,', n=', total, ')')
       index_vec <- c(index_vec, new)
       has_border <- c(has_border, TRUE)
     } else{
@@ -3733,8 +3769,8 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         group_by(temp, treatment_arm) %>% 
         count(temp) %>% 
         mutate(percentage = case_when(
-          treatment_arm=='Group A' ~ format_count_percent(n, a_total),
-          treatment_arm=='Group B' ~ format_count_percent(n, b_total),
+          treatment_arm == arms[1] ~ format_count_percent(n, a_total),
+          treatment_arm == arms[2] ~ format_count_percent(n, b_total),
           TRUE ~ NA_character_)) %>% 
         select(-n) %>%
         mutate(header = name_str) %>%
@@ -3743,7 +3779,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           values_from = percentage,
           values_fill = "0 (0%)"
         )%>%
-        select(temp, header, `Group A`, `Group B`)
+        select(temp, header, all_of(arms))
       
       inner_all <- inner %>% 
         group_by(temp) %>% 
@@ -3756,7 +3792,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         mutate(temp = as.character(temp))
       
       inner <- full_join(inner_all, inner_some)%>%
-        select(temp, header, `Group A`, `Group B`, Total)
+        select(temp, header, all_of(arms), Total)
       
       
       if (titlecase) {
@@ -3765,7 +3801,7 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       }
       
       new <- nrow(inner)
-      names(new) <- paste0(name_str, ' (Group A=',a_total,', Group B=',b_total,', n=', total, ')')
+      names(new) <- paste0(name_str, ' (', arms[1], '=',a_total,', ', arms[2], '=',b_total,', n=', total, ')')
       index_vec <- c(index_vec, new)
       has_border <- c(has_border, TRUE)
       
@@ -3783,13 +3819,13 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
   border_rows <- all_group_starts[has_border]
   
   if(is_empty(sub_bold_index_vec)){
-    vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
+    vis <- kable(out, format="html", align='l', col.names = c(" ", arms[1], arms[2], "Total")) %>%
       add_indent(c(seq(nrow(out)))) %>% 
       { if(length(border_rows) > 0) row_spec(., border_rows, extra_css = "border-top: 1px solid") else . } %>%  
       pack_rows(index = index_vec, label_row_css = "text-align:left", escape = FALSE) %>% 
       kable_styling("striped", full_width = F, position="left")
   }else{
-    vis <- kable(out, format="html", align='l', col.names = c(" ", "Group A", "Group B", "Total")) %>%
+    vis <- kable(out, format="html", align='l', col.names = c(" ", arms[1], arms[2], "Total")) %>%
       add_indent(c(seq(nrow(out)))) %>% 
       add_indent(sub_index_vec) %>% 
       row_spec(sub_bold_index_vec, bold = TRUE) %>% 
@@ -4797,13 +4833,22 @@ closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, br
         TRUE ~ complication))
   }
   
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # rendering a table of zeros.
+  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
+
   if (relatedness) {
     table_data <- clean_df %>%
       group_by(complication, relatedness_val, severity_val) %>%
-      summarise(N_A = sum(treatment_arm == "Group A", na.rm = TRUE),
-                PTs_A = n_distinct(study_id[treatment_arm == "Group A"]),
-                N_B = sum(treatment_arm == "Group B", na.rm = TRUE),
-                PTs_B = n_distinct(study_id[treatment_arm == "Group B"]),
+      summarise(N_A = sum(treatment_arm == arms[1], na.rm = TRUE),
+                PTs_A = n_distinct(study_id[treatment_arm == arms[1]]),
+                N_B = sum(treatment_arm == arms[2], na.rm = TRUE),
+                PTs_B = n_distinct(study_id[treatment_arm == arms[2]]),
                 .groups = 'drop') %>%
       arrange(complication == "Other",
               complication,
@@ -4813,10 +4858,10 @@ closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, br
   } else {
     table_data <- clean_df %>%
       group_by(complication, severity_val) %>%
-      summarise( N_A = sum(treatment_arm == "Group A", na.rm = TRUE),
-                 PTs_A = n_distinct(study_id[treatment_arm == "Group A"]),
-                 N_B = sum(treatment_arm == "Group B", na.rm = TRUE),
-                 PTs_B = n_distinct(study_id[treatment_arm == "Group B"]),
+      summarise( N_A = sum(treatment_arm == arms[1], na.rm = TRUE),
+                 PTs_A = n_distinct(study_id[treatment_arm == arms[1]]),
+                 N_B = sum(treatment_arm == arms[2], na.rm = TRUE),
+                 PTs_B = n_distinct(study_id[treatment_arm == arms[2]]),
                  .groups = 'drop') %>%
       arrange(complication == "Other",
               complication, 
@@ -4825,8 +4870,8 @@ closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, br
   
   final_table <- table_data %>%
     mutate(
-      `Group A (N[PTs])` = sprintf("%d[%d]", N_A, PTs_A),
-      `Group B (N[PTs])` = sprintf("%d[%d]", N_B, PTs_B)
+      !!paste0(arms[1], " (N[PTs])") := sprintf("%d[%d]", N_A, PTs_A),
+      !!paste0(arms[2], " (N[PTs])") := sprintf("%d[%d]", N_B, PTs_B)
     ) %>%
     select(-N_A, -PTs_A, -N_B, -PTs_B) %>%
     rename(`Complication` = complication,
@@ -5503,8 +5548,17 @@ closed_persistent_pain <- function(analytic, include_severe = TRUE){
            bpi_interference_score_3mo, bpi_interference_score_6mo, bpi_interference_score_12mo) %>%
     filter(enrolled)
 
-  df_a <- df %>% filter(treatment_arm == 'Group A')
-  df_b <- df %>% filter(treatment_arm == 'Group B')
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # rendering a table of zeros.
+  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
+
+  df_a <- df %>% filter(treatment_arm == arms[1])
+  df_b <- df %>% filter(treatment_arm == arms[2])
 
   inner_data_extractor <- function(prefix, inner_df) {
     recode_map <- setNames(c("3 Months", "6 Months", "12 Months"),
@@ -5555,13 +5609,13 @@ closed_persistent_pain <- function(analytic, include_severe = TRUE){
 
   colnames(final) <- if (include_severe) {
     c('',
-      'n (Group A)', 'Score, Mean (SD) (Group A)', 'Severe (7-10), n (%) (Group A)',
-      'n (Group B)', 'Score, Mean (SD) (Group B)', 'Severe (7-10), n (%) (Group B)',
+      paste0('n (', arms[1], ')'), paste0('Score, Mean (SD) (', arms[1], ')'), paste0('Severe (7-10), n (%) (', arms[1], ')'),
+      paste0('n (', arms[2], ')'), paste0('Score, Mean (SD) (', arms[2], ')'), paste0('Severe (7-10), n (%) (', arms[2], ')'),
       'n ', 'Score, Mean (SD)', 'Severe (7-10), n (%)')
   } else {
     c('',
-      'n (Group A)', 'Score, Mean (SD) (Group A)',
-      'n (Group B)', 'Score, Mean (SD) (Group B)',
+      paste0('n (', arms[1], ')'), paste0('Score, Mean (SD) (', arms[1], ')'),
+      paste0('n (', arms[2], ')'), paste0('Score, Mean (SD) (', arms[2], ')'),
       'n ', 'Score, Mean (SD)')
   }
 
@@ -5609,8 +5663,17 @@ closed_opioid_days <- function(analytic){
            opioid_days_6mo, opioid_days_12mo) %>%
     filter(enrolled)
 
-  df_a <- df %>% filter(treatment_arm == 'Group A')
-  df_b <- df %>% filter(treatment_arm == 'Group B')
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # rendering a table of zeros.
+  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
+
+  df_a <- df %>% filter(treatment_arm == arms[1])
+  df_b <- df %>% filter(treatment_arm == arms[2])
 
   inner_data_extractor <- function(inner_df) {
     recode_map <- setNames(c("Baseline", "3 Months", "6 Months", "12 Months"),
@@ -5642,8 +5705,8 @@ closed_opioid_days <- function(analytic){
   final <- cbind(days_a, days_b, days_tot)
 
   colnames(final) <- c('',
-                       'n (Group A)', 'Opioid Days, Mean (SD) (Group A)',
-                       'n (Group B)', 'Opioid Days, Mean (SD) (Group B)',
+                       paste0('n (', arms[1], ')'), paste0('Opioid Days, Mean (SD) (', arms[1], ')'),
+                       paste0('n (', arms[2], ')'), paste0('Opioid Days, Mean (SD) (', arms[2], ')'),
                        'n ', 'Opioid Days, Mean (SD)')
 
   index_vec_a <- c("Days of Reported Opioid Use" = nrow(final))
@@ -5721,11 +5784,20 @@ closed_reported_side_effects <- function(analytic, max_days = 90, include_deaths
     counts
   }
 
-  final <- arm_counts(analytic %>% filter(treatment_arm == 'Group A')) %>%
-    left_join(arm_counts(analytic %>% filter(treatment_arm == 'Group B')), by = 'Category') %>%
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # rendering a table of zeros.
+  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
+
+  final <- arm_counts(analytic %>% filter(treatment_arm == arms[1])) %>%
+    left_join(arm_counts(analytic %>% filter(treatment_arm == arms[2])), by = 'Category') %>%
     left_join(arm_counts(analytic), by = 'Category')
 
-  colnames(final) <- c('', 'N (%) (Group A)', 'N (%) (Group B)', 'N (%)')
+  colnames(final) <- c('', paste0('N (%) (', arms[1], ')'), paste0('N (%) (', arms[2], ')'), 'N (%)')
 
   if (is.null(group_label)) {
     group_label <- if (is.null(max_days)) "Reported Side Effects and Adverse Events, Whole Study"
@@ -5908,6 +5980,18 @@ closed_bayes_cox_supportive <- function(analytic, type_construct, days_construct
     digit_sum <- sapply(strsplit(gsub("[^0-9]", "", as.character(analytic$study_id)), ""),
                         function(d) sum(as.integer(d)))
     analytic <- analytic %>% mutate(treatment_arm = ifelse(digit_sum %% 2 == 0, "Group A", "Group B"))
+  }
+
+  # Arm-label validation, replicated from closed_survival_analysis_bayes_poisson:
+  # a mislabeled control_arm otherwise classifies every participant as treated.
+  arm_levels <- unique(stats::na.omit(analytic$treatment_arm[analytic$enrolled %in% TRUE]))
+  if (!control_arm %in% arm_levels) {
+    stop(sprintf("control_arm \"%s\" does not appear in treatment_arm (levels found: %s)",
+                 control_arm, paste(arm_levels, collapse = ", ")))
+  }
+  if (length(arm_levels) != 2) {
+    stop(sprintf("expected exactly two treatment arms, found %d (%s)",
+                 length(arm_levels), paste(arm_levels, collapse = ", ")))
   }
 
   dat <- analytic %>%
@@ -6138,6 +6222,18 @@ closed_nsaid_covariate_balance <- function(analytic, control_arm = "Group A", bl
     analytic <- analytic %>% mutate(treatment_arm = ifelse(digit_sum %% 2 == 0, "Group A", "Group B"))
   }
 
+  # Arm-label validation, replicated from closed_survival_analysis_bayes_poisson:
+  # a mislabeled control_arm otherwise classifies every participant as treated.
+  arm_levels <- unique(stats::na.omit(analytic$treatment_arm[analytic$enrolled %in% TRUE]))
+  if (!control_arm %in% arm_levels) {
+    stop(sprintf("control_arm \"%s\" does not appear in treatment_arm (levels found: %s)",
+                 control_arm, paste(arm_levels, collapse = ", ")))
+  }
+  if (length(arm_levels) != 2) {
+    stop(sprintf("expected exactly two treatment arms, found %d (%s)",
+                 length(arm_levels), paste(arm_levels, collapse = ", ")))
+  }
+
   base <- analytic %>%
     filter(enrolled) %>%
     mutate(smd_arm = as.integer(treatment_arm != control_arm),
@@ -6253,6 +6349,18 @@ closed_bpi_day90_gaussian <- function(analytic, score_construct, outcome_label,
     digit_sum <- sapply(strsplit(gsub("[^0-9]", "", as.character(analytic$study_id)), ""),
                         function(d) sum(as.integer(d)))
     analytic <- analytic %>% mutate(treatment_arm = ifelse(digit_sum %% 2 == 0, "Group A", "Group B"))
+  }
+
+  # Arm-label validation, replicated from closed_survival_analysis_bayes_poisson:
+  # a mislabeled control_arm otherwise classifies every participant as treated.
+  arm_levels <- unique(stats::na.omit(analytic$treatment_arm[analytic$enrolled %in% TRUE]))
+  if (!control_arm %in% arm_levels) {
+    stop(sprintf("control_arm \"%s\" does not appear in treatment_arm (levels found: %s)",
+                 control_arm, paste(arm_levels, collapse = ", ")))
+  }
+  if (length(arm_levels) != 2) {
+    stop(sprintf("expected exactly two treatment arms, found %d (%s)",
+                 length(arm_levels), paste(arm_levels, collapse = ", ")))
   }
 
   dat <- analytic %>%
@@ -6724,6 +6832,15 @@ closed_ni_tipping_ids <- function(analytic, p_control, p_treatment, seed,
     pool <- pool %>% mutate(selection_arm = ifelse(digit_sum %% 2 == 0, "Group A", "Group B"))
   } else {
     pool <- pool %>% mutate(selection_arm = treatment_arm)
+  }
+
+  # Arm-label validation: a control_arm absent from the selection labels would
+  # silently classify the whole pool as the treatment arm.
+  selection_levels <- if (blinded) c("Group A", "Group B") else
+    unique(stats::na.omit(analytic$treatment_arm))
+  if (!control_arm %in% selection_levels) {
+    stop(sprintf("control_arm \"%s\" does not appear among the selection arm labels (%s)",
+                 control_arm, paste(selection_levels, collapse = ", ")))
   }
 
   set.seed(seed)

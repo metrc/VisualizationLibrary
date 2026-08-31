@@ -4,12 +4,7 @@
 \alias{closed_consort_diagram_nsaid_publication}
 \title{NSAID Consort Diagram: publication}
 \usage{
-closed_consort_diagram_nsaid_publication(
-  analytic,
-  outcome_day = 365,
-  arm_a_str = "Group A",
-  arm_b_str = "Group B"
-)
+closed_consort_diagram_nsaid_publication(analytic, outcome_day = 365)
 }
 \arguments{
 \item{analytic}{analytic data set that must include
@@ -21,10 +16,6 @@ adjudicated_physician_withdrawn, df_surg_start_date, surgery_or_healed_type, sur
 crossover, treatment_arm}
 
 \item{outcome_day}{day at which the primary outcome status is assessed, defaults to 365}
-
-\item{arm_a_str}{label for the Group A treatment arm, defaults to "Group A"}
-
-\item{arm_b_str}{label for the Group B treatment arm, defaults to "Group B"}
 }
 \value{
 An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.

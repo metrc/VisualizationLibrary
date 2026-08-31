@@ -271,8 +271,6 @@ closed_consort_diagram_wb_publication <- function(analytic){
 #' adjudicated_physician_withdrawn, df_surg_start_date, surgery_or_healed_type, surgery_or_healed_days,
 #' crossover, treatment_arm
 #' @param outcome_day day at which the primary outcome status is assessed, defaults to 365
-#' @param arm_a_str label for the Group A treatment arm, defaults to "Group A"
-#' @param arm_b_str label for the Group B treatment arm, defaults to "Group B"
 #'
 #' @return An HTML string containing an image tag with the base64-encoded consort diagram in PNG format.
 #' @export
@@ -280,7 +278,7 @@ closed_consort_diagram_wb_publication <- function(analytic){
 #' @examples
 #' closed_consort_diagram_nsaid_publication("Replace with Analytic Tibble")
 #'
-closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, arm_a_str="Group A", arm_b_str="Group B"){
+closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365){
 
   confirm_stability_of_related_visual('consort_diagram_nsaid_publication', '3015ae6abfb00e915281b11b16abc1a6')
 
@@ -473,8 +471,17 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
     )
   }
 
-  a <- arm_counts(rand_df %>% filter(treatment_arm == 'Group A'))
-  b <- arm_counts(rand_df %>% filter(treatment_arm == 'Group B'))
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # drawing a diagram of zeros.
+  arms <- sort(unique(stats::na.omit(rand_df$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
+
+  a <- arm_counts(rand_df %>% filter(treatment_arm == arms[1]))
+  b <- arm_counts(rand_df %>% filter(treatment_arm == arms[2]))
 
   show_no_df <- (a$no_definitive_fixation + b$no_definitive_fixation) > 0
 
@@ -601,8 +608,8 @@ closed_consort_diagram_nsaid_publication <- function(analytic, outcome_day=365, 
       title2 [style="rounded,filled", fillcolor="#DDE9F5", color="#2E5F8A", penwidth=1.5, pos="2,0.4!", shape = box, width=2.4, height=.5,
         label = "', randomized, ' Underwent randomization"];
     ',
-    arm_column(a, arm_a_str, '-0.85', '_a'),
-    arm_column(b, arm_b_str, '4.85', '_b'),
+    arm_column(a, arms[1], '-0.85', '_a'),
+    arm_column(b, arms[2], '4.85', '_b'),
     '
       midpoint [style=invis, pos="2,3.8!", width=0, height=0, fixedsize=true]
 
