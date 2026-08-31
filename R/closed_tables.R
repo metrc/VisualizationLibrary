@@ -6843,6 +6843,11 @@ closed_ni_tipping_ids <- function(analytic, p_control, p_treatment, seed,
                  control_arm, paste(selection_levels, collapse = ", ")))
   }
 
+  # The seed is used locally and the caller's RNG state is restored on exit:
+  # a library function must not reposition the global RNG as a side effect.
+  old_seed <- if (exists(".Random.seed", envir = .GlobalEnv)) get(".Random.seed", envir = .GlobalEnv) else NULL
+  on.exit(if (!is.null(old_seed)) assign(".Random.seed", old_seed, envir = .GlobalEnv) else
+    suppressWarnings(rm(".Random.seed", envir = .GlobalEnv)), add = TRUE)
   set.seed(seed)
   pool <- pool %>% mutate(random_rank = stats::runif(dplyr::n()))
 
