@@ -4,18 +4,33 @@
 \alias{participants_w_complications}
 \title{Participants with complications}
 \usage{
-participants_w_complications(analytic)
+participants_w_complications(
+  analytic,
+  categories = complication_categories(),
+  count_construct = "complication_count",
+  exposure_construct = "last_followup_days"
+)
 }
 \arguments{
-\item{analytic}{analytic data set that must include study_id, complication_data}
+\item{analytic}{analytic data set that must include study_id, enrolled, complication_data,
+sae_data, followup_data and the count and exposure constructs}
+
+\item{categories}{mapping from complication_categories()}
+
+\item{count_construct}{verified total event count per participant}
+
+\item{exposure_construct}{verified person-days of follow-up per participant}
 }
 \value{
-html table
+An HTML table.
 }
 \description{
-Returns statistics of the presence of one or more complication across the participants of the study.
-Notably, this is numerically different from counting across complications themselves, as one participant
-can have multiple complications
+Participants with one or more events in each safety category from
+complication_categories(): category, participants with events, denominator with known
+ascertainment, percent and the number with unknown ascertainment. Counting participants
+is numerically different from counting complications, since one participant can have
+several. The first row (any complication) uses the verified count construct together with
+the long records; all-SAE coverage is shown separately from the narrower related SAE row.
 }
 \examples{
 participants_w_complications("Replace with Analytic Tibble")

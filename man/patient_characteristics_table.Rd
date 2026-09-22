@@ -4,20 +4,43 @@
 \alias{patient_characteristics_table}
 \title{Patient Characteristics Summary Table}
 \usage{
-patient_characteristics_table(analytic)
+patient_characteristics_table(
+  analytic,
+  age = "age",
+  sex = "sex",
+  race = "ethnicity_race",
+  education = "education",
+  insurance = "insurance",
+  bmi = "bmi",
+  comorbidities = "comorbidities_list",
+  tobacco = "tobacco_use",
+  health = "preinjury_health",
+  health_label = "Self-reported general health (single item)"
+)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include: enrolled, age, 
-sex, ethnicity_race, education, preinjury_health, tobacco_use, and comorbidities_list.}
+\item{analytic}{analytic data set that must include enrolled and the constructs named by
+the other arguments}
+
+\item{age, sex, race, education, comorbidities, tobacco, health}{construct names}
+
+\item{insurance, bmi}{construct names for the optional insurance and body mass index rows;
+shown as "Not in export" when absent}
+
+\item{health_label}{row label for the self-reported health item}
 }
 \value{
-An HTML table styled with kableExtra.
+An HTML table.
 }
 \description{
-Visualizes the patient characteristics for enrolled subjects, including Age, Sex, 
-Race/Ethnicity, Education, Preinjury Health, Tobacco Use, and Comorbidities.
+Pooled participant characteristics for enrolled participants: age, sex, race/ethnicity,
+education, insurance and body mass index (when the constructs are exported),
+comorbidities (split on semicolon, so percentages may exceed 100%), tobacco use and a
+single-item self-reported health measure. Numeric rows carry observed and missing n.
+Unknown, refused and missing responses are separate categories and no baseline
+significance tests are shown. The output does not depend on treatment assignment; see
+closed_patient_characteristics_table for the by-arm version.
 }
 \examples{
-\dontrun{
-}
+patient_characteristics_table("Replace with Analytic Tibble")
 }

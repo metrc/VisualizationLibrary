@@ -6928,3 +6928,1309 @@ closed_adherent_days_percent <- function(analytic, total_days = 21) {
     paste0(format(round(100 * mean(p, na.rm = TRUE), 1), nsmall = 1), "%")
   }, character(1))
 }
+
+
+# ---- Treatment assignment for blinded development ----------------------------------------------
+#
+# Closed displays and treatment-dependent analyses read treatment_arm. During blinded
+# development a report builds one reproducible dummy map from the sorted enrolled IDs and
+# applies it everywhere, so nothing re-randomizes between tables and nothing is inferred
+# from real labels. With blinded = FALSE the actual assignment must be supplied and the
+# control arm named; dummy assignments are never generated silently.
+
+#' Save and restore the caller's random-number state
+#' @noRd
+save_rng_state <- function() {
+  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+    get(".Random.seed", envir = globalenv(), inherits = FALSE)
+  } else {
+    NULL
+  }
+}
+
+#' @noRd
+restore_rng_state <- function(old_seed) {
+  if (is.null(old_seed)) {
+    if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) rm(".Random.seed", envir = globalenv())
+  } else {
+    assign(".Random.seed", old_seed, envir = globalenv())
+  }
+  invisible(NULL)
+}
+
+#' Reproducible dummy treatment assignment map
+#' @noRd
+dummy_assignment_map <- function(analytic, seed = 20260922, labels = c("Group A", "Group B"), allocation = c(1, 1)) {
+  if (length(labels) != 2 || length(allocation) != 2) stop("labels and allocation must each have length two")
+  ids <- enrolled_study_ids(analytic)
+  n <- length(ids)
+  old_seed <- save_rng_state()
+  on.exit(restore_rng_state(old_seed), add = TRUE)
+  set.seed(seed)
+  n_first <- round(n * allocation[1] / sum(allocation))
+  arms <- c(rep(labels[1], n_first), rep(labels[2], n - n_first))[sample.int(n)]
+  map <- tibble(study_id = ids, treatment_arm = arms)
+  attr(map, "assignment_mode") <- "dummy"
+  attr(map, "seed") <- seed
+  attr(map, "labels") <- labels
+  attr(map, "allocation") <- allocation
+  attr(map, "n") <- n
+  attr(map, "id_hash") <- rlang::hash(ids)
+  map
+}
+
+#' Check that a map covers the required IDs exactly once with two arms
+#' @noRd
+validate_assignment_map <- function(map, ids) {
+  if (!is.data.frame(map) || !all(c("study_id", "treatment_arm") %in% names(map))) {
+    stop("assignment_map must be a data frame with study_id and treatment_arm")
+  }
+  map <- map %>% mutate(study_id = as.character(study_id)) %>% filter(study_id %in% ids)
+  if (any(duplicated(map$study_id))) {
+    stop("assignment_map has duplicated study_id values: ", paste(unique(map$study_id[duplicated(map$study_id)]), collapse = ", "))
+  }
+  missing_ids <- setdiff(ids, map$study_id)
+  if (length(missing_ids) > 0) stop("assignment_map does not cover every required study_id: ", paste(missing_ids, collapse = ", "))
+  if (any(is.na(map$treatment_arm))) stop("assignment_map has missing treatment_arm values")
+  arms <- sort(unique(map$treatment_arm))
+  if (length(arms) != 2) stop("assignment_map must contain exactly two arm labels, found: ", paste(arms, collapse = ", "))
+  map
+}
+
+#' Resolve the treatment assignment used by an analysis
+#' @noRd
+resolve_treatment_assignment <- function(analytic, blinded = FALSE, assignment_map = NULL, seed = 20260922,
+                                         control_arm = "Group A", labels = c("Group A", "Group B"),
+                                         allocation = c(1, 1)) {
+  if (inherits(assignment_map, "treatment_assignment")) return(assignment_map)
+  ids <- enrolled_study_ids(analytic)
+  if (isTRUE(blinded)) {
+    if (is.null(assignment_map)) {
+      map <- dummy_assignment_map(analytic, seed = seed, labels = labels, allocation = allocation)
+    } else {
+      supplied <- assignment_map
+      map <- validate_assignment_map(assignment_map, ids)
+      for (a in setdiff(names(attributes(supplied)), names(attributes(map)))) attr(map, a) <- attr(supplied, a)
+      if (is.null(attr(map, "assignment_mode"))) attr(map, "assignment_mode") <- "dummy (supplied)"
+    }
+    mode <- attr(map, "assignment_mode")
+    caption <- "Dummy treatment assignment (development output)"
+  } else {
+    if (is.null(assignment_map)) {
+      require_constructs(analytic, "treatment_arm", "blinded = FALSE")
+      map <- analytic %>%
+        filter(enrolled %in% TRUE) %>%
+        transmute(study_id = as.character(study_id), treatment_arm = as.character(treatment_arm))
+      if (any(is.na(map$treatment_arm))) {
+        stop("blinded = FALSE requires actual treatment_arm for every enrolled participant; ",
+             sum(is.na(map$treatment_arm)), " missing")
+      }
+    } else {
+      map <- assignment_map
+    }
+    map <- validate_assignment_map(map, ids)
+    mode <- "actual"
+    caption <- "Actual treatment assignment"
+  }
+  arms <- sort(unique(map$treatment_arm))
+  if (is.null(control_arm) || !control_arm %in% arms) {
+    stop(sprintf("control_arm \"%s\" does not appear in treatment_arm (levels found: %s)",
+                 if (is.null(control_arm)) "NULL" else control_arm, paste(arms, collapse = ", ")))
+  }
+  treatment_arm <- setdiff(arms, control_arm)
+  structure(list(map = map, assignment_mode = mode, arms = arms, control_arm = control_arm,
+                 treatment_arm = treatment_arm, contrast = paste0(treatment_arm, " minus ", control_arm),
+                 caption = caption, seed = attr(map, "seed"), n = length(ids), id_hash = rlang::hash(ids)),
+            class = "treatment_assignment")
+}
+
+#' Apply a treatment assignment to the analytic data for closed displays
+#' @noRd
+apply_treatment_assignment <- function(analytic, assignment) {
+  map <- if (inherits(assignment, "treatment_assignment")) assignment$map else assignment
+  map <- map %>% transmute(study_id = as.character(study_id), .arm = as.character(treatment_arm))
+  analytic %>%
+    mutate(study_id = as.character(study_id)) %>%
+    select(-any_of("treatment_arm")) %>%
+    left_join(map, by = "study_id") %>%
+    rename(treatment_arm = .arm)
+}
+
+#' Caption text for a treatment assignment
+#' @noRd
+assignment_caption <- function(assignment, prefix = NULL) {
+  txt <- paste0(assignment$caption, "; contrast ", assignment$contrast)
+  if (!is.null(prefix)) txt <- paste0(prefix, " (", txt, ")")
+  txt
+}
+
+#' Treatment-course mappings for pre-post analyses of everyone treated
+#' @noRd
+synthetic_treatment_course <- function(analytic, seed = 20260922, sets = c("set_1", "set_2")) {
+  ids <- enrolled_study_ids(analytic)
+  if (length(sets) == 0) stop("no measurement sets are available to draw a synthetic course from")
+  old_seed <- save_rng_state()
+  on.exit(restore_rng_state(old_seed), add = TRUE)
+  set.seed(seed)
+  tibble(study_id = ids, treatment_set = sample(sets, length(ids), replace = TRUE),
+         course_source = "synthetic")
+}
+
+#' Treatment course derived from set-2 presence (reveals allocation)
+#' @noRd
+treatment_course_from_sets <- function(analytic, set_2_constructs = c("durometer_readings_set_2", "oct_readings_set_2")) {
+  ids <- enrolled_study_ids(analytic)
+  present <- intersect(set_2_constructs, names(analytic))
+  if (length(present) == 0) stop("no set-2 constructs present; cannot derive the treatment course from the export")
+  df <- analytic %>% filter(enrolled %in% TRUE) %>% mutate(study_id = as.character(study_id))
+  has_set_2 <- Reduce(`|`, lapply(present, function(construct) !is.na(packed_na(df[[construct]]))))
+  tibble(study_id = df$study_id, treatment_set = ifelse(has_set_2, "set_2", "set_1"),
+         course_source = "derived from set-2 presence (reveals allocation)") %>%
+    filter(study_id %in% ids) %>%
+    arrange(study_id)
+}
+
+#' The two arm labels among enrolled participants
+#' @noRd
+closed_arm_levels <- function(analytic) {
+  require_constructs(analytic, "treatment_arm", "closed display")
+  arms <- sort(unique(stats::na.omit(as.character(analytic$treatment_arm[analytic$enrolled %in% TRUE]))))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels among enrolled participants, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
+  arms
+}
+
+#' Arm, Arm, Overall column names with n
+#' @noRd
+closed_column_names <- function(first, df, arms) {
+  c(first, paste0(arms[1], " (n = ", sum(df$treatment_arm %in% arms[1]), ")"),
+    paste0(arms[2], " (n = ", sum(df$treatment_arm %in% arms[2]), ")"), paste0("Overall (n = ", nrow(df), ")"))
+}
+
+# ---- Closed characteristics tables ------------------------------------------------------------
+
+#' Patient Characteristics Summary Table by Treatment Arm
+#'
+#' @description
+#' Closed version of patient_characteristics_table: the same rows and definitions for each
+#' treatment_arm with an overall column. See patient_characteristics_table for details.
+#'
+#' @inheritParams patient_characteristics_table
+#' @param analytic analytic data set that must include enrolled, treatment_arm and the
+#' constructs named by the other arguments
+#'
+#' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
+#' built from the sorted enrolled IDs and seed (the same map every closed function builds)
+#' @param seed seed for the dummy assignment
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_patient_characteristics_table("Replace with Analytic Tibble", blinded = TRUE)
+closed_patient_characteristics_table <- function(analytic, age = "age", sex = "sex", race = "ethnicity_race",
+                                                 education = "education", insurance = "insurance", bmi = "bmi",
+                                                 comorbidities = "comorbidities_list", tobacco = "tobacco_use",
+                                                 health = "preinjury_health",
+                                                 health_label = "Self-reported general health (single item)",
+                                                  blinded = FALSE, seed = 20260922) {
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", "treatment_arm", age, sex, race, education, insurance, bmi, comorbidities, tobacco, health),
+    example_types = c("Boolean", "TreatmentArm", "Number", "NamedCategory['Male' 'Female']", "Category", "Category", "Category",
+                      "Number", "Category-NS", "NamedCategory['Never' 'Former' 'Current']",
+                      "NamedCategory['Excellent' 'Very Good' 'Good' 'Fair' 'Poor']"))
+  confirm_stability_of_related_visual('patient_characteristics_table', '22ab6de3373144a3b16b8ce58f10d043')
+  if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
+  constructs <- list(age = age, sex = sex, race = race, education = education, insurance = insurance, bmi = bmi,
+                     comorbidities = comorbidities, tobacco = tobacco, health = health)
+  arms <- closed_arm_levels(analytic)
+  df <- analytic %>% filter(enrolled %in% TRUE)
+  levels <- characteristics_levels(df, constructs)
+  all_rows <- characteristics_rows(df, levels, constructs, health_label)
+  a <- characteristics_rows(df %>% filter(treatment_arm %in% arms[1]), levels, constructs, health_label)
+  b <- characteristics_rows(df %>% filter(treatment_arm %in% arms[2]), levels, constructs, health_label)
+  out <- tibble(Construct = all_rows$Construct, A = a$Value, B = b$Value, Total = all_rows$Value, Is_Header = all_rows$Is_Header)
+  kable_indented_rows(out, closed_column_names("Characteristic", df, arms))
+}
+
+#' Amputation, Residual Limb and Prostheses Characteristics by Treatment Arm
+#'
+#' @description
+#' Closed version of amputation_characteristics_table: the same rows and definitions for
+#' each treatment_arm with an overall column.
+#'
+#' @inheritParams amputation_characteristics_table
+#' @param analytic analytic data set that must include enrolled, treatment_arm and the
+#' constructs named by the other arguments
+#'
+#' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
+#' built from the sorted enrolled IDs and seed (the same map every closed function builds)
+#' @param seed seed for the dummy assignment
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_amputation_characteristics_table("Replace with Analytic Tibble", blinded = TRUE)
+closed_amputation_characteristics_table <- function(analytic, anchor = c("first_injection", "consent"), display_years = TRUE,
+                                                    regular_levels = regular_use_levels,
+                                                    days_since_first_injection = "amputation_days_since",
+                                                    days_since_consent = "amputation_days", cause = "amputation_cause",
+                                                    side = "amputation_side", days_per_week = "prosthesis_days_per_week",
+                                                    hours_per_day = "prosthesis_hours_per_day", devices = "ambulatory_device_list",
+                                                    ulcer_stage = "ulcer_stage", prosthesis_type = "prosthesis_type",
+                                                    comfort_sit = "socket_comfort_score_sit", comfort_stand = "socket_comfort_score_stand",
+                                                    comfort_walk = "socket_comfort_score_walk", medications = "medication_frequency_list",
+                                                    skin_treatments = "meds_skin_list", medication_slots = 6, skin_treatment_slots = 5,
+                                                     blinded = FALSE, seed = 20260922) {
+  anchor <- match.arg(anchor)
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", "treatment_arm", days_since_first_injection, days_since_consent, cause, days_per_week,
+                           hours_per_day, devices, comfort_sit, comfort_stand, comfort_walk, medications, skin_treatments),
+    example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Category", "Number", "Number", "Category-NS", "Number",
+                      "Number", "Number",
+                      "Character", "Character"))
+  confirm_stability_of_related_visual('amputation_characteristics_table', '145f7fdc562ee9c708e8e8c0e3d37180')
+  if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
+  constructs <- list(days_since_first_injection = days_since_first_injection, days_since_consent = days_since_consent,
+                     cause = cause, side = side, days_per_week = days_per_week, hours_per_day = hours_per_day,
+                     devices = devices, ulcer_stage = ulcer_stage, prosthesis_type = prosthesis_type,
+                     comfort_sit = comfort_sit, comfort_stand = comfort_stand, comfort_walk = comfort_walk,
+                     medications = medications, skin_treatments = skin_treatments,
+                     medication_slots = medication_slots, skin_treatment_slots = skin_treatment_slots)
+  arms <- closed_arm_levels(analytic)
+  df <- analytic %>% filter(enrolled %in% TRUE)
+  levels <- amputation_levels(df, constructs)
+  all_rows <- amputation_rows(df, levels, constructs, anchor, display_years, regular_levels)
+  a <- amputation_rows(df %>% filter(treatment_arm %in% arms[1]), levels, constructs, anchor, display_years, regular_levels)
+  b <- amputation_rows(df %>% filter(treatment_arm %in% arms[2]), levels, constructs, anchor, display_years, regular_levels)
+  out <- tibble(Construct = all_rows$Construct, A = a$Value, B = b$Value, Total = all_rows$Value, Is_Header = all_rows$Is_Header)
+  kable_indented_rows(out, closed_column_names("Characteristic", df, arms))
+}
+
+# ---- Closed safety displays and analyses ------------------------------------------------------
+
+#' Participants with complications by Treatment Arm
+#'
+#' @description
+#' Closed version of participants_w_complications: participants with one or more events in
+#' each category as n/N (%) by treatment_arm and overall, with the unknown-ascertainment
+#' count. The risk-difference columns come from closed_participant_risk_analysis.
+#'
+#' @inheritParams participants_w_complications
+#' @param analytic analytic data set that must include study_id, enrolled, treatment_arm,
+#' complication_data, sae_data, followup_data and the count and exposure constructs
+#'
+#' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
+#' built from the sorted enrolled IDs and seed (the same map every closed function builds)
+#' @param seed seed for the dummy assignment
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_participants_w_complications("Replace with Analytic Tibble", blinded = TRUE)
+closed_participants_w_complications <- function(analytic, categories = complication_categories(),
+                                                count_construct = "complication_count",
+                                                exposure_construct = "last_followup_days",
+                                                 blinded = FALSE, seed = 20260922) {
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", "treatment_arm", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
+    example_types = c("Boolean", "TreatmentArm", complication_data_example_type, sae_data_example_type,
+                      followup_data_example_type, "Number", "Number"))
+  confirm_stability_of_related_visual('participants_w_complications', 'f9197c9ffed79aabc731703153b1374d')
+  if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
+  arms <- closed_arm_levels(analytic)
+  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct) %>%
+    left_join(analytic %>% transmute(study_id = as.character(study_id), treatment_arm), by = "study_id")
+  fmt <- function(df) {
+    p <- pooled_event_risks(df, categories)
+    ifelse(p$denominator > 0,
+           paste0(p$participants_with_event, "/", p$denominator, " (",
+                  trimws(format(round(100 * p$participants_with_event / p$denominator, 1), nsmall = 1)), "%)"),
+           paste0(p$participants_with_event, "/", p$denominator))
+  }
+  pooled <- pooled_event_risks(participants, categories)
+  out <- tibble(Category = pooled$category,
+                A = fmt(participants %>% filter(treatment_arm %in% arms[1])),
+                B = fmt(participants %>% filter(treatment_arm %in% arms[2])),
+                Total = fmt(participants), `Unknown ascertainment` = pooled$unknown_ascertainment)
+  kable(out, format = "html", align = "l",
+        col.names = c("Category", paste0(arms[1], " n/N (%)"), paste0(arms[2], " n/N (%)"), "Total n/N (%)",
+                      "Unknown ascertainment")) %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+}
+
+#' n/N (%) cell
+#' @noRd
+fmt_n_of_total <- function(x, n) {
+  ifelse(n > 0, paste0(x, "/", n, " (", trimws(format(round(100 * x / n, 1), nsmall = 1)), "%)"), paste0(x, "/", n))
+}
+
+#' Participants with safety events by arm with risk differences
+#'
+#' @description
+#' For each category from complication_categories(), the participants with one or more
+#' events by arm (denominator: enrolled participants with known ascertainment) and the risk
+#' difference in percentage points, treatment arm minus control arm, with the interval from
+#' risk_difference_interval. All-SAE coverage is shown separately from the narrower related
+#' SAE category. Blinded results demonstrate pipeline behaviour only.
+#'
+#' @inheritParams participants_w_complications
+#' @param analytic analytic data set that must include study_id, enrolled, complication_data,
+#' sae_data, followup_data, the count and exposure constructs, and treatment_arm unless
+#' blinded
+#' @param blinded when TRUE, ignores any real treatment_arm and uses a reproducible dummy
+#' assignment (see resolve_treatment_assignment)
+#' @param assignment_map optional data frame with study_id and treatment_arm that overrides the analytic's
+#' treatment_arm; it must cover every enrolled participant exactly once with two arm labels
+#' @param seed seed for the dummy map
+#' @param control_arm value of treatment_arm treated as the control group
+#' @param ci_method "newcombe" or "wald"
+#' @param return_fit when TRUE, returns a list with the result table (as result_table), the
+#' per-category results, the pooled counts, the participant-level inputs, the reconciliation
+#' with the verified count, the assignment and the settings
+#'
+#' @return An HTML table, or a list when return_fit = TRUE.
+#' @export
+#'
+#' @examples
+#' closed_participant_risk_analysis("Replace with Analytic Tibble", blinded = TRUE)
+closed_participant_risk_analysis <- function(analytic, categories = complication_categories(),
+                                             count_construct = "complication_count",
+                                             exposure_construct = "last_followup_days",
+                                             blinded = FALSE, assignment_map = NULL, seed = 20260922,
+                                             control_arm = "Group A", ci_method = c("newcombe", "wald"),
+                                             return_fit = FALSE) {
+  analytic <- if_needed_generate_example_data(
+      analytic,
+      example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
+      example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type, "Number", "Number"))
+  ci_method <- match.arg(ci_method)
+  assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
+  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct) %>%
+    left_join(assignment$map, by = "study_id")
+  rows <- event_category_rows(categories)
+  trt <- assignment$treatment_arm
+  ctl <- assignment$control_arm
+  results <- bind_rows(lapply(seq_len(nrow(rows)), function(i) {
+    flag <- participants[[rows$flag[i]]]
+    arm <- participants$treatment_arm
+    x1 <- sum(flag %in% TRUE & arm == trt)
+    n1 <- sum(!is.na(flag) & arm == trt)
+    x2 <- sum(flag %in% TRUE & arm == ctl)
+    n2 <- sum(!is.na(flag) & arm == ctl)
+    rd <- risk_difference_interval(x1, n1, x2, n2, method = ci_method)
+    tibble(key = rows$key[i], category = rows$category[i], treatment_events = x1, treatment_n = n1,
+           control_events = x2, control_n = n2, total_events = x1 + x2, total_n = n1 + n2,
+           unknown_ascertainment = sum(is.na(flag)), risk_difference = rd$estimate, lower = rd$lower,
+           upper = rd$upper, method = rd$method, status = rd$status)
+  }))
+  out <- results %>% transmute(Category = category, T = fmt_n_of_total(treatment_events, treatment_n),
+                               C = fmt_n_of_total(control_events, control_n), Total = fmt_n_of_total(total_events, total_n),
+                               RD = fmt_estimate(risk_difference, lower, upper, 1), Status = ifelse(status == "ok", "", status))
+  result_table <- kable(out, format = "html", align = "l",
+                        col.names = c("Category", paste0(trt, " n/N (%)"), paste0(ctl, " n/N (%)"), "Total n/N (%)",
+                                      paste0("Risk difference, ", assignment$contrast, " (95% CI)"), "Status")) %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    add_footnote(c(assignment_caption(assignment), paste0("Interval method: ", ci_method, " (percentage points).")),
+                 notation = "number")
+  if (!return_fit) return(result_table)
+  list(result_table = result_table, endpoint = "Participants with safety events", results = results,
+       pooled = pooled_event_risks(participants, categories), participants = participants,
+       reconciliation = attr(participants, "reconciliation"), assignment = assignment,
+       population = "enrolled participants with known safety ascertainment",
+       outcome_definition = "participant with one or more events in the category",
+       settings = list(ci_method = ci_method, count_construct = count_construct, exposure_construct = exposure_construct))
+}
+
+#' Total safety events and exact incidence rate ratios by arm
+#'
+#' @description
+#' For each category, the participants, events, person-days and rate per rate_unit
+#' person-days by arm, and the incidence rate ratio (treatment arm over control arm) with
+#' the exact conditional interval from exact_rate_ratio. The any complication row uses the
+#' verified count and exposure constructs; category rows use the long records with the same
+#' verified exposure and say so. Participants with missing or nonpositive exposure or
+#' unknown ascertainment are excluded from the rate analysis and counted in the footnote.
+#' Zero-event arms yield boundary estimates, shown as returned.
+#'
+#' @inheritParams closed_participant_risk_analysis
+#' @param rate_unit person-days per rate unit (100 gives events per 100 person-days)
+#'
+#' @return An HTML table, or a list when return_fit = TRUE (result_table, results, pooled,
+#' participants, excluded, reconciliation, assignment and settings).
+#' @export
+#'
+#' @examples
+#' closed_event_rate_analysis("Replace with Analytic Tibble", blinded = TRUE)
+closed_event_rate_analysis <- function(analytic, categories = complication_categories(),
+                                       count_construct = "complication_count", exposure_construct = "last_followup_days",
+                                       blinded = FALSE, assignment_map = NULL, seed = 20260922, control_arm = "Group A",
+                                       rate_unit = 100, return_fit = FALSE) {
+  analytic <- if_needed_generate_example_data(
+      analytic,
+      example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
+      example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type, "Number", "Number"))
+  assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
+  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct) %>%
+    left_join(assignment$map, by = "study_id")
+  rows <- event_category_rows(categories)
+  usable <- participants %>% filter(exposure_valid, ascertained)
+  excluded <- participants %>% filter(!exposure_valid | !ascertained) %>%
+    transmute(study_id, treatment_arm, exposure_valid, ascertained)
+  trt <- assignment$treatment_arm
+  ctl <- assignment$control_arm
+  arm_totals <- function(df, count_col) {
+    tibble(participants = nrow(df), events = sum(df[[count_col]], na.rm = TRUE), person_days = sum(df$exposure_days))
+  }
+  results <- bind_rows(lapply(seq_len(nrow(rows)), function(i) {
+    t_arm <- arm_totals(usable %>% filter(treatment_arm == trt), rows$count[i])
+    c_arm <- arm_totals(usable %>% filter(treatment_arm == ctl), rows$count[i])
+    rr <- exact_rate_ratio(t_arm$events, t_arm$person_days, c_arm$events, c_arm$person_days)
+    tibble(key = rows$key[i], category = rows$category[i], count_source = rows$count_source[i],
+           treatment_participants = t_arm$participants, treatment_events = t_arm$events,
+           treatment_person_days = t_arm$person_days, treatment_rate = rate_unit * t_arm$events / t_arm$person_days,
+           control_participants = c_arm$participants, control_events = c_arm$events,
+           control_person_days = c_arm$person_days, control_rate = rate_unit * c_arm$events / c_arm$person_days,
+           irr = rr$estimate, lower = rr$lower, upper = rr$upper, p_value = rr$p_value, method = rr$method,
+           status = rr$status)
+  }))
+  rate_lab <- paste0("rate per ", rate_unit, " person-days")
+  out <- results %>% transmute(
+    Category = category, `Count source` = count_source,
+    T = paste0(treatment_participants, " / ", treatment_events, " / ", treatment_person_days, " / ", fmt_number(treatment_rate)),
+    C = paste0(control_participants, " / ", control_events, " / ", control_person_days, " / ", fmt_number(control_rate)),
+    IRR = fmt_estimate(irr, lower, upper, 2), Status = ifelse(status == "ok", "", status))
+  result_table <- kable(out, format = "html", align = "l",
+                        col.names = c("Category", "Count source", paste0(trt, ": n / events / person-days / ", rate_lab),
+                                      paste0(ctl, ": n / events / person-days / ", rate_lab),
+                                      paste0("IRR ", trt, " over ", ctl, " (exact 95% CI)"), "Status")) %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    add_footnote(c(assignment_caption(assignment), unique(results$method),
+                   paste0(nrow(excluded), " participant(s) excluded for missing/nonpositive exposure or unknown ascertainment.")),
+                 notation = "number")
+  if (!return_fit) return(result_table)
+  list(result_table = result_table, endpoint = "Total safety events and incidence rates", results = results,
+       participants = participants, excluded = excluded, reconciliation = attr(participants, "reconciliation"),
+       assignment = assignment, population = "enrolled participants with known ascertainment and positive verified exposure",
+       outcome_definition = paste0("event counts per participant with ", exposure_construct, " as exposure"),
+       settings = list(rate_unit = rate_unit, count_construct = count_construct, exposure_construct = exposure_construct))
+}
+
+# ---- Closed repeated-measurement displays and analyses ----------------------------------------
+
+#' Location Measurement Summary Table by Treatment Arm
+#'
+#' @description
+#' Closed version of location_measurement_table: the descriptive panel (pre-injection n and
+#' mean (SD), follow-up n and mean (SD), paired n and change mean (SD)) for each
+#' treatment_arm. closed_durometer_readings_table and closed_oct_readings_table wrap the
+#' default endpoints.
+#'
+#' @inheritParams location_measurement_table
+#' @param analytic analytic data set that must include enrolled, study_id, treatment_arm
+#' and the readings construct
+#'
+#' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
+#' built from the sorted enrolled IDs and seed (the same map every closed function builds)
+#' @param seed seed for the dummy assignment
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_location_measurement_table("Replace with Analytic Tibble", blinded = TRUE)
+closed_location_measurement_table <- function(analytic, readings_construct = "durometer_readings_set_1",
+                                              fields = c("set", "event", "position", "injection", "reading"),
+                                              value_field = "reading", baseline_event = "injection_1",
+                                              followup_event = "3_month", followup_label = "3 Month", set = "set_1",
+                                              unit = "", keep = NULL, min_valid = 1,
+                                               blinded = FALSE, seed = 20260922) {
+  analytic <- if_needed_generate_example_data(
+    analytic, example_constructs = c("enrolled", "treatment_arm", readings_construct),
+    example_types = c("Boolean", "TreatmentArm", measurement_example_type(fields, value_field)))
+  confirm_stability_of_related_visual('location_measurement_table', '95ece666fbac7434f69d20350ef6f88f')
+  if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
+  arms <- closed_arm_levels(analytic)
+  d <- location_change_data(analytic, readings_construct, fields, value_field, baseline_event, followup_event, set, keep, min_valid)
+  change <- d$change %>%
+    inner_join(analytic %>% transmute(study_id = as.character(study_id), treatment_arm), by = "study_id") %>%
+    filter(treatment_arm %in% arms)
+  positions <- measurement_positions(change$position)
+  desc <- measurement_descriptives(change, positions, "treatment_arm")$descriptive
+  block <- function(arm) {
+    desc %>% filter(treatment_arm == arm) %>%
+      transmute(position = as.character(position),
+                !!paste0(arm, "_pre") := fmt_n_mean_sd(n_baseline, mean_baseline, sd_baseline),
+                !!paste0(arm, "_fu") := fmt_n_mean_sd(n_followup, mean_followup, sd_followup),
+                !!paste0(arm, "_ch") := fmt_n_mean_sd(n_paired, mean_change, sd_change))
+  }
+  out <- tibble(position = c(positions, "All locations (participant mean)")) %>%
+    left_join(block(arms[1]), by = "position") %>%
+    left_join(block(arms[2]), by = "position")
+  header <- c(" " = 1, 3, 3)
+  names(header)[2:3] <- arms
+  unit_label <- if (nzchar(unit)) paste0(" ", unit) else ""
+  kable(out, format = "html", align = "l",
+        col.names = c("Position", rep(c(paste0("Pre-injection", unit_label, " n; mean (SD)"),
+                                        paste0(followup_label, unit_label, " n; mean (SD)"),
+                                        "Paired n; change mean (SD)"), 2))) %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+}
+
+#' @rdname closed_location_measurement_table
+#' @param mode "1mo", "2mo" or "3mo": the follow-up visit compared with injection_1
+#' @export
+closed_durometer_readings_table <- function(analytic, mode = "3mo", min_valid = 1, blinded = FALSE, seed = 20260922) {
+  ev <- mode_followup(mode)
+  ep <- default_measurement_endpoints()$durometer
+  closed_location_measurement_table(analytic, ep$readings_constructs[1], ep$fields, ep$value_field, "injection_1",
+                                    ev[["event"]], ev[["label"]], "set_1", ep$unit, NULL, min_valid, blinded, seed)
+}
+
+#' @rdname closed_location_measurement_table
+#' @param orientations optional OCT orientations to include; NULL uses all images
+#' @export
+closed_oct_readings_table <- function(analytic, mode = "3mo", orientations = NULL, min_valid = 1, blinded = FALSE,
+                                      seed = 20260922) {
+  ev <- mode_followup(mode)
+  ep <- default_measurement_endpoints()$oct
+  keep <- if (is.null(orientations)) NULL else list(orientation = orientations)
+  closed_location_measurement_table(analytic, ep$readings_constructs[1], ep$fields, ep$value_field, "injection_1",
+                                    ev[["event"]], ev[["label"]], "set_1", "", keep, min_valid, blinded, seed)
+}
+
+#' Two-sample difference in means with a t interval
+#' @noRd
+two_sample_difference <- function(x_trt, x_ctl, var_equal = TRUE, conf_level = 0.95) {
+  x_trt <- x_trt[!is.na(x_trt)]
+  x_ctl <- x_ctl[!is.na(x_ctl)]
+  if (length(x_trt) < 2 || length(x_ctl) < 2) {
+    return(tibble(estimate = if (length(x_trt) > 0 && length(x_ctl) > 0) mean(x_trt) - mean(x_ctl) else NA_real_,
+                  lower = NA_real_, upper = NA_real_, p_value = NA_real_,
+                  status = "interval not estimable: fewer than two participants in an arm"))
+  }
+  tt <- tryCatch(stats::t.test(x_trt, x_ctl, var.equal = var_equal, conf.level = conf_level), error = function(e) e)
+  if (inherits(tt, "error")) {
+    return(tibble(estimate = mean(x_trt) - mean(x_ctl), lower = NA_real_, upper = NA_real_, p_value = NA_real_,
+                  status = paste("t-test failed:", conditionMessage(tt))))
+  }
+  tibble(estimate = unname(tt$estimate[1] - tt$estimate[2]), lower = tt$conf.int[1], upper = tt$conf.int[2],
+         p_value = tt$p.value, status = "ok")
+}
+
+#' Fit a linear mixed model with nlme and extract one fixed-effect contrast
+#' @noRd
+lme_contrast_fit <- function(formula, random, data, term, conf_level = 0.95) {
+  messages <- character()
+  fit <- withCallingHandlers(
+    tryCatch(nlme::lme(fixed = formula, random = random, data = data, method = "REML", na.action = stats::na.omit),
+             error = function(e) e),
+    warning = function(w) { messages <<- c(messages, conditionMessage(w)); invokeRestart("muffleWarning") })
+  not_estimable <- function(status) {
+    list(estimate = NA_real_, se = NA_real_, df = NA_real_, lower = NA_real_, upper = NA_real_, p_value = NA_real_,
+         status = status, messages = messages, fit = NULL, variance = NULL)
+  }
+  if (inherits(fit, "error")) return(not_estimable(paste("fit failed:", conditionMessage(fit))))
+  tt <- summary(fit)$tTable
+  if (!term %in% rownames(tt)) {
+    return(not_estimable(paste0("term '", term, "' not estimable (available: ", paste(rownames(tt), collapse = ", "), ")")))
+  }
+  est <- tt[term, "Value"]
+  se <- tt[term, "Std.Error"]
+  df <- tt[term, "DF"]
+  crit <- stats::qt(1 - (1 - conf_level) / 2, df)
+  vc <- tryCatch(nlme::VarCorr(fit), error = function(e) NULL)
+  variance <- if (!is.null(vc)) {
+    tibble(component = rownames(vc), variance = suppressWarnings(as.numeric(vc[, "Variance"])),
+           std_dev = suppressWarnings(as.numeric(vc[, "StdDev"])))
+  } else NULL
+  near_zero <- !is.null(variance) && any(variance$std_dev[!is.na(variance$std_dev)] < 1e-6)
+  list(estimate = est, se = se, df = df, lower = est - crit * se, upper = est + crit * se, p_value = tt[term, "p-value"],
+       status = if (near_zero) "converged; a random-effect variance is near zero (boundary fit)" else "converged",
+       messages = messages, fit = fit, variance = variance)
+}
+
+#' Core between-arm change analysis on location visit means
+#' @noRd
+location_change_fit <- function(visit_means, assignment, endpoint, unit, baseline_event, followup_event, set, model,
+                                location_test, include_p_values, conf_level, settings = list()) {
+  vm <- visit_means %>% filter(set == !!set, event %in% c(baseline_event, followup_event))
+  change <- measurement_visit_change(vm, baseline_event, followup_event) %>% inner_join(assignment$map, by = "study_id")
+  positions <- measurement_positions(change$position)
+  trt <- assignment$treatment_arm
+  ctl <- assignment$control_arm
+  desc <- measurement_descriptives(change, positions, "treatment_arm")
+  test_label <- paste0(ifelse(location_test == "student", "Student", "Welch"), " two-sample t")
+  contrasts <- bind_rows(lapply(positions, function(pos) {
+    d <- change %>% filter(position == pos, paired)
+    r <- two_sample_difference(d$change[d$treatment_arm == trt], d$change[d$treatment_arm == ctl],
+                               var_equal = location_test == "student", conf_level = conf_level)
+    tibble(position = pos, comparison = "between-arm difference in participant change (follow-up minus baseline)",
+           n_treatment = sum(d$treatment_arm == trt), n_control = sum(d$treatment_arm == ctl), method = test_label, r)
+  }))
+  overall_d <- desc$participant %>% filter(paired)
+  overall_r <- two_sample_difference(overall_d$change[overall_d$treatment_arm == trt],
+                                     overall_d$change[overall_d$treatment_arm == ctl],
+                                     var_equal = location_test == "student", conf_level = conf_level)
+  contrasts <- bind_rows(contrasts,
+                         tibble(position = "All locations (participant mean)",
+                                comparison = "between-arm difference in participant mean change across locations",
+                                n_treatment = sum(overall_d$treatment_arm == trt), n_control = sum(overall_d$treatment_arm == ctl),
+                                method = test_label, overall_r))
+  if (!include_p_values) contrasts$p_value <- NA_real_
+
+  if (model == "repeated") {
+    d <- vm %>%
+      inner_join(assignment$map, by = "study_id") %>%
+      filter(!is.na(mean)) %>%
+      mutate(arm_num = factor(ifelse(treatment_arm == trt, "treatment", "control"), levels = c("control", "treatment")),
+             visit = factor(ifelse(event == followup_event, "followup", "baseline"), levels = c("baseline", "followup")),
+             value = mean, study_id = factor(study_id), position = factor(position))
+    fit <- lme_contrast_fit(value ~ arm_num * visit, ~ 1 | study_id/position, d, "arm_numtreatment:visitfollowup", conf_level)
+    description <- "location visit mean ~ arm * visit, random intercepts for participant and location within participant (nlme::lme, REML); contrast = arm-by-visit interaction (differential change)"
+    n_loc <- nrow(distinct(d, study_id, position))
+  } else {
+    d <- change %>%
+      filter(paired) %>%
+      mutate(arm_num = factor(ifelse(treatment_arm == trt, "treatment", "control"), levels = c("control", "treatment")),
+             study_id = factor(study_id))
+    fit <- lme_contrast_fit(change ~ arm_num, ~ 1 | study_id, d, "arm_numtreatment", conf_level)
+    description <- "location change (follow-up minus baseline) ~ arm, random intercept for participant (nlme::lme, REML); contrast = arm coefficient; complete pairs only"
+    n_loc <- nrow(d)
+  }
+  model_tbl <- tibble(formulation = model, description = description, estimate = fit$estimate, lower = fit$lower,
+                      upper = fit$upper, se = fit$se, df = fit$df, p_value = if (include_p_values) fit$p_value else NA_real_,
+                      n_participants = n_distinct(d$study_id), n_locations = n_loc, n_observations = nrow(d),
+                      status = fit$status, messages = paste(fit$messages, collapse = "; "))
+  list(endpoint = endpoint, unit = unit, population = paste0("enrolled participants with usable ", set, " measurements"),
+       outcome_definition = paste0("location mean of usable readings at ", baseline_event, " and ", followup_event,
+                                   "; change = follow-up minus baseline where both available"),
+       assignment = assignment, contrast = assignment$contrast, method = description,
+       descriptive = desc$descriptive, participant = desc$participant, contrasts = contrasts, model = model_tbl,
+       model_fit = fit$fit, variance_components = fit$variance, visit_means = vm, change = change,
+       settings = c(list(model = model, location_test = location_test, baseline_event = baseline_event,
+                         followup_event = followup_event, set = set, include_p_values = include_p_values,
+                         conf_level = conf_level), settings),
+       status = fit$status)
+}
+
+#' Results table for a location change analysis
+#' @noRd
+location_change_result_table <- function(result, followup_label, reference_difference) {
+  a <- result$assignment
+  desc <- result$descriptive
+  positions <- setdiff(levels(desc$position), "All locations (participant mean)")
+  block <- function(arm) {
+    desc %>% filter(treatment_arm == arm) %>%
+      transmute(position = as.character(position), pre = fmt_n_mean_sd(n_baseline, mean_baseline, sd_baseline),
+                fu = fmt_n_mean_sd(n_followup, mean_followup, sd_followup), ch = fmt_n_mean_sd(n_paired, mean_change, sd_change)) %>%
+      rename_with(~ paste0(arm, "_", .x), -position)
+  }
+  contrasts <- result$contrasts %>%
+    transmute(position, diff = fmt_estimate(estimate, lower, upper, 2), diff_note = ifelse(status == "ok", "", status))
+  model <- result$model
+  out <- tibble(position = c(positions, "All locations (participant mean)")) %>%
+    left_join(block(a$treatment_arm), by = "position") %>%
+    left_join(block(a$control_arm), by = "position") %>%
+    left_join(contrasts, by = "position") %>%
+    mutate(model_est = ifelse(position == "All locations (participant mean)",
+                              fmt_estimate(model$estimate, model$lower, model$upper, 2), ""),
+           diff = ifelse(diff_note == "", diff, paste0(diff, " [", diff_note, "]"))) %>%
+    select(-diff_note)
+  header <- c(" " = 1, 3, 3, " " = 2)
+  names(header)[2:3] <- c(a$treatment_arm, a$control_arm)
+  footnotes <- c(assignment_caption(a),
+                 paste0("Units: ", result$unit, ". ", result$outcome_definition, "."),
+                 paste0("Location rows: ", unique(result$contrasts$method), " on participant location changes. Overall row: ",
+                        model$description, "; participants ", model$n_participants, ", locations ", model$n_locations,
+                        ", observations ", model$n_observations, "; status: ", model$status,
+                        ifelse(nzchar(model$messages), paste0(" (", model$messages, ")"), ""), "."))
+  if (!is.null(reference_difference)) {
+    footnotes <- c(footnotes, paste0("The ", reference_difference, " ", result$unit,
+                                     " value is the group-level efficacy reference for the overall between-arm difference in change, not a participant responder rule."))
+  }
+  kable(out, format = "html", align = "l",
+        col.names = c("Location", rep(c("Pre n; mean (SD)", paste0(followup_label, " n; mean (SD)"), "Paired n; change mean (SD)"), 2),
+                      paste0("Difference in change, ", a$contrast, " (95% CI), two-sample t"),
+                      "Mixed-model difference in change (95% CI)")) %>%
+    add_header_above(header) %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    add_footnote(footnotes, notation = "number")
+}
+
+#' Between-arm change in a repeated location measurement
+#'
+#' @description
+#' Builds location-level visit means from a packed measurement construct, describes
+#' baseline, follow-up and paired change by arm and location (with a participant-mean
+#' overall row), compares participant changes between arms at each location with a
+#' two-sample t-test, and fits a multilevel model for the overall between-arm difference in
+#' change. Two model formulations are offered because an arm-and-time repeated-measures
+#' specification and a change-score specification are not identical: model = "repeated" fits
+#' the visit means with an arm-by-visit interaction and random intercepts for participant
+#' and location within participant; model = "change" fits the location changes with a
+#' participant random intercept. The formulation is recorded in the result. Works for any
+#' endpoint defined as in default_measurement_endpoints (durometer, OCT width, or another
+#' packed measurement family). Blinded results demonstrate pipeline behaviour only.
+#'
+#' @inheritParams location_measurement_table
+#' @inheritParams closed_participant_risk_analysis
+#' @param analytic analytic data set that must include study_id, enrolled, the readings
+#' construct, and treatment_arm unless blinded
+#' @param endpoint_label label used in the result
+#' @param model "repeated" or "change"
+#' @param location_test "student" (pooled variance) or "welch" for the location t-tests
+#' @param include_p_values add p-values to the contrasts (off unless agreed)
+#' @param conf_level confidence level
+#' @param reference_difference optional group-level efficacy reference (for example 6.4 DU)
+#' stated in the footnote
+#' @param return_fit when TRUE, returns a list with the result table (as result_table), the
+#' descriptive panel, the participant-level changes, the location contrasts, the model row,
+#' the variance components, the fitted model, the visit means, the assignment, the settings and
+#' pooled_change_sd (the arm-blind SD of participant change, a nuisance input for labelled blinded planning)
+#'
+#' @return An HTML table, or a list when return_fit = TRUE.
+#' @export
+#'
+#' @examples
+#' closed_location_change_analysis("Replace with Analytic Tibble", blinded = TRUE, unit = "DU", reference_difference = 6.4)
+closed_location_change_analysis <- function(analytic, readings_construct = "durometer_readings_set_1",
+                                            fields = c("set", "event", "position", "injection", "reading"),
+                                            value_field = "reading", endpoint_label = "Location measurement",
+                                            unit = "", baseline_event = "injection_1", followup_event = "3_month",
+                                            followup_label = "3 Month", set = "set_1", keep = NULL,
+                                            blinded = FALSE, assignment_map = NULL, seed = 20260922,
+                                            control_arm = "Group A", model = c("repeated", "change"),
+                                            location_test = c("student", "welch"), include_p_values = FALSE,
+                                            min_valid = 1, conf_level = 0.95, reference_difference = NULL,
+                                            return_fit = FALSE) {
+  analytic <- if_needed_generate_example_data(analytic, example_constructs = c("enrolled", readings_construct),
+      example_types = c("Boolean", measurement_example_type(fields, value_field)))
+  model <- match.arg(model)
+  location_test <- match.arg(location_test)
+  assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
+  long <- unpack_measurement_readings(analytic, readings_construct, fields, value_field) %>% keep_measurement_rows(keep)
+  vm <- measurement_visit_means(long, min_valid)
+  result <- location_change_fit(vm, assignment, endpoint_label, unit, baseline_event, followup_event, set, model,
+                                location_test, include_p_values, conf_level,
+                                settings = list(readings_construct = readings_construct, value_field = value_field,
+                                                keep = keep, min_valid = min_valid, reference_difference = reference_difference,
+                                                parse_failures = sum(long$parse_failed)))
+  result$result_table <- location_change_result_table(result, followup_label, reference_difference)
+  result$pooled_change_sd <- pooled_change_sd(result)
+  if (!return_fit) return(result$result_table)
+  result
+}
+
+#' Pre-post change in everyone who received the active treatment
+#'
+#' @description
+#' Supportive pre-versus-follow-up analysis in everyone who received the active treatment,
+#' using each participant's own treatment course: the set named in the course mapping
+#' (study_id, treatment_set), for example set 1 for initially treated participants and set 2
+#' for initially controlled participants who later received treatment. One person's control
+#' period is never an additional recipient. The course must be supplied: actual receipt is
+#' not random dummy assignment and cannot be fabricated. course_source = "synthetic" supplies a
+#' labelled synthetic course for development; "from_sets" or the study's own mapping belongs in
+#' the restricted report. Incomplete courses contribute their observed visits to the nested
+#' pre-post model; paired descriptive n is reported separately.
+#'
+#' @inheritParams location_measurement_table
+#' @param analytic analytic data set that must include study_id, enrolled and the readings
+#' constructs
+#' @param course data frame with study_id and treatment_set (and optionally course_source); ignored unless
+#' course_source = "supplied"
+#' @param course_source "supplied" uses course; "synthetic" draws a reproducible synthetic course from seed for
+#' development, restricted to the sets present in the export, and labels the output as synthetic; "from_sets"
+#' derives the course from the presence of the second-course readings construct (a participant with a second
+#' course was initially controlled), which reveals allocation and belongs only in the restricted report. A
+#' supplied or derived course stops with an error when it names a set whose readings are not exported
+#' @param seed seed for the synthetic course
+#' @param readings_constructs packed constructs for every course (absent ones are skipped)
+#' @param endpoint_label label used in the result
+#' @param conf_level confidence level
+#' @param return_fit when TRUE, returns a list with the result table (as result_table), the
+#' descriptive panel, the model row, the course counts and the settings
+#'
+#' @return An HTML table, or a list when return_fit = TRUE.
+#' @export
+#'
+#' @examples
+#' closed_pre_post_course_analysis("Replace with Analytic Tibble", course_source = "synthetic")
+closed_pre_post_course_analysis <- function(analytic, course = NULL, course_source = c("supplied", "synthetic", "from_sets"),
+                                            readings_constructs = c("durometer_readings_set_1", "durometer_readings_set_2"),
+                                            fields = c("set", "event", "position", "injection", "reading"),
+                                            value_field = "reading", endpoint_label = "Location measurement, all treated",
+                                            unit = "", baseline_event = "injection_1", followup_event = "3_month",
+                                            followup_label = "3 Month", keep = NULL, min_valid = 1, conf_level = 0.95,
+                                            seed = 20260922, return_fit = FALSE) {
+  analytic <- if_needed_generate_example_data(analytic, example_constructs = c("enrolled", readings_constructs[1]),
+      example_types = c("Boolean", measurement_example_type(fields, value_field)))
+  course_source <- match.arg(course_source)
+  long <- unpack_measurement_readings(analytic, readings_constructs, fields, value_field) %>% keep_measurement_rows(keep)
+  available_sets <- sort(unique(long$set))
+  if (course_source == "synthetic") {
+    # A synthetic course can only name sets that are in the export: with set 1 alone (second
+    # course not yet exported) every participant is a set-1 recipient for development.
+    course <- synthetic_treatment_course(analytic, seed, sets = available_sets)
+  } else if (course_source == "from_sets") {
+    course <- treatment_course_from_sets(analytic, readings_constructs[-1])
+  }
+  if (!is.data.frame(course) || !all(c("study_id", "treatment_set") %in% names(course))) {
+    stop("course must be a data frame with study_id and treatment_set (the measurement set that carried the active ",
+         "treatment for each participant), or course_source must be \"synthetic\" or \"from_sets\"")
+  }
+  # An actual course (supplied or derived) must be measurable: every set it names has to be in
+  # the export. Only the synthetic development course is allowed to run on a partial export.
+  missing_sets <- setdiff(unique(as.character(course$treatment_set)), available_sets)
+  if (course_source != "synthetic" && length(missing_sets) > 0) {
+    stop("the treatment course names measurement sets with no readings in the export (",
+         paste(missing_sets, collapse = ", "), "); export the second-course constructs (",
+         paste(readings_constructs[-1], collapse = ", "), ") before running the actual all-treated analysis, ",
+         "or use course_source = \"synthetic\" for development")
+  }
+  course <- course %>%
+    transmute(study_id = as.character(study_id), treatment_set = as.character(treatment_set),
+              course_source = if ("course_source" %in% names(course)) course_source else "supplied")
+  if (any(duplicated(course$study_id))) stop("course has duplicated study_id values")
+  synthetic <- any(grepl("synthetic", course$course_source))
+  vm <- measurement_visit_means(long, min_valid)
+  selected <- vm %>%
+    inner_join(course, by = "study_id") %>%
+    filter(set == treatment_set, event %in% c(baseline_event, followup_event))
+  change <- measurement_visit_change(selected, baseline_event, followup_event) %>% mutate(group = "All treated")
+  positions <- measurement_positions(change$position)
+  desc <- measurement_descriptives(change, positions, "group")
+  d <- selected %>%
+    filter(!is.na(mean)) %>%
+    mutate(visit = factor(ifelse(event == followup_event, "followup", "baseline"), levels = c("baseline", "followup")),
+           value = mean, study_id = factor(study_id), position = factor(position))
+  fit <- lme_contrast_fit(value ~ visit, ~ 1 | study_id/position, d, "visitfollowup", conf_level)
+  model <- tibble(formulation = "pre-post nested",
+                  description = "location visit mean ~ visit, random intercepts for participant and location within participant (nlme::lme, REML); contrast = follow-up minus pretreatment",
+                  estimate = fit$estimate, lower = fit$lower, upper = fit$upper, se = fit$se, df = fit$df, p_value = fit$p_value,
+                  n_participants = n_distinct(d$study_id), n_locations = nrow(distinct(d, study_id, position)),
+                  n_observations = nrow(d), status = fit$status, messages = paste(fit$messages, collapse = "; "))
+  course_counts <- course %>% count(treatment_set, name = "participants_selected")
+  caption <- if (synthetic) "Synthetic treatment-course selection (development output)" else "Actual treatment-course selection (restricted)"
+  out <- desc$descriptive %>% transmute(
+    Location = as.character(position),
+    `Pretreatment n; mean (SD)` = fmt_n_mean_sd(n_baseline, mean_baseline, sd_baseline),
+    !!paste0(followup_label, " n; mean (SD)") := fmt_n_mean_sd(n_followup, mean_followup, sd_followup),
+    `Paired n; change mean (SD)` = fmt_n_mean_sd(n_paired, mean_change, sd_change),
+    `Model change, follow-up minus pretreatment (95% CI)` = ifelse(position == "All locations (participant mean)",
+                                                                    fmt_estimate(model$estimate, model$lower, model$upper, 2), ""))
+  result_table <- kable(out, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    add_footnote(c(caption,
+                   paste0("Course selection source: ", paste(unique(course$course_source), collapse = "; "),
+                          ". Participants by selected set: ",
+                          paste(paste0(course_counts$treatment_set, ": ", course_counts$participants_selected), collapse = "; "),
+                          ". Sets in the export: ", paste(available_sets, collapse = ", "),
+                          if (length(available_sets) < 2) "; the second course will be included once its readings are exported" else "", "."),
+                   paste0("Units: ", unit, ". Location mean of usable readings at ", baseline_event, " and ", followup_event,
+                          " of the treatment course; the pretreatment visit of the treatment course, not the control period, ",
+                          "for initially controlled participants."),
+                   paste0(model$description, "; participants ", model$n_participants, ", locations ", model$n_locations,
+                          ", observations ", model$n_observations, "; status: ", model$status, ".")),
+                 notation = "number")
+  if (!return_fit) return(result_table)
+  list(result_table = result_table, endpoint = endpoint_label, unit = unit, caption = caption, synthetic_course = synthetic,
+       course_source = paste(unique(course$course_source), collapse = "; "),
+       population = "all participants who received the active treatment, measured in their own treatment course",
+       contrast = "follow-up minus pretreatment (within participant)", method = model$description,
+       descriptive = desc$descriptive, participant = desc$participant, model = model, model_fit = fit$fit,
+       variance_components = fit$variance, change = change, course_counts = course_counts,
+       participants_without_course_data = setdiff(course$study_id, unique(selected$study_id)),
+       settings = list(readings_constructs = readings_constructs, value_field = value_field, baseline_event = baseline_event,
+                       followup_event = followup_event, keep = keep, min_valid = min_valid, conf_level = conf_level),
+       status = fit$status)
+}
+
+# ---- Closed patient-reported outcomes ---------------------------------------------------------
+
+#' Patient Reported Outcomes Summary Table by Treatment Arm
+#'
+#' @description
+#' Closed version of patient_reported_outcomes_table: observed n, mean (SD) and missing n
+#' per instrument and visit for each treatment_arm and overall. The model contrasts come
+#' from closed_gee_visit_contrast_analysis.
+#'
+#' @inheritParams patient_reported_outcomes_table
+#' @param analytic analytic data set that must include enrolled, study_id, treatment_arm
+#' and the score constructs
+#'
+#' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
+#' built from the sorted enrolled IDs and seed (the same map every closed function builds)
+#' @param seed seed for the dummy assignment
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_patient_reported_outcomes_table("Replace with Analytic Tibble", blinded = TRUE)
+closed_patient_reported_outcomes_table <- function(analytic, score_families = default_score_families(),
+                                                   promis_construct = "promis_data", blinded = FALSE, seed = 20260922) {
+  constructs <- unlist(score_families, use.names = FALSE)
+  analytic <- if_needed_generate_example_data(
+    analytic, example_constructs = c("enrolled", "treatment_arm", constructs, promis_construct),
+    example_types = c("Boolean", "TreatmentArm", rep("Number", length(constructs)),
+                      if (!is.null(promis_construct)) promis_data_example_type))
+  confirm_stability_of_related_visual('patient_reported_outcomes_table', '62d3977e920cf91b2772463069bcd9d2')
+  if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
+  arms <- closed_arm_levels(analytic)
+  long <- unpack_score_families(analytic, score_families, promis_construct = promis_construct) %>%
+    left_join(analytic %>% transmute(study_id = as.character(study_id), treatment_arm), by = "study_id")
+  df <- analytic %>% filter(enrolled %in% TRUE)
+  fmt <- function(l, n_tot) score_family_rows(l, n_tot) %>% transmute(instrument, visit, val = paste0(n, "; ", msd, "; ", missing))
+  joined <- fmt(long, nrow(df)) %>% rename(Total = val) %>%
+    left_join(fmt(long %>% filter(treatment_arm %in% arms[1]), sum(df$treatment_arm %in% arms[1])) %>% rename(A = val),
+              by = c("instrument", "visit")) %>%
+    left_join(fmt(long %>% filter(treatment_arm %in% arms[2]), sum(df$treatment_arm %in% arms[2])) %>% rename(B = val),
+              by = c("instrument", "visit"))
+  table_raw <- bind_rows(lapply(levels(joined$instrument), function(inst) {
+    r <- joined %>% filter(instrument == inst)
+    bind_rows(tibble(Construct = inst, A = "", B = "", Total = "", Is_Header = TRUE),
+              r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), A, B, Total, Is_Header = FALSE))
+  }))
+  kable_indented_rows(table_raw, paste0(closed_column_names("Instrument / visit", df, arms),
+                                        c("", rep(": n; mean (SD); missing", 3))))
+}
+
+#' GEE fit with visit-specific arm contrasts
+#' @noRd
+gee_visit_fit <- function(d, corstr, family, contrast_type, conf_level, visits) {
+  n_part <- n_distinct(d$study_id)
+  empty <- function(status) tibble(visit = visits, estimate = NA_real_, lower = NA_real_, upper = NA_real_, se = NA_real_,
+                                   p_value = NA_real_, n_participants = n_part, n_observations = nrow(d), status = status)
+  if (!requireNamespace("geepack", quietly = TRUE)) return(empty("geepack not installed; GEE not fitted"))
+  d <- d %>% arrange(study_id, visit) %>% mutate(id = as.integer(factor(study_id)))
+  messages <- character()
+  fit <- withCallingHandlers(
+    tryCatch(geepack::geeglm(score ~ arm_num * visit, id = id, data = d, family = family, corstr = corstr), error = function(e) e),
+    warning = function(w) { messages <<- c(messages, conditionMessage(w)); invokeRestart("muffleWarning") })
+  if (inherits(fit, "error")) return(empty(paste("GEE fit failed:", conditionMessage(fit))))
+  beta <- stats::coef(fit)
+  V <- fit$geese$vbeta
+  rownames(V) <- colnames(V) <- names(beta)
+  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  bind_rows(lapply(visits, function(v) {
+    inter <- paste0("arm_numtreatment:visit", v)
+    L <- setNames(rep(0, length(beta)), names(beta))
+    if (contrast_type == "visit_difference") L["arm_numtreatment"] <- 1
+    if (!inter %in% names(L)) return(empty(paste0("interaction term for ", v, " not estimable")) %>% filter(visit == v))
+    L[inter] <- 1
+    if (any(is.na(beta[L != 0]))) return(empty("coefficient not estimable (aliased)") %>% filter(visit == v))
+    est <- sum(L * beta)
+    se <- suppressWarnings(sqrt(as.numeric(t(L) %*% V %*% L)))
+    if (is.na(se) || !is.finite(se)) {
+      return(tibble(visit = v, estimate = est, lower = NA_real_, upper = NA_real_, se = NA_real_, p_value = NA_real_,
+                    n_participants = n_part, n_observations = nrow(d),
+                    status = "sandwich variance not estimable (too few clusters); interval not reported"))
+    }
+    tibble(visit = v, estimate = est, lower = est - z * se, upper = est + z * se, se = se,
+           p_value = 2 * stats::pnorm(-abs(est / se)), n_participants = n_part, n_observations = nrow(d),
+           status = if (length(messages) > 0) paste("converged with warnings:", paste(messages, collapse = "; ")) else "converged")
+  }))
+}
+
+#' Patient-reported outcomes by arm with GEE visit contrasts
+#'
+#' @description
+#' Describes each score family by visit and arm (observed n, mean (SD), missing n) and fits
+#' a generalized estimating equation with categorical visit, arm and their interaction,
+#' participant as the cluster, via geepack with a robust sandwich variance and Wald normal
+#' intervals. The reported arm contrast at each follow-up visit is either the between-arm
+#' difference at that visit (contrast = "visit_difference": arm main effect plus interaction)
+#' or the between-arm difference in change from baseline (contrast = "change_from_baseline":
+#' interaction alone). Family, link, working correlation and the absence of a small-sample
+#' correction are explicit arguments and are recorded. With few participants the fit can
+#' fail or the sandwich variance can be unreliable; the status column says so and the
+#' descriptive panel stands on its own.
+#'
+#' @inheritParams patient_reported_outcomes_table
+#' @inheritParams closed_participant_risk_analysis
+#' @param analytic analytic data set that must include study_id, enrolled, the score
+#' constructs (and the packed PROMIS-29 construct when present), and treatment_arm unless blinded
+#' @param contrast "visit_difference" or "change_from_baseline"
+#' @param corstr working correlation for geepack
+#' @param family GLM family object; gaussian identity by default
+#' @param conf_level confidence level
+#' @param return_fit when TRUE, returns a list with the result table (as result_table), the
+#' descriptive panel, the pooled panel, the contrasts, the long data, the assignment and the
+#' settings
+#'
+#' @return An HTML table, or a list when return_fit = TRUE.
+#' @export
+#'
+#' @examples
+#' closed_gee_visit_contrast_analysis("Replace with Analytic Tibble", blinded = TRUE)
+closed_gee_visit_contrast_analysis <- function(analytic, score_families = default_score_families(),
+                                               promis_construct = "promis_data", blinded = FALSE,
+                                               assignment_map = NULL, seed = 20260922, control_arm = "Group A",
+                                               contrast = c("visit_difference", "change_from_baseline"),
+                                               corstr = "exchangeable", family = stats::gaussian(), conf_level = 0.95,
+                                               return_fit = FALSE) {
+  analytic <- if_needed_generate_example_data(
+    analytic, example_constructs = c("enrolled", unlist(score_families, use.names = FALSE), promis_construct),
+    example_types = c("Boolean", rep("Number", length(unlist(score_families))),
+                      if (!is.null(promis_construct)) promis_data_example_type))
+  contrast <- match.arg(contrast)
+  assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
+  long <- unpack_score_families(analytic, score_families, promis_construct = promis_construct)
+  visits <- setdiff(levels(long$visit), levels(long$visit)[1])
+  n_enrolled <- length(enrolled_study_ids(analytic))
+  d_all <- long %>%
+    inner_join(assignment$map, by = "study_id") %>%
+    mutate(arm_num = factor(ifelse(treatment_arm == assignment$treatment_arm, "treatment", "control"),
+                            levels = c("control", "treatment")))
+  arm_n <- assignment$map %>% count(treatment_arm, name = "arm_total")
+  descriptive <- d_all %>%
+    group_by(instrument, visit, treatment_arm) %>%
+    summarise(n = sum(!is.na(score)), mean = if (any(!is.na(score))) mean(score, na.rm = TRUE) else NA_real_,
+              sd = stats::sd(score, na.rm = TRUE), .groups = "drop") %>%
+    left_join(arm_n, by = "treatment_arm") %>%
+    mutate(missing = arm_total - n) %>%
+    select(-arm_total)
+  pooled <- d_all %>%
+    group_by(instrument, visit) %>%
+    summarise(n = sum(!is.na(score)), mean = if (any(!is.na(score))) mean(score, na.rm = TRUE) else NA_real_,
+              sd = stats::sd(score, na.rm = TRUE), .groups = "drop") %>%
+    mutate(missing = n_enrolled - n)
+  contrasts <- bind_rows(lapply(levels(long$instrument), function(inst) {
+    d <- d_all %>% filter(instrument == inst, !is.na(score)) %>% droplevels()
+    if (nrow(d) == 0) {
+      return(tibble(instrument = inst, visit = visits, estimate = NA_real_, lower = NA_real_, upper = NA_real_,
+                    se = NA_real_, p_value = NA_real_, n_participants = 0L, n_observations = 0L, status = "no observed scores"))
+    }
+    d$visit <- factor(as.character(d$visit), levels = levels(long$visit))
+    gee_visit_fit(d, corstr, family, contrast, conf_level, visits) %>% mutate(instrument = inst, .before = 1)
+  }))
+  a <- assignment
+  desc_cells <- descriptive %>%
+    mutate(cell = ifelse(n > 0, paste0(n, "; ", fmt_number(mean, 1), " (", fmt_number(sd, 1), "); ", missing),
+                         paste0("0; -; ", missing))) %>%
+    select(instrument, visit, treatment_arm, cell) %>%
+    pivot_wider(names_from = treatment_arm, values_from = cell)
+  con <- contrasts %>%
+    mutate(visit = factor(visit, levels = levels(desc_cells$visit)),
+           instrument = factor(instrument, levels = levels(desc_cells$instrument)),
+           est = ifelse(grepl("^converged", status), fmt_estimate(estimate, lower, upper, 1), paste0("Not estimated [", status, "]"))) %>%
+    select(instrument, visit, est)
+  desc_cells <- desc_cells %>% left_join(con, by = c("instrument", "visit")) %>% mutate(est = replace_na(est, ""))
+  table_raw <- bind_rows(lapply(levels(desc_cells$instrument), function(inst) {
+    r <- desc_cells %>% filter(instrument == inst) %>% arrange(visit)
+    bind_rows(tibble(Construct = inst, T = "", C = "", E = "", Is_Header = TRUE),
+              r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), T = .data[[a$treatment_arm]],
+                              C = .data[[a$control_arm]], E = est, Is_Header = FALSE))
+  }))
+  method <- paste0("GEE (geepack::geeglm), ", family$family, " family, ", family$link, " link, ", corstr,
+                   " working correlation, robust sandwich SE, Wald normal interval, no small-sample correction")
+  outcome_definition <- paste0("instrument score per visit as exported; contrast = ",
+                               ifelse(contrast == "visit_difference", "between-arm difference at the visit",
+                                      "between-arm difference in change from baseline"))
+  missing_families <- attr(long, "missing_families")
+  result_table <- kable_indented_rows(table_raw, c("Instrument / visit", paste0(a$treatment_arm, ": n; mean (SD); missing"),
+                                                  paste0(a$control_arm, ": n; mean (SD); missing"),
+                                                  paste0("GEE contrast, ", a$contrast, " (95% CI)"))) %>%
+    add_footnote(c(assignment_caption(a), method, outcome_definition,
+                   if (length(missing_families) > 0) paste0("Not in export: ", paste(missing_families, collapse = ", "), ".") else NULL),
+                 notation = "number")
+  if (!return_fit) return(result_table)
+  list(result_table = result_table, endpoint = "Patient-reported outcomes", population = "enrolled participants with an observed score",
+       outcome_definition = outcome_definition, assignment = assignment, contrast = assignment$contrast, method = method,
+       descriptive = descriptive, pooled = pooled, contrasts = contrasts, long = d_all, missing_families = missing_families,
+       settings = list(contrast = contrast, corstr = corstr, family = family$family, link = family$link, conf_level = conf_level),
+       status = if (all(grepl("^converged", contrasts$status))) "ok" else "one or more instruments did not fit")
+}
+
+# ---- Closed missing-data sensitivity ----------------------------------------------------------
+
+#' Missing-data sensitivity for repeated location measurements
+#'
+#' @description
+#' Re-runs the between-arm change analysis of each measurement endpoint under alternative
+#' handling of missing follow-up location means and reports every estimate beside the
+#' primary estimate. Rows per endpoint: the primary analysis (all observed visit means, mixed
+#' model under a missing-at-random working assumption), the complete-pairs analysis
+#' (locations with both visits), and, when delta_values is supplied, delta-adjusted single
+#' imputation in which each missing follow-up location mean is set to the participant's
+#' baseline mean plus the pooled observed mean change plus delta (a stated departure from
+#' missing at random). Delta values are explicit configuration and no missing-at-random test
+#' is reported.
+#'
+#' @inheritParams closed_location_change_analysis
+#' @param endpoints named list of endpoint definitions from default_measurement_endpoints
+#' @param delta_values delta departures in outcome units: a numeric vector applied to every
+#' endpoint, or a named list with an element per endpoint; NULL runs only the primary and
+#' complete-pairs rows
+#' @param return_fit when TRUE, returns a list with the result table (as result_table), the
+#' results tibble, the assignment and the settings
+#'
+#' @return An HTML table, or a list when return_fit = TRUE.
+#' @export
+#'
+#' @examples
+#' closed_missing_data_sensitivity("Replace with Analytic Tibble", blinded = TRUE, delta_values = list(durometer = c(-6.4, 0, 6.4)))
+closed_missing_data_sensitivity <- function(analytic, endpoints = default_measurement_endpoints(), delta_values = NULL,
+                                            blinded = FALSE, assignment_map = NULL, seed = 20260922, control_arm = "Group A",
+                                            model = c("repeated", "change"), baseline_event = "injection_1",
+                                            followup_event = "3_month", set = "set_1", min_valid = 1, conf_level = 0.95,
+                                            return_fit = FALSE) {
+  analytic <- if_needed_generate_example_data(
+      analytic, example_constructs = c("enrolled", vapply(endpoints, function(ep) ep$readings_constructs[1], character(1))),
+      example_types = c("Boolean", vapply(endpoints, function(ep) measurement_example_type(ep$fields, ep$value_field), character(1))))
+  model <- match.arg(model)
+  assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
+  results <- bind_rows(lapply(names(endpoints), function(name) {
+    ep <- endpoints[[name]]
+    present <- intersect(ep$readings_constructs[1], names(analytic))
+    if (length(present) == 0) return(NULL)
+    vm <- measurement_visit_means(unpack_measurement_readings(analytic, present, ep$fields, ep$value_field), min_valid)
+    run <- function(vm_in, analysis, assumption, imputed_n = 0L) {
+      r <- location_change_fit(vm_in, assignment, ep$label, ep$unit, baseline_event, followup_event, set, model,
+                               "student", FALSE, conf_level)
+      tibble(endpoint = ep$label, analysis = analysis, assumption = assumption, included_n = r$model$n_participants,
+             included_locations = r$model$n_locations, imputed_n = imputed_n, estimate = r$model$estimate,
+             lower = r$model$lower, upper = r$model$upper, status = r$model$status)
+    }
+    primary <- run(vm, "Primary", paste0("all observed visit means; ", model, " mixed model (missing at random working assumption)"))
+    ch <- measurement_visit_change(vm %>% filter(set == !!set), baseline_event, followup_event)
+    vm_cc <- vm %>% semi_join(ch %>% filter(paired), by = c("study_id", "set", "position"))
+    out <- bind_rows(primary, run(vm_cc, "Complete pairs", "locations with both baseline and follow-up means only"))
+    deltas <- if (is.list(delta_values)) delta_values[[name]] else delta_values
+    if (!is.null(deltas)) {
+      pooled_change <- mean(ch$change, na.rm = TRUE)
+      to_impute <- ch %>% filter(!is.na(baseline), is.na(followup))
+      for (delta in deltas) {
+        imputed <- to_impute %>%
+          transmute(study_id, set, event = followup_event, position, n_total = 0L, n_valid = 0L, n_failed = 0L,
+                    mean = baseline + pooled_change + delta, available = TRUE)
+        out <- bind_rows(out, run(bind_rows(vm, imputed), paste0("Delta-adjusted imputation (delta = ", delta, ")"),
+                                  paste0("missing follow-up = baseline + pooled observed change + ", delta,
+                                         " (departure from missing at random)"), imputed_n = nrow(imputed)))
+      }
+    }
+    out %>% mutate(difference_from_primary = estimate - primary$estimate)
+  }))
+  out <- results %>% transmute(
+    Endpoint = endpoint, Analysis = analysis, Assumption = assumption,
+    `Included participants / locations` = paste0(included_n, " / ", included_locations), `Imputed locations` = imputed_n,
+    `Estimate (95% CI)` = fmt_estimate(estimate, lower, upper, 2),
+    `Difference from primary` = fmt_number(difference_from_primary), Status = status)
+  result_table <- kable(out, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    collapse_rows(columns = 1, valign = "top") %>%
+    add_footnote(c(assignment_caption(assignment),
+                   "Mixed model re-fitted under each assumption; delta-adjusted single imputation when delta values are supplied.",
+                   "Missing at random is a working assumption of the primary mixed model; it is not established by a statistical test."),
+                 notation = "number")
+  if (!return_fit) return(result_table)
+  list(result_table = result_table, results = results, assignment = assignment,
+       settings = list(delta_values = delta_values, model = model, baseline_event = baseline_event,
+                       followup_event = followup_event, set = set, min_valid = min_valid, conf_level = conf_level))
+}
+
+# ---- Closed availability and qualitative review ------------------------------------------------
+
+#' Follow-up and Endpoint Availability Table by Treatment Arm
+#'
+#' @description
+#' Closed version of endpoint_availability_table: per visit and endpoint, the counts
+#' expected / visit completed / outcome available / expected but missing / not expected /
+#' paired with baseline for each treatment_arm and overall.
+#'
+#' @inheritParams endpoint_availability_table
+#' @param analytic analytic data set that must include study_id, enrolled, treatment_arm,
+#' followup_data and the measurement and score constructs
+#'
+#' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
+#' built from the sorted enrolled IDs and seed (the same map every closed function builds)
+#' @param seed seed for the dummy assignment
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_endpoint_availability_table("Replace with Analytic Tibble", blinded = TRUE)
+closed_endpoint_availability_table <- function(analytic, measurements = default_measurement_endpoints(),
+                                               score_families = default_score_families(),
+                                               periods = c("1 Month" = "1_month", "2 Month" = "2_month", "3 Month" = "3_month"),
+                                               followup_form = "Overall", promis_construct = "promis_data",
+                                               blinded = FALSE, seed = 20260922) {
+  analytic <- if_needed_generate_example_data(analytic, example_constructs = c("treatment_arm", availability_example_constructs(measurements, score_families, promis_construct)),
+      example_types = c("TreatmentArm", availability_example_types(measurements, score_families, promis_construct)))
+  confirm_stability_of_related_visual('endpoint_availability_table', 'd7da2ce7c6c0cc8b4208dd1c212b4c2d')
+  if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
+  arms <- closed_arm_levels(analytic)
+  ids <- enrolled_study_ids(analytic)
+  arm_of <- analytic %>% transmute(study_id = as.character(study_id), treatment_arm)
+  fmt <- function(r) paste0(r$expected, " / ", r$visit_completed, " / ", r$outcome_available, " / ", r$outcome_missing, " / ",
+                            r$not_expected, " / ", r$paired_with_baseline)
+  rows_for <- function(arm) endpoint_availability_rows(analytic, ids[ids %in% arm_of$study_id[arm_of$treatment_arm %in% arm]],
+                                                       measurements, score_families, periods, followup_form, promis_construct)
+  a <- rows_for(arms[1])
+  b <- rows_for(arms[2])
+  tot <- endpoint_availability_rows(analytic, ids, measurements, score_families, periods, followup_form, promis_construct)
+  out <- tibble(Visit = tot$period, Endpoint = tot$endpoint, A = fmt(a), B = fmt(b), Total = fmt(tot))
+  kable(out, format = "html", align = "l",
+        col.names = c("Visit", "Endpoint", paste0(arms[1], " (n = ", a$enrolled[1], ")"), paste0(arms[2], " (n = ", b$enrolled[1], ")"),
+                      paste0("Overall (n = ", tot$enrolled[1], ")"))) %>%
+    add_header_above(c(" " = 2, "expected / visit completed / outcome available / expected but missing / not expected / paired with baseline" = 3)) %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    collapse_rows(columns = 1, valign = "top")
+}
+
+#' Qualitative Review Summary Table by Treatment Arm
+#'
+#' @description
+#' Closed version of qualitative_review_summary: reviewer findings per visit for each
+#' treatment_arm.
+#'
+#' @inheritParams qualitative_review_summary
+#' @param analytic analytic data set that must include study_id, enrolled, treatment_arm
+#' and the review construct
+#'
+#' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
+#' built from the sorted enrolled IDs and seed (the same map every closed function builds)
+#' @param seed seed for the dummy assignment
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' closed_qualitative_review_summary("Replace with Analytic Tibble", blinded = TRUE)
+closed_qualitative_review_summary <- function(analytic, review_construct = "appearance_data",
+                                              fields = c("period", "visit", "assessment_date", "location", "image_reference",
+                                                         "quality", "redness", "scaling", "other_findings", "reviewer"),
+                                              features = c("redness", "scaling", "other_findings"),
+                                              quality_field = "quality", visit_field = "visit",
+                                               blinded = FALSE, seed = 20260922) {
+  analytic <- if_needed_generate_example_data(analytic, example_constructs = c("enrolled", "treatment_arm", review_construct),
+      example_types = c("Boolean", "TreatmentArm", review_example_type(fields, features, quality_field, visit_field)))
+  confirm_stability_of_related_visual('qualitative_review_summary', '8d231e6f8086c620129f8d9e191eb7be')
+  if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
+  if (!review_construct %in% names(analytic)) {
+    out <- tibble(Status = paste0("construct '", review_construct, "' not present in the export; add the packed review index (",
+                                  paste(fields, collapse = ", "), ") to produce this summary"))
+    return(kable(out, format = "html", align = "l") %>% kable_styling("striped", full_width = FALSE, position = "left"))
+  }
+  arms <- closed_arm_levels(analytic)
+  with_arm <- analytic %>% mutate(study_id = as.character(study_id)) %>% filter(treatment_arm %in% arms)
+  review <- qualitative_review_data(with_arm, review_construct, fields, features, quality_field, visit_field)
+  long <- review$long %>% left_join(with_arm %>% transmute(study_id, treatment_arm), by = "study_id")
+  grouped <- list(
+    long = long,
+    table = bind_rows(lapply(features, function(feature) {
+      long %>% mutate(level = replace_na(.data[[feature]], "Not recorded")) %>%
+        group_by(treatment_arm, across(all_of(visit_field)), level) %>%
+        summarise(images = n(), participants = n_distinct(study_id), .groups = "drop") %>%
+        mutate(feature = feature, .before = 1)
+    })),
+    totals = long %>% group_by(treatment_arm, across(all_of(visit_field))) %>%
+      summarise(images_reviewed = n(), participants_reviewed = n_distinct(study_id),
+                images_adequate = sum(.data[[quality_field]] %in% "Adequate"), .groups = "drop"))
+  qualitative_review_table(grouped, visit_field, group_col = "treatment_arm",
+                           footnotes = c("Reviewer findings per image, counted by visit and treatment arm; participants may contribute several locations."))
+}

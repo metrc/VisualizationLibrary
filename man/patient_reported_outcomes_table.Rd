@@ -4,22 +4,31 @@
 \alias{patient_reported_outcomes_table}
 \title{Patient Reported Outcomes Summary Table}
 \usage{
-patient_reported_outcomes_table(analytic)
+patient_reported_outcomes_table(
+  analytic,
+  score_families = default_score_families(),
+  promis_construct = "promis_data"
+)
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include: enrolled, 
-dlqi_baseline, dlqi_1mo, dlqi_2mo, dlqi_3mo, 
-peq_rl_baseline, peq_rl_1mo, peq_rl_2mo, peq_rl_3mo, 
-plus_m_baseline, plus_m_1mo, plus_m_2mo, plus_m_3mo.}
+\item{analytic}{analytic data set that must include enrolled, study_id and the score
+constructs named in score_families}
+
+\item{score_families}{named list from default_score_families}
+
+\item{promis_construct}{packed PROMIS-29 construct (visit, domain, items_answered,
+raw_score, t_score); NULL to omit}
 }
 \value{
-An HTML table styled with kableExtra.
+An HTML table.
 }
 \description{
-Visualizes Patient Reported Outcomes (DLQI, PEQ, PLUS-M) across multiple 
-time points (Pre-injection, 1 Month, 2 Months, 3 Months) for enrolled subjects.
+Each score family at baseline and one, two and three months for enrolled participants:
+observed n, mean (SD) and missing n. Scores are used as exported. The PROMIS-29 domains
+come from the packed promis_construct (T-scores for the seven scored domains, the 0-10
+rating for pain intensity) when it is in the export. Families whose constructs are not in
+the export are listed in the footnote instead of being dropped silently.
 }
 \examples{
-\dontrun{
-}
+patient_reported_outcomes_table("Replace with Analytic Tibble")
 }

@@ -706,8 +706,8 @@ closed_risk_difference_posterior_figure <- function(survival_result) {
 #' return_fit = TRUE result of closed_survival_analysis_bayes_poisson, so the
 #' forest is built from the same fits as the tables it summarizes; no additional
 #' model runs. Points are posterior medians and lines are 95% credible
-#' intervals; a vertical line marks no difference, and — only when show_margin
-#' is TRUE — a second line marks the noninferiority margin read from the first
+#' intervals; a vertical line marks no difference, and, only when show_margin
+#' is TRUE, a second line marks the noninferiority margin read from the first
 #' entry's settings. Per the 8/30 statistician direction, the margin belongs
 #' only to the primary-and-supportive figure (manuscript Figure 2); subgroup
 #' and secondary-outcome forests show the zero line alone, and no
@@ -824,4 +824,77 @@ closed_mean_difference_forest <- function(analyses) {
                      base64enc::base64encode(fig_path))
   file.remove(fig_path)
   return(img_tag)
+}
+
+
+#' Participant Trajectory Figure by Treatment Arm
+#'
+#' @description
+#' Closed version of trajectory_figure: participant values by visit coloured by treatment arm
+#' and labelled with the assignment mode.
+#'
+#' @inheritParams trajectory_figure
+#' @inheritParams closed_participant_risk_analysis
+#'
+#' @return An HTML img tag with the figure embedded as a data URI.
+#' @export
+#'
+#' @examples
+#' closed_trajectory_figure("Replace with Analytic Tibble", blinded = TRUE)
+closed_trajectory_figure <- function(analytic, readings_construct = "durometer_readings_set_1",
+                                     fields = c("set", "event", "position", "injection", "reading"), value_field = "reading",
+                                     score_family = NULL, score_families = default_score_families(),
+                                     promis_construct = "promis_data", blinded = FALSE, assignment_map = NULL,
+                                     seed = 20260922, control_arm = "Group A") {
+  analytic <- if_needed_generate_example_data(
+    analytic, example_constructs = c("enrolled", readings_construct, unlist(score_families, use.names = FALSE), promis_construct),
+    example_types = c("Boolean", measurement_example_type(fields, value_field), rep("Number", length(unlist(score_families))),
+                      if (!is.null(promis_construct)) promis_data_example_type))
+  confirm_stability_of_related_visual('trajectory_figure', 'b4af05d09f6cb925d48d06bdf32c9cc1')
+  assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
+  td <- trajectory_data(analytic, readings_construct, fields, value_field, score_family, score_families, promis_construct)
+  d <- td$data %>% inner_join(assignment$map, by = "study_id")
+  trajectory_plot(d, td$ylab, assignment_caption(assignment))
+}
+
+#' Forest figure of between-arm differences in change
+#'
+#' @description
+#' Forest figure of the location-specific two-sample differences and the mixed-model overall
+#' difference in change, with 95% intervals, for a set of location change analyses. Each
+#' entry carries a return_fit = TRUE result of closed_location_change_analysis, so the
+#' figure is built from the same fits as the tables it summarizes. A vertical line marks no
+#' difference. The caption belongs to the calling report via VisualizationTools::figure();
+#' the assignment mode of the fits is drawn beneath the plot.
+#'
+#' @param analyses list of entries, each a list with number (the analysis's table number),
+#' label (its display name) and result (its return_fit = TRUE result of
+#' closed_location_change_analysis)
+#'
+#' @return An HTML img tag with the figure embedded as a data URI, or invisible NULL when
+#' analyses is empty.
+#' @export
+#'
+#' @examples
+#' fit <- closed_location_change_analysis("Replace with Analytic Tibble", blinded = TRUE, return_fit = TRUE)
+#' closed_effect_forest(list(list(number = "4", label = "Skin firmness", result = fit)))
+closed_effect_forest <- function(analyses) {
+  if (length(analyses) == 0) return(invisible(NULL))
+  fr <- bind_rows(lapply(analyses, function(a) {
+    facet <- sprintf("%s   (%s)", a$label, a$number)
+    bind_rows(a$result$contrasts %>% transmute(facet = facet, label = paste0(position, " (t-test)"), estimate, lower, upper),
+              a$result$model %>% transmute(facet = facet, label = "Overall (mixed model)", estimate, lower, upper))
+  })) %>% filter(!is.na(estimate))
+  fr$label <- factor(fr$label, levels = rev(unique(fr$label)))
+  fr$facet <- factor(fr$facet, levels = unique(fr$facet))
+  captions <- unique(vapply(analyses, function(a) a$result$assignment$caption, character(1)))
+  p <- ggplot2::ggplot(fr, ggplot2::aes(x = estimate, y = label)) +
+    ggplot2::geom_vline(xintercept = 0, color = "#8A93A0", linewidth = 0.4) +
+    ggplot2::geom_segment(ggplot2::aes(x = lower, xend = upper, yend = label), color = "#17365D", linewidth = 1) +
+    ggplot2::geom_point(color = "#17365D", size = 2.2) +
+    ggplot2::facet_wrap(~ facet, scales = "free_x", ncol = 1) +
+    ggplot2::labs(x = paste0("Difference in change, ", analyses[[1]]$result$assignment$contrast, " (95% CI)"), y = NULL,
+                  caption = paste(captions, collapse = "; ")) +
+    ggplot2::theme_minimal(base_size = 12)
+  ggplot_img_tag(p, 8, 1.5 + 0.45 * nrow(fr), "Forest plot of between-arm differences in change")
 }

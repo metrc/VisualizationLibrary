@@ -2913,3 +2913,81 @@ adherence_by_id <- function(analytic, random_sample = NULL, facilitycodes = NULL
 }
 
 
+
+
+#' Embed a ggplot as a base64 PNG image tag
+#' @noRd
+ggplot_img_tag <- function(plot, width, height, alt) {
+  fig_path <- tempfile(fileext = ".png")
+  ggplot2::ggsave(fig_path, plot, width = width, height = height, dpi = 150, bg = "white", limitsize = FALSE)
+  tag <- sprintf('<img src="data:image/png;base64,%s" style="max-width:100%%" alt="%s"/>',
+                 base64enc::base64encode(fig_path), alt)
+  file.remove(fig_path)
+  tag
+}
+
+#' Long visit values for a trajectory figure
+#' @noRd
+trajectory_data <- function(analytic, readings_construct, fields, value_field, score_family, score_families,
+                            promis_construct = "promis_data") {
+  event_levels <- c("injection_1", "injection_2", "2_week", "1_month", "2_month", "3_month")
+  if (!is.null(score_family)) {
+    d <- unpack_score_families(analytic, score_families, promis_construct = promis_construct) %>%
+      filter(instrument == !!score_family, !is.na(score)) %>%
+      transmute(study_id, set = "score", visit = as.character(visit), value = score, position = as.character(instrument))
+    list(data = d, ylab = paste0(score_family, " score"))
+  } else {
+    d <- measurement_visit_means(unpack_measurement_readings(analytic, readings_construct, fields, value_field)) %>%
+      filter(available) %>%
+      transmute(study_id, set, visit = factor(event, levels = unique(c(event_levels, event))), value = mean, position)
+    list(data = d, ylab = paste0("Location mean ", value_field))
+  }
+}
+
+#' Draw participant trajectories
+#' @noRd
+trajectory_plot <- function(d, ylab, caption) {
+  p <- ggplot2::ggplot(d, ggplot2::aes(x = visit, y = value, group = study_id, color = treatment_arm)) +
+    ggplot2::geom_line(alpha = 0.6) + ggplot2::geom_point(size = 1.4) +
+    ggplot2::facet_grid(set ~ position) +
+    ggplot2::labs(x = "Visit", y = ylab, color = NULL, caption = caption) +
+    ggplot2::theme_minimal(base_size = 11) +
+    ggplot2::theme(axis.text.x = ggplot2::element_text(angle = 45, hjust = 1), legend.position = "bottom")
+  ggplot_img_tag(p, 10, 3 + 2.2 * n_distinct(d$set), "Participant trajectories by visit")
+}
+
+#' Participant Trajectory Figure
+#'
+#' @description
+#' Pooled participant values by visit from a packed measurement construct (one facet per
+#' location and set) or from a score family, drawn from the same long tables as the
+#' descriptive tables. Visits and sets are distinguished by facets. No treatment assignment
+#' is used; see closed_trajectory_figure for the by-arm version.
+#'
+#' @param analytic analytic data set that must include study_id, enrolled and either the
+#' readings construct or the score constructs
+#' @param readings_construct packed measurement construct (ignored when score_family is set)
+#' @param fields packed field names, including set, event and position
+#' @param value_field the packed field holding the measurement
+#' @param score_family optional name of a score family (or PROMIS-29 domain label) to plot instead
+#' @param score_families named list from default_score_families
+#' @param promis_construct packed PROMIS-29 construct whose domains can be named in score_family; NULL to omit
+#'
+#' @return An HTML img tag with the figure embedded as a data URI.
+#' @export
+#'
+#' @examples
+#' trajectory_figure("Replace with Analytic Tibble")
+#' trajectory_figure("Replace with Analytic Tibble", score_family = "DLQI")
+trajectory_figure <- function(analytic, readings_construct = "durometer_readings_set_1",
+                              fields = c("set", "event", "position", "injection", "reading"), value_field = "reading",
+                              score_family = NULL, score_families = default_score_families(),
+                              promis_construct = "promis_data") {
+  analytic <- if_needed_generate_example_data(
+    analytic, example_constructs = c("enrolled", readings_construct, unlist(score_families, use.names = FALSE), promis_construct),
+    example_types = c("Boolean", measurement_example_type(fields, value_field), rep("Number", length(unlist(score_families))),
+                      if (!is.null(promis_construct)) promis_data_example_type))
+  td <- trajectory_data(analytic, readings_construct, fields, value_field, score_family, score_families, promis_construct)
+  d <- td$data %>% mutate(treatment_arm = "All participants")
+  trajectory_plot(d, td$ylab, "Open display: pooled participants, no treatment assignment used")
+}

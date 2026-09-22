@@ -6,29 +6,28 @@
 \usage{
 durometer_readings_table(
   analytic,
-  mode,
-  include_per_participant_values = FALSE
+  mode = "3mo",
+  include_per_participant_values = FALSE,
+  min_valid = 1
 )
 }
 \arguments{
-\item{analytic}{This is the analytic data set that must include: enrolled, study_id, 
-and durometer_readings_set_1.}
+\item{analytic}{analytic data set that must include enrolled, study_id and the readings
+construct}
 
-\item{mode}{1_month or 3_month, determines the comparator values}
+\item{mode}{"1mo", "2mo" or "3mo": the follow-up visit compared with injection_1}
 
-\item{include_per_participant_values}{Logical. If TRUE, includes an indented 
-"Per participant values" subheader, followed by randomized and anonymized 
-individual rows for each position.}
+\item{include_per_participant_values}{list shuffled per-participant values}
+
+\item{min_valid}{minimum usable readings for a location mean}
 }
 \value{
-An HTML table styled with kableExtra.
+An HTML table.
 }
 \description{
-Visualizes durometer readings by position, comparing pre-injection to 3 months 
-post-injection (Difference = 3 Month - Pre). Optionally includes anonymized 
-individual participant values showing their personal Mean (SD) across readings.
+location_measurement_table for the durometer endpoint (durometer_readings_set_1, fields
+set, event, position, injection, reading; the injection field is the reading number).
 }
 \examples{
-\dontrun{
-} 
+durometer_readings_table("Replace with Analytic Tibble", mode = "3mo")
 }

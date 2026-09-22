@@ -6543,56 +6543,6 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, break
     return(output)
 }
 
-#' Participants with complications
-#'
-#' @description 
-#' Returns statistics of the presence of one or more complication across the participants of the study.
-#' Notably, this is numerically different from counting across complications themselves, as one participant
-#' can have multiple complications
-#'
-#' @param analytic analytic data set that must include study_id, complication_data
-#'
-#' @return html table
-#' @export
-#'
-#' @examples
-#' participants_w_complications("Replace with Analytic Tibble")
-participants_w_complications <- function(analytic){
-  
-  analytic <- if_needed_generate_example_data(
-    analytic,
-    example_constructs = "complication_data",
-    example_types = "(';new_row: ', '|')FollowupPeriod|Character|Character|NamedCategory['Superficial-infection' 'Deep-Infection' 'Deep-Infection, Not Involving Bone' 'Deep-Infection, Septic Joint' 'Non-Union' 'Malunion' 'Loss of limb/amputation' 'Fixation failure' 'Peri-implant Fracture' 'Reaction to Hardware' 'Wound Dehiscence' 'Wound Seroma/Hematoma' 'Flap failure' 'Tendon Injury' 'Delayed Wound Healing' 'Cellulitis' 'DVT/PE' 'Joint Arthritis' 'Other']|Character|Date|NamedCategory['Definitely related' 'Probably related' 'Possibly related' 'Unlikely related' 'Unrelated' \"Don't know\"]|NamedCategory['Mild' 'Moderate' 'Severe and Undesirable' 'Life-threatening or disabling' 'Fatal']|NamedCategory['Operative' 'Non-operative' 'No treatment']|Character"
-  )
-  
-  df <- analytic %>%
-      select(study_id, enrolled, complication_data) %>% 
-      separate_rows(complication_data, sep = ';new_row: ') %>%
-      separate(complication_data, into = c("redcap_event_name", "form_name", "event_type",
-                                           "complication", "notes", "diagnosis_date", "relatedness_val",
-                                           "severity_val", "treatment", "other_info"), sep = '\\|', fill = "right")
-  n_enrolled <- analytic %>%
-    filter(enrolled) %>%
-    nrow()
-  
-  parts_w_comp <- df %>%
-    filter(enrolled) %>%
-    filter(!is.na(severity_val)) %>%
-    pull(study_id) %>%
-    unique() %>%
-    length()
-  
-  final_table <- tibble(
-    ` ` = c('Enrolled Participants', 'Participants with >0 Complications'),
-    n = c(n_enrolled, parts_w_comp)
-  )
-  
-  output <- kable(final_table, format = "html", align = 'l') %>%
-    kable_styling("striped", full_width = F, position = "left") 
-  
-  return(output)
-}
-
 
 # Required packages: kableExtra, janitor, dplyr, tidyr, htmltools
 # These are typically already loaded by VisualizationLibrary
@@ -6897,235 +6847,6 @@ ivac_invoice_summary <- function(analytic, facilitycodes = NULL) {
 }
 
 
-#' Patient Characteristics Summary Table
-#'
-#' @description 
-#' Visualizes the patient characteristics for enrolled subjects, including Age, Sex, 
-#' Race/Ethnicity, Education, Preinjury Health, Tobacco Use, and Comorbidities.
-#'
-#' @param analytic This is the analytic data set that must include: enrolled, age, 
-#' sex, ethnicity_race, education, preinjury_health, tobacco_use, and comorbidities_list.
-#'
-#' @return An HTML table styled with kableExtra.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' }
-patient_characteristics_table <- function(analytic){
-  
-  inner_analytic <- analytic %>% filter(enrolled == TRUE)
-  enrolled_tot <- nrow(inner_analytic)
-  
-  age_vec <- inner_analytic %>% 
-    mutate(age = as.numeric(age)) %>% 
-    pull(age)
-  
-  df_age <- tibble(
-    Construct = "Age, mean years (SD)", 
-    Value = format_mean_sd(age_vec))
-  
-  df_sex_data <- inner_analytic %>%
-    count(sex) %>%
-    mutate(Value = format_count_percent(n, enrolled_tot),
-           Construct = as.character(sex)) %>%
-    select(Construct, Value)
-  
-  df_sex <- bind_rows(tibble(Construct = "Sex", Value = "n(%)"), df_sex_data)
-  
-  df_race_data <- inner_analytic %>%
-    count(ethnicity_race) %>%
-    mutate(Value = format_count_percent(n, enrolled_tot),
-           Construct = as.character(ethnicity_race)) %>%
-    select(Construct, Value)
-  
-  df_race <- bind_rows(tibble(Construct = "Race/Ethnicity", Value = "n(%)"), df_race_data)
-  
-  education_factor <- c("GED or high school graduate",
-                        "Some college, no degree",
-                        "Associates degree (2 year degree)",
-                        "Bachelors/college degree",
-                        "Graduate degree")
-  
-  df_edu_data <- inner_analytic %>%
-    count(education) %>%
-    arrange(match(education, education_factor)) %>%
-    mutate(Value = format_count_percent(n, enrolled_tot),
-           Construct = as.character(education)) %>%
-    select(Construct, Value)
-  
-  df_edu <- bind_rows(tibble(Construct = "Education", Value = "n(%)"), df_edu_data)
-  
-  df_health_data <- inner_analytic %>%
-    count(preinjury_health) %>%
-    mutate(Value = format_count_percent(n, enrolled_tot),
-           Construct = as.character(preinjury_health)) %>%
-    select(Construct, Value)
-  
-  df_health <- bind_rows(tibble(Construct = "Preinjury Health", Value = "n(%)"), df_health_data)
-  
-  df_tobacco_data <- inner_analytic %>%
-    count(tobacco_use) %>%
-    mutate(Value = format_count_percent(n, enrolled_tot),
-           Construct = as.character(tobacco_use)) %>%
-    select(Construct, Value)
-  
-  df_tobacco <- bind_rows(tibble(Construct = "Tobacco Use", Value = "n(%)"), df_tobacco_data)
-  
-  df_comorb_data <- inner_analytic %>%
-    select(comorbidities_list) %>%
-    separate_rows(comorbidities_list, sep = '; ') %>%
-    count(comorbidities_list) %>%
-    arrange(comorbidities_list == "None", comorbidities_list) %>%
-    mutate(Value = format_count_percent(n, enrolled_tot),
-           Construct = as.character(comorbidities_list)) %>%
-    select(Construct, Value)
-  
-  df_comorb <- bind_rows(tibble(Construct = "Comorbidity", Value = "n(%)"), df_comorb_data)
-  
-  table_raw <- bind_rows(
-    df_age,
-    df_sex,
-    df_race,
-    df_edu,
-    df_health,
-    df_tobacco,
-    df_comorb)
-  
-  is_header <- table_raw$Value == "n(%)" | table_raw$Construct == "Age, mean years (SD)"
-  
-  indent_rows <- which(!is_header)
-  
-  table <- kable(table_raw, format = "html", col.names = c("Construct", "n"), align = 'l') %>%
-    kable_styling("striped", full_width = FALSE, position = "left") %>%
-    column_spec(1, bold = is_header) %>%
-    add_indent(indent_rows)
-  
-  return(table)
-}
-
-#' Amputation, Residual Limb and Prostheses Characteristics Summary Table
-#'
-#' @description 
-#' Visualizes the characteristics of enrolled subjects including years since amputation, 
-#' cause, prosthesis use, ambulatory devices, socket comfort scores, and treatments.
-#'
-#' @param analytic This is the analytic data set that must include: enrolled, 
-#' amputation_days_since, prosthesis_days_per_week, prosthesis_hours_per_day, 
-#' socket_comfort_score_sit, socket_comfort_score_stand, socket_comfort_score_walk, 
-#' amputation_cause, ambulatory_device_list, medication_frequency_list, and meds_skin_list.
-#'
-#' @return An HTML table styled with kableExtra.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' }
-amputation_characteristics_table <- function(analytic){
-  
-  inner_analytic <- analytic %>% filter(enrolled == TRUE)
-  enrolled_tot <- nrow(inner_analytic)
-  
-  ays_vec <- inner_analytic %>%
-    mutate(amputation_years_since = as.numeric(amputation_days_since) / 365) %>%
-    pull(amputation_years_since)
-  
-  df_ays <- tibble(
-    Construct = "Years since amputation, mean (SD)", 
-    Value = format_mean_sd(ays_vec),
-    Is_Header = TRUE)
-  
-  df_cause_data <- inner_analytic %>%
-    count(amputation_cause) %>%
-    mutate(Value = format_count_percent(n, enrolled_tot),
-           Construct = as.character(amputation_cause),
-           Is_Header = FALSE) %>%
-    select(Construct, Value, Is_Header)
-  
-  df_cause <- bind_rows(tibble(Construct = "Cause of amputation", Value = "n(%)", Is_Header = TRUE), df_cause_data)
-  
-  pros_week <- format_mean_sd(inner_analytic %>% pull(prosthesis_days_per_week) %>% as.numeric())
-  pros_day <- format_mean_sd(inner_analytic %>% pull(prosthesis_hours_per_day) %>% as.numeric())
-  
-  df_pros <- bind_rows(
-    tibble(Construct = "Prosthesis Use", Value = "", Is_Header = TRUE),
-    tibble(Construct = "Days per week, mean (SD)", Value = pros_week, Is_Header = FALSE),
-    tibble(Construct = "Hours per day, mean (SD)", Value = pros_day, Is_Header = FALSE))
-  
-  ambulatory_device_factor <- c("Cane", "Walker", "Wheelchair", "Other", "None")
-  
-  df_amb_data <- inner_analytic %>%
-    select(ambulatory_device_list) %>%
-    separate_rows(ambulatory_device_list, sep = '; ') %>%
-    count(ambulatory_device_list) %>%
-    arrange(match(ambulatory_device_list, ambulatory_device_factor)) %>%
-    mutate(Value = format_count_percent(n, enrolled_tot),
-           Construct = as.character(ambulatory_device_list),
-           Is_Header = FALSE) %>%
-    select(Construct, Value, Is_Header)
-  
-  df_amb <- bind_rows(tibble(Construct = "Ambulatory device use", Value = "n(%)", Is_Header = TRUE), df_amb_data)
-  
-  scs_sit <- format_mean_sd(inner_analytic %>% pull(socket_comfort_score_sit) %>% as.numeric())
-  scs_stand <- format_mean_sd(inner_analytic %>% pull(socket_comfort_score_stand) %>% as.numeric())
-  scs_walk <- format_mean_sd(inner_analytic %>% pull(socket_comfort_score_walk) %>% as.numeric())
-  
-  df_scs <- bind_rows(
-    tibble(Construct = "Socket Comfort Score", Value = "", Is_Header = TRUE),
-    tibble(Construct = "Sitting, mean (SD)", Value = scs_sit, Is_Header = FALSE),
-    tibble(Construct = "Standing, mean (SD)", Value = scs_stand, Is_Header = FALSE),
-    tibble(Construct = "Walking, mean (SD)", Value = scs_walk, Is_Header = FALSE))
-  
-  meds <- inner_analytic %>%
-    select(medication_frequency_list) %>%
-    separate(medication_frequency_list, into = c("acetaminophen", "opiods", "nsaids",
-                                                 "gaba analogue", "other"), sep = '; ')
-  meds_sum <- meds %>%
-    filter(if_all(everything(), ~ . == "Did not use")) %>%
-    nrow()
-  
-  df_meds <- tibble(
-    Construct = "Medications used to address residual limb pain",
-    Value = format_count_percent(enrolled_tot - meds_sum, enrolled_tot),
-    Is_Header = TRUE)
-  
-  skin_treats <- inner_analytic %>%
-    select(meds_skin_list) %>%
-    separate(meds_skin_list, into = c("creams", "anti-perspirents", "antibiotics",
-                                      "bandages", "other"), sep = '; ')
-  skin_sum <- skin_treats %>%
-    filter(if_all(everything(), ~ . == "Did not use")) %>%
-    nrow()
-  
-  df_skin <- tibble(
-    Construct = "Skin treatments to address residual limb problems",
-    Value = format_count_percent(enrolled_tot - skin_sum, enrolled_tot),
-    Is_Header = TRUE)
-  
-  table_raw <- bind_rows(
-    df_ays,
-    df_cause,
-    df_pros,
-    df_amb,
-    df_scs,
-    df_meds,
-    df_skin)
-  
-  is_header <- table_raw$Is_Header
-  indent_rows <- which(!is_header)
-  
-  table_print <- table_raw %>% select(-Is_Header)
-  
-  table <- kable(table_print, format = "html", col.names = c("Construct", "n"), align = 'l') %>%
-    kable_styling("striped", full_width = FALSE, position = "left") %>%
-    column_spec(1, bold = is_header) %>%
-    add_indent(indent_rows)
-  
-  return(table)
-}
-
-
-
 #' Pathogen Characteristics
 #'
 #' @description 
@@ -7195,315 +6916,6 @@ pathogen_characteristics <- function(analytic){
     column_spec(3, extra_css = "border-left: 1px solid black;")
   return(table)
 }
-
-#' Patient Reported Outcomes Summary Table
-#'
-#' @description 
-#' Visualizes Patient Reported Outcomes (DLQI, PEQ, PLUS-M) across multiple 
-#' time points (Pre-injection, 1 Month, 2 Months, 3 Months) for enrolled subjects.
-#'
-#' @param analytic This is the analytic data set that must include: enrolled, 
-#' dlqi_baseline, dlqi_1mo, dlqi_2mo, dlqi_3mo, 
-#' peq_rl_baseline, peq_rl_1mo, peq_rl_2mo, peq_rl_3mo, 
-#' plus_m_baseline, plus_m_1mo, plus_m_2mo, plus_m_3mo.
-#'
-#' @return An HTML table styled with kableExtra.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' }
-patient_reported_outcomes_table <- function(analytic){
-  
-  inner_analytic <- analytic %>% filter(enrolled == TRUE)
-  
-  get_msd <- function(col_name) {
-    vec <- as.numeric(inner_analytic[[col_name]])
-    format_mean_sd(vec)
-  }
-  
-  df_dlqi <- bind_rows(
-    tibble(Construct = "DLQI", Value = "", Is_Header = TRUE),
-    tibble(Construct = "Pre-injection, mean (SD)", Value = get_msd("dlqi_baseline"), Is_Header = FALSE),
-    tibble(Construct = "1 Month, mean (SD)", Value = get_msd("dlqi_1mo"), Is_Header = FALSE),
-    tibble(Construct = "2 Month, mean (SD)", Value = get_msd("dlqi_2mo"), Is_Header = FALSE),
-    tibble(Construct = "3 Month, mean (SD)", Value = get_msd("dlqi_3mo"), Is_Header = FALSE))
-  
-  df_peq <- bind_rows(
-    tibble(Construct = "PEQ", Value = "", Is_Header = TRUE),
-    tibble(Construct = "Pre-injection, mean (SD)", Value = get_msd("peq_rl_baseline"), Is_Header = FALSE),
-    tibble(Construct = "1 Month, mean (SD)", Value = get_msd("peq_rl_1mo"), Is_Header = FALSE),
-    tibble(Construct = "2 Month, mean (SD)", Value = get_msd("peq_rl_2mo"), Is_Header = FALSE),
-    tibble(Construct = "3 Month, mean (SD)", Value = get_msd("peq_rl_3mo"), Is_Header = FALSE))
-  
-  df_plus_m <- bind_rows(
-    tibble(Construct = "PLUS-M", Value = "", Is_Header = TRUE),
-    tibble(Construct = "Pre-injection, mean (SD)", Value = get_msd("plus_m_baseline"), Is_Header = FALSE),
-    tibble(Construct = "1 Month, mean (SD)", Value = get_msd("plus_m_1mo"), Is_Header = FALSE),
-    tibble(Construct = "2 Month, mean (SD)", Value = get_msd("plus_m_2mo"), Is_Header = FALSE),
-    tibble(Construct = "3 Month, mean (SD)", Value = get_msd("plus_m_3mo"), Is_Header = FALSE))
-  
-  table_raw <- bind_rows(df_dlqi, df_peq, df_plus_m)
-  
-  is_header <- table_raw$Is_Header
-  indent_rows <- which(!is_header)
-  
-  table_print <- table_raw %>% select(-Is_Header)
-  
-  table <- kable(table_print, format = "html", col.names = c("Construct", "n"), align = 'l') %>%
-    kable_styling("striped", full_width = FALSE, position = "left") %>%
-    column_spec(1, bold = is_header) %>%
-    add_indent(indent_rows)
-  
-  return(table)
-}
-
-#' Durometer Readings Summary Table
-#'
-#' @description 
-#' Visualizes durometer readings by position, comparing pre-injection to 3 months 
-#' post-injection (Difference = 3 Month - Pre). Optionally includes anonymized 
-#' individual participant values showing their personal Mean (SD) across readings.
-#'
-#' @param analytic This is the analytic data set that must include: enrolled, study_id, 
-#' and durometer_readings_set_1.
-#' @param mode 1_month or 3_month, determines the comparator values
-#' @param include_per_participant_values Logical. If TRUE, includes an indented 
-#' "Per participant values" subheader, followed by randomized and anonymized 
-#' individual rows for each position.
-#'
-#' @return An HTML table styled with kableExtra.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' } 
-durometer_readings_table <- function(analytic, mode, include_per_participant_values = FALSE){
-  inner_analytic <- analytic %>% filter(enrolled == TRUE)
-  
-  time2 <- case_when(
-    mode=='1mo' ~ c('1_month', 'month_1', 'mean_m1', '1 Month'),
-    mode=='2mo' ~ c('2_month', 'month_2', 'mean_m2', '2 Month'),
-    mode=='3mo' ~ c('3_month', 'month_3', 'mean_m3', '3 Month')
-  )
-  
-  duro_raw <- inner_analytic %>%
-    select(study_id, durometer_readings_set_1) %>%
-    separate_rows(durometer_readings_set_1, sep = ';') %>%
-    separate(durometer_readings_set_1, into = c("set", "event", "position",
-                                                "injection", "reading"), sep = ',') %>%
-    mutate(event = ifelse(event == time2[1], time2[2], event),
-           reading = as.double(reading)) %>%
-    filter((event == 'injection_1' | event == time2[2]) & set == 'set_1') %>%
-    select(study_id, position, event, injection, reading) %>%
-    pivot_wider(names_from = event, values_from = reading) %>%
-    mutate(difference = !!sym(time2[2]) - injection_1) 
-  
-  duro_base <- duro_raw %>%
-    group_by(study_id, position) %>%
-    summarize(
-      mean_inj1 = mean(injection_1, na.rm = TRUE),
-      !!sym(time2[3]) := mean(!!sym(time2[2]), na.rm = TRUE),
-      mean_diff = mean(difference, na.rm = TRUE),
-      .groups = "drop"
-    )
-  
-  duro_summary <- duro_base %>%
-    group_by(position) %>%
-    summarize(
-      `Pre-injection, Mean (SD)` = format_mean_sd(mean_inj1),
-      !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := format_mean_sd(!!sym(time2[3])),
-      `Difference` = format_mean_sd(mean_diff),
-      .groups = "drop"
-    ) %>%
-    rename(Construct = position) %>%
-    mutate(Is_Header = TRUE, Is_Subheader = FALSE)
-  
-  if (include_per_participant_values) {
-    
-    duro_indiv <- duro_raw %>%
-      group_by(study_id, position) %>%
-      summarize(
-        `Pre-injection, Mean (SD)` = format_mean_sd(injection_1),
-        !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := format_mean_sd(!!sym(time2[2])),
-        `Difference` = format_mean_sd(difference),
-        .groups = "drop"
-      ) %>%
-      mutate(
-        Construct = "", 
-        Is_Header = FALSE,
-        Is_Subheader = FALSE
-      ) %>%
-      select(position, Construct, `Pre-injection, Mean (SD)`, 
-             paste(time2[4], "Post-injection, Mean (SD)"), `Difference`, Is_Header, Is_Subheader) %>%
-      group_by(position) %>%
-      slice_sample(prop = 1) %>%
-      ungroup()
-    
-    duro_subheader <- duro_summary %>%
-      select(position = Construct) %>%
-      mutate(
-        Construct = "Per participant values",
-        `Pre-injection, Mean (SD)` = "",
-        !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := "",
-        `Difference` = "",
-        Is_Header = FALSE,
-        Is_Subheader = TRUE
-      )
-    
-    table_raw <- bind_rows(
-      duro_summary %>% mutate(sort_key = 0, position = Construct),
-      duro_subheader %>% mutate(sort_key = 1),
-      duro_indiv %>% mutate(sort_key = 2)
-    ) %>%
-      arrange(position, sort_key) %>%
-      select(-sort_key, -position)
-    
-  } else {
-    table_raw <- duro_summary
-  }
-  
-  is_header <- table_raw$Is_Header
-  indent_rows <- which(table_raw$Is_Subheader) 
-  
-  table_print <- table_raw %>% select(-Is_Header, -Is_Subheader)
-  col_names <- c("Position", "Pre-injection, Mean (SD)", 
-                 paste(time2[4], "Post-injection, Mean (SD)"), "Difference")
-  
-  table <- kable(table_print, format = "html", col.names = col_names, align = 'l') %>%
-    kable_styling("striped", full_width = FALSE, position = "left") %>%
-    column_spec(1, bold = is_header)
-  
-  if (length(indent_rows) > 0) {
-    table <- table %>% add_indent(indent_rows)
-  }
-  
-  return(table)
-}
-
-#' OCT Readings Summary Table
-#'
-#' @description 
-#' Visualizes OCT width readings by position, comparing pre-injection to 3 months 
-#' post-injection (Difference = 3 Month - Pre). Optionally includes anonymized 
-#' individual participant values showing their personal Mean (SD) across readings.
-#'
-#' @param analytic This is the analytic data set that must include: enrolled, study_id, 
-#' and oct_readings_set_1.
-#' @param mode 1_month or 3_month, determines the comparator values
-#' @param include_per_participant_values Logical. If TRUE, includes an indented 
-#' "Per participant values" subheader, followed by randomized and anonymized 
-#' individual rows for each position.
-#'
-#' @return An HTML table styled with kableExtra.
-#' @export
-#'
-#' @examples
-#' \dontrun{
-#' } 
-oct_readings_table <- function(analytic, mode, include_per_participant_values = FALSE){
-  inner_analytic <- analytic %>% filter(enrolled == TRUE)
-  
-  time2 <- case_when(
-    mode=='1mo' ~ c('1_month', 'month_1', 'mean_m1', '1 Month'),
-    mode=='2mo' ~ c('2_month', 'month_2', 'mean_m2', '2 Month'),
-    mode=='3mo' ~ c('3_month', 'month_3', 'mean_m3', '3 Month')
-  )
-  
-  oct_raw <- inner_analytic %>%
-    select(study_id, oct_readings_set_1) %>%
-    separate_rows(oct_readings_set_1, sep = ';') %>%
-    separate(oct_readings_set_1, into = c("set", "event", "position",
-                                          "orientation", "area", "length", "width"), sep = ',') %>%
-    mutate(event = ifelse(event == time2[1], time2[2], event),
-           width = as.double(width)) %>%
-    filter((event == 'injection_1' | event == time2[2]) & set == 'set_1') %>%
-    select(study_id, position, event, orientation, width) %>%
-    pivot_wider(names_from = event, values_from = width) %>%
-    mutate(difference = !!sym(time2[2]) - injection_1)
-  
-  oct_base <- oct_raw %>%
-    group_by(study_id, position) %>%
-    summarize(
-      mean_inj1 = mean(injection_1, na.rm = TRUE),
-      !!sym(time2[3]) := mean(!!sym(time2[2]), na.rm = TRUE),
-      mean_diff = mean(difference, na.rm = TRUE),
-      .groups = "drop"
-    )
-  
-  oct_summary <- oct_base %>%
-    group_by(position) %>%
-    summarize(
-      `Pre-injection, Mean (SD)` = format_mean_sd(mean_inj1),
-      !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := format_mean_sd(!!sym(time2[3])),
-      `Difference` = format_mean_sd(mean_diff),
-      .groups = "drop"
-    ) %>%
-    rename(Construct = position) %>%
-    mutate(Is_Header = TRUE, Is_Subheader = FALSE)
-  
-  if (include_per_participant_values) {
-    
-    oct_indiv <- oct_raw %>%
-      group_by(study_id, position) %>%
-      summarize(
-        `Pre-injection, Mean (SD)` = format_mean_sd(injection_1),
-        !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := format_mean_sd(!!sym(time2[2])),
-        `Difference` = format_mean_sd(difference),
-        .groups = "drop"
-      ) %>%
-      mutate(
-        Construct = "", 
-        Is_Header = FALSE,
-        Is_Subheader = FALSE
-      ) %>%
-      select(position, Construct, `Pre-injection, Mean (SD)`, 
-             paste(time2[4], "Post-injection, Mean (SD)"), `Difference`, Is_Header, Is_Subheader) %>%
-      group_by(position) %>%
-      slice_sample(prop = 1) %>%
-      ungroup()
-
-    oct_subheader <- oct_summary %>%
-      select(position = Construct) %>%
-      mutate(
-        Construct = "Per participant values",
-        `Pre-injection, Mean (SD)` = "",
-        !!sym(paste(time2[4], "Post-injection, Mean (SD)")) := "",
-        `Difference` = "",
-        Is_Header = FALSE,
-        Is_Subheader = TRUE
-      )
-    
-    table_raw <- bind_rows(
-      oct_summary %>% mutate(sort_key = 0, position = Construct),
-      oct_subheader %>% mutate(sort_key = 1),
-      oct_indiv %>% mutate(sort_key = 2)
-    ) %>%
-      arrange(position, sort_key) %>%
-      select(-sort_key, -position)
-    
-  } else {
-    table_raw <- oct_summary
-  }
-  
-  is_header <- table_raw$Is_Header
-  indent_rows <- which(table_raw$Is_Subheader)
-  
-  table_print <- table_raw %>% select(-Is_Header, -Is_Subheader)
-  col_names <- c("Position", "Pre-injection, Mean (SD)", 
-                 paste(time2[4], "Post-injection, Mean (SD)"), "Difference")
-  
-  table <- kable(table_print, format = "html", col.names = col_names, align = 'l') %>%
-    kable_styling("striped", full_width = FALSE, position = "left") %>%
-    column_spec(1, bold = is_header)
-  
-  if (length(indent_rows) > 0) {
-    table <- table %>% add_indent(indent_rows)
-  }
-  
-  return(table)
-}
-
 
 #' Persistent pain
 #'
@@ -7963,4 +7375,1515 @@ unpack_clinical_events <- function(analytic){
              sep = '\\|', fill = 'right') %>%
     mutate_all(na_if, 'NA') %>%
     filter(!is.na(complication_category_mapped)))
+}
+
+
+# ---- Packed-construct unpacking and repeated-measurement preparation ------------------------
+#
+# Shared helpers beneath the safety, repeated-measurement and patient-reported-outcome
+# displays and analyses. They turn the one-row-per-study_id analytic contract into typed long
+# tables without touching the participant file, so open and closed outputs agree on
+# populations, denominators and definitions.
+
+#' Treat packed literal missing tokens as missing
+#' @noRd
+packed_na <- function(x) {
+  x <- str_trim(as.character(x))
+  x[x %in% c("NA", "", "N/A", "NaN")] <- NA_character_
+  x
+}
+
+#' Numeric conversion that keeps failed conversions visible
+#' @noRd
+parse_packed_number <- function(x) {
+  raw <- packed_na(x)
+  num <- suppressWarnings(as.numeric(raw))
+  list(value = num, failed = !is.na(raw) & is.na(num))
+}
+
+#' Stop with the names of the constructs a function needs but the analytic lacks
+#' @noRd
+require_constructs <- function(analytic, constructs, what) {
+  missing_constructs <- setdiff(constructs, names(analytic))
+  if (length(missing_constructs) > 0) {
+    stop(paste0(what, " requires constructs not present in the analytic data set: ",
+                paste(missing_constructs, collapse = ", ")))
+  }
+  invisible(TRUE)
+}
+
+#' Sorted enrolled study_id values, enforcing the one-row-per-ID contract
+#' @noRd
+enrolled_study_ids <- function(analytic) {
+  require_constructs(analytic, c("study_id", "enrolled"), "population selection")
+  ids <- analytic %>% filter(enrolled %in% TRUE) %>% pull(study_id) %>% as.character()
+  if (any(duplicated(ids))) {
+    stop("analytic input violates the one-row-per-study_id contract: duplicated enrolled IDs ",
+         paste(unique(ids[duplicated(ids)]), collapse = ", "))
+  }
+  sort(ids)
+}
+
+#' Unpack a packed long-file construct into typed rows
+#' @noRd
+unpack_packed_construct <- function(analytic, construct, fields, row_sep, field_sep,
+                                    population = c("enrolled", "all")) {
+  population <- match.arg(population)
+  require_constructs(analytic, c("study_id", construct), paste0("unpacking ", construct))
+  df <- analytic
+  if (population == "enrolled") {
+    require_constructs(analytic, "enrolled", paste0("unpacking ", construct))
+    df <- df %>% filter(enrolled %in% TRUE)
+  }
+  df <- df %>%
+    transmute(study_id = as.character(study_id), packed = packed_na(.data[[construct]])) %>%
+    filter(!is.na(packed)) %>%
+    separate_rows(packed, sep = row_sep) %>%
+    mutate(packed = str_trim(packed)) %>%
+    filter(!is.na(packed), packed != "")
+  if (nrow(df) == 0) {
+    out <- tibble(study_id = character())
+    for (f in fields) out[[f]] <- character()
+    return(out)
+  }
+  df %>%
+    separate(packed, into = fields, sep = field_sep, fill = "right", extra = "merge") %>%
+    mutate(across(all_of(fields), packed_na))
+}
+
+#' Unpack follow-up status records
+#' @noRd
+unpack_followup_data <- function(analytic, population = c("enrolled", "all")) {
+  population <- match.arg(population)
+  unpack_packed_construct(analytic, "followup_data",
+                          c("redcap_event_name", "followup_period", "form", "status", "form_dates"),
+                          row_sep = ";", field_sep = ",", population = population) %>%
+    mutate(form_dates = suppressWarnings(as.Date(form_dates)),
+           status_base = str_remove(status, ":.*$"),
+           visit_complete = status_base %in% "Complete")
+}
+
+#' Complication category mapping for safety summaries
+#' @noRd
+complication_categories <- function(minor_expected = c("Local injection reactions"),
+                                    minor_unexpected = c("Small hemorrhage", "Edema", "Nodules/papules",
+                                                         "Irritation", "Dermatitis", "Pruritus", "Cellulitis"),
+                                    serious_severities = c("Severe and Undesirable",
+                                                           "Life-threatening or disabling", "Fatal"),
+                                    related_levels = c("Definitely related", "Probably related",
+                                                       "Possibly related"),
+                                    labels = c(any = "Any complication",
+                                               minor_expected = "Minor expected complication",
+                                               minor_unexpected = "Minor unexpected complication",
+                                               serious = "Serious complication (severe, life-threatening or fatal)",
+                                               other = "Other complication",
+                                               sae_any = "Any SAE (SAE form, all relatedness)",
+                                               sae_related = "SAE related or possibly related to treatment")) {
+  list(minor_expected = minor_expected, minor_unexpected = minor_unexpected,
+       serious_severities = serious_severities, related_levels = related_levels, labels = labels)
+}
+
+#' Assign each complication record to a category
+#' @noRd
+assign_complication_category <- function(complication, severity, categories) {
+  comp <- tolower(str_trim(as.character(complication)))
+  sev <- tolower(str_trim(as.character(severity)))
+  starts_with_any <- function(x, prefixes) {
+    if (length(prefixes) == 0) return(rep(FALSE, length(x)))
+    Reduce(`|`, lapply(tolower(prefixes), function(p) startsWith(x, p)))
+  }
+  case_when(
+    sev %in% tolower(categories$serious_severities) ~ "serious",
+    starts_with_any(comp, categories$minor_expected) ~ "minor_expected",
+    starts_with_any(comp, categories$minor_unexpected) ~ "minor_unexpected",
+    TRUE ~ "other"
+  )
+}
+
+#' Unpack complication records with safety categories
+#' @noRd
+unpack_complication_data <- function(analytic, categories = complication_categories(),
+                                     population = c("enrolled", "all")) {
+  population <- match.arg(population)
+  unpack_packed_construct(analytic, "complication_data",
+                          c("redcap_event_name", "form_name", "event_type", "complication", "notes",
+                            "diagnosis_date", "relatedness", "severity", "treatment", "other_info"),
+                          row_sep = ";new_row: ", field_sep = "\\|", population = population) %>%
+    filter(!is.na(complication)) %>%
+    mutate(diagnosis_date = suppressWarnings(as.Date(diagnosis_date)),
+           category = assign_complication_category(complication, severity, categories),
+           serious = tolower(severity) %in% tolower(categories$serious_severities),
+           related = tolower(relatedness) %in% tolower(categories$related_levels))
+}
+
+#' Unpack serious adverse event records
+#' @noRd
+unpack_sae_data <- function(analytic, population = c("enrolled", "all")) {
+  population <- match.arg(population)
+  unpack_packed_construct(analytic, "sae_data",
+                          c("facilitycode", "treatment_arm_placeholder", "sae_treatment_received",
+                            "consent_date", "sae_dt_event", "age", "sae_related",
+                            "sae_relatedness_treatment", "sae_outcome", "sae_describe"),
+                          row_sep = ";new_row: ", field_sep = "\\|", population = population) %>%
+    select(-treatment_arm_placeholder) %>%
+    mutate(sae_dt_event = suppressWarnings(as.Date(sae_dt_event)))
+}
+
+#' Unpack not-expected and not-completed administrative records
+#' @noRd
+unpack_not_expected_data <- function(analytic, population = c("enrolled", "all")) {
+  population <- match.arg(population)
+  unpack_packed_construct(analytic, "not_expected_data",
+                          c("facilitycode", "treatment_arm_placeholder", "consent_date",
+                            "not_expected_date", "age", "not_expected_reason"),
+                          row_sep = ";new_row: ", field_sep = "\\|", population = population) %>%
+    select(-treatment_arm_placeholder) %>%
+    mutate(not_expected_date = suppressWarnings(as.Date(not_expected_date)))
+}
+
+#' @rdname unpack_not_expected_data
+#' @noRd
+unpack_not_completed_data <- function(analytic, population = c("enrolled", "all")) {
+  population <- match.arg(population)
+  unpack_packed_construct(analytic, "not_completed_data",
+                          c("facilitycode", "treatment_arm_placeholder", "consent_date",
+                            "not_completed_date", "age", "not_completed_reason"),
+                          row_sep = ";new_row: ", field_sep = "\\|", population = population) %>%
+    select(-treatment_arm_placeholder) %>%
+    mutate(not_completed_date = suppressWarnings(as.Date(not_completed_date)))
+}
+
+#' Unpack repeated location measurements
+#' @noRd
+unpack_measurement_readings <- function(analytic, readings_constructs = "durometer_readings_set_1",
+                                        fields = c("set", "event", "position", "injection", "reading"),
+                                        value_field = "reading", row_sep = ";", field_sep = ",",
+                                        population = c("enrolled", "all")) {
+  population <- match.arg(population)
+  if (!all(c("set", "event", "position") %in% fields)) {
+    stop("fields must include set, event and position")
+  }
+  if (!value_field %in% fields) stop("value_field must be one of the packed fields")
+  present <- intersect(readings_constructs, names(analytic))
+  if (length(present) == 0) {
+    stop("none of the readings constructs are present: ", paste(readings_constructs, collapse = ", "))
+  }
+  out <- bind_rows(lapply(present, function(construct) {
+    unpack_packed_construct(analytic, construct, fields, row_sep = row_sep, field_sep = field_sep,
+                            population = population) %>%
+      mutate(source_construct = construct)
+  }))
+  parsed <- parse_packed_number(out[[value_field]])
+  out %>%
+    mutate(value_raw = .data[[value_field]], value = parsed$value, parse_failed = parsed$failed) %>%
+    select(study_id, set, event, position, everything())
+}
+
+#' Location-level visit means of repeated readings
+#' @noRd
+measurement_visit_means <- function(long, min_valid = 1) {
+  long %>%
+    group_by(study_id, set, event, position) %>%
+    summarise(n_total = n(),
+              n_valid = sum(!is.na(value)),
+              n_failed = sum(parse_failed),
+              mean = if (sum(!is.na(value)) > 0) mean(value, na.rm = TRUE) else NA_real_,
+              .groups = "drop") %>%
+    mutate(available = n_valid >= min_valid & !is.na(mean),
+           mean = ifelse(available, mean, NA_real_))
+}
+
+#' Paired change in location means between two visits
+#' @noRd
+measurement_visit_change <- function(visit_means, baseline_event = "injection_1",
+                                     followup_event = "3_month") {
+  base <- visit_means %>%
+    filter(event == baseline_event) %>%
+    select(study_id, set, position, baseline = mean, n_valid_baseline = n_valid)
+  fu <- visit_means %>%
+    filter(event == followup_event) %>%
+    select(study_id, set, position, followup = mean, n_valid_followup = n_valid)
+  full_join(base, fu, by = c("study_id", "set", "position")) %>%
+    mutate(n_valid_baseline = replace_na(n_valid_baseline, 0L),
+           n_valid_followup = replace_na(n_valid_followup, 0L),
+           paired = !is.na(baseline) & !is.na(followup),
+           change = ifelse(paired, followup - baseline, NA_real_)) %>%
+    arrange(study_id, set, position)
+}
+
+#' Filter unpacked readings by packed field values
+#' @noRd
+keep_measurement_rows <- function(long, keep) {
+  if (is.null(keep)) return(long)
+  for (field in names(keep)) {
+    if (!field %in% names(long)) stop("keep names a field not present in the readings: ", field)
+    long <- long %>% filter(.data[[field]] %in% keep[[field]])
+  }
+  long
+}
+
+#' Default measurement endpoints for the amputation skin studies
+#' @noRd
+default_measurement_endpoints <- function() {
+  list(
+    durometer = list(label = "Skin firmness (durometer)",
+                     readings_constructs = c("durometer_readings_set_1", "durometer_readings_set_2"),
+                     fields = c("set", "event", "position", "injection", "reading"),
+                     value_field = "reading", unit = "DU"),
+    oct = list(label = "Skin thickness (OCT width)",
+               readings_constructs = c("oct_readings_set_1", "oct_readings_set_2"),
+               fields = c("set", "event", "position", "orientation", "area", "length", "width"),
+               value_field = "width", unit = "OCT width units (unconfirmed)")
+  )
+}
+
+#' Default patient-reported score families
+#' @noRd
+default_score_families <- function(extra = NULL) {
+  fam <- function(prefix) c(baseline = paste0(prefix, "_baseline"), `1mo` = paste0(prefix, "_1mo"),
+                            `2mo` = paste0(prefix, "_2mo"), `3mo` = paste0(prefix, "_3mo"))
+  c(list("DLQI" = fam("dlqi"), "PEQ (Residual Limb Health)" = fam("peq_rl"), "PLUS-M" = fam("plus_m")),
+    extra)
+}
+
+promis_domain_labels <- c(physical_function = "PROMIS-29 Physical Function (T-score)",
+                          anxiety = "PROMIS-29 Anxiety (T-score)",
+                          depression = "PROMIS-29 Depression (T-score)",
+                          fatigue = "PROMIS-29 Fatigue (T-score)",
+                          sleep_disturbance = "PROMIS-29 Sleep Disturbance (T-score)",
+                          social_roles = "PROMIS-29 Social Roles (T-score)",
+                          pain_interference = "PROMIS-29 Pain Interference (T-score)",
+                          pain_intensity = "PROMIS-29 Pain Intensity (0-10)")
+
+promis_data_example_type <- "(';', ',')NamedCategory['Baseline' '1 Month' '2 Month' '3 Month']|NamedCategory['physical_function' 'anxiety' 'depression' 'fatigue' 'sleep_disturbance' 'social_roles' 'pain_interference' 'pain_intensity']|Number-U4|Number|Number"
+
+#' Unpack the packed PROMIS-29 scores (promis_data) to the score-family long shape
+#'
+#' Fields visit, domain, items_answered, raw_score, t_score; record separator ";", field
+#' separator ",". The score is the T-score for the seven scored domains and the 0-10 rating
+#' for pain intensity. A domain with fewer than four items answered has no T-score in the
+#' export (PROMIS rule) and so counts as missing here; items_answered is kept.
+#' @noRd
+unpack_promis_data <- function(analytic, construct = "promis_data",
+                               visit_labels = c("Baseline", "1 Month", "2 Month", "3 Month")) {
+  long <- unpack_packed_construct(analytic, construct, c("visit", "domain", "items_answered", "raw_score", "t_score"),
+                                  row_sep = ";", field_sep = ",")
+  score_field <- ifelse(long$domain %in% "pain_intensity", long$raw_score, long$t_score)
+  parsed <- parse_packed_number(score_field)
+  long %>%
+    mutate(instrument = unname(promis_domain_labels[domain]),
+           instrument = ifelse(is.na(instrument), paste0("PROMIS-29 ", domain), instrument),
+           score_raw = score_field, score = parsed$value, parse_failed = parsed$failed,
+           items_answered = parse_packed_number(items_answered)$value) %>%
+    filter(visit %in% visit_labels) %>%
+    select(study_id, instrument, visit, score_raw, score, parse_failed, items_answered)
+}
+
+#' Reshape score families to participant/visit rows
+#'
+#' Wide score families (default_score_families) and, when promis_construct names a packed
+#' PROMIS-29 construct present in the export, its domains as additional instruments.
+#' @noRd
+unpack_score_families <- function(analytic, score_families = default_score_families(),
+                                  visit_labels = c(baseline = "Baseline", `1mo` = "1 Month",
+                                                   `2mo` = "2 Month", `3mo` = "3 Month"),
+                                  promis_construct = "promis_data") {
+  require_constructs(analytic, c("study_id", "enrolled"), "unpack_score_families")
+  df <- analytic %>% filter(enrolled %in% TRUE) %>% mutate(study_id = as.character(study_id))
+  missing_families <- character()
+  rows <- list()
+  for (inst in names(score_families)) {
+    cols <- score_families[[inst]]
+    if (!all(cols %in% names(df))) {
+      missing_families <- c(missing_families, inst)
+      next
+    }
+    for (v in names(cols)) {
+      parsed <- parse_packed_number(df[[cols[[v]]]])
+      rows[[length(rows) + 1]] <- tibble(study_id = df$study_id, instrument = inst,
+                                         visit = visit_labels[[v]],
+                                         score_raw = packed_na(df[[cols[[v]]]]),
+                                         score = parsed$value, parse_failed = parsed$failed)
+    }
+  }
+  out <- if (length(rows) == 0) {
+    tibble(study_id = character(), instrument = character(), visit = character(),
+           score_raw = character(), score = numeric(), parse_failed = logical())
+  } else {
+    bind_rows(rows)
+  }
+  out$items_answered <- NA_real_
+  instrument_levels <- names(score_families)
+  if (!is.null(promis_construct)) {
+    if (promis_construct %in% names(analytic)) {
+      promis <- unpack_promis_data(analytic, promis_construct, unname(visit_labels))
+      out <- bind_rows(out, promis)
+      instrument_levels <- c(instrument_levels,
+                             unname(promis_domain_labels)[unname(promis_domain_labels) %in% promis$instrument],
+                             setdiff(unique(promis$instrument), unname(promis_domain_labels)))
+    } else {
+      missing_families <- c(missing_families, paste0("PROMIS-29 (", promis_construct, ")"))
+    }
+  }
+  out <- out %>%
+    mutate(instrument = factor(instrument, levels = instrument_levels),
+           visit = factor(visit, levels = unname(visit_labels)))
+  attr(out, "missing_families") <- missing_families
+  out
+}
+
+#' Participant-level safety inputs
+#' @noRd
+participant_event_summary <- function(analytic, categories = complication_categories(),
+                                      count_construct = "complication_count",
+                                      exposure_construct = "last_followup_days") {
+  require_constructs(analytic, c("study_id", "enrolled", "complication_data", "sae_data", "followup_data",
+                                 count_construct, exposure_construct), "participant_event_summary")
+  ids <- enrolled_study_ids(analytic)
+  base <- analytic %>%
+    filter(enrolled %in% TRUE) %>%
+    transmute(study_id = as.character(study_id),
+              event_count = parse_packed_number(.data[[count_construct]])$value,
+              exposure_days = parse_packed_number(.data[[exposure_construct]])$value,
+              has_complication_record = !is.na(packed_na(complication_data)))
+
+  events <- unpack_complication_data(analytic, categories)
+  event_counts <- events %>%
+    group_by(study_id) %>%
+    summarise(n_records = n(),
+              n_minor_expected = sum(category == "minor_expected"),
+              n_minor_unexpected = sum(category == "minor_unexpected"),
+              n_serious = sum(category == "serious"),
+              n_other = sum(category == "other"), .groups = "drop")
+
+  saes <- unpack_sae_data(analytic)
+  sae_counts <- saes %>%
+    group_by(study_id) %>%
+    summarise(n_sae = n(),
+              n_sae_related = sum(tolower(sae_related) %in% tolower(categories$related_levels) |
+                                    tolower(sae_relatedness_treatment) %in% tolower(categories$related_levels)),
+              .groups = "drop")
+
+  fu_any <- unpack_followup_data(analytic) %>%
+    group_by(study_id) %>%
+    summarise(any_completed_form = any(visit_complete), .groups = "drop")
+
+  out <- tibble(study_id = ids) %>%
+    left_join(base, by = "study_id") %>%
+    left_join(event_counts, by = "study_id") %>%
+    left_join(sae_counts, by = "study_id") %>%
+    left_join(fu_any, by = "study_id") %>%
+    mutate(across(c(n_records, n_minor_expected, n_minor_unexpected, n_serious, n_other, n_sae, n_sae_related),
+                  ~ replace_na(.x, 0L)),
+           any_completed_form = replace_na(any_completed_form, FALSE),
+           ascertained = has_complication_record | any_completed_form,
+           ascertainment_unknown = !ascertained,
+           event_count_source = case_when(!is.na(event_count) ~ "verified",
+                                          ascertained ~ "long_records",
+                                          TRUE ~ "unknown"),
+           event_count = ifelse(is.na(event_count) & ascertained, as.numeric(n_records), event_count),
+           any_complication = ifelse(ascertained, n_records > 0 | event_count > 0, NA),
+           any_minor_expected = ifelse(ascertained, n_minor_expected > 0, NA),
+           any_minor_unexpected = ifelse(ascertained, n_minor_unexpected > 0, NA),
+           any_serious = ifelse(ascertained, n_serious > 0 | n_sae > 0, NA),
+           any_other = ifelse(ascertained, n_other > 0, NA),
+           any_sae = ifelse(ascertained, n_sae > 0, NA),
+           any_sae_related = ifelse(ascertained, n_sae_related > 0, NA),
+           exposure_valid = !is.na(exposure_days) & exposure_days > 0)
+
+  attr(out, "reconciliation") <- out %>%
+    filter(event_count_source == "verified") %>%
+    summarise(participants = n(), verified_total = sum(event_count, na.rm = TRUE),
+              long_record_total = sum(n_records), participants_differing = sum(event_count != n_records))
+  attr(out, "events") <- events
+  attr(out, "saes") <- saes
+  out
+}
+
+#' Category rows shared by the safety displays and analyses
+#' @noRd
+event_category_rows <- function(categories) {
+  labels <- categories$labels
+  keys <- c("any", "minor_expected", "minor_unexpected", "serious", "other", "sae_any", "sae_related")
+  tibble(key = keys, category = unname(labels[keys]),
+         flag = c("any_complication", "any_minor_expected", "any_minor_unexpected", "any_serious",
+                  "any_other", "any_sae", "any_sae_related"),
+         count = c("event_count", "n_minor_expected", "n_minor_unexpected", "n_serious", "n_other",
+                   "n_sae", "n_sae_related"),
+         count_source = c("verified count construct", "long complication records", "long complication records",
+                          "long complication records", "long complication records", "SAE form records",
+                          "SAE form records"))
+}
+
+#' Pooled participants-with-event counts by category
+#' @noRd
+pooled_event_risks <- function(participants, categories) {
+  rows <- event_category_rows(categories)
+  bind_rows(lapply(seq_len(nrow(rows)), function(i) {
+    flag <- participants[[rows$flag[i]]]
+    tibble(key = rows$key[i], category = rows$category[i],
+           participants_with_event = sum(flag %in% TRUE), denominator = sum(!is.na(flag)),
+           unknown_ascertainment = sum(is.na(flag)), enrolled = nrow(participants))
+  }))
+}
+
+# ---- Interval methods ------------------------------------------------------------------------
+
+#' Risk difference with a small-sample confidence interval
+#' @noRd
+risk_difference_interval <- function(x1, n1, x2, n2, method = c("newcombe", "wald"), conf_level = 0.95) {
+  method <- match.arg(method)
+  if (any(c(n1, n2) == 0) || any(is.na(c(x1, n1, x2, n2)))) {
+    return(tibble(p1 = NA_real_, p2 = NA_real_, estimate = NA_real_, lower = NA_real_, upper = NA_real_,
+                  method = method, status = "not estimable: empty denominator"))
+  }
+  z <- stats::qnorm(1 - (1 - conf_level) / 2)
+  p1 <- x1 / n1
+  p2 <- x2 / n2
+  d <- p1 - p2
+  if (method == "wald") {
+    se <- sqrt(p1 * (1 - p1) / n1 + p2 * (1 - p2) / n2)
+    lo <- d - z * se
+    hi <- d + z * se
+  } else {
+    wilson <- function(x, n) {
+      p <- x / n
+      centre <- (p + z^2 / (2 * n)) / (1 + z^2 / n)
+      half <- z * sqrt(p * (1 - p) / n + z^2 / (4 * n^2)) / (1 + z^2 / n)
+      c(centre - half, centre + half)
+    }
+    w1 <- wilson(x1, n1)
+    w2 <- wilson(x2, n2)
+    lo <- d - sqrt((p1 - w1[1])^2 + (w2[2] - p2)^2)
+    hi <- d + sqrt((w1[2] - p1)^2 + (p2 - w2[1])^2)
+  }
+  tibble(p1 = p1, p2 = p2, estimate = 100 * d, lower = 100 * max(-1, lo), upper = 100 * min(1, hi),
+         method = method, status = "ok")
+}
+
+#' Exact incidence rate ratio for two Poisson counts with exposure
+#' @noRd
+exact_rate_ratio <- function(x1, t1, x2, t2, conf_level = 0.95) {
+  method <- "exact conditional Poisson (binomial conditioning on total events; stats::poisson.test)"
+  if (any(is.na(c(x1, t1, x2, t2))) || t1 <= 0 || t2 <= 0) {
+    return(tibble(rate1 = NA_real_, rate2 = NA_real_, estimate = NA_real_, lower = NA_real_, upper = NA_real_,
+                  p_value = NA_real_, method = method, status = "not estimable: missing or nonpositive exposure"))
+  }
+  if (x1 + x2 == 0) {
+    return(tibble(rate1 = 0, rate2 = 0, estimate = NA_real_, lower = NA_real_, upper = NA_real_,
+                  p_value = NA_real_, method = method, status = "not estimable: no events in either arm"))
+  }
+  fit <- tryCatch(stats::poisson.test(c(x1, x2), c(t1, t2), conf.level = conf_level), error = function(e) e)
+  if (inherits(fit, "error")) {
+    return(tibble(rate1 = x1 / t1, rate2 = x2 / t2, estimate = NA_real_, lower = NA_real_, upper = NA_real_,
+                  p_value = NA_real_, method = method, status = paste("poisson.test failed:", conditionMessage(fit))))
+  }
+  tibble(rate1 = x1 / t1, rate2 = x2 / t2, estimate = unname(fit$estimate), lower = fit$conf.int[1],
+         upper = fit$conf.int[2], p_value = fit$p.value, method = method,
+         status = if (x1 == 0 || x2 == 0) "boundary estimate: zero events in one arm" else "ok")
+}
+
+# ---- Formatting helpers shared by the open and closed displays -------------------------------
+
+#' Example type string for a packed construct with the given separators
+#' @noRd
+packed_example_type <- function(fields, row_sep, field_sep) {
+  paste0("('", gsub("\\\\", "", row_sep), "', '", gsub("\\\\", "", field_sep), "')",
+         paste(rep("Character", length(fields)), collapse = "|"))
+}
+
+#' Example constructs and types for the endpoint availability tables
+#' @noRd
+availability_example_constructs <- function(measurements, score_families, promis_construct = NULL) {
+  c("enrolled", "followup_data", vapply(measurements, function(ep) ep$readings_constructs[1], character(1)),
+    unlist(score_families, use.names = FALSE), promis_construct)
+}
+
+#' @noRd
+availability_example_types <- function(measurements, score_families, promis_construct = NULL) {
+  c("Boolean", followup_data_example_type,
+    vapply(measurements, function(ep) measurement_example_type(ep$fields, ep$value_field), character(1)),
+    rep("Number", length(unlist(score_families))), if (!is.null(promis_construct)) promis_data_example_type)
+}
+
+#' Example type string for a packed review index
+#' @noRd
+review_example_type <- function(fields, features, quality_field, visit_field) {
+  types <- vapply(fields, function(f) {
+    if (f == visit_field) "NamedCategory['1 Month' '2 Month' '3 Month']"
+    else if (f == quality_field) "NamedCategory['Adequate' 'Poor']"
+    else if (f %in% features) "NamedCategory['None' 'Mild' 'Moderate' 'Present']"
+    else "Character"
+  }, character(1))
+  paste0("(';', ',')", paste(types, collapse = "|"))
+}
+
+#' Format an estimate with its interval
+#' @noRd
+fmt_estimate <- function(est, lower, upper, digits = 2) {
+  f <- function(v) ifelse(is.na(v), "NA", ifelse(is.infinite(v), ifelse(v > 0, "Inf", "-Inf"),
+                                                  trimws(format(round(v, digits), nsmall = digits))))
+  ifelse(is.na(est), "Not estimable", paste0(f(est), " (", f(lower), " to ", f(upper), ")"))
+}
+
+#' Format a number or an em dash when missing
+#' @noRd
+fmt_number <- function(x, digits = 2) {
+  ifelse(is.na(x), "-", trimws(format(round(x, digits), nsmall = digits)))
+}
+
+#' Mean (SD) that tolerates zero or one observation
+#' @noRd
+mean_sd_or_dash <- function(x, digits = 2) {
+  x <- x[!is.na(x)]
+  if (length(x) == 0) return("-")
+  if (length(x) == 1) return(paste0(trimws(format(round(x, digits), nsmall = digits)), " (-)"))
+  format_mean_sd(x, digits)
+}
+
+#' Format n; mean (SD) for a descriptive cell
+#' @noRd
+fmt_n_mean_sd <- function(n, m, s) {
+  ifelse(n > 0, paste0(n, "; ", fmt_number(m), " (", fmt_number(s), ")"), "-")
+}
+
+#' Kable with bold header rows and indented detail rows
+#' @noRd
+kable_indented_rows <- function(table_raw, col_names, indent_flag = NULL, header_above = NULL) {
+  is_header <- table_raw$Is_Header
+  indent_rows <- if (is.null(indent_flag)) which(!is_header) else which(table_raw[[indent_flag]])
+  table_print <- table_raw %>% select(-any_of(c("Is_Header", "Is_Subheader")))
+  out <- kable(table_print, format = "html", col.names = col_names, align = "l", escape = FALSE) %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    column_spec(1, bold = is_header)
+  if (length(indent_rows) > 0) out <- out %>% add_indent(indent_rows)
+  if (!is.null(header_above)) out <- out %>% add_header_above(header_above)
+  out
+}
+
+bottom_category_levels <- c("Refused", "Don't know", "Don't Know", "Unknown", "Other", "None", "Missing")
+
+#' Category levels in display order, with unknown/refused/missing last
+#' @noRd
+category_levels <- function(x, sep = NULL, order = NULL) {
+  x <- packed_na(x)
+  if (!is.null(sep)) x <- unlist(str_split(x[!is.na(x)], sep))
+  x <- str_trim(x)
+  x[is.na(x)] <- "Missing"
+  lev <- unique(x)
+  if (!is.null(order)) {
+    lev <- c(intersect(order, lev), sort(setdiff(lev, c(order, bottom_category_levels))),
+             intersect(bottom_category_levels, setdiff(lev, order)))
+  } else {
+    lev <- c(sort(setdiff(lev, bottom_category_levels)), intersect(bottom_category_levels, lev))
+  }
+  unique(lev)
+}
+
+#' Header plus n (%) rows for one categorical construct
+#' @noRd
+category_count_rows <- function(df, construct, header, levels, sep = NULL, denominator = nrow(df)) {
+  x <- packed_na(df[[construct]])
+  if (!is.null(sep)) {
+    x <- unlist(lapply(x, function(v) if (is.na(v)) "Missing" else str_trim(unlist(str_split(v, sep)))))
+  } else {
+    x[is.na(x)] <- "Missing"
+  }
+  counts <- base::table(factor(x, levels = levels))
+  bind_rows(tibble(Construct = header, Value = "n (%)", Is_Header = TRUE),
+            tibble(Construct = levels, Value = format_count_percent(as.integer(counts), denominator),
+                   Is_Header = FALSE))
+}
+
+#' Mean (SD) row with observed / missing n for one numeric construct
+#' @noRd
+numeric_summary_rows <- function(df, construct, header, digits = 2, transform = identity) {
+  vals <- if (!is.null(construct) && construct %in% names(df)) {
+    transform(parse_packed_number(df[[construct]])$value)
+  } else {
+    rep(NA_real_, nrow(df))
+  }
+  bind_rows(tibble(Construct = header, Value = mean_sd_or_dash(vals, digits), Is_Header = TRUE),
+            tibble(Construct = "Observed / missing, n", Value = paste0(sum(!is.na(vals)), " / ", sum(is.na(vals))),
+                   Is_Header = FALSE))
+}
+
+# ---- Participant characteristics (open) ------------------------------------------------------
+
+#' Category levels shared by the open and closed characteristics tables
+#' @noRd
+characteristics_levels <- function(df, constructs) {
+  opt <- function(name) if (!is.null(constructs[[name]]) && constructs[[name]] %in% names(df)) df[[constructs[[name]]]] else NULL
+  list(
+    sex = category_levels(df[[constructs$sex]], order = c("Male", "Female")),
+    race = category_levels(df[[constructs$race]], order = c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic")),
+    education = category_levels(df[[constructs$education]],
+                                order = c("8th grade or less", "9th to 12th grade, no diploma", "GED or high school graduate",
+                                          "Some college, no degree", "Associates degree (2 year degree)",
+                                          "Bachelors/college degree", "Some graduate work, no degree", "Graduate degree")),
+    insurance = if (!is.null(opt("insurance"))) category_levels(opt("insurance")) else NULL,
+    health = category_levels(df[[constructs$health]], order = c("Excellent", "Very Good", "Good", "Fair", "Poor")),
+    tobacco = category_levels(df[[constructs$tobacco]], order = c("Never", "Former", "Current")),
+    comorbidity = category_levels(df[[constructs$comorbidities]], sep = "; ")
+  )
+}
+
+#' Rows of the characteristics table for one group
+#' @noRd
+characteristics_rows <- function(df, levels, constructs, health_label) {
+  rows <- list(
+    numeric_summary_rows(df, constructs$age, "Age, mean years (SD)", 1),
+    category_count_rows(df, constructs$sex, "Sex", levels$sex),
+    category_count_rows(df, constructs$race, "Race/Ethnicity", levels$race),
+    category_count_rows(df, constructs$education, "Education", levels$education)
+  )
+  rows[[length(rows) + 1]] <- if (!is.null(levels$insurance)) {
+    category_count_rows(df, constructs$insurance, "Insurance", levels$insurance)
+  } else {
+    tibble(Construct = "Insurance", Value = "Not in export", Is_Header = TRUE)
+  }
+  rows[[length(rows) + 1]] <- if (!is.null(constructs$bmi) && constructs$bmi %in% names(df)) {
+    numeric_summary_rows(df, constructs$bmi, "Body mass index, mean kg/m² (SD)", 1)
+  } else {
+    tibble(Construct = "Body mass index", Value = "Not in export", Is_Header = TRUE)
+  }
+  rows[[length(rows) + 1]] <- category_count_rows(df, constructs$comorbidities,
+                                                  "Comorbidity (multiple selections possible)", levels$comorbidity, sep = "; ")
+  rows[[length(rows) + 1]] <- category_count_rows(df, constructs$tobacco, "Tobacco use", levels$tobacco)
+  rows[[length(rows) + 1]] <- category_count_rows(df, constructs$health, health_label, levels$health)
+  bind_rows(rows)
+}
+
+#' Patient Characteristics Summary Table
+#'
+#' @description
+#' Pooled participant characteristics for enrolled participants: age, sex, race/ethnicity,
+#' education, insurance and body mass index (when the constructs are exported),
+#' comorbidities (split on semicolon, so percentages may exceed 100%), tobacco use and a
+#' single-item self-reported health measure. Numeric rows carry observed and missing n.
+#' Unknown, refused and missing responses are separate categories and no baseline
+#' significance tests are shown. The output does not depend on treatment assignment; see
+#' closed_patient_characteristics_table for the by-arm version.
+#'
+#' @param analytic analytic data set that must include enrolled and the constructs named by
+#' the other arguments
+#' @param age,sex,race,education,comorbidities,tobacco,health construct names
+#' @param insurance,bmi construct names for the optional insurance and body mass index rows;
+#' shown as "Not in export" when absent
+#' @param health_label row label for the self-reported health item
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' patient_characteristics_table("Replace with Analytic Tibble")
+patient_characteristics_table <- function(analytic, age = "age", sex = "sex", race = "ethnicity_race",
+                                          education = "education", insurance = "insurance", bmi = "bmi",
+                                          comorbidities = "comorbidities_list", tobacco = "tobacco_use",
+                                          health = "preinjury_health",
+                                          health_label = "Self-reported general health (single item)") {
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", age, sex, race, education, insurance, bmi, comorbidities, tobacco, health),
+    example_types = c("Boolean", "Number", "NamedCategory['Male' 'Female']", "Category", "Category", "Category",
+                      "Number", "Category-NS", "NamedCategory['Never' 'Former' 'Current']",
+                      "NamedCategory['Excellent' 'Very Good' 'Good' 'Fair' 'Poor']"))
+  constructs <- list(age = age, sex = sex, race = race, education = education, insurance = insurance, bmi = bmi,
+                     comorbidities = comorbidities, tobacco = tobacco, health = health)
+  df <- analytic %>% filter(enrolled %in% TRUE)
+  rows <- characteristics_rows(df, characteristics_levels(df, constructs), constructs, health_label)
+  kable_indented_rows(rows, c("Characteristic", paste0("Enrolled (n = ", nrow(df), ")")))
+}
+
+# ---- Amputation and prosthesis characteristics (open) ---------------------------------------
+
+regular_use_levels <- c("1 per week", "Several times per week", "Daily", "Multiple times per day")
+
+#' Count participants with regular use in a packed frequency list
+#' @noRd
+regular_use_count <- function(x, n_slots, regular_levels) {
+  x <- packed_na(x)
+  parsed <- lapply(x, function(v) {
+    if (is.na(v)) return(rep(NA_character_, n_slots))
+    parts <- str_trim(unlist(str_split(v, ";")))
+    if (length(parts) != n_slots) return(c(parts, rep(NA_character_, n_slots))[seq_len(n_slots)])
+    parts
+  })
+  mat <- do.call(rbind, parsed)
+  any_regular <- apply(mat, 1, function(r) any(r %in% regular_levels))
+  all_known <- apply(mat, 1, function(r) all(!is.na(packed_na(r))))
+  list(regular = sum(any_regular), unknown = sum(!all_known & !any_regular))
+}
+
+#' Category levels shared by the open and closed amputation tables
+#' @noRd
+amputation_levels <- function(df, constructs) {
+  opt <- function(name) if (!is.null(constructs[[name]]) && constructs[[name]] %in% names(df)) df[[constructs[[name]]]] else NULL
+  list(cause = category_levels(df[[constructs$cause]]),
+       side = if (!is.null(opt("side"))) category_levels(opt("side")) else NULL,
+       device = category_levels(df[[constructs$devices]], sep = "; ", order = c("Cane", "Crutches", "Walker", "Wheelchair")),
+       ulcer = if (!is.null(opt("ulcer_stage"))) category_levels(opt("ulcer_stage")) else NULL,
+       prosthesis_type = if (!is.null(opt("prosthesis_type"))) category_levels(opt("prosthesis_type")) else NULL)
+}
+
+#' Rows of the amputation table for one group
+#' @noRd
+amputation_rows <- function(df, levels, constructs, anchor, display_years, regular_levels) {
+  n <- nrow(df)
+  anchor_construct <- if (anchor == "first_injection") constructs$days_since_first_injection else constructs$days_since_consent
+  anchor_label <- if (anchor == "first_injection") "first injection" else "consent"
+  rows <- list(
+    if (display_years) {
+      numeric_summary_rows(df, anchor_construct, paste0("Years since amputation at ", anchor_label, ", mean (SD)"), 1,
+                           transform = function(v) v / 365.25)
+    } else {
+      numeric_summary_rows(df, anchor_construct, paste0("Days since amputation at ", anchor_label, ", mean (SD)"), 0)
+    },
+    category_count_rows(df, constructs$cause, "Cause of amputation", levels$cause))
+  if (!is.null(levels$side)) rows[[length(rows) + 1]] <- category_count_rows(df, constructs$side, "Side of amputation", levels$side)
+  rows[[length(rows) + 1]] <- bind_rows(
+    tibble(Construct = "Prosthesis use", Value = "", Is_Header = TRUE),
+    numeric_summary_rows(df, constructs$days_per_week, "Days per week, mean (SD)", 1) %>% mutate(Is_Header = FALSE),
+    numeric_summary_rows(df, constructs$hours_per_day, "Hours per day, mean (SD)", 1) %>% mutate(Is_Header = FALSE))
+  rows[[length(rows) + 1]] <- category_count_rows(df, constructs$devices, "Ambulatory device use (multiple selections possible)",
+                                                  levels$device, sep = "; ")
+  rows[[length(rows) + 1]] <- if (!is.null(levels$ulcer)) category_count_rows(df, constructs$ulcer_stage, "Ulcer stage", levels$ulcer) else
+    tibble(Construct = "Ulcer stage", Value = "Not in export", Is_Header = TRUE)
+  rows[[length(rows) + 1]] <- if (!is.null(levels$prosthesis_type)) category_count_rows(df, constructs$prosthesis_type, "Prosthesis type", levels$prosthesis_type) else
+    tibble(Construct = "Prosthesis type", Value = "Not in export", Is_Header = TRUE)
+  rows[[length(rows) + 1]] <- bind_rows(
+    tibble(Construct = "Socket comfort score", Value = "", Is_Header = TRUE),
+    numeric_summary_rows(df, constructs$comfort_sit, "Sitting, mean (SD)", 1) %>% mutate(Is_Header = FALSE),
+    numeric_summary_rows(df, constructs$comfort_stand, "Standing, mean (SD)", 1) %>% mutate(Is_Header = FALSE),
+    numeric_summary_rows(df, constructs$comfort_walk, "Walking, mean (SD)", 1) %>% mutate(Is_Header = FALSE))
+  meds <- regular_use_count(df[[constructs$medications]], constructs$medication_slots, regular_levels)
+  skin <- regular_use_count(df[[constructs$skin_treatments]], constructs$skin_treatment_slots, regular_levels)
+  rows[[length(rows) + 1]] <- bind_rows(
+    tibble(Construct = "Regular use of pain medication for residual limb pain (daily or weekly)",
+           Value = format_count_percent(meds$regular, n), Is_Header = TRUE),
+    tibble(Construct = "Frequency unknown or missing", Value = as.character(meds$unknown), Is_Header = FALSE),
+    tibble(Construct = "Regular use of skin treatments for residual limb problems (daily or weekly)",
+           Value = format_count_percent(skin$regular, n), Is_Header = TRUE),
+    tibble(Construct = "Frequency unknown or missing", Value = as.character(skin$unknown), Is_Header = FALSE))
+  bind_rows(rows)
+}
+
+#' Amputation, Residual Limb and Prostheses Characteristics Summary Table
+#'
+#' @description
+#' Pooled amputation and prosthesis characteristics for enrolled participants: time since
+#' amputation at one labelled anchor (first injection or consent), cause, side, prosthesis
+#' use, ambulatory devices split into individual selections, ulcer stage and prosthesis type
+#' when exported, socket comfort, and regular pain-medication and skin-treatment use. Regular
+#' use applies the daily-or-weekly threshold in regular_levels rather than any answer other
+#' than "Did not use", and parses the packed frequency lists by their slot count (six for
+#' medications including cannabinoids, five for skin treatments).
+#'
+#' @param analytic analytic data set that must include enrolled and the constructs named by
+#' the other arguments
+#' @param anchor "first_injection" (uses days_since_first_injection) or "consent" (uses
+#' days_since_consent)
+#' @param display_years show years (days / 365.25) rather than days
+#' @param regular_levels frequency labels counted as regular use
+#' @param days_since_first_injection,days_since_consent,cause,side,days_per_week,hours_per_day,devices,ulcer_stage,prosthesis_type,comfort_sit,comfort_stand,comfort_walk,medications,skin_treatments construct names; side, ulcer_stage and prosthesis_type are optional
+#' @param medication_slots,skin_treatment_slots number of packed slots in the frequency lists
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' amputation_characteristics_table("Replace with Analytic Tibble")
+amputation_characteristics_table <- function(analytic, anchor = c("first_injection", "consent"), display_years = TRUE,
+                                             regular_levels = regular_use_levels,
+                                             days_since_first_injection = "amputation_days_since",
+                                             days_since_consent = "amputation_days", cause = "amputation_cause",
+                                             side = "amputation_side", days_per_week = "prosthesis_days_per_week",
+                                             hours_per_day = "prosthesis_hours_per_day", devices = "ambulatory_device_list",
+                                             ulcer_stage = "ulcer_stage", prosthesis_type = "prosthesis_type",
+                                             comfort_sit = "socket_comfort_score_sit", comfort_stand = "socket_comfort_score_stand",
+                                             comfort_walk = "socket_comfort_score_walk", medications = "medication_frequency_list",
+                                             skin_treatments = "meds_skin_list", medication_slots = 6, skin_treatment_slots = 5) {
+  anchor <- match.arg(anchor)
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", days_since_first_injection, days_since_consent, cause, days_per_week, hours_per_day,
+                           devices, comfort_sit, comfort_stand, comfort_walk, medications, skin_treatments),
+    example_types = c("Boolean", "Number", "Number", "Category", "Number", "Number", "Category-NS", "Number", "Number",
+                      "Number", "Character", "Character"))
+  constructs <- list(days_since_first_injection = days_since_first_injection, days_since_consent = days_since_consent,
+                     cause = cause, side = side, days_per_week = days_per_week, hours_per_day = hours_per_day,
+                     devices = devices, ulcer_stage = ulcer_stage, prosthesis_type = prosthesis_type,
+                     comfort_sit = comfort_sit, comfort_stand = comfort_stand, comfort_walk = comfort_walk,
+                     medications = medications, skin_treatments = skin_treatments,
+                     medication_slots = medication_slots, skin_treatment_slots = skin_treatment_slots)
+  df <- analytic %>% filter(enrolled %in% TRUE)
+  rows <- amputation_rows(df, amputation_levels(df, constructs), constructs, anchor, display_years, regular_levels)
+  kable_indented_rows(rows, c("Characteristic", paste0("Enrolled (n = ", nrow(df), ")")))
+}
+
+# ---- Safety displays (open) ------------------------------------------------------------------
+
+complication_data_example_type <- "(';new_row: ', '|')FollowupPeriod|Character|Character|NamedCategory['Local injection reactions' 'Small hemorrhage' 'Edema' 'Nodules/papules' 'Irritation' 'Dermatitis' 'Pruritus' 'Cellulitis' 'Other']|Character|Date|NamedCategory['Definitely related' 'Probably related' 'Possibly related' 'Unlikely related' 'Unrelated']|NamedCategory['Mild' 'Moderate' 'Severe and Undesirable']|NamedCategory['Operative' 'Non-operative' 'No treatment']|Character"
+sae_data_example_type <- "(';new_row: ', '|')FacilityCode|Character|Character|Date|Date|Number|NamedCategory['Possibly Related' 'Unlikely Related' 'Unrelated']|NamedCategory['Possibly Related' 'Probably Not Related']|Character|Character"
+followup_data_example_type <- "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date"
+
+#' Participants with complications
+#'
+#' @description
+#' Participants with one or more events in each safety category from
+#' complication_categories(): category, participants with events, denominator with known
+#' ascertainment, percent and the number with unknown ascertainment. Counting participants
+#' is numerically different from counting complications, since one participant can have
+#' several. The first row (any complication) uses the verified count construct together with
+#' the long records; all-SAE coverage is shown separately from the narrower related SAE row.
+#'
+#' @param analytic analytic data set that must include study_id, enrolled, complication_data,
+#' sae_data, followup_data and the count and exposure constructs
+#' @param categories mapping from complication_categories()
+#' @param count_construct verified total event count per participant
+#' @param exposure_construct verified person-days of follow-up per participant
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' participants_w_complications("Replace with Analytic Tibble")
+participants_w_complications <- function(analytic, categories = complication_categories(),
+                                         count_construct = "complication_count",
+                                         exposure_construct = "last_followup_days") {
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
+    example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type,
+                      "Number", "Number"))
+  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct)
+  pooled <- pooled_event_risks(participants, categories)
+  out <- pooled %>%
+    transmute(Category = category,
+              `Participants with >=1 event` = participants_with_event,
+              `Denominator (known ascertainment)` = denominator,
+              Percent = ifelse(denominator > 0,
+                               paste0(trimws(format(round(100 * participants_with_event / denominator, 1), nsmall = 1)), "%"),
+                               ""),
+              `Unknown ascertainment` = unknown_ascertainment)
+  kable(out, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    add_footnote(c(paste0("Enrolled participants: ", nrow(participants), ". Ascertainment is unknown when a participant ",
+                          "has neither a complication record nor a completed follow-up form.")), notation = "number")
+}
+
+#' Total events and incidence rates
+#'
+#' @description
+#' Pooled companion to closed_event_rate_analysis: for each safety category, the number of
+#' participants with known ascertainment and positive exposure, the total events, the
+#' person-days and the rate per rate_unit person-days, with no group comparison. The any
+#' complication row uses the verified count construct; category rows use the long records
+#' with the same verified exposure, and say so. Participants with missing or nonpositive
+#' exposure are excluded and counted.
+#'
+#' @inheritParams participants_w_complications
+#' @param rate_unit person-days per rate unit (100 gives events per 100 person-days)
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' event_rate_summary("Replace with Analytic Tibble")
+event_rate_summary <- function(analytic, categories = complication_categories(),
+                               count_construct = "complication_count",
+                               exposure_construct = "last_followup_days", rate_unit = 100) {
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
+    example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type,
+                      "Number", "Number"))
+  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct)
+  usable <- participants %>% filter(exposure_valid, ascertained)
+  rows <- event_category_rows(categories)
+  out <- bind_rows(lapply(seq_len(nrow(rows)), function(i) {
+    events <- sum(usable[[rows$count[i]]], na.rm = TRUE)
+    days <- sum(usable$exposure_days)
+    tibble(Category = rows$category[i], `Count source` = rows$count_source[i], Participants = nrow(usable),
+           Events = events, `Person-days` = days, Rate = fmt_number(rate_unit * events / days))
+  }))
+  names(out)[names(out) == "Rate"] <- paste0("Rate per ", rate_unit, " person-days")
+  kable(out, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    add_footnote(c(paste0(nrow(participants) - nrow(usable), " participant(s) excluded for missing/nonpositive exposure ",
+                          "or unknown ascertainment.")), notation = "number")
+}
+
+# ---- Repeated location measurements (open) ----------------------------------------------------
+
+#' Descriptive summary of paired location changes by group
+#' @noRd
+measurement_descriptives <- function(change_grouped, positions, group_col) {
+  by_loc <- change_grouped %>%
+    group_by(.data[[group_col]], position) %>%
+    summarise(n_baseline = sum(!is.na(baseline)), mean_baseline = mean(baseline, na.rm = TRUE),
+              sd_baseline = stats::sd(baseline, na.rm = TRUE),
+              n_followup = sum(!is.na(followup)), mean_followup = mean(followup, na.rm = TRUE),
+              sd_followup = stats::sd(followup, na.rm = TRUE),
+              n_paired = sum(paired), mean_change = mean(change, na.rm = TRUE),
+              sd_change = stats::sd(change, na.rm = TRUE), .groups = "drop")
+  participant <- change_grouped %>%
+    group_by(.data[[group_col]], study_id) %>%
+    summarise(baseline = if (any(!is.na(baseline))) mean(baseline, na.rm = TRUE) else NA_real_,
+              followup = if (any(!is.na(followup))) mean(followup, na.rm = TRUE) else NA_real_,
+              change = if (any(paired)) mean(change[paired]) else NA_real_,
+              paired = any(paired), .groups = "drop")
+  overall <- participant %>%
+    group_by(.data[[group_col]]) %>%
+    summarise(position = "All locations (participant mean)",
+              n_baseline = sum(!is.na(baseline)), mean_baseline = mean(baseline, na.rm = TRUE),
+              sd_baseline = stats::sd(baseline, na.rm = TRUE),
+              n_followup = sum(!is.na(followup)), mean_followup = mean(followup, na.rm = TRUE),
+              sd_followup = stats::sd(followup, na.rm = TRUE),
+              n_paired = sum(paired), mean_change = mean(change, na.rm = TRUE),
+              sd_change = stats::sd(change, na.rm = TRUE), .groups = "drop")
+  desc <- bind_rows(by_loc, overall) %>%
+    mutate(position = factor(position, levels = c(positions, "All locations (participant mean)"))) %>%
+    arrange(.data[[group_col]], position) %>%
+    mutate(across(c(mean_baseline, sd_baseline, mean_followup, sd_followup, mean_change, sd_change),
+                  ~ ifelse(is.nan(.x), NA_real_, .x)))
+  list(descriptive = desc, participant = participant)
+}
+
+#' Positions in display order: clock positions first, then any others
+#' @noRd
+measurement_positions <- function(x) {
+  clock <- c("12 o'clock", "3 o'clock", "6 o'clock", "9 o'clock")
+  c(intersect(clock, unique(x)), sort(setdiff(unique(x), clock)))
+}
+
+#' Example type string for a packed measurement construct
+#' @noRd
+measurement_example_type <- function(fields, value_field) {
+  types <- vapply(fields, function(f) switch(f,
+    set = "NamedCategory['set_1']",
+    event = "NamedCategory['injection_1' '3_month' '1_month' '2_month']",
+    position = "NamedCategory['12 oclock' '3 oclock' '6 oclock' '9 oclock']",
+    if (f == value_field) "Number" else "Number-U6"), character(1))
+  paste0("(';', ',')", paste(types, collapse = "|"))
+}
+
+#' Open descriptive rows for a measurement table
+#' @noRd
+measurement_table_rows <- function(change, positions) {
+  desc <- measurement_descriptives(change %>% mutate(group = "all"), positions, "group")$descriptive
+  desc %>% transmute(
+    Construct = as.character(position),
+    `Pre n` = n_baseline,
+    `Pre, mean (SD)` = ifelse(n_baseline > 0, paste0(fmt_number(mean_baseline), " (", fmt_number(sd_baseline), ")"), "-"),
+    `Follow-up n` = n_followup,
+    `Follow-up, mean (SD)` = ifelse(n_followup > 0, paste0(fmt_number(mean_followup), " (", fmt_number(sd_followup), ")"), "-"),
+    `Paired n` = n_paired,
+    `Change, mean (SD)` = ifelse(n_paired > 0, paste0(fmt_number(mean_change), " (", fmt_number(sd_change), ")"), "-"),
+    Is_Header = TRUE, Is_Subheader = FALSE)
+}
+
+#' Open measurement table from paired changes
+#' @noRd
+measurement_table_open <- function(change, followup_label, include_per_participant_values, unit) {
+  positions <- measurement_positions(change$position)
+  summary_rows <- measurement_table_rows(change, positions)
+  if (include_per_participant_values) {
+    indiv <- change %>%
+      group_by(position) %>%
+      slice_sample(prop = 1) %>%
+      ungroup() %>%
+      transmute(position, Construct = "",
+                `Pre n` = n_valid_baseline,
+                `Pre, mean (SD)` = ifelse(is.na(baseline), "-", fmt_number(baseline)),
+                `Follow-up n` = n_valid_followup,
+                `Follow-up, mean (SD)` = ifelse(is.na(followup), "-", fmt_number(followup)),
+                `Paired n` = as.integer(paired),
+                `Change, mean (SD)` = ifelse(paired, fmt_number(change), "-"),
+                Is_Header = FALSE, Is_Subheader = FALSE, sort_key = 2)
+    sub <- summary_rows %>% filter(Construct != "All locations (participant mean)") %>%
+      transmute(position = Construct, Construct = "Per participant values (location mean; n = usable readings)",
+                `Pre n` = NA_integer_, `Pre, mean (SD)` = "", `Follow-up n` = NA_integer_, `Follow-up, mean (SD)` = "",
+                `Paired n` = NA_integer_, `Change, mean (SD)` = "", Is_Header = FALSE, Is_Subheader = TRUE, sort_key = 1)
+    table_raw <- bind_rows(summary_rows %>% mutate(position = Construct, sort_key = 0), sub, indiv) %>%
+      mutate(position = factor(position, levels = unique(summary_rows$Construct))) %>%
+      arrange(position, sort_key) %>%
+      select(-sort_key, -position) %>%
+      mutate(across(c(`Pre n`, `Follow-up n`, `Paired n`), ~ ifelse(is.na(.x), "", as.character(.x))))
+  } else {
+    table_raw <- summary_rows
+  }
+  unit_label <- if (nzchar(unit)) paste0(" ", unit) else ""
+  col_names <- c("Position", "Pre-injection n", paste0("Pre-injection", unit_label, ", mean (SD)"),
+                 paste0(followup_label, " n"), paste0(followup_label, " post-injection", unit_label, ", mean (SD)"),
+                 "Paired n", paste0("Change (", followup_label, " minus pre), mean (SD)"))
+  kable_indented_rows(table_raw, col_names, indent_flag = "Is_Subheader")
+}
+
+#' Paired location changes from an analytic data set for one endpoint
+#' @noRd
+location_change_data <- function(analytic, readings_constructs, fields, value_field, baseline_event, followup_event,
+                                 set, keep, min_valid) {
+  long <- unpack_measurement_readings(analytic, readings_constructs, fields, value_field) %>%
+    keep_measurement_rows(keep)
+  vm <- measurement_visit_means(long, min_valid) %>% filter(set == !!set)
+  list(long = long, visit_means = vm, change = measurement_visit_change(vm, baseline_event, followup_event))
+}
+
+#' Location Measurement Summary Table
+#'
+#' @description
+#' Pooled pre-to-follow-up summary of a repeated location measurement (durometer readings,
+#' OCT width, or any packed measurement family) for enrolled participants. At each location
+#' the visit values are the mean of usable readings within participant, visit and location,
+#' summarised as observed n and mean (SD), with the paired n and mean (SD) of the
+#' within-participant change (follow-up minus baseline, calculated only when both visits are
+#' available). An overall row uses the participant mean across locations. A missing
+#' follow-up visit shows as unavailable rather than stopping the table. With
+#' include_per_participant_values = TRUE, anonymised and shuffled per-participant location
+#' means are listed beneath each location. durometer_readings_table and oct_readings_table
+#' are convenience wrappers for the default endpoints.
+#'
+#' @param analytic analytic data set that must include enrolled, study_id and the readings
+#' construct
+#' @param readings_construct packed measurement construct
+#' @param fields packed field names, including set, event and position
+#' @param value_field the packed field holding the measurement
+#' @param baseline_event,followup_event event labels of the two visits compared
+#' @param followup_label display label for the follow-up visit
+#' @param set measurement set summarised
+#' @param unit unit label for the column headers
+#' @param keep optional named list of packed-field values to keep (for example
+#' list(orientation = "H")); NULL keeps every reading
+#' @param include_per_participant_values list shuffled per-participant values
+#' @param min_valid minimum usable readings for a location mean
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' location_measurement_table("Replace with Analytic Tibble")
+location_measurement_table <- function(analytic, readings_construct = "durometer_readings_set_1",
+                                       fields = c("set", "event", "position", "injection", "reading"),
+                                       value_field = "reading", baseline_event = "injection_1",
+                                       followup_event = "3_month", followup_label = "3 Month", set = "set_1",
+                                       unit = "", keep = NULL, include_per_participant_values = FALSE,
+                                       min_valid = 1) {
+  analytic <- if_needed_generate_example_data(
+    analytic, example_constructs = c("enrolled", readings_construct),
+    example_types = c("Boolean", measurement_example_type(fields, value_field)))
+  d <- location_change_data(analytic, readings_construct, fields, value_field, baseline_event, followup_event, set, keep, min_valid)
+  measurement_table_open(d$change, followup_label, include_per_participant_values, unit)
+}
+
+#' Follow-up event and label for a readings table mode
+#' @noRd
+mode_followup <- function(mode) {
+  switch(mode,
+         "1mo" = c(event = "1_month", label = "1 Month"),
+         "2mo" = c(event = "2_month", label = "2 Month"),
+         "3mo" = c(event = "3_month", label = "3 Month"),
+         stop("mode must be one of '1mo', '2mo', '3mo'"))
+}
+
+#' Durometer Readings Summary Table
+#'
+#' @description
+#' location_measurement_table for the durometer endpoint (durometer_readings_set_1, fields
+#' set, event, position, injection, reading; the injection field is the reading number).
+#'
+#' @inheritParams location_measurement_table
+#' @param mode "1mo", "2mo" or "3mo": the follow-up visit compared with injection_1
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' durometer_readings_table("Replace with Analytic Tibble", mode = "3mo")
+durometer_readings_table <- function(analytic, mode = "3mo", include_per_participant_values = FALSE, min_valid = 1) {
+  ev <- mode_followup(mode)
+  ep <- default_measurement_endpoints()$durometer
+  location_measurement_table(analytic, ep$readings_constructs[1], ep$fields, ep$value_field, "injection_1",
+                             ev[["event"]], ev[["label"]], "set_1", ep$unit, NULL, include_per_participant_values, min_valid)
+}
+
+#' OCT Readings Summary Table
+#'
+#' @description
+#' location_measurement_table for the OCT width endpoint (oct_readings_set_1, fields set,
+#' event, position, orientation, area, length, width). Each participant/location/visit value
+#' is the mean of all usable images across orientations unless orientations restricts the
+#' aggregation explicitly.
+#'
+#' @inheritParams durometer_readings_table
+#' @param orientations optional orientations to include; NULL uses all images
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' oct_readings_table("Replace with Analytic Tibble", mode = "3mo")
+oct_readings_table <- function(analytic, mode = "3mo", include_per_participant_values = FALSE, orientations = NULL,
+                               min_valid = 1) {
+  ev <- mode_followup(mode)
+  ep <- default_measurement_endpoints()$oct
+  keep <- if (is.null(orientations)) NULL else list(orientation = orientations)
+  location_measurement_table(analytic, ep$readings_constructs[1], ep$fields, ep$value_field, "injection_1",
+                             ev[["event"]], ev[["label"]], "set_1", "", keep, include_per_participant_values, min_valid)
+}
+
+# ---- Patient-reported outcomes (open) --------------------------------------------------------
+
+#' Observed n, mean (SD) and missing n per instrument and visit
+#' @noRd
+score_family_rows <- function(long, n_total) {
+  long %>%
+    group_by(instrument, visit) %>%
+    summarise(n = sum(!is.na(score)), msd = mean_sd_or_dash(score, 1), .groups = "drop") %>%
+    mutate(missing = n_total - n)
+}
+
+#' Patient Reported Outcomes Summary Table
+#'
+#' @description
+#' Each score family at baseline and one, two and three months for enrolled participants:
+#' observed n, mean (SD) and missing n. Scores are used as exported. The PROMIS-29 domains
+#' come from the packed promis_construct (T-scores for the seven scored domains, the 0-10
+#' rating for pain intensity) when it is in the export. Families whose constructs are not in
+#' the export are listed in the footnote instead of being dropped silently.
+#'
+#' @param analytic analytic data set that must include enrolled, study_id and the score
+#' constructs named in score_families
+#' @param score_families named list from default_score_families
+#' @param promis_construct packed PROMIS-29 construct (visit, domain, items_answered,
+#' raw_score, t_score); NULL to omit
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' patient_reported_outcomes_table("Replace with Analytic Tibble")
+patient_reported_outcomes_table <- function(analytic, score_families = default_score_families(),
+                                            promis_construct = "promis_data") {
+  constructs <- unlist(score_families, use.names = FALSE)
+  analytic <- if_needed_generate_example_data(
+    analytic, example_constructs = c("enrolled", constructs, promis_construct),
+    example_types = c("Boolean", rep("Number", length(constructs)), if (!is.null(promis_construct)) promis_data_example_type))
+  long <- unpack_score_families(analytic, score_families, promis_construct = promis_construct)
+  n_total <- length(enrolled_study_ids(analytic))
+  rows <- score_family_rows(long, n_total)
+  table_raw <- bind_rows(lapply(levels(rows$instrument), function(inst) {
+    r <- rows %>% filter(instrument == inst)
+    bind_rows(tibble(Construct = inst, n = "", `Mean (SD)` = "", Missing = "", Is_Header = TRUE),
+              r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), n = as.character(n),
+                              `Mean (SD)` = msd, Missing = as.character(missing), Is_Header = FALSE))
+  }))
+  missing_families <- attr(long, "missing_families")
+  kable_indented_rows(table_raw, c("Instrument / visit", "Observed n", "Mean (SD)", "Missing n")) %>%
+    add_footnote(c(paste0("Enrolled participants: ", n_total, ".",
+                          if (length(missing_families) > 0) paste0(" Not in export: ", paste(missing_families, collapse = ", "), ".") else "")),
+                 notation = "number")
+}
+
+# ---- Endpoint availability (open) ------------------------------------------------------------
+
+#' Availability rows for a set of study IDs
+#' @noRd
+endpoint_availability_rows <- function(analytic, ids, measurements, score_families, periods, followup_form,
+                                       promis_construct = "promis_data") {
+  n_ids <- length(ids)
+  sub <- analytic %>% mutate(study_id = as.character(study_id)) %>% filter(study_id %in% ids)
+  fu <- unpack_followup_data(sub)
+  overall <- fu %>% filter(form == followup_form) %>%
+    group_by(followup_period) %>%
+    summarise(expected = sum(!status_base %in% "Not Expected"), visit_completed = sum(visit_complete),
+              not_expected = sum(status_base %in% "Not Expected"), .groups = "drop")
+  scores <- unpack_score_families(sub, score_families, promis_construct = promis_construct)
+  measurement_row <- function(ep, label, period) {
+    present_constructs <- intersect(ep$readings_constructs[1], names(sub))
+    if (length(present_constructs) == 0) return(NULL)
+    vm <- measurement_visit_means(unpack_measurement_readings(sub, present_constructs, ep$fields, ep$value_field)) %>%
+      filter(set == "set_1")
+    ev <- periods[[period]]
+    present <- vm %>% filter(event == ev, available) %>% group_by(study_id) %>% summarise(locs = n_distinct(position), .groups = "drop")
+    base <- vm %>% filter(event == "injection_1", available) %>% distinct(study_id, position)
+    paired <- vm %>% filter(event == ev, available) %>% distinct(study_id, position) %>%
+      inner_join(base, by = c("study_id", "position")) %>% distinct(study_id) %>% nrow()
+    tibble(period = period, endpoint = label, outcome_available = nrow(present),
+           locations_available = sum(present$locs), paired_with_baseline = paired)
+  }
+  score_row <- function(period) {
+    p <- scores %>% filter(as.character(visit) == period) %>% group_by(instrument) %>%
+      summarise(available = sum(!is.na(score)), .groups = "drop")
+    b <- scores %>% filter(as.character(visit) == "Baseline", !is.na(score)) %>% select(study_id, instrument)
+    paired <- scores %>% filter(as.character(visit) == period, !is.na(score)) %>%
+      inner_join(b, by = c("study_id", "instrument")) %>% count(instrument, name = "paired")
+    p %>% left_join(paired, by = "instrument") %>%
+      transmute(period = period, endpoint = paste0("PRO: ", instrument), outcome_available = available,
+                locations_available = NA_integer_, paired_with_baseline = replace_na(paired, 0L))
+  }
+  rows <- bind_rows(lapply(names(periods), function(p) {
+    bind_rows(bind_rows(lapply(names(measurements), function(m) measurement_row(measurements[[m]], measurements[[m]]$label, p))),
+              score_row(p))
+  }))
+  rows %>%
+    left_join(overall, by = c("period" = "followup_period")) %>%
+    mutate(expected = replace_na(expected, 0L), visit_completed = replace_na(visit_completed, 0L),
+           not_expected = replace_na(not_expected, 0L), outcome_missing = pmax(expected - outcome_available, 0L),
+           enrolled = n_ids)
+}
+
+#' Follow-up and Endpoint Availability Table
+#'
+#' @description
+#' Rows per follow-up visit and endpoint (each measurement endpoint and each score family)
+#' with the number of enrolled participants expected at the visit (the Overall follow-up form
+#' not "Not Expected"), the number with the visit completed, the number with the outcome
+#' available, the number expected but without the outcome, the number not expected, the
+#' locations available and the number paired with a baseline value. Participant n is
+#' distinct from observation n, and a completed visit is never equated with every endpoint
+#' being available. Extends expected_and_followup_visit_overall rather than replacing it.
+#'
+#' @param analytic analytic data set that must include study_id, enrolled, followup_data and
+#' the measurement and score constructs
+#' @param measurements named list of endpoint definitions from default_measurement_endpoints
+#' @param score_families named list from default_score_families
+#' @param periods named character vector mapping follow-up period labels to measurement
+#' event labels
+#' @param followup_form the followup_data form whose status defines expected visits
+#' @param promis_construct packed PROMIS-29 construct whose domains are listed as endpoints; NULL to omit
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' endpoint_availability_table("Replace with Analytic Tibble")
+endpoint_availability_table <- function(analytic, measurements = default_measurement_endpoints(),
+                                        score_families = default_score_families(),
+                                        periods = c("1 Month" = "1_month", "2 Month" = "2_month", "3 Month" = "3_month"),
+                                        followup_form = "Overall", promis_construct = "promis_data") {
+  analytic <- if_needed_generate_example_data(analytic, example_constructs = availability_example_constructs(measurements, score_families, promis_construct),
+      example_types = availability_example_types(measurements, score_families, promis_construct))
+  ids <- enrolled_study_ids(analytic)
+  rows <- endpoint_availability_rows(analytic, ids, measurements, score_families, periods, followup_form, promis_construct)
+  out <- rows %>% transmute(Visit = period, Endpoint = endpoint, Enrolled = enrolled, Expected = expected,
+                            `Visit completed` = visit_completed, `Outcome available (participants)` = outcome_available,
+                            `Locations available` = ifelse(is.na(locations_available), "", as.character(locations_available)),
+                            `Expected, outcome missing` = outcome_missing, `Not expected` = not_expected,
+                            `Paired with baseline` = paired_with_baseline)
+  kable(out, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    collapse_rows(columns = 1, valign = "top")
+}
+
+# ---- Future-study power sensitivity (open) ---------------------------------------------------
+
+#' Power of a two-sample t-test with unequal allocation
+#' @noRd
+power_two_sample <- function(delta, sd, n1, n2, alpha = 0.05) {
+  df <- n1 + n2 - 2
+  if (df < 1) return(NA_real_)
+  ncp <- delta / (sd * sqrt(1 / n1 + 1 / n2))
+  crit <- stats::qt(1 - alpha / 2, df)
+  stats::pt(crit, df, ncp = ncp, lower.tail = FALSE) + stats::pt(-crit, df, ncp = ncp)
+}
+
+#' Future-Study Power Sensitivity Table
+#'
+#' @description
+#' Required sample size for a future two-arm comparison of mean change under each supplied
+#' scenario, using the noncentral t distribution with unequal allocation and inflating the
+#' total for anticipated missingness. Inputs are explicit planning assumptions: the assumed
+#' effect, the SD of participant change, the allocation ratio, the target power and the
+#' missing fraction. Nothing is derived from a treatment-effect estimate; pooled_change_sd
+#' can supply an arm-blind nuisance estimate from a location change analysis for explicitly
+#' labelled blinded planning.
+#'
+#' @param scenarios data frame with columns scenario, effect, sd_change, allocation_ratio
+#' (treatment per control), power and missing_fraction, and optionally alpha
+#' @param alpha two-sided significance level used when a scenario has none
+#' @param max_n_control search limit for the control-arm size
+#' @param note footnote stating the provenance of the inputs
+#' @param return_fit when TRUE, returns the scenario results as a tibble alongside the table
+#' (as result_table)
+#'
+#' @return An HTML table, or a list when return_fit = TRUE.
+#' @export
+#'
+#' @examples
+#' power_sensitivity_table(data.frame(scenario = "Reference", effect = 6.4, sd_change = 8,
+#'                                    allocation_ratio = 1, power = 0.8, missing_fraction = 0.1))
+power_sensitivity_table <- function(scenarios, alpha = 0.05, max_n_control = 500,
+                                    note = "Inputs are explicit planning assumptions; no treatment-effect estimate is used.",
+                                    return_fit = FALSE) {
+  needed <- c("scenario", "effect", "sd_change", "allocation_ratio", "power", "missing_fraction")
+  if (!all(needed %in% names(scenarios))) stop("scenarios must have columns: ", paste(needed, collapse = ", "))
+  if (!"alpha" %in% names(scenarios)) scenarios$alpha <- alpha
+  results <- bind_rows(lapply(seq_len(nrow(scenarios)), function(i) {
+    s <- scenarios[i, ]
+    n_control <- NA_integer_
+    achieved <- NA_real_
+    for (n1 in 2:max_n_control) {
+      n2 <- max(2, ceiling(n1 * s$allocation_ratio))
+      p <- power_two_sample(s$effect, s$sd_change, n2, n1, s$alpha)
+      if (!is.na(p) && p >= s$power) { n_control <- n1; achieved <- p; break }
+    }
+    n_treatment <- if (is.na(n_control)) NA_integer_ else max(2, ceiling(n_control * s$allocation_ratio))
+    n_total <- n_control + n_treatment
+    tibble(scenario = s$scenario, effect = s$effect, sd_change = s$sd_change, allocation_ratio = s$allocation_ratio,
+           power = s$power, alpha = s$alpha, missing_fraction = s$missing_fraction, n_control = n_control,
+           n_treatment = n_treatment, n_total = n_total, n_total_inflated = ceiling(n_total / (1 - s$missing_fraction)),
+           achieved_power = achieved,
+           status = if (is.na(n_control)) paste0("not reached within ", max_n_control, " per control arm") else "ok")
+  }))
+  out <- results %>% transmute(
+    Scenario = scenario, `Assumed effect` = effect, `SD of change` = sd_change,
+    `Allocation (treatment:control)` = paste0(allocation_ratio, ":1"), `Target power` = power, Alpha = alpha,
+    `Anticipated missing` = paste0(round(100 * missing_fraction), "%"),
+    `n control / n treatment` = paste0(n_control, " / ", n_treatment), `Total n` = n_total,
+    `Total n inflated for missingness` = n_total_inflated, `Achieved power` = fmt_number(achieved_power, 3), Status = status)
+  result_table <- kable(out, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    add_footnote(c(note, "Two-sample t-test on participant change; total n inflated by 1 / (1 - missing fraction)."),
+                 notation = "number")
+  if (return_fit) return(list(result_table = result_table, results = results, scenarios = scenarios))
+  result_table
+}
+
+#' Pooled (arm-blind) SD of participant change from a location change analysis
+#' @noRd
+pooled_change_sd <- function(result) {
+  p <- result$participant %>% filter(paired)
+  list(sd_change = stats::sd(p$change), n = nrow(p), endpoint = result$endpoint)
+}
+
+# ---- Qualitative review summary (open) -------------------------------------------------------
+
+#' Summarise reviewer findings from a packed review index
+#' @noRd
+qualitative_review_data <- function(analytic, review_construct, fields, features, quality_field, visit_field,
+                                    group_col = NULL) {
+  long <- unpack_packed_construct(analytic, review_construct, fields, row_sep = ";", field_sep = ",")
+  group_cols <- c(group_col, visit_field)
+  summarise_feature <- function(feature) {
+    long %>%
+      mutate(level = replace_na(.data[[feature]], "Not recorded")) %>%
+      group_by(across(all_of(group_cols)), level) %>%
+      summarise(images = n(), participants = n_distinct(study_id), .groups = "drop") %>%
+      mutate(feature = feature, .before = 1)
+  }
+  totals <- long %>%
+    group_by(across(all_of(group_cols))) %>%
+    summarise(images_reviewed = n(), participants_reviewed = n_distinct(study_id),
+              images_adequate = sum(.data[[quality_field]] %in% "Adequate"), .groups = "drop")
+  list(long = long, table = bind_rows(lapply(features, summarise_feature)), totals = totals)
+}
+
+#' Format the review summary as a table
+#' @noRd
+qualitative_review_table <- function(review, visit_field, group_col = NULL, footnotes = NULL) {
+  tb <- review$table %>%
+    mutate(cell = paste0(images, " (", participants, ")")) %>%
+    select(any_of(group_col), all_of(visit_field), feature, level, cell) %>%
+    pivot_wider(names_from = all_of(visit_field), values_from = cell, values_fill = "0 (0)") %>%
+    arrange(across(any_of(group_col)), feature, level)
+  totals <- review$totals %>%
+    mutate(feature = "Images reviewed (participants); adequate quality", level = "",
+           cell = paste0(images_reviewed, " (", participants_reviewed, "); ", images_adequate)) %>%
+    select(any_of(group_col), all_of(visit_field), feature, level, cell) %>%
+    pivot_wider(names_from = all_of(visit_field), values_from = cell, values_fill = "0 (0)")
+  out <- bind_rows(totals, tb)
+  if (!is.null(group_col)) out <- out %>% rename(Arm = all_of(group_col))
+  out <- out %>% rename(Feature = feature, Level = level)
+  vis <- kable(out, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    collapse_rows(columns = if (!is.null(group_col)) 1:2 else 1, valign = "top")
+  if (!is.null(footnotes)) vis <- vis %>% add_footnote(footnotes, notation = "number")
+  vis
+}
+
+#' Qualitative Review Summary Table
+#'
+#' @description
+#' Counts reviewer findings from a packed review index (record separator ";", field
+#' separator ","), for example the skin appearance review of redness, scaling and other
+#' disturbances at each follow-up visit: images reviewed and participants per visit, and the
+#' number of images (participants) at each recorded level of every feature. No score or
+#' significance test is invented. When the review construct is absent the table states what
+#' is needed. The default schema is proposed, not an existing export column.
+#'
+#' @param analytic analytic data set that must include study_id, enrolled and the review
+#' construct
+#' @param review_construct name of the packed review index
+#' @param fields packed field names in order
+#' @param features fields whose levels are counted
+#' @param quality_field field holding the image quality (counted when "Adequate")
+#' @param visit_field field holding the visit label
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' qualitative_review_summary("Replace with Analytic Tibble")
+qualitative_review_summary <- function(analytic, review_construct = "appearance_data",
+                                       fields = c("period", "visit", "assessment_date", "location", "image_reference",
+                                                  "quality", "redness", "scaling", "other_findings", "reviewer"),
+                                       features = c("redness", "scaling", "other_findings"),
+                                       quality_field = "quality", visit_field = "visit") {
+  analytic <- if_needed_generate_example_data(analytic, example_constructs = c("enrolled", review_construct),
+      example_types = c("Boolean", review_example_type(fields, features, quality_field, visit_field)))
+  if (!review_construct %in% names(analytic)) {
+    out <- tibble(Status = paste0("construct '", review_construct, "' not present in the export; add the packed review index (",
+                                  paste(fields, collapse = ", "), ") to produce this summary"))
+    return(kable(out, format = "html", align = "l") %>% kable_styling("striped", full_width = FALSE, position = "left"))
+  }
+  review <- qualitative_review_data(analytic, review_construct, fields, features, quality_field, visit_field)
+  qualitative_review_table(review, visit_field,
+                           footnotes = c("Reviewer findings per image, counted by visit; participants may contribute several locations.",
+                                         "Open summary: no treatment assignment used."))
+}
+
+# ---- Run manifest ----------------------------------------------------------------------------
+
+#' Report Run Manifest
+#'
+#' @description
+#' Records the analysis population, enrolled count, data cutoff, source SAP version,
+#' assignment mode and package versions for a report header, so a knitted report states what
+#' it was built from.
+#'
+#' @param analytic analytic data set that must include study_id and enrolled (and treatment_arm when
+#' blinded = FALSE)
+#' @param sap_version SAP version text
+#' @param data_cutoff data cutoff or export date text
+#' @param input_file name of the analytic export read by the report
+#' @param blinded NULL for an open report; TRUE to describe the reproducible dummy assignment the closed
+#' functions build from the sorted enrolled IDs and seed; FALSE to describe the actual assignment
+#' @param seed seed of the dummy assignment
+#' @param control_arm value of treatment_arm treated as the control group
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' report_manifest("Replace with Analytic Tibble", "v2.0", "2026-09-22", "analytic_dataset.csv")
+#' report_manifest("Replace with Analytic Tibble", "v2.0", "2026-09-22", "analytic_dataset.csv", blinded = TRUE)
+report_manifest <- function(analytic, sap_version, data_cutoff, input_file = NA_character_, blinded = NULL,
+                            seed = 20260922, control_arm = "Group A") {
+  analytic <- if_needed_generate_example_data(analytic, example_constructs = "enrolled", example_types = "Boolean")
+  n_enrolled <- length(enrolled_study_ids(analytic))
+  mode <- if (is.null(blinded)) "Open report: pooled, no treatment assignment used" else {
+    assignment <- resolve_treatment_assignment(analytic, blinded, NULL, seed, control_arm)
+    paste0(assignment$assignment_mode, " (", assignment$caption, "; contrast ", assignment$contrast,
+           if (!is.null(assignment$seed)) paste0("; seed ", assignment$seed), ")")
+  }
+  df <- tibble(
+    Item = c("Population", "Enrolled participants", "Data cutoff / export", "Source SAP", "Assignment mode",
+             "Analytic input file", "VisualizationLibrary version", "VisualizationTools version", "R version"),
+    Value = c("enrolled == TRUE", as.character(n_enrolled), as.character(data_cutoff), sap_version, mode,
+              as.character(input_file), as.character(utils::packageVersion("VisualizationLibrary")),
+              tryCatch(as.character(utils::packageVersion("VisualizationTools")), error = function(e) "not installed"),
+              paste(R.version$major, R.version$minor, sep = ".")))
+  kable(df, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
 }
