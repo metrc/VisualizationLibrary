@@ -7446,8 +7446,15 @@ unpack_packed_construct <- function(analytic, construct, fields, row_sep, field_
     for (f in fields) out[[f]] <- character()
     return(out)
   }
+  n_fields <- str_count(df$packed, field_sep) + 1
+  if (any(n_fields != length(fields))) {
+    bad <- df[n_fields != length(fields), ]
+    stop(sprintf("%s has %d packed record(s) with %s fields instead of %d (first bad record for study_id %s: '%s')",
+                 construct, nrow(bad), paste(unique(n_fields[n_fields != length(fields)]), collapse = "/"), length(fields),
+                 bad$study_id[1], substr(bad$packed[1], 1, 80)))
+  }
   df %>%
-    separate(packed, into = fields, sep = field_sep, fill = "right", extra = "merge") %>%
+    separate(packed, into = fields, sep = field_sep) %>%
     mutate(across(all_of(fields), packed_na))
 }
 
@@ -7564,11 +7571,8 @@ unpack_measurement_readings <- function(analytic, readings_constructs = "duromet
     stop("fields must include set, event and position")
   }
   if (!value_field %in% fields) stop("value_field must be one of the packed fields")
-  present <- intersect(readings_constructs, names(analytic))
-  if (length(present) == 0) {
-    stop("none of the readings constructs are present: ", paste(readings_constructs, collapse = ", "))
-  }
-  out <- bind_rows(lapply(present, function(construct) {
+  require_constructs(analytic, readings_constructs, "unpack_measurement_readings")
+  out <- bind_rows(lapply(readings_constructs, function(construct) {
     unpack_packed_construct(analytic, construct, fields, row_sep = row_sep, field_sep = field_sep,
                             population = population) %>%
       mutate(source_construct = construct)
@@ -7668,14 +7672,16 @@ unpack_promis_data <- function(analytic, construct = "promis_data",
                                visit_labels = c("Baseline", "1 Month", "2 Month", "3 Month")) {
   long <- unpack_packed_construct(analytic, construct, c("visit", "domain", "items_answered", "raw_score", "t_score"),
                                   row_sep = ";", field_sep = ",")
+  unknown_domain <- setdiff(unique(long$domain), names(promis_domain_labels))
+  if (length(unknown_domain) > 0) stop(construct, " has unknown PROMIS domain(s): ", paste(unknown_domain, collapse = ", "))
+  unknown_visit <- setdiff(unique(long$visit), visit_labels)
+  if (length(unknown_visit) > 0) stop(construct, " has visit label(s) outside the score-family visits: ", paste(unknown_visit, collapse = ", "))
   score_field <- ifelse(long$domain %in% "pain_intensity", long$raw_score, long$t_score)
   parsed <- parse_packed_number(score_field)
   long %>%
     mutate(instrument = unname(promis_domain_labels[domain]),
-           instrument = ifelse(is.na(instrument), paste0("PROMIS-29 ", domain), instrument),
            score_raw = score_field, score = parsed$value, parse_failed = parsed$failed,
            items_answered = parse_packed_number(items_answered)$value) %>%
-    filter(visit %in% visit_labels) %>%
     select(study_id, instrument, visit, score_raw, score, parse_failed, items_answered)
 }
 
@@ -7690,14 +7696,11 @@ unpack_score_families <- function(analytic, score_families = default_score_famil
                                   promis_construct = "promis_data") {
   require_constructs(analytic, c("study_id", "enrolled"), "unpack_score_families")
   df <- analytic %>% filter(enrolled %in% TRUE) %>% mutate(study_id = as.character(study_id))
-  missing_families <- character()
+  require_constructs(analytic, unlist(score_families, use.names = FALSE), "unpack_score_families")
+  if (!is.null(promis_construct)) require_constructs(analytic, promis_construct, "unpack_score_families")
   rows <- list()
   for (inst in names(score_families)) {
     cols <- score_families[[inst]]
-    if (!all(cols %in% names(df))) {
-      missing_families <- c(missing_families, inst)
-      next
-    }
     for (v in names(cols)) {
       parsed <- parse_packed_number(df[[cols[[v]]]])
       rows[[length(rows) + 1]] <- tibble(study_id = df$study_id, instrument = inst,
@@ -7715,21 +7718,13 @@ unpack_score_families <- function(analytic, score_families = default_score_famil
   out$items_answered <- NA_real_
   instrument_levels <- names(score_families)
   if (!is.null(promis_construct)) {
-    if (promis_construct %in% names(analytic)) {
-      promis <- unpack_promis_data(analytic, promis_construct, unname(visit_labels))
-      out <- bind_rows(out, promis)
-      instrument_levels <- c(instrument_levels,
-                             unname(promis_domain_labels)[unname(promis_domain_labels) %in% promis$instrument],
-                             setdiff(unique(promis$instrument), unname(promis_domain_labels)))
-    } else {
-      missing_families <- c(missing_families, paste0("PROMIS-29 (", promis_construct, ")"))
-    }
+    promis <- unpack_promis_data(analytic, promis_construct, unname(visit_labels))
+    out <- bind_rows(out, promis)
+    instrument_levels <- c(instrument_levels, unname(promis_domain_labels)[unname(promis_domain_labels) %in% promis$instrument])
   }
-  out <- out %>%
+  out %>%
     mutate(instrument = factor(instrument, levels = instrument_levels),
            visit = factor(visit, levels = unname(visit_labels)))
-  attr(out, "missing_families") <- missing_families
-  out
 }
 
 #' Participant-level safety inputs
@@ -7779,9 +7774,9 @@ participant_event_summary <- function(analytic, categories = complication_catego
            ascertained = has_complication_record | any_completed_form,
            ascertainment_unknown = !ascertained,
            event_count_source = case_when(!is.na(event_count) ~ "verified",
-                                          ascertained ~ "long_records",
+                                          ascertained ~ "no records (verified zero)",
                                           TRUE ~ "unknown"),
-           event_count = ifelse(is.na(event_count) & ascertained, as.numeric(n_records), event_count),
+           event_count = ifelse(is.na(event_count) & ascertained, 0, event_count),
            any_complication = ifelse(ascertained, n_records > 0 | event_count > 0, NA),
            any_minor_expected = ifelse(ascertained, n_minor_expected > 0, NA),
            any_minor_unexpected = ifelse(ascertained, n_minor_unexpected > 0, NA),
@@ -7791,6 +7786,11 @@ participant_event_summary <- function(analytic, categories = complication_catego
            any_sae_related = ifelse(ascertained, n_sae_related > 0, NA),
            exposure_valid = !is.na(exposure_days) & exposure_days > 0)
 
+  inconsistent <- out %>% filter(is.na(event_count) & n_records > 0 | (!is.na(event_count) & event_count < n_records))
+  if (nrow(inconsistent) > 0) {
+    stop(count_construct, " is missing or below the number of packed complication records for study_id ",
+         paste(inconsistent$study_id, collapse = ", "), "; reconcile the verified count with complication_data")
+  }
   attr(out, "reconciliation") <- out %>%
     filter(event_count_source == "verified") %>%
     summarise(participants = n(), verified_total = sum(event_count, na.rm = TRUE),
@@ -8013,7 +8013,7 @@ numeric_summary_rows <- function(df, construct, header, digits = 2, transform = 
 #' Category levels shared by the open and closed characteristics tables
 #' @noRd
 characteristics_levels <- function(df, constructs) {
-  opt <- function(name) if (!is.null(constructs[[name]]) && constructs[[name]] %in% names(df)) df[[constructs[[name]]]] else NULL
+  opt <- function(name) if (!is.null(constructs[[name]])) df[[constructs[[name]]]] else NULL
   list(
     sex = category_levels(df[[constructs$sex]], order = c("Male", "Female")),
     race = category_levels(df[[constructs$race]], order = c("Non-Hispanic White", "Non-Hispanic Black", "Hispanic")),
@@ -8037,15 +8037,11 @@ characteristics_rows <- function(df, levels, constructs, health_label) {
     category_count_rows(df, constructs$race, "Race/Ethnicity", levels$race),
     category_count_rows(df, constructs$education, "Education", levels$education)
   )
-  rows[[length(rows) + 1]] <- if (!is.null(levels$insurance)) {
-    category_count_rows(df, constructs$insurance, "Insurance", levels$insurance)
-  } else {
-    tibble(Construct = "Insurance", Value = "Not in export", Is_Header = TRUE)
+  if (!is.null(constructs$insurance)) {
+    rows[[length(rows) + 1]] <- category_count_rows(df, constructs$insurance, "Insurance", levels$insurance)
   }
-  rows[[length(rows) + 1]] <- if (!is.null(constructs$bmi) && constructs$bmi %in% names(df)) {
-    numeric_summary_rows(df, constructs$bmi, "Body mass index, mean kg/m² (SD)", 1)
-  } else {
-    tibble(Construct = "Body mass index", Value = "Not in export", Is_Header = TRUE)
+  if (!is.null(constructs$bmi)) {
+    rows[[length(rows) + 1]] <- numeric_summary_rows(df, constructs$bmi, "Body mass index, mean kg/m² (SD)", 1)
   }
   rows[[length(rows) + 1]] <- category_count_rows(df, constructs$comorbidities,
                                                   "Comorbidity (multiple selections possible)", levels$comorbidity, sep = "; ")
@@ -8058,8 +8054,7 @@ characteristics_rows <- function(df, levels, constructs, health_label) {
 #'
 #' @description
 #' Pooled participant characteristics for enrolled participants: age, sex, race/ethnicity,
-#' education, insurance and body mass index (when the constructs are exported),
-#' comorbidities (split on semicolon, so percentages may exceed 100%), tobacco use and a
+#' education, insurance and body mass index, comorbidities (split on semicolon, so percentages may exceed 100%), tobacco use and a
 #' single-item self-reported health measure. Numeric rows carry observed and missing n.
 #' Unknown, refused and missing responses are separate categories and no baseline
 #' significance tests are shown. The output does not depend on treatment assignment; see
@@ -8068,8 +8063,7 @@ characteristics_rows <- function(df, levels, constructs, health_label) {
 #' @param analytic analytic data set that must include enrolled and the constructs named by
 #' the other arguments
 #' @param age,sex,race,education,comorbidities,tobacco,health construct names
-#' @param insurance,bmi construct names for the optional insurance and body mass index rows;
-#' shown as "Not in export" when absent
+#' @param insurance,bmi construct names for the insurance and body mass index rows; NULL omits a row
 #' @param health_label row label for the self-reported health item
 #'
 #' @return An HTML table.
@@ -8090,6 +8084,7 @@ patient_characteristics_table <- function(analytic, age = "age", sex = "sex", ra
                       "NamedCategory['Excellent' 'Very Good' 'Good' 'Fair' 'Poor']"))
   constructs <- list(age = age, sex = sex, race = race, education = education, insurance = insurance, bmi = bmi,
                      comorbidities = comorbidities, tobacco = tobacco, health = health)
+  require_constructs(analytic, c("enrolled", unlist(constructs)), "patient_characteristics_table")
   df <- analytic %>% filter(enrolled %in% TRUE)
   rows <- characteristics_rows(df, characteristics_levels(df, constructs), constructs, health_label)
   kable_indented_rows(rows, c("Characteristic", paste0("Enrolled (n = ", nrow(df), ")")))
@@ -8101,13 +8096,16 @@ regular_use_levels <- c("1 per week", "Several times per week", "Daily", "Multip
 
 #' Count participants with regular use in a packed frequency list
 #' @noRd
-regular_use_count <- function(x, n_slots, regular_levels) {
+regular_use_count <- function(x, n_slots, regular_levels, construct = "frequency list") {
   x <- packed_na(x)
+  n_parts <- ifelse(is.na(x), n_slots, str_count(x, ";") + 1)
+  if (any(n_parts != n_slots)) {
+    stop(construct, " has ", sum(n_parts != n_slots), " value(s) with ", paste(unique(n_parts[n_parts != n_slots]), collapse = "/"),
+         " slots instead of ", n_slots, "; the exporter must preserve every slot position")
+  }
   parsed <- lapply(x, function(v) {
     if (is.na(v)) return(rep(NA_character_, n_slots))
-    parts <- str_trim(unlist(str_split(v, ";")))
-    if (length(parts) != n_slots) return(c(parts, rep(NA_character_, n_slots))[seq_len(n_slots)])
-    parts
+    str_trim(unlist(str_split(v, ";")))
   })
   mat <- do.call(rbind, parsed)
   any_regular <- apply(mat, 1, function(r) any(r %in% regular_levels))
@@ -8118,7 +8116,7 @@ regular_use_count <- function(x, n_slots, regular_levels) {
 #' Category levels shared by the open and closed amputation tables
 #' @noRd
 amputation_levels <- function(df, constructs) {
-  opt <- function(name) if (!is.null(constructs[[name]]) && constructs[[name]] %in% names(df)) df[[constructs[[name]]]] else NULL
+  opt <- function(name) if (!is.null(constructs[[name]])) df[[constructs[[name]]]] else NULL
   list(cause = category_levels(df[[constructs$cause]]),
        side = if (!is.null(opt("side"))) category_levels(opt("side")) else NULL,
        device = category_levels(df[[constructs$devices]], sep = "; ", order = c("Cane", "Crutches", "Walker", "Wheelchair")),
@@ -8131,6 +8129,7 @@ amputation_levels <- function(df, constructs) {
 amputation_rows <- function(df, levels, constructs, anchor, display_years, regular_levels) {
   n <- nrow(df)
   anchor_construct <- if (anchor == "first_injection") constructs$days_since_first_injection else constructs$days_since_consent
+  if (is.null(anchor_construct) || !anchor_construct %in% names(df)) stop("the time-since-amputation construct for anchor '", anchor, "' is not in the export")
   anchor_label <- if (anchor == "first_injection") "first injection" else "consent"
   rows <- list(
     if (display_years) {
@@ -8147,17 +8146,15 @@ amputation_rows <- function(df, levels, constructs, anchor, display_years, regul
     numeric_summary_rows(df, constructs$hours_per_day, "Hours per day, mean (SD)", 1) %>% mutate(Is_Header = FALSE))
   rows[[length(rows) + 1]] <- category_count_rows(df, constructs$devices, "Ambulatory device use (multiple selections possible)",
                                                   levels$device, sep = "; ")
-  rows[[length(rows) + 1]] <- if (!is.null(levels$ulcer)) category_count_rows(df, constructs$ulcer_stage, "Ulcer stage", levels$ulcer) else
-    tibble(Construct = "Ulcer stage", Value = "Not in export", Is_Header = TRUE)
-  rows[[length(rows) + 1]] <- if (!is.null(levels$prosthesis_type)) category_count_rows(df, constructs$prosthesis_type, "Prosthesis type", levels$prosthesis_type) else
-    tibble(Construct = "Prosthesis type", Value = "Not in export", Is_Header = TRUE)
+  if (!is.null(levels$ulcer)) rows[[length(rows) + 1]] <- category_count_rows(df, constructs$ulcer_stage, "Ulcer stage", levels$ulcer)
+  if (!is.null(levels$prosthesis_type)) rows[[length(rows) + 1]] <- category_count_rows(df, constructs$prosthesis_type, "Prosthesis type", levels$prosthesis_type)
   rows[[length(rows) + 1]] <- bind_rows(
     tibble(Construct = "Socket comfort score", Value = "", Is_Header = TRUE),
     numeric_summary_rows(df, constructs$comfort_sit, "Sitting, mean (SD)", 1) %>% mutate(Is_Header = FALSE),
     numeric_summary_rows(df, constructs$comfort_stand, "Standing, mean (SD)", 1) %>% mutate(Is_Header = FALSE),
     numeric_summary_rows(df, constructs$comfort_walk, "Walking, mean (SD)", 1) %>% mutate(Is_Header = FALSE))
-  meds <- regular_use_count(df[[constructs$medications]], constructs$medication_slots, regular_levels)
-  skin <- regular_use_count(df[[constructs$skin_treatments]], constructs$skin_treatment_slots, regular_levels)
+  meds <- regular_use_count(df[[constructs$medications]], constructs$medication_slots, regular_levels, constructs$medications)
+  skin <- regular_use_count(df[[constructs$skin_treatments]], constructs$skin_treatment_slots, regular_levels, constructs$skin_treatments)
   rows[[length(rows) + 1]] <- bind_rows(
     tibble(Construct = "Regular use of pain medication for residual limb pain (daily or weekly)",
            Value = format_count_percent(meds$regular, n), Is_Header = TRUE),
@@ -8173,8 +8170,8 @@ amputation_rows <- function(df, levels, constructs, anchor, display_years, regul
 #' @description
 #' Pooled amputation and prosthesis characteristics for enrolled participants: time since
 #' amputation at one labelled anchor (first injection or consent), cause, side, prosthesis
-#' use, ambulatory devices split into individual selections, ulcer stage and prosthesis type
-#' when exported, socket comfort, and regular pain-medication and skin-treatment use. Regular
+#' use, ambulatory devices split into individual selections, ulcer stage and prosthesis type,
+#' socket comfort, and regular pain-medication and skin-treatment use. Regular
 #' use applies the daily-or-weekly threshold in regular_levels rather than any answer other
 #' than "Did not use", and parses the packed frequency lists by their slot count (six for
 #' medications including cannabinoids, five for skin treatments).
@@ -8185,7 +8182,7 @@ amputation_rows <- function(df, levels, constructs, anchor, display_years, regul
 #' days_since_consent)
 #' @param display_years show years (days / 365.25) rather than days
 #' @param regular_levels frequency labels counted as regular use
-#' @param days_since_first_injection,days_since_consent,cause,side,days_per_week,hours_per_day,devices,ulcer_stage,prosthesis_type,comfort_sit,comfort_stand,comfort_walk,medications,skin_treatments construct names; side, ulcer_stage and prosthesis_type are optional
+#' @param days_since_first_injection,days_since_consent,cause,side,days_per_week,hours_per_day,devices,ulcer_stage,prosthesis_type,comfort_sit,comfort_stand,comfort_walk,medications,skin_treatments construct names; NULL omits the side, ulcer stage or prosthesis type row
 #' @param medication_slots,skin_treatment_slots number of packed slots in the frequency lists
 #'
 #' @return An HTML table.
@@ -8206,16 +8203,21 @@ amputation_characteristics_table <- function(analytic, anchor = c("first_injecti
   anchor <- match.arg(anchor)
   analytic <- if_needed_generate_example_data(
     analytic,
-    example_constructs = c("enrolled", days_since_first_injection, days_since_consent, cause, days_per_week, hours_per_day,
-                           devices, comfort_sit, comfort_stand, comfort_walk, medications, skin_treatments),
-    example_types = c("Boolean", "Number", "Number", "Category", "Number", "Number", "Category-NS", "Number", "Number",
-                      "Number", "Character", "Character"))
+    example_constructs = c("enrolled", days_since_first_injection, days_since_consent, cause, side, days_per_week, hours_per_day,
+                           devices, ulcer_stage, prosthesis_type, comfort_sit, comfort_stand, comfort_walk, medications, skin_treatments),
+    example_types = c("Boolean", "Number", "Number", "Category", "NamedCategory['Left' 'Right']", "Number", "Number", "Category-NS",
+                      "Category", "Category", "Number", "Number", "Number",
+                      "NamedCategory['Daily; Did not use; Did not use; Did not use; Did not use; Did not use']",
+                      "NamedCategory['Daily; Did not use; Did not use; Did not use; Did not use']"))
   constructs <- list(days_since_first_injection = days_since_first_injection, days_since_consent = days_since_consent,
                      cause = cause, side = side, days_per_week = days_per_week, hours_per_day = hours_per_day,
                      devices = devices, ulcer_stage = ulcer_stage, prosthesis_type = prosthesis_type,
                      comfort_sit = comfort_sit, comfort_stand = comfort_stand, comfort_walk = comfort_walk,
                      medications = medications, skin_treatments = skin_treatments,
                      medication_slots = medication_slots, skin_treatment_slots = skin_treatment_slots)
+  require_constructs(analytic, c("enrolled", unlist(constructs[c("cause", "side", "days_per_week", "hours_per_day", "devices", "ulcer_stage",
+                                                                "prosthesis_type", "comfort_sit", "comfort_stand", "comfort_walk",
+                                                                "medications", "skin_treatments")])), "amputation_characteristics_table")
   df <- analytic %>% filter(enrolled %in% TRUE)
   rows <- amputation_rows(df, amputation_levels(df, constructs), constructs, anchor, display_years, regular_levels)
   kable_indented_rows(rows, c("Characteristic", paste0("Enrolled (n = ", nrow(df), ")")))
@@ -8426,8 +8428,17 @@ location_change_data <- function(analytic, readings_constructs, fields, value_fi
                                  set, keep, min_valid) {
   long <- unpack_measurement_readings(analytic, readings_constructs, fields, value_field) %>%
     keep_measurement_rows(keep)
+  if (!set %in% long$set) stop("set '", set, "' has no readings in ", paste(readings_constructs, collapse = ", "))
   vm <- measurement_visit_means(long, min_valid) %>% filter(set == !!set)
-  list(long = long, visit_means = vm, change = measurement_visit_change(vm, baseline_event, followup_event))
+  list(long = long, visit_means = vm, change = measurement_visit_change(vm, baseline_event, followup_event),
+       parse_failures = sum(long$parse_failed))
+}
+
+#' Footnote line for readings that failed numeric conversion
+#' @noRd
+parse_failure_note <- function(n_failed, value_field) {
+  if (n_failed == 0) return(NULL)
+  paste0(n_failed, " ", value_field, " value(s) could not be read as numbers and are treated as missing.")
 }
 
 #' Location Measurement Summary Table
@@ -8473,7 +8484,10 @@ location_measurement_table <- function(analytic, readings_construct = "durometer
     analytic, example_constructs = c("enrolled", readings_construct),
     example_types = c("Boolean", measurement_example_type(fields, value_field)))
   d <- location_change_data(analytic, readings_construct, fields, value_field, baseline_event, followup_event, set, keep, min_valid)
-  measurement_table_open(d$change, followup_label, include_per_participant_values, unit)
+  out <- measurement_table_open(d$change, followup_label, include_per_participant_values, unit)
+  note <- parse_failure_note(d$parse_failures, value_field)
+  if (!is.null(note)) out <- out %>% add_footnote(note, notation = "symbol")
+  out
 }
 
 #' Follow-up event and label for a readings table mode
@@ -8549,8 +8563,8 @@ score_family_rows <- function(long, n_total) {
 #' Each score family at baseline and one, two and three months for enrolled participants:
 #' observed n, mean (SD) and missing n. Scores are used as exported. The PROMIS-29 domains
 #' come from the packed promis_construct (T-scores for the seven scored domains, the 0-10
-#' rating for pain intensity) when it is in the export. Families whose constructs are not in
-#' the export are listed in the footnote instead of being dropped silently.
+#' rating for pain intensity). Every named construct must be in the export; NULL omits the
+#' PROMIS construct and a shorter score_families list omits a family.
 #'
 #' @param analytic analytic data set that must include enrolled, study_id and the score
 #' constructs named in score_families
@@ -8578,11 +8592,8 @@ patient_reported_outcomes_table <- function(analytic, score_families = default_s
               r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), n = as.character(n),
                               `Mean (SD)` = msd, Missing = as.character(missing), Is_Header = FALSE))
   }))
-  missing_families <- attr(long, "missing_families")
   kable_indented_rows(table_raw, c("Instrument / visit", "Observed n", "Mean (SD)", "Missing n")) %>%
-    add_footnote(c(paste0("Enrolled participants: ", n_total, ".",
-                          if (length(missing_families) > 0) paste0(" Not in export: ", paste(missing_families, collapse = ", "), ".") else "")),
-                 notation = "number")
+    add_footnote(c(paste0("Enrolled participants: ", n_total, ".")), notation = "number")
 }
 
 # ---- Endpoint availability (open) ------------------------------------------------------------
@@ -8600,9 +8611,7 @@ endpoint_availability_rows <- function(analytic, ids, measurements, score_famili
               not_expected = sum(status_base %in% "Not Expected"), .groups = "drop")
   scores <- unpack_score_families(sub, score_families, promis_construct = promis_construct)
   measurement_row <- function(ep, label, period) {
-    present_constructs <- intersect(ep$readings_constructs[1], names(sub))
-    if (length(present_constructs) == 0) return(NULL)
-    vm <- measurement_visit_means(unpack_measurement_readings(sub, present_constructs, ep$fields, ep$value_field)) %>%
+    vm <- measurement_visit_means(unpack_measurement_readings(sub, ep$readings_constructs[1], ep$fields, ep$value_field)) %>%
       filter(set == "set_1")
     ev <- periods[[period]]
     present <- vm %>% filter(event == ev, available) %>% group_by(study_id) %>% summarise(locs = n_distinct(position), .groups = "drop")
@@ -8809,8 +8818,7 @@ qualitative_review_table <- function(review, visit_field, group_col = NULL, foot
 #' separator ","), for example the skin appearance review of redness, scaling and other
 #' disturbances at each follow-up visit: images reviewed and participants per visit, and the
 #' number of images (participants) at each recorded level of every feature. No score or
-#' significance test is invented. When the review construct is absent the table states what
-#' is needed. The default schema is proposed, not an existing export column.
+#' significance test is invented.
 #'
 #' @param analytic analytic data set that must include study_id, enrolled and the review
 #' construct
@@ -8832,11 +8840,7 @@ qualitative_review_summary <- function(analytic, review_construct = "appearance_
                                        quality_field = "quality", visit_field = "visit") {
   analytic <- if_needed_generate_example_data(analytic, example_constructs = c("enrolled", review_construct),
       example_types = c("Boolean", review_example_type(fields, features, quality_field, visit_field)))
-  if (!review_construct %in% names(analytic)) {
-    out <- tibble(Status = paste0("construct '", review_construct, "' not present in the export; add the packed review index (",
-                                  paste(fields, collapse = ", "), ") to produce this summary"))
-    return(kable(out, format = "html", align = "l") %>% kable_styling("striped", full_width = FALSE, position = "left"))
-  }
+  require_constructs(analytic, c("enrolled", review_construct), "qualitative_review_summary")
   review <- qualitative_review_data(analytic, review_construct, fields, features, quality_field, visit_field)
   qualitative_review_table(review, visit_field,
                            footnotes = c("Reviewer findings per image, counted by visit; participants may contribute several locations.",

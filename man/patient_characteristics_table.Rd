@@ -24,8 +24,7 @@ the other arguments}
 
 \item{age, sex, race, education, comorbidities, tobacco, health}{construct names}
 
-\item{insurance, bmi}{construct names for the optional insurance and body mass index rows;
-shown as "Not in export" when absent}
+\item{insurance, bmi}{construct names for the insurance and body mass index rows; NULL omits a row}
 
 \item{health_label}{row label for the self-reported health item}
 }
@@ -34,8 +33,7 @@ An HTML table.
 }
 \description{
 Pooled participant characteristics for enrolled participants: age, sex, race/ethnicity,
-education, insurance and body mass index (when the constructs are exported),
-comorbidities (split on semicolon, so percentages may exceed 100%), tobacco use and a
+education, insurance and body mass index, comorbidities (split on semicolon, so percentages may exceed 100%), tobacco use and a
 single-item self-reported health measure. Numeric rows carry observed and missing n.
 Unknown, refused and missing responses are separate categories and no baseline
 significance tests are shown. The output does not depend on treatment assignment; see

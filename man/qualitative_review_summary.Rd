@@ -36,8 +36,7 @@ Counts reviewer findings from a packed review index (record separator ";", field
 separator ","), for example the skin appearance review of redness, scaling and other
 disturbances at each follow-up visit: images reviewed and participants per visit, and the
 number of images (participants) at each recorded level of every feature. No score or
-significance test is invented. When the review construct is absent the table states what
-is needed. The default schema is proposed, not an existing export column.
+significance test is invented.
 }
 \examples{
 qualitative_review_summary("Replace with Analytic Tibble")

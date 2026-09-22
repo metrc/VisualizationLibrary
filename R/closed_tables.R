@@ -7094,7 +7094,12 @@ treatment_course_from_sets <- function(analytic, set_2_constructs = c("durometer
 #' @noRd
 closed_arm_levels <- function(analytic) {
   require_constructs(analytic, "treatment_arm", "closed display")
-  arms <- sort(unique(stats::na.omit(as.character(analytic$treatment_arm[analytic$enrolled %in% TRUE]))))
+  enrolled_arms <- as.character(analytic$treatment_arm[analytic$enrolled %in% TRUE])
+  if (any(is.na(enrolled_arms))) {
+    stop(sum(is.na(enrolled_arms)), " enrolled participant(s) have no treatment_arm; a closed display needs every enrolled ",
+         "participant assigned (or blinded = TRUE for the dummy assignment)")
+  }
+  arms <- sort(unique(enrolled_arms))
   if (length(arms) != 2) {
     stop(sprintf("expected exactly two treatment_arm levels among enrolled participants, found %d (%s)",
                  length(arms), paste(arms, collapse = ", ")))
@@ -7141,10 +7146,11 @@ closed_patient_characteristics_table <- function(analytic, age = "age", sex = "s
     example_types = c("Boolean", "TreatmentArm", "Number", "NamedCategory['Male' 'Female']", "Category", "Category", "Category",
                       "Number", "Category-NS", "NamedCategory['Never' 'Former' 'Current']",
                       "NamedCategory['Excellent' 'Very Good' 'Good' 'Fair' 'Poor']"))
-  confirm_stability_of_related_visual('patient_characteristics_table', '22ab6de3373144a3b16b8ce58f10d043')
+  confirm_stability_of_related_visual('patient_characteristics_table', '1e895a91fe4ab4880fc97ec09d88cf23')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   constructs <- list(age = age, sex = sex, race = race, education = education, insurance = insurance, bmi = bmi,
                      comorbidities = comorbidities, tobacco = tobacco, health = health)
+  require_constructs(analytic, c("enrolled", unlist(constructs)), "closed_patient_characteristics_table")
   arms <- closed_arm_levels(analytic)
   df <- analytic %>% filter(enrolled %in% TRUE)
   levels <- characteristics_levels(df, constructs)
@@ -7187,12 +7193,14 @@ closed_amputation_characteristics_table <- function(analytic, anchor = c("first_
   anchor <- match.arg(anchor)
   analytic <- if_needed_generate_example_data(
     analytic,
-    example_constructs = c("enrolled", "treatment_arm", days_since_first_injection, days_since_consent, cause, days_per_week,
-                           hours_per_day, devices, comfort_sit, comfort_stand, comfort_walk, medications, skin_treatments),
-    example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Category", "Number", "Number", "Category-NS", "Number",
-                      "Number", "Number",
-                      "Character", "Character"))
-  confirm_stability_of_related_visual('amputation_characteristics_table', '145f7fdc562ee9c708e8e8c0e3d37180')
+    example_constructs = c("enrolled", "treatment_arm", days_since_first_injection, days_since_consent, cause, side, days_per_week,
+                           hours_per_day, devices, ulcer_stage, prosthesis_type, comfort_sit, comfort_stand, comfort_walk, medications,
+                           skin_treatments),
+    example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Category", "NamedCategory['Left' 'Right']", "Number", "Number",
+                      "Category-NS", "Category", "Category", "Number", "Number", "Number",
+                      "NamedCategory['Daily; Did not use; Did not use; Did not use; Did not use; Did not use']",
+                      "NamedCategory['Daily; Did not use; Did not use; Did not use; Did not use']"))
+  confirm_stability_of_related_visual('amputation_characteristics_table', '6150e32430b7857b6c11222d511d8b55')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   constructs <- list(days_since_first_injection = days_since_first_injection, days_since_consent = days_since_consent,
                      cause = cause, side = side, days_per_week = days_per_week, hours_per_day = hours_per_day,
@@ -7200,6 +7208,9 @@ closed_amputation_characteristics_table <- function(analytic, anchor = c("first_
                      comfort_sit = comfort_sit, comfort_stand = comfort_stand, comfort_walk = comfort_walk,
                      medications = medications, skin_treatments = skin_treatments,
                      medication_slots = medication_slots, skin_treatment_slots = skin_treatment_slots)
+  require_constructs(analytic, c("enrolled", unlist(constructs[c("cause", "side", "days_per_week", "hours_per_day", "devices", "ulcer_stage",
+                                                                "prosthesis_type", "comfort_sit", "comfort_stand", "comfort_walk",
+                                                                "medications", "skin_treatments")])), "closed_amputation_characteristics_table")
   arms <- closed_arm_levels(analytic)
   df <- analytic %>% filter(enrolled %in% TRUE)
   levels <- amputation_levels(df, constructs)
@@ -7451,7 +7462,7 @@ closed_location_measurement_table <- function(analytic, readings_construct = "du
   analytic <- if_needed_generate_example_data(
     analytic, example_constructs = c("enrolled", "treatment_arm", readings_construct),
     example_types = c("Boolean", "TreatmentArm", measurement_example_type(fields, value_field)))
-  confirm_stability_of_related_visual('location_measurement_table', '95ece666fbac7434f69d20350ef6f88f')
+  confirm_stability_of_related_visual('location_measurement_table', '57ff930433c0319e089346ed6e478cbd')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   arms <- closed_arm_levels(analytic)
   d <- location_change_data(analytic, readings_construct, fields, value_field, baseline_event, followup_event, set, keep, min_valid)
@@ -7473,12 +7484,15 @@ closed_location_measurement_table <- function(analytic, readings_construct = "du
   header <- c(" " = 1, 3, 3)
   names(header)[2:3] <- arms
   unit_label <- if (nzchar(unit)) paste0(" ", unit) else ""
-  kable(out, format = "html", align = "l",
-        col.names = c("Position", rep(c(paste0("Pre-injection", unit_label, " n; mean (SD)"),
-                                        paste0(followup_label, unit_label, " n; mean (SD)"),
-                                        "Paired n; change mean (SD)"), 2))) %>%
+  vis <- kable(out, format = "html", align = "l",
+               col.names = c("Position", rep(c(paste0("Pre-injection", unit_label, " n; mean (SD)"),
+                                               paste0(followup_label, unit_label, " n; mean (SD)"),
+                                               "Paired n; change mean (SD)"), 2))) %>%
     add_header_above(header) %>%
     kable_styling("striped", full_width = FALSE, position = "left")
+  note <- parse_failure_note(d$parse_failures, value_field)
+  if (!is.null(note)) vis <- vis %>% add_footnote(note, notation = "symbol")
+  vis
 }
 
 #' @rdname closed_location_measurement_table
@@ -7653,6 +7667,7 @@ location_change_result_table <- function(result, followup_label, reference_diffe
     footnotes <- c(footnotes, paste0("The ", reference_difference, " ", result$unit,
                                      " value is the group-level efficacy reference for the overall between-arm difference in change, not a participant responder rule."))
   }
+  footnotes <- c(footnotes, parse_failure_note(result$settings$parse_failures, result$settings$value_field))
   kable(out, format = "html", align = "l",
         col.names = c("Location", rep(c("Pre n; mean (SD)", paste0(followup_label, " n; mean (SD)"), "Paired n; change mean (SD)"), 2),
                       paste0("Difference in change, ", a$contrast, " (95% CI), two-sample t"),
@@ -7714,6 +7729,7 @@ closed_location_change_analysis <- function(analytic, readings_construct = "duro
   location_test <- match.arg(location_test)
   assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
   long <- unpack_measurement_readings(analytic, readings_construct, fields, value_field) %>% keep_measurement_rows(keep)
+  if (!set %in% long$set) stop("set '", set, "' has no readings in ", readings_construct)
   vm <- measurement_visit_means(long, min_valid)
   result <- location_change_fit(vm, assignment, endpoint_label, unit, baseline_event, followup_event, set, model,
                                 location_test, include_p_values, conf_level,
@@ -7750,7 +7766,8 @@ closed_location_change_analysis <- function(analytic, readings_construct = "duro
 #' course was initially controlled), which reveals allocation and belongs only in the restricted report. A
 #' supplied or derived course stops with an error when it names a set whose readings are not exported
 #' @param seed seed for the synthetic course
-#' @param readings_constructs packed constructs for every course (absent ones are skipped)
+#' @param readings_constructs packed constructs for every course; all must be exported unless
+#' course_source = "synthetic", which uses the ones present
 #' @param endpoint_label label used in the result
 #' @param conf_level confidence level
 #' @param return_fit when TRUE, returns a list with the result table (as result_table), the
@@ -7771,11 +7788,17 @@ closed_pre_post_course_analysis <- function(analytic, course = NULL, course_sour
   analytic <- if_needed_generate_example_data(analytic, example_constructs = c("enrolled", readings_constructs[1]),
       example_types = c("Boolean", measurement_example_type(fields, value_field)))
   course_source <- match.arg(course_source)
+  if (course_source == "synthetic") {
+    # Development only: the synthetic course runs on whatever course constructs are exported, so
+    # a report can be built before the second course exists. An actual course needs them all.
+    readings_constructs <- intersect(readings_constructs, names(analytic))
+    if (length(readings_constructs) == 0) stop("none of the readings constructs are in the export")
+  } else {
+    require_constructs(analytic, readings_constructs, "closed_pre_post_course_analysis with an actual course")
+  }
   long <- unpack_measurement_readings(analytic, readings_constructs, fields, value_field) %>% keep_measurement_rows(keep)
   available_sets <- sort(unique(long$set))
   if (course_source == "synthetic") {
-    # A synthetic course can only name sets that are in the export: with set 1 alone (second
-    # course not yet exported) every participant is a set-1 recipient for development.
     course <- synthetic_treatment_course(analytic, seed, sets = available_sets)
   } else if (course_source == "from_sets") {
     course <- treatment_course_from_sets(analytic, readings_constructs[-1])
@@ -7797,6 +7820,8 @@ closed_pre_post_course_analysis <- function(analytic, course = NULL, course_sour
     transmute(study_id = as.character(study_id), treatment_set = as.character(treatment_set),
               course_source = if ("course_source" %in% names(course)) course_source else "supplied")
   if (any(duplicated(course$study_id))) stop("course has duplicated study_id values")
+  not_enrolled <- setdiff(course$study_id, enrolled_study_ids(analytic))
+  if (length(not_enrolled) > 0) stop("course names study_id values that are not enrolled: ", paste(not_enrolled, collapse = ", "))
   synthetic <- any(grepl("synthetic", course$course_source))
   vm <- measurement_visit_means(long, min_valid)
   selected <- vm %>%
@@ -7879,7 +7904,7 @@ closed_patient_reported_outcomes_table <- function(analytic, score_families = de
     analytic, example_constructs = c("enrolled", "treatment_arm", constructs, promis_construct),
     example_types = c("Boolean", "TreatmentArm", rep("Number", length(constructs)),
                       if (!is.null(promis_construct)) promis_data_example_type))
-  confirm_stability_of_related_visual('patient_reported_outcomes_table', '62d3977e920cf91b2772463069bcd9d2')
+  confirm_stability_of_related_visual('patient_reported_outcomes_table', '88693f6d96a0d47e5008644463fc52d3')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   arms <- closed_arm_levels(analytic)
   long <- unpack_score_families(analytic, score_families, promis_construct = promis_construct) %>%
@@ -8032,17 +8057,14 @@ closed_gee_visit_contrast_analysis <- function(analytic, score_families = defaul
   outcome_definition <- paste0("instrument score per visit as exported; contrast = ",
                                ifelse(contrast == "visit_difference", "between-arm difference at the visit",
                                       "between-arm difference in change from baseline"))
-  missing_families <- attr(long, "missing_families")
   result_table <- kable_indented_rows(table_raw, c("Instrument / visit", paste0(a$treatment_arm, ": n; mean (SD); missing"),
                                                   paste0(a$control_arm, ": n; mean (SD); missing"),
                                                   paste0("GEE contrast, ", a$contrast, " (95% CI)"))) %>%
-    add_footnote(c(assignment_caption(a), method, outcome_definition,
-                   if (length(missing_families) > 0) paste0("Not in export: ", paste(missing_families, collapse = ", "), ".") else NULL),
-                 notation = "number")
+    add_footnote(c(assignment_caption(a), method, outcome_definition), notation = "number")
   if (!return_fit) return(result_table)
   list(result_table = result_table, endpoint = "Patient-reported outcomes", population = "enrolled participants with an observed score",
        outcome_definition = outcome_definition, assignment = assignment, contrast = assignment$contrast, method = method,
-       descriptive = descriptive, pooled = pooled, contrasts = contrasts, long = d_all, missing_families = missing_families,
+       descriptive = descriptive, pooled = pooled, contrasts = contrasts, long = d_all,
        settings = list(contrast = contrast, corstr = corstr, family = family$family, link = family$link, conf_level = conf_level),
        status = if (all(grepl("^converged", contrasts$status))) "ok" else "one or more instruments did not fit")
 }
@@ -8087,9 +8109,7 @@ closed_missing_data_sensitivity <- function(analytic, endpoints = default_measur
   assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
   results <- bind_rows(lapply(names(endpoints), function(name) {
     ep <- endpoints[[name]]
-    present <- intersect(ep$readings_constructs[1], names(analytic))
-    if (length(present) == 0) return(NULL)
-    vm <- measurement_visit_means(unpack_measurement_readings(analytic, present, ep$fields, ep$value_field), min_valid)
+    vm <- measurement_visit_means(unpack_measurement_readings(analytic, ep$readings_constructs[1], ep$fields, ep$value_field), min_valid)
     run <- function(vm_in, analysis, assumption, imputed_n = 0L) {
       r <- location_change_fit(vm_in, assignment, ep$label, ep$unit, baseline_event, followup_event, set, model,
                                "student", FALSE, conf_level)
@@ -8209,13 +8229,9 @@ closed_qualitative_review_summary <- function(analytic, review_construct = "appe
                                                blinded = FALSE, seed = 20260922) {
   analytic <- if_needed_generate_example_data(analytic, example_constructs = c("enrolled", "treatment_arm", review_construct),
       example_types = c("Boolean", "TreatmentArm", review_example_type(fields, features, quality_field, visit_field)))
-  confirm_stability_of_related_visual('qualitative_review_summary', '8d231e6f8086c620129f8d9e191eb7be')
+  confirm_stability_of_related_visual('qualitative_review_summary', '7b88c87cd6bca67376957dcbfcefcd4c')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
-  if (!review_construct %in% names(analytic)) {
-    out <- tibble(Status = paste0("construct '", review_construct, "' not present in the export; add the packed review index (",
-                                  paste(fields, collapse = ", "), ") to produce this summary"))
-    return(kable(out, format = "html", align = "l") %>% kable_styling("striped", full_width = FALSE, position = "left"))
-  }
+  require_constructs(analytic, c("enrolled", review_construct), "closed_qualitative_review_summary")
   arms <- closed_arm_levels(analytic)
   with_arm <- analytic %>% mutate(study_id = as.character(study_id)) %>% filter(treatment_arm %in% arms)
   review <- qualitative_review_data(with_arm, review_construct, fields, features, quality_field, visit_field)

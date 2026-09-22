@@ -38,7 +38,7 @@ days_since_consent)}
 
 \item{regular_levels}{frequency labels counted as regular use}
 
-\item{days_since_first_injection, days_since_consent, cause, side, days_per_week, hours_per_day, devices, ulcer_stage, prosthesis_type, comfort_sit, comfort_stand, comfort_walk, medications, skin_treatments}{construct names; side, ulcer_stage and prosthesis_type are optional}
+\item{days_since_first_injection, days_since_consent, cause, side, days_per_week, hours_per_day, devices, ulcer_stage, prosthesis_type, comfort_sit, comfort_stand, comfort_walk, medications, skin_treatments}{construct names; NULL omits the side, ulcer stage or prosthesis type row}
 
 \item{medication_slots, skin_treatment_slots}{number of packed slots in the frequency lists}
 }
@@ -48,8 +48,8 @@ An HTML table.
 \description{
 Pooled amputation and prosthesis characteristics for enrolled participants: time since
 amputation at one labelled anchor (first injection or consent), cause, side, prosthesis
-use, ambulatory devices split into individual selections, ulcer stage and prosthesis type
-when exported, socket comfort, and regular pain-medication and skin-treatment use. Regular
+use, ambulatory devices split into individual selections, ulcer stage and prosthesis type,
+socket comfort, and regular pain-medication and skin-treatment use. Regular
 use applies the daily-or-weekly threshold in regular_levels rather than any answer other
 than "Did not use", and parses the packed frequency lists by their slot count (six for
 medications including cannabinoids, five for skin treatments).

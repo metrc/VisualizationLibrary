@@ -26,8 +26,7 @@ constructs named by the other arguments}
 
 \item{age, sex, race, education, comorbidities, tobacco, health}{construct names}
 
-\item{insurance, bmi}{construct names for the optional insurance and body mass index rows;
-shown as "Not in export" when absent}
+\item{insurance, bmi}{construct names for the insurance and body mass index rows; NULL omits a row}
 
 \item{health_label}{row label for the self-reported health item}
 

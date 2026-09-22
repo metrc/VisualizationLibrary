@@ -26,8 +26,8 @@ An HTML table.
 Each score family at baseline and one, two and three months for enrolled participants:
 observed n, mean (SD) and missing n. Scores are used as exported. The PROMIS-29 domains
 come from the packed promis_construct (T-scores for the seven scored domains, the 0-10
-rating for pain intensity) when it is in the export. Families whose constructs are not in
-the export are listed in the footnote instead of being dropped silently.
+rating for pain intensity). Every named construct must be in the export; NULL omits the
+PROMIS construct and a shorter score_families list omits a family.
 }
 \examples{
 patient_reported_outcomes_table("Replace with Analytic Tibble")

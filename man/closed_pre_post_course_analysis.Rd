@@ -36,7 +36,8 @@ derives the course from the presence of the second-course readings construct (a 
 course was initially controlled), which reveals allocation and belongs only in the restricted report. A
 supplied or derived course stops with an error when it names a set whose readings are not exported}
 
-\item{readings_constructs}{packed constructs for every course (absent ones are skipped)}
+\item{readings_constructs}{packed constructs for every course; all must be exported unless
+course_source = "synthetic", which uses the ones present}
 
 \item{fields}{packed field names, including set, event and position}
 
