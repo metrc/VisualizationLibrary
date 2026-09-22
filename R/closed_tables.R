@@ -7191,6 +7191,7 @@ closed_amputation_characteristics_table <- function(analytic, anchor = c("first_
                                                     skin_treatments = "meds_skin_list", medication_slots = 6, skin_treatment_slots = 5,
                                                      blinded = FALSE, seed = 20260922) {
   anchor <- match.arg(anchor)
+  example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("enrolled", "treatment_arm", days_since_first_injection, days_since_consent, cause, side, days_per_week,
@@ -7198,9 +7199,12 @@ closed_amputation_characteristics_table <- function(analytic, anchor = c("first_
                            skin_treatments),
     example_types = c("Boolean", "TreatmentArm", "Number", "Number", "Category", "NamedCategory['Left' 'Right']", "Number", "Number",
                       "Category-NS", "Category", "Category", "Number", "Number", "Number",
-                      "NamedCategory['Daily; Did not use; Did not use; Did not use; Did not use; Did not use']",
-                      "NamedCategory['Daily; Did not use; Did not use; Did not use; Did not use']"))
-  confirm_stability_of_related_visual('amputation_characteristics_table', '6150e32430b7857b6c11222d511d8b55')
+                      "Character", "Character"))
+  if (example) {
+    analytic[[medications]] <- sample(example_frequency_lists(medication_slots), nrow(analytic), replace = TRUE)
+    analytic[[skin_treatments]] <- sample(example_frequency_lists(skin_treatment_slots), nrow(analytic), replace = TRUE)
+  }
+  confirm_stability_of_related_visual('amputation_characteristics_table', '737aa9254f7f0f652930aedafd9b8c19')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   constructs <- list(days_since_first_injection = days_since_first_injection, days_since_consent = days_since_consent,
                      cause = cause, side = side, days_per_week = days_per_week, hours_per_day = hours_per_day,
@@ -7246,12 +7250,14 @@ closed_participants_w_complications <- function(analytic, categories = complicat
                                                 count_construct = "complication_count",
                                                 exposure_construct = "last_followup_days",
                                                  blinded = FALSE, seed = 20260922) {
+  example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("enrolled", "treatment_arm", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
     example_types = c("Boolean", "TreatmentArm", complication_data_example_type, sae_data_example_type,
                       followup_data_example_type, "Number", "Number"))
-  confirm_stability_of_related_visual('participants_w_complications', 'f9197c9ffed79aabc731703153b1374d')
+  if (example) analytic <- example_verified_count(analytic, count_construct)
+  confirm_stability_of_related_visual('participants_w_complications', '1ba973b518c0001a4ca02fa45bc9d657')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   arms <- closed_arm_levels(analytic)
   participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct) %>%
@@ -7315,10 +7321,12 @@ closed_participant_risk_analysis <- function(analytic, categories = complication
                                              blinded = FALSE, assignment_map = NULL, seed = 20260922,
                                              control_arm = "Group A", ci_method = c("newcombe", "wald"),
                                              return_fit = FALSE) {
+  example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
       analytic,
       example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
       example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type, "Number", "Number"))
+  if (example) analytic <- example_verified_count(analytic, count_construct)
   ci_method <- match.arg(ci_method)
   assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
   participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct) %>%
@@ -7381,10 +7389,12 @@ closed_event_rate_analysis <- function(analytic, categories = complication_categ
                                        count_construct = "complication_count", exposure_construct = "last_followup_days",
                                        blinded = FALSE, assignment_map = NULL, seed = 20260922, control_arm = "Group A",
                                        rate_unit = 100, return_fit = FALSE) {
+  example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
       analytic,
       example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
       example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type, "Number", "Number"))
+  if (example) analytic <- example_verified_count(analytic, count_construct)
   assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
   participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct) %>%
     left_join(assignment$map, by = "study_id")

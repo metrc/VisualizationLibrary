@@ -7773,6 +7773,7 @@ participant_event_summary <- function(analytic, categories = complication_catego
            any_completed_form = replace_na(any_completed_form, FALSE),
            ascertained = has_complication_record | any_completed_form,
            ascertainment_unknown = !ascertained,
+           event_count_verified = event_count,
            event_count_source = case_when(!is.na(event_count) ~ "verified",
                                           ascertained ~ "no records (verified zero)",
                                           TRUE ~ "unknown"),
@@ -7786,9 +7787,9 @@ participant_event_summary <- function(analytic, categories = complication_catego
            any_sae_related = ifelse(ascertained, n_sae_related > 0, NA),
            exposure_valid = !is.na(exposure_days) & exposure_days > 0)
 
-  inconsistent <- out %>% filter(is.na(event_count) & n_records > 0 | (!is.na(event_count) & event_count < n_records))
+  inconsistent <- out %>% filter(is.na(event_count_verified) & n_records > 0)
   if (nrow(inconsistent) > 0) {
-    stop(count_construct, " is missing or below the number of packed complication records for study_id ",
+    stop(count_construct, " is missing although complication_data has records for study_id ",
          paste(inconsistent$study_id, collapse = ", "), "; reconcile the verified count with complication_data")
   }
   attr(out, "reconciliation") <- out %>%
@@ -7916,6 +7917,21 @@ review_example_type <- function(fields, features, quality_field, visit_field) {
     else "Character"
   }, character(1))
   paste0("(';', ',')", paste(types, collapse = "|"))
+}
+
+#' Example verified event count consistent with the generated complication records
+#' @noRd
+example_verified_count <- function(analytic, count_construct) {
+  packed <- packed_na(analytic$complication_data)
+  analytic[[count_construct]] <- as.character(ifelse(is.na(packed), 0, str_count(packed, ";new_row: ") + 1))
+  analytic
+}
+
+#' Example packed frequency lists with the declared number of slots
+#' @noRd
+example_frequency_lists <- function(n) {
+  levels <- c("Did not use", "< 1 per week", "1 per week", "Several times per week", "Daily", "Multiple times per day")
+  vapply(1:20, function(i) paste(sample(levels, n, replace = TRUE, prob = c(6, 1, 1, 1, 2, 1)), collapse = "; "), character(1))
 }
 
 #' Format an estimate with its interval
@@ -8201,14 +8217,18 @@ amputation_characteristics_table <- function(analytic, anchor = c("first_injecti
                                              comfort_walk = "socket_comfort_score_walk", medications = "medication_frequency_list",
                                              skin_treatments = "meds_skin_list", medication_slots = 6, skin_treatment_slots = 5) {
   anchor <- match.arg(anchor)
+  example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("enrolled", days_since_first_injection, days_since_consent, cause, side, days_per_week, hours_per_day,
                            devices, ulcer_stage, prosthesis_type, comfort_sit, comfort_stand, comfort_walk, medications, skin_treatments),
     example_types = c("Boolean", "Number", "Number", "Category", "NamedCategory['Left' 'Right']", "Number", "Number", "Category-NS",
                       "Category", "Category", "Number", "Number", "Number",
-                      "NamedCategory['Daily; Did not use; Did not use; Did not use; Did not use; Did not use']",
-                      "NamedCategory['Daily; Did not use; Did not use; Did not use; Did not use']"))
+                      "Character", "Character"))
+  if (example) {
+    analytic[[medications]] <- sample(example_frequency_lists(medication_slots), nrow(analytic), replace = TRUE)
+    analytic[[skin_treatments]] <- sample(example_frequency_lists(skin_treatment_slots), nrow(analytic), replace = TRUE)
+  }
   constructs <- list(days_since_first_injection = days_since_first_injection, days_since_consent = days_since_consent,
                      cause = cause, side = side, days_per_week = days_per_week, hours_per_day = hours_per_day,
                      devices = devices, ulcer_stage = ulcer_stage, prosthesis_type = prosthesis_type,
@@ -8253,11 +8273,13 @@ followup_data_example_type <- "(';', ',')FollowupPeriod|FollowupPeriod|Form|Foll
 participants_w_complications <- function(analytic, categories = complication_categories(),
                                          count_construct = "complication_count",
                                          exposure_construct = "last_followup_days") {
+  example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
     example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type,
                       "Number", "Number"))
+  if (example) analytic <- example_verified_count(analytic, count_construct)
   participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct)
   pooled <- pooled_event_risks(participants, categories)
   out <- pooled %>%
@@ -8295,11 +8317,13 @@ participants_w_complications <- function(analytic, categories = complication_cat
 event_rate_summary <- function(analytic, categories = complication_categories(),
                                count_construct = "complication_count",
                                exposure_construct = "last_followup_days", rate_unit = 100) {
+  example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
     example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type,
                       "Number", "Number"))
+  if (example) analytic <- example_verified_count(analytic, count_construct)
   participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct)
   usable <- participants %>% filter(exposure_valid, ascertained)
   rows <- event_category_rows(categories)
