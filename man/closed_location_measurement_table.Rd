@@ -18,6 +18,7 @@ closed_location_measurement_table(
   unit = "",
   keep = NULL,
   min_valid = 1,
+  cell_style = c("detailed", "paper"),
   blinded = FALSE,
   seed = 20260922
 )
@@ -26,6 +27,7 @@ closed_durometer_readings_table(
   analytic,
   mode = "3mo",
   min_valid = 1,
+  cell_style = c("detailed", "paper"),
   blinded = FALSE,
   seed = 20260922
 )
@@ -35,6 +37,7 @@ closed_oct_readings_table(
   mode = "3mo",
   orientations = NULL,
   min_valid = 1,
+  cell_style = c("detailed", "paper"),
   blinded = FALSE,
   seed = 20260922
 )
@@ -61,6 +64,8 @@ and the readings construct}
 list(orientation = "H")); NULL keeps every reading}
 
 \item{min_valid}{minimum usable readings for a location mean}
+
+\item{cell_style}{"detailed" keeps n in every cell; "paper" shows mean (SD) only with the arm N in the column header}
 
 \item{blinded}{when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
 built from the sorted enrolled IDs and seed (the same map every closed function builds)}

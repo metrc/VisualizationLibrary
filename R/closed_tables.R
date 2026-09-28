@@ -7238,6 +7238,7 @@ closed_amputation_characteristics_table <- function(analytic, anchor = c("first_
 #' @param analytic analytic data set that must include study_id, enrolled, treatment_arm,
 #' complication_data, sae_data, followup_data and the count and exposure constructs
 #'
+#' @param cell_style "detailed" shows n/N (%) per arm; "paper" shows the percentage only with the arm N in the header
 #' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
 #' built from the sorted enrolled IDs and seed (the same map every closed function builds)
 #' @param seed seed for the dummy assignment
@@ -7250,8 +7251,9 @@ closed_participants_w_complications <- function(analytic, categories = complicat
                                                 count_construct = "complication_count",
                                                 exposure_construct = "last_followup_days",
                                                 phase = c("all", "set_1", "set_2"), rows = NULL,
-                                                blinded = FALSE, seed = 20260922) {
+                                                cell_style = c("detailed", "paper"), blinded = FALSE, seed = 20260922) {
   phase <- match.arg(phase)
+  cell_style <- match.arg(cell_style)
   example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
     analytic,
@@ -7268,19 +7270,25 @@ closed_participants_w_complications <- function(analytic, categories = complicat
     left_join(analytic %>% transmute(study_id = as.character(study_id), treatment_arm), by = "study_id")
   fmt <- function(df) {
     p <- pooled_event_risks(df, categories, rows)
-    ifelse(p$denominator > 0,
-           paste0(p$participants_with_event, "/", p$denominator, " (",
-                  trimws(format(round(100 * p$participants_with_event / p$denominator, 1), nsmall = 1)), "%)"),
+    pct <- trimws(format(round(100 * p$participants_with_event / p$denominator, 1), nsmall = 1))
+    if (cell_style == "paper") return(ifelse(p$denominator > 0, paste0(pct, "%"), "-"))
+    ifelse(p$denominator > 0, paste0(p$participants_with_event, "/", p$denominator, " (", pct, "%)"),
            paste0(p$participants_with_event, "/", p$denominator))
   }
+  denominators <- function(df) max(pooled_event_risks(df, categories, rows)$denominator)
   pooled <- pooled_event_risks(participants, categories, rows)
   out <- tibble(Category = pooled$category,
                 A = fmt(participants %>% filter(treatment_arm %in% arms[1])),
                 B = fmt(participants %>% filter(treatment_arm %in% arms[2])),
                 Total = fmt(participants), `Unknown ascertainment` = pooled$unknown_ascertainment)
-  kable(out, format = "html", align = "l",
-        col.names = c("Category", paste0(arms[1], " n/N (%)"), paste0(arms[2], " n/N (%)"), "Total n/N (%)",
-                      "Unknown ascertainment")) %>%
+  col_names <- if (cell_style == "paper") {
+    c("Category", paste0(arms[1], " (N = ", denominators(participants %>% filter(treatment_arm %in% arms[1])), ")"),
+      paste0(arms[2], " (N = ", denominators(participants %>% filter(treatment_arm %in% arms[2])), ")"),
+      paste0("Total (N = ", denominators(participants), ")"), "Unknown ascertainment")
+  } else {
+    c("Category", paste0(arms[1], " n/N (%)"), paste0(arms[2], " n/N (%)"), "Total n/N (%)", "Unknown ascertainment")
+  }
+  kable(out, format = "html", align = "l", col.names = col_names) %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
     add_footnote(notes, notation = "number")
 }
@@ -7495,7 +7503,7 @@ closed_event_rate_analysis <- function(analytic, categories = complication_categ
 #' @inheritParams location_measurement_table
 #' @param analytic analytic data set that must include enrolled, study_id, treatment_arm
 #' and the readings construct
-#'
+#' @param cell_style "detailed" keeps n in every cell; "paper" shows mean (SD) only with the arm N in the column header
 #' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
 #' built from the sorted enrolled IDs and seed (the same map every closed function builds)
 #' @param seed seed for the dummy assignment
@@ -7508,8 +7516,9 @@ closed_location_measurement_table <- function(analytic, readings_construct = "du
                                               fields = c("set", "event", "position", "injection", "reading"),
                                               value_field = "reading", baseline_event = "injection_1",
                                               followup_event = "3_month", followup_label = "3 Month", set = "set_1",
-                                              unit = "", keep = NULL, min_valid = 1,
-                                               blinded = FALSE, seed = 20260922) {
+                                              unit = "", keep = NULL, min_valid = 1, cell_style = c("detailed", "paper"),
+                                              blinded = FALSE, seed = 20260922) {
+  cell_style <- match.arg(cell_style)
   analytic <- if_needed_generate_example_data(
     analytic, example_constructs = c("enrolled", "treatment_arm", readings_construct),
     example_types = c("Boolean", "TreatmentArm", measurement_example_type(fields, value_field)))
@@ -7525,22 +7534,25 @@ closed_location_measurement_table <- function(analytic, readings_construct = "du
   block <- function(arm) {
     desc %>% filter(treatment_arm == arm) %>%
       transmute(position = as.character(position),
-                !!paste0(arm, "_pre") := fmt_n_mean_sd(n_baseline, mean_baseline, sd_baseline),
-                !!paste0(arm, "_fu") := fmt_n_mean_sd(n_followup, mean_followup, sd_followup),
-                !!paste0(arm, "_ch") := fmt_n_mean_sd(n_paired, mean_change, sd_change))
+                !!paste0(arm, "_pre") := fmt_cell_mean_sd(n_baseline, mean_baseline, sd_baseline, cell_style),
+                !!paste0(arm, "_fu") := fmt_cell_mean_sd(n_followup, mean_followup, sd_followup, cell_style),
+                !!paste0(arm, "_ch") := fmt_cell_mean_sd(n_paired, mean_change, sd_change, cell_style))
   }
   out <- tibble(position = c(positions, "All locations (participant mean)")) %>%
     left_join(block(arms[1]), by = "position") %>%
     left_join(block(arms[2]), by = "position")
   header <- c(" " = 1, 3, 3)
-  names(header)[2:3] <- arms
+  df <- analytic %>% filter(enrolled %in% TRUE)
+  names(header)[2:3] <- if (cell_style == "paper") paste0(arms, " (N = ", c(sum(df$treatment_arm %in% arms[1]), sum(df$treatment_arm %in% arms[2])), ")") else arms
   unit_label <- if (nzchar(unit)) paste0(" ", unit) else ""
+  cell_lab <- if (cell_style == "paper") "mean (SD)" else "n; mean (SD)"
+  change_lab <- if (cell_style == "paper") "change mean (SD)" else "paired n; change mean (SD)"
   vis <- kable(out, format = "html", align = "l",
-               col.names = c("Position", rep(c(paste0("Pre-injection", unit_label, " n; mean (SD)"),
-                                               paste0(followup_label, unit_label, " n; mean (SD)"),
-                                               "Paired n; change mean (SD)"), 2))) %>%
+               col.names = c("Position", rep(c(paste0("Pre-injection", unit_label, " ", cell_lab),
+                                               paste0(followup_label, unit_label, " ", cell_lab), change_lab), 2))) %>%
     add_header_above(header) %>%
     kable_styling("striped", full_width = FALSE, position = "left")
+  if (cell_style == "paper") vis <- vis %>% add_footnote("Cells show the statistic only; N in the column header is the arm size.", notation = "number")
   note <- parse_failure_note(d$parse_failures, value_field)
   if (!is.null(note)) vis <- vis %>% add_footnote(note, notation = "symbol")
   vis
@@ -7549,23 +7561,24 @@ closed_location_measurement_table <- function(analytic, readings_construct = "du
 #' @rdname closed_location_measurement_table
 #' @param mode "1mo", "2mo" or "3mo": the follow-up visit compared with injection_1
 #' @export
-closed_durometer_readings_table <- function(analytic, mode = "3mo", min_valid = 1, blinded = FALSE, seed = 20260922) {
+closed_durometer_readings_table <- function(analytic, mode = "3mo", min_valid = 1, cell_style = c("detailed", "paper"),
+                                            blinded = FALSE, seed = 20260922) {
   ev <- mode_followup(mode)
   ep <- default_measurement_endpoints()$durometer
   closed_location_measurement_table(analytic, ep$readings_constructs[1], ep$fields, ep$value_field, "injection_1",
-                                    ev[["event"]], ev[["label"]], "set_1", ep$unit, NULL, min_valid, blinded, seed)
+                                    ev[["event"]], ev[["label"]], "set_1", ep$unit, NULL, min_valid, match.arg(cell_style), blinded, seed)
 }
 
 #' @rdname closed_location_measurement_table
 #' @param orientations optional OCT orientations to include; NULL uses all images
 #' @export
-closed_oct_readings_table <- function(analytic, mode = "3mo", orientations = NULL, min_valid = 1, blinded = FALSE,
-                                      seed = 20260922) {
+closed_oct_readings_table <- function(analytic, mode = "3mo", orientations = NULL, min_valid = 1,
+                                      cell_style = c("detailed", "paper"), blinded = FALSE, seed = 20260922) {
   ev <- mode_followup(mode)
   ep <- default_measurement_endpoints()$oct
   keep <- if (is.null(orientations)) NULL else list(orientation = orientations)
   closed_location_measurement_table(analytic, ep$readings_constructs[1], ep$fields, ep$value_field, "injection_1",
-                                    ev[["event"]], ev[["label"]], "set_1", "", keep, min_valid, blinded, seed)
+                                    ev[["event"]], ev[["label"]], "set_1", "", keep, min_valid, match.arg(cell_style), blinded, seed)
 }
 
 #' Two-sample difference in means with a t interval
@@ -7685,49 +7698,61 @@ location_change_fit <- function(visit_means, assignment, endpoint, unit, baselin
 
 #' Results table for a location change analysis
 #' @noRd
-location_change_result_table <- function(result, followup_label, reference_difference) {
+location_change_result_table <- function(result, followup_label, reference_difference, cell_style = "detailed") {
   a <- result$assignment
   desc <- result$descriptive
   positions <- setdiff(levels(desc$position), "All locations (participant mean)")
+  arm_n <- result$assignment$map %>% count(treatment_arm)
+  n_of <- function(arm) arm_n$n[arm_n$treatment_arm == arm]
   block <- function(arm) {
     desc %>% filter(treatment_arm == arm) %>%
-      transmute(position = as.character(position), pre = fmt_n_mean_sd(n_baseline, mean_baseline, sd_baseline),
-                fu = fmt_n_mean_sd(n_followup, mean_followup, sd_followup), ch = fmt_n_mean_sd(n_paired, mean_change, sd_change)) %>%
+      transmute(position = as.character(position),
+                pre = fmt_cell_mean_sd(n_baseline, mean_baseline, sd_baseline, cell_style),
+                fu = fmt_cell_mean_sd(n_followup, mean_followup, sd_followup, cell_style),
+                ch = fmt_cell_mean_sd(n_paired, mean_change, sd_change, cell_style)) %>%
       rename_with(~ paste0(arm, "_", .x), -position)
   }
-  contrasts <- result$contrasts %>%
-    transmute(position, diff = fmt_estimate(estimate, lower, upper, 2), diff_note = ifelse(status == "ok", "", status))
+  # Location rows carry the two-sample t-test on participant changes; the All locations row
+  # carries the mixed-effects model estimate, which is the SAP's primary comparison.
   model <- result$model
+  contrasts <- result$contrasts %>%
+    filter(position != "All locations (participant mean)") %>%
+    transmute(position, diff = ifelse(status == "ok", fmt_estimate(estimate, lower, upper, 2),
+                                      paste0(fmt_estimate(estimate, lower, upper, 2), " [", status, "]")))
+  overall <- tibble(position = "All locations (participant mean)",
+                    diff = ifelse(grepl("^converged", model$status), fmt_estimate(model$estimate, model$lower, model$upper, 2),
+                                  paste0(fmt_estimate(model$estimate, model$lower, model$upper, 2), " [", model$status, "]")))
   out <- tibble(position = c(positions, "All locations (participant mean)")) %>%
     left_join(block(a$treatment_arm), by = "position") %>%
     left_join(block(a$control_arm), by = "position") %>%
-    left_join(contrasts, by = "position") %>%
-    mutate(model_est = ifelse(position == "All locations (participant mean)",
-                              fmt_estimate(model$estimate, model$lower, model$upper, 2), ""),
-           diff = ifelse(diff_note == "", diff, paste0(diff, " [", diff_note, "]"))) %>%
-    select(-diff_note)
-  header <- c(" " = 1, 3, 3, " " = 2)
-  names(header)[2:3] <- c(a$treatment_arm, a$control_arm)
+    left_join(bind_rows(contrasts, overall), by = "position")
+  header <- c(" " = 1, 3, 3, " " = 1)
+  names(header)[2:3] <- c(arm_header(a$treatment_arm, n_of(a$treatment_arm), cell_style, ""),
+                          arm_header(a$control_arm, n_of(a$control_arm), cell_style, ""))
+  if (cell_style != "paper") names(header)[2:3] <- c(a$treatment_arm, a$control_arm)
+  cell_lab <- if (cell_style == "paper") "mean (SD)" else "n; mean (SD)"
+  change_lab <- if (cell_style == "paper") "change mean (SD)" else "paired n; change mean (SD)"
   footnotes <- c(assignment_caption(a),
                  paste0("Units: ", result$unit, ". ", result$outcome_definition, "."),
-                 paste0("Location rows: ", unique(result$contrasts$method), " on participant location changes. Overall row: ",
-                        model$description, "; participants ", model$n_participants, ", locations ", model$n_locations,
-                        ", observations ", model$n_observations, "; status: ", model$status,
+                 paste0("Location rows: ", unique(result$contrasts$method), " on participant location changes (two-sample comparison, not the model)."),
+                 paste0("All locations row: mixed-effects model, not a t-test. ", model$description, "; participants ", model$n_participants,
+                        ", locations ", model$n_locations, ", observations ", model$n_observations, "; status: ", model$status,
                         ifelse(nzchar(model$messages), paste0(" (", model$messages, ")"), ""), "."))
+  if (cell_style == "paper") {
+    footnotes <- c(footnotes, "Cells show the statistic only; N in the column header is the arm size. Observed and paired n per location are in the detailed descriptive panel.")
+  }
   if (!is.null(reference_difference)) {
     footnotes <- c(footnotes, paste0("The ", reference_difference, " ", result$unit,
                                      " value is the group-level efficacy reference for the overall between-arm difference in change, not a participant responder rule."))
   }
   footnotes <- c(footnotes, parse_failure_note(result$settings$parse_failures, result$settings$value_field))
   kable(out, format = "html", align = "l",
-        col.names = c("Location", rep(c("Pre n; mean (SD)", paste0(followup_label, " n; mean (SD)"), "Paired n; change mean (SD)"), 2),
-                      paste0("Difference in change, ", a$contrast, " (95% CI), two-sample t"),
-                      "Mixed-model difference in change (95% CI)")) %>%
+        col.names = c("Location", rep(c(paste0("Pre ", cell_lab), paste0(followup_label, " ", cell_lab), change_lab), 2),
+                      paste0("Difference in change, ", a$contrast, " (95% CI)"))) %>%
     add_header_above(header) %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
     add_footnote(footnotes, notation = "number")
 }
-
 #' Between-arm change in a repeated location measurement
 #'
 #' @description
@@ -7735,7 +7760,8 @@ location_change_result_table <- function(result, followup_label, reference_diffe
 #' baseline, follow-up and paired change by arm and location (with a participant-mean
 #' overall row), compares participant changes between arms at each location with a
 #' two-sample t-test, and fits a multilevel model for the overall between-arm difference in
-#' change. Two model formulations are offered because an arm-and-time repeated-measures
+#' change. The result table has one difference column: the location rows carry the t-test and
+#' the All locations row carries the mixed-model estimate, and the footnote says so. Two model formulations are offered because an arm-and-time repeated-measures
 #' specification and a change-score specification are not identical: model = "repeated" fits
 #' the visit means with an arm-by-visit interaction and random intercepts for participant
 #' and location within participant; model = "change" fits the location changes with a
@@ -7754,6 +7780,7 @@ location_change_result_table <- function(result, followup_label, reference_diffe
 #' @param conf_level confidence level
 #' @param reference_difference optional group-level efficacy reference (for example 6.4 DU)
 #' stated in the footnote
+#' @param cell_style "detailed" keeps n in every cell; "paper" shows mean (SD) only with the arm N in the column header
 #' @param return_fit when TRUE, returns a list with the result table (as result_table), the
 #' descriptive panel, the participant-level changes, the location contrasts, the model row,
 #' the variance components, the fitted model, the visit means, the assignment, the settings and
@@ -7773,11 +7800,12 @@ closed_location_change_analysis <- function(analytic, readings_construct = "duro
                                             control_arm = "Group A", model = c("repeated", "change"),
                                             location_test = c("student", "welch"), include_p_values = FALSE,
                                             min_valid = 1, conf_level = 0.95, reference_difference = NULL,
-                                            return_fit = FALSE) {
+                                            cell_style = c("detailed", "paper"), return_fit = FALSE) {
   analytic <- if_needed_generate_example_data(analytic, example_constructs = c("enrolled", readings_construct),
       example_types = c("Boolean", measurement_example_type(fields, value_field)))
   model <- match.arg(model)
   location_test <- match.arg(location_test)
+  cell_style <- match.arg(cell_style)
   assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
   long <- unpack_measurement_readings(analytic, readings_construct, fields, value_field) %>% keep_measurement_rows(keep)
   if (!set %in% long$set) stop("set '", set, "' has no readings in ", readings_construct)
@@ -7787,7 +7815,8 @@ closed_location_change_analysis <- function(analytic, readings_construct = "duro
                                 settings = list(readings_construct = readings_construct, value_field = value_field,
                                                 keep = keep, min_valid = min_valid, reference_difference = reference_difference,
                                                 parse_failures = sum(long$parse_failed)))
-  result$result_table <- location_change_result_table(result, followup_label, reference_difference)
+  result$settings$cell_style <- cell_style
+  result$result_table <- location_change_result_table(result, followup_label, reference_difference, cell_style)
   result$pooled_change_sd <- pooled_change_sd(result)
   if (!return_fit) return(result$result_table)
   result
@@ -7817,6 +7846,7 @@ closed_location_change_analysis <- function(analytic, readings_construct = "duro
 #' course was initially controlled), which reveals allocation and belongs only in the restricted report. A
 #' supplied or derived course stops with an error when it names a set whose readings are not exported
 #' @param seed seed for the synthetic course
+#' @param cell_style "detailed" keeps n in every cell; "paper" shows mean (SD) only
 #' @param readings_constructs packed constructs for every course; all must be exported unless
 #' course_source = "synthetic", which uses the ones present
 #' @param endpoint_label label used in the result
@@ -7835,10 +7865,11 @@ closed_pre_post_course_analysis <- function(analytic, course = NULL, course_sour
                                             value_field = "reading", endpoint_label = "Location measurement, all treated",
                                             unit = "", baseline_event = "injection_1", followup_event = "3_month",
                                             followup_label = "3 Month", keep = NULL, min_valid = 1, conf_level = 0.95,
-                                            seed = 20260922, return_fit = FALSE) {
+                                            seed = 20260922, cell_style = c("detailed", "paper"), return_fit = FALSE) {
   analytic <- if_needed_generate_example_data(analytic, example_constructs = c("enrolled", readings_constructs[1]),
       example_types = c("Boolean", measurement_example_type(fields, value_field)))
   course_source <- match.arg(course_source)
+  cell_style <- match.arg(cell_style)
   if (course_source == "synthetic") {
     # Development only: the synthetic course runs on whatever course constructs are exported, so
     # a report can be built before the second course exists. An actual course needs them all.
@@ -7893,16 +7924,20 @@ closed_pre_post_course_analysis <- function(analytic, course = NULL, course_sour
                   n_observations = nrow(d), status = fit$status, messages = paste(fit$messages, collapse = "; "))
   course_counts <- course %>% count(treatment_set, name = "participants_selected")
   caption <- if (synthetic) "Synthetic treatment-course selection (development output)" else "Actual treatment-course selection (restricted)"
+  cell_lab <- if (cell_style == "paper") "mean (SD)" else "n; mean (SD)"
+  change_lab <- if (cell_style == "paper") "Change mean (SD)" else "Paired n; change mean (SD)"
   out <- desc$descriptive %>% transmute(
     Location = as.character(position),
-    `Pretreatment n; mean (SD)` = fmt_n_mean_sd(n_baseline, mean_baseline, sd_baseline),
-    !!paste0(followup_label, " n; mean (SD)") := fmt_n_mean_sd(n_followup, mean_followup, sd_followup),
-    `Paired n; change mean (SD)` = fmt_n_mean_sd(n_paired, mean_change, sd_change),
+    !!paste0("Pretreatment ", cell_lab) := fmt_cell_mean_sd(n_baseline, mean_baseline, sd_baseline, cell_style),
+    !!paste0(followup_label, " ", cell_lab) := fmt_cell_mean_sd(n_followup, mean_followup, sd_followup, cell_style),
+    !!change_lab := fmt_cell_mean_sd(n_paired, mean_change, sd_change, cell_style),
     `Model change, follow-up minus pretreatment (95% CI)` = ifelse(position == "All locations (participant mean)",
                                                                     fmt_estimate(model$estimate, model$lower, model$upper, 2), ""))
+  n_treated <- n_distinct(selected$study_id)
   result_table <- kable(out, format = "html", align = "l") %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
     add_footnote(c(caption,
+                   if (cell_style == "paper") paste0("Cells show the statistic only; N = ", n_treated, " participants with measurements in their treatment course.") else NULL,
                    paste0("Course selection source: ", paste(unique(course$course_source), collapse = "; "),
                           ". Participants by selected set: ",
                           paste(paste0(course_counts$treatment_set, ": ", course_counts$participants_selected), collapse = "; "),
@@ -7940,6 +7975,7 @@ closed_pre_post_course_analysis <- function(analytic, course = NULL, course_sour
 #' @param analytic analytic data set that must include enrolled, study_id, treatment_arm
 #' and the score constructs
 #'
+#' @param cell_style "detailed" shows n; mean (SD); missing per cell; "paper" shows mean (SD) only
 #' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
 #' built from the sorted enrolled IDs and seed (the same map every closed function builds)
 #' @param seed seed for the dummy assignment
@@ -7949,7 +7985,9 @@ closed_pre_post_course_analysis <- function(analytic, course = NULL, course_sour
 #' @examples
 #' closed_patient_reported_outcomes_table("Replace with Analytic Tibble", blinded = TRUE)
 closed_patient_reported_outcomes_table <- function(analytic, score_families = default_score_families(),
-                                                   promis_construct = "promis_data", blinded = FALSE, seed = 20260922) {
+                                                   promis_construct = "promis_data", cell_style = c("detailed", "paper"),
+                                                   blinded = FALSE, seed = 20260922) {
+  cell_style <- match.arg(cell_style)
   constructs <- unlist(score_families, use.names = FALSE)
   analytic <- if_needed_generate_example_data(
     analytic, example_constructs = c("enrolled", "treatment_arm", constructs, promis_construct),
@@ -7961,7 +7999,8 @@ closed_patient_reported_outcomes_table <- function(analytic, score_families = de
   long <- unpack_score_families(analytic, score_families, promis_construct = promis_construct) %>%
     left_join(analytic %>% transmute(study_id = as.character(study_id), treatment_arm), by = "study_id")
   df <- analytic %>% filter(enrolled %in% TRUE)
-  fmt <- function(l, n_tot) score_family_rows(l, n_tot) %>% transmute(instrument, visit, val = paste0(n, "; ", msd, "; ", missing))
+  fmt <- function(l, n_tot) score_family_rows(l, n_tot) %>%
+    transmute(instrument, visit, val = if (cell_style == "paper") ifelse(n > 0, msd, "-") else paste0(n, "; ", msd, "; ", missing))
   joined <- fmt(long, nrow(df)) %>% rename(Total = val) %>%
     left_join(fmt(long %>% filter(treatment_arm %in% arms[1]), sum(df$treatment_arm %in% arms[1])) %>% rename(A = val),
               by = c("instrument", "visit")) %>%
@@ -7972,8 +8011,10 @@ closed_patient_reported_outcomes_table <- function(analytic, score_families = de
     bind_rows(tibble(Construct = inst, A = "", B = "", Total = "", Is_Header = TRUE),
               r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), A, B, Total, Is_Header = FALSE))
   }))
-  kable_indented_rows(table_raw, paste0(closed_column_names("Instrument / visit", df, arms),
-                                        c("", rep(": n; mean (SD); missing", 3))))
+  vis <- kable_indented_rows(table_raw, paste0(closed_column_names("Instrument / visit", df, arms),
+                                               c("", rep(if (cell_style == "paper") ": mean (SD)" else ": n; mean (SD); missing", 3))))
+  if (cell_style == "paper") vis <- vis %>% add_footnote("Cells show mean (SD) only; n in the column header is the arm size. Observed and missing n per visit are in the detailed version.", notation = "number")
+  vis
 }
 
 #' GEE fit with visit-specific arm contrasts
@@ -8035,6 +8076,7 @@ gee_visit_fit <- function(d, corstr, family, contrast_type, conf_level, visits) 
 #' @param corstr working correlation for geepack
 #' @param family GLM family object; gaussian identity by default
 #' @param conf_level confidence level
+#' @param cell_style "detailed" shows n; mean (SD); missing per cell; "paper" shows mean (SD) only with the arm N in the header
 #' @param return_fit when TRUE, returns a list with the result table (as result_table), the
 #' descriptive panel, the pooled panel, the contrasts, the long data, the assignment and the
 #' settings
@@ -8049,7 +8091,8 @@ closed_gee_visit_contrast_analysis <- function(analytic, score_families = defaul
                                                assignment_map = NULL, seed = 20260922, control_arm = "Group A",
                                                contrast = c("visit_difference", "change_from_baseline"),
                                                corstr = "exchangeable", family = stats::gaussian(), conf_level = 0.95,
-                                               return_fit = FALSE) {
+                                               cell_style = c("detailed", "paper"), return_fit = FALSE) {
+  cell_style <- match.arg(cell_style)
   analytic <- if_needed_generate_example_data(
     analytic, example_constructs = c("enrolled", unlist(score_families, use.names = FALSE), promis_construct),
     example_types = c("Boolean", rep("Number", length(unlist(score_families))),
@@ -8087,8 +8130,8 @@ closed_gee_visit_contrast_analysis <- function(analytic, score_families = defaul
   }))
   a <- assignment
   desc_cells <- descriptive %>%
-    mutate(cell = ifelse(n > 0, paste0(n, "; ", fmt_number(mean, 1), " (", fmt_number(sd, 1), "); ", missing),
-                         paste0("0; -; ", missing))) %>%
+    mutate(cell = if (cell_style == "paper") ifelse(n > 0, paste0(fmt_number(mean, 1), " (", fmt_number(sd, 1), ")"), "-") else
+      ifelse(n > 0, paste0(n, "; ", fmt_number(mean, 1), " (", fmt_number(sd, 1), "); ", missing), paste0("0; -; ", missing))) %>%
     select(instrument, visit, treatment_arm, cell) %>%
     pivot_wider(names_from = treatment_arm, values_from = cell)
   con <- contrasts %>%
@@ -8108,10 +8151,13 @@ closed_gee_visit_contrast_analysis <- function(analytic, score_families = defaul
   outcome_definition <- paste0("instrument score per visit as exported; contrast = ",
                                ifelse(contrast == "visit_difference", "between-arm difference at the visit",
                                       "between-arm difference in change from baseline"))
-  result_table <- kable_indented_rows(table_raw, c("Instrument / visit", paste0(a$treatment_arm, ": n; mean (SD); missing"),
-                                                  paste0(a$control_arm, ": n; mean (SD); missing"),
+  result_table <- kable_indented_rows(table_raw, c("Instrument / visit",
+                                                  arm_header(a$treatment_arm, sum(arm_n$arm_total[arm_n$treatment_arm == a$treatment_arm]), cell_style, "n; mean (SD); missing"),
+                                                  arm_header(a$control_arm, sum(arm_n$arm_total[arm_n$treatment_arm == a$control_arm]), cell_style, "n; mean (SD); missing"),
                                                   paste0("GEE contrast, ", a$contrast, " (95% CI)"))) %>%
-    add_footnote(c(assignment_caption(a), method, outcome_definition), notation = "number")
+    add_footnote(c(assignment_caption(a), method, outcome_definition,
+                   if (cell_style == "paper") "Cells show mean (SD) only; N in the column header is the arm size. Observed and missing n per visit are in the detailed version." else NULL),
+                 notation = "number")
   if (!return_fit) return(result_table)
   list(result_table = result_table, endpoint = "Patient-reported outcomes", population = "enrolled participants with an observed score",
        outcome_definition = outcome_definition, assignment = assignment, contrast = assignment$contrast, method = method,

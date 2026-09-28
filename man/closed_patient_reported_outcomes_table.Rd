@@ -8,6 +8,7 @@ closed_patient_reported_outcomes_table(
   analytic,
   score_families = default_score_families(),
   promis_construct = "promis_data",
+  cell_style = c("detailed", "paper"),
   blinded = FALSE,
   seed = 20260922
 )
@@ -20,6 +21,8 @@ and the score constructs}
 
 \item{promis_construct}{packed PROMIS-29 construct (visit, domain, items_answered,
 raw_score, t_score); NULL to omit}
+
+\item{cell_style}{"detailed" shows n; mean (SD); missing per cell; "paper" shows mean (SD) only}
 
 \item{blinded}{when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
 built from the sorted enrolled IDs and seed (the same map every closed function builds)}

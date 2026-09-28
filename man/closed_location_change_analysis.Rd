@@ -26,6 +26,7 @@ closed_location_change_analysis(
   min_valid = 1,
   conf_level = 0.95,
   reference_difference = NULL,
+  cell_style = c("detailed", "paper"),
   return_fit = FALSE
 )
 }
@@ -75,6 +76,8 @@ treatment_arm; it must cover every enrolled participant exactly once with two ar
 \item{reference_difference}{optional group-level efficacy reference (for example 6.4 DU)
 stated in the footnote}
 
+\item{cell_style}{"detailed" keeps n in every cell; "paper" shows mean (SD) only with the arm N in the column header}
+
 \item{return_fit}{when TRUE, returns a list with the result table (as result_table), the
 descriptive panel, the participant-level changes, the location contrasts, the model row,
 the variance components, the fitted model, the visit means, the assignment, the settings and
@@ -88,7 +91,8 @@ Builds location-level visit means from a packed measurement construct, describes
 baseline, follow-up and paired change by arm and location (with a participant-mean
 overall row), compares participant changes between arms at each location with a
 two-sample t-test, and fits a multilevel model for the overall between-arm difference in
-change. Two model formulations are offered because an arm-and-time repeated-measures
+change. The result table has one difference column: the location rows carry the t-test and
+the All locations row carries the mixed-model estimate, and the footnote says so. Two model formulations are offered because an arm-and-time repeated-measures
 specification and a change-score specification are not identical: model = "repeated" fits
 the visit means with an arm-by-visit interaction and random intercepts for participant
 and location within participant; model = "change" fits the location changes with a

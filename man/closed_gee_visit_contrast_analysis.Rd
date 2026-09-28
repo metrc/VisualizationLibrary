@@ -16,6 +16,7 @@ closed_gee_visit_contrast_analysis(
   corstr = "exchangeable",
   family = stats::gaussian(),
   conf_level = 0.95,
+  cell_style = c("detailed", "paper"),
   return_fit = FALSE
 )
 }
@@ -45,6 +46,8 @@ treatment_arm; it must cover every enrolled participant exactly once with two ar
 \item{family}{GLM family object; gaussian identity by default}
 
 \item{conf_level}{confidence level}
+
+\item{cell_style}{"detailed" shows n; mean (SD); missing per cell; "paper" shows mean (SD) only with the arm N in the header}
 
 \item{return_fit}{when TRUE, returns a list with the result table (as result_table), the
 descriptive panel, the pooled panel, the contrasts, the long data, the assignment and the

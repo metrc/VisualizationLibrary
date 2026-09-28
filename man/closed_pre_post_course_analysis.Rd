@@ -20,6 +20,7 @@ closed_pre_post_course_analysis(
   min_valid = 1,
   conf_level = 0.95,
   seed = 20260922,
+  cell_style = c("detailed", "paper"),
   return_fit = FALSE
 )
 }
@@ -59,6 +60,8 @@ list(orientation = "H")); NULL keeps every reading}
 \item{conf_level}{confidence level}
 
 \item{seed}{seed for the synthetic course}
+
+\item{cell_style}{"detailed" keeps n in every cell; "paper" shows mean (SD) only}
 
 \item{return_fit}{when TRUE, returns a list with the result table (as result_table), the
 descriptive panel, the model row, the course counts and the settings}

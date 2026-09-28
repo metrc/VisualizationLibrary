@@ -8006,6 +8006,20 @@ fmt_n_mean_sd <- function(n, m, s) {
   ifelse(n > 0, paste0(n, "; ", fmt_number(m), " (", fmt_number(s), ")"), "-")
 }
 
+#' Descriptive cell in the requested style: "detailed" keeps n in the cell, "paper" shows the
+#' statistic only (the n belongs in the column header)
+#' @noRd
+fmt_cell_mean_sd <- function(n, m, s, cell_style = "detailed", digits = 2) {
+  if (cell_style == "paper") return(ifelse(n > 0, paste0(fmt_number(m, digits), " (", fmt_number(s, digits), ")"), "-"))
+  ifelse(n > 0, paste0(n, "; ", fmt_number(m, digits), " (", fmt_number(s, digits), ")"), "-")
+}
+
+#' Column-header label for an arm in the requested style
+#' @noRd
+arm_header <- function(arm, n, cell_style = "detailed", detail = "n; mean (SD)") {
+  if (cell_style == "paper") paste0(arm, " (N = ", n, ")") else paste0(arm, ": ", detail)
+}
+
 #' Kable with bold header rows and indented detail rows
 #' @noRd
 kable_indented_rows <- function(table_raw, col_names, indent_flag = NULL, header_above = NULL) {

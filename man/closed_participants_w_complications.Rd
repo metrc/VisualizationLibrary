@@ -11,6 +11,7 @@ closed_participants_w_complications(
   exposure_construct = "last_followup_days",
   phase = c("all", "set_1", "set_2"),
   rows = NULL,
+  cell_style = c("detailed", "paper"),
   blinded = FALSE,
   seed = 20260922
 )
@@ -30,6 +31,8 @@ count the packed records (not de-duplicated)}
 
 \item{rows}{optional category keys to show (any, minor_expected, minor_unexpected, serious,
 other, sae_any, sae_related); NULL shows all}
+
+\item{cell_style}{"detailed" shows n/N (%) per arm; "paper" shows the percentage only with the arm N in the header}
 
 \item{blinded}{when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
 built from the sorted enrolled IDs and seed (the same map every closed function builds)}
