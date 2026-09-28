@@ -7730,6 +7730,17 @@ unpack_score_families <- function(analytic, score_families = default_score_famil
            visit = factor(visit, levels = unname(visit_labels)))
 }
 
+#' Row-wise sum of numeric constructs: missing when every construct is missing, otherwise the
+#' sum with missing treated as zero (a participant with no second course has no second-course
+#' exposure to add)
+#' @noRd
+sum_constructs <- function(df, constructs) {
+  mat <- matrix(unlist(lapply(constructs, function(k) parse_packed_number(df[[k]])$value)), ncol = length(constructs))
+  out <- rowSums(mat, na.rm = TRUE)
+  out[rowSums(!is.na(mat)) == 0] <- NA_real_
+  out
+}
+
 #' Safety phase labels
 #' @noRd
 safety_phase_label <- c(all = "all courses",
@@ -7738,7 +7749,8 @@ safety_phase_label <- c(all = "all courses",
 
 #' Participant-level safety inputs
 #'
-#' One row per enrolled participant in the requested phase. phase = "all" keeps every
+#' One row per enrolled participant in the requested phase. count_construct and
+#' exposure_construct may name several constructs, which are summed per participant. phase = "all" keeps every
 #' complication record and uses the verified count construct as the total; "set_1" or
 #' "set_2" keep the records of that course (from the set2_ event-name prefix) and need a
 #' count construct verified for that course, or count_construct = NULL to count the packed
@@ -7756,9 +7768,10 @@ participant_event_summary <- function(analytic, categories = complication_catego
   ids <- enrolled_study_ids(analytic)
   base <- analytic %>%
     filter(enrolled %in% TRUE) %>%
-    transmute(study_id = as.character(study_id),
-              event_count = if (is.null(count_construct)) NA_real_ else parse_packed_number(.data[[count_construct]])$value,
-              exposure_days = parse_packed_number(.data[[exposure_construct]])$value)
+    mutate(study_id = as.character(study_id),
+           event_count = if (is.null(count_construct)) NA_real_ else sum_constructs(pick(everything()), count_construct),
+           exposure_days = sum_constructs(pick(everything()), exposure_construct)) %>%
+    select(study_id, event_count, exposure_days)
 
   events_all <- unpack_complication_data(analytic, categories)
   events <- if (phase == "all") events_all else events_all %>% filter(set == phase)
@@ -7830,14 +7843,21 @@ participant_event_summary <- function(analytic, categories = complication_catego
   attr(out, "phase") <- phase
   attr(out, "n_not_in_phase") <- n_not_in_phase
   attr(out, "count_source") <- if (is.null(count_construct)) "packed complication records (not de-duplicated)" else
-    paste0("verified ", count_construct)
-  attr(out, "notes") <- c(
-    paste0("Phase: ", safety_phase_label[[phase]], ". Any complication row counted from ", attr(out, "count_source"),
-           "; category rows from the packed records. Exposure: ", exposure_construct, "."),
-    "SAE-form records carry no course and are counted in every phase.",
-    if (n_not_in_phase > 0) paste0(n_not_in_phase, " enrolled participant(s) without second-course records or exposure are not in this phase.") else NULL)
+    paste0("verified ", paste(count_construct, collapse = " + "))
+  attr(out, "notes") <- list(
+    phase = if (phase == "all") NULL else paste0("Complications in the ", safety_phase_label[[phase]], "."),
+    sae = "SAE rows count serious adverse events from the SAE form in either course.",
+    not_in_phase = if (n_not_in_phase > 0) paste0(n_not_in_phase, " enrolled participant(s) did not enter the second course and are not in this table.") else NULL)
   out
 }
+#' Footnote lines for a safety table: the phase, the SAE note when an SAE row is shown, and the
+#' second-course exclusion when it applies
+#' @noRd
+safety_footnotes <- function(participants, category_rows) {
+  notes <- attr(participants, "notes")
+  c(notes$phase, if (any(grepl("^sae", category_rows$key))) notes$sae else NULL, notes$not_in_phase)
+}
+
 #' Category rows shared by the safety displays and analyses
 #' @noRd
 event_category_rows <- function(categories, rows = NULL, count_source = "verified count construct") {
@@ -8324,9 +8344,11 @@ followup_data_example_type <- "(';', ',')FollowupPeriod|FollowupPeriod|Form|Foll
 #' @param analytic analytic data set that must include study_id, enrolled, complication_data,
 #' sae_data, followup_data and the count and exposure constructs
 #' @param categories mapping from complication_categories()
-#' @param count_construct verified total event count per participant for the phase, or NULL to
-#' count the packed records (not de-duplicated)
-#' @param exposure_construct verified person-days of follow-up per participant for the phase
+#' @param count_construct verified total event count per participant for the phase (several
+#' constructs are summed per participant), or NULL to count the packed records (not de-duplicated)
+#' @param exposure_construct verified person-days of follow-up per participant for the phase;
+#' several constructs are summed per participant, a missing one adding zero, so
+#' c("last_followup_days", "last_followup_days_set_2") gives the whole-study exposure
 #' @param phase "all", "set_1" or "set_2"
 #' @param rows optional category keys to show (any, minor_expected, minor_unexpected, serious,
 #' other, sae_any, sae_related); NULL shows all
@@ -8358,11 +8380,12 @@ participants_w_complications <- function(analytic, categories = complication_cat
                                paste0(trimws(format(round(100 * participants_with_event / denominator, 1), nsmall = 1)), "%"),
                                ""),
               `Unknown ascertainment` = unknown_ascertainment)
-  kable(out, format = "html", align = "l") %>%
-    kable_styling("striped", full_width = FALSE, position = "left") %>%
-    add_footnote(c(paste0("Participants in this phase: ", nrow(participants), ". Ascertainment is unknown when a participant ",
-                          "has neither a complication record nor a completed follow-up form."), attr(participants, "notes")),
-                 notation = "number")
+  footnotes <- c(safety_footnotes(participants, event_category_rows(categories, rows)),
+                 if (any(pooled$unknown_ascertainment > 0)) "Ascertainment is unknown when a participant has neither a complication record nor a completed follow-up form." else NULL)
+  vis <- kable(out, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+  if (length(footnotes) > 0) vis <- vis %>% add_footnote(footnotes, notation = "number")
+  vis
 }
 #' Total events and incidence rates
 #'
@@ -8401,14 +8424,17 @@ event_rate_summary <- function(analytic, categories = complication_categories(),
   out <- bind_rows(lapply(seq_len(nrow(category_rows)), function(i) {
     events <- sum(usable[[category_rows$count[i]]], na.rm = TRUE)
     days <- sum(usable$exposure_days)
-    tibble(Category = category_rows$category[i], `Count source` = category_rows$count_source[i], Participants = nrow(usable),
+    tibble(Category = category_rows$category[i], Participants = nrow(usable),
            Events = events, `Person-days` = days, Rate = fmt_number(rate_unit * events / days))
   }))
   names(out)[names(out) == "Rate"] <- paste0("Rate per ", rate_unit, " person-days")
-  kable(out, format = "html", align = "l") %>%
-    kable_styling("striped", full_width = FALSE, position = "left") %>%
-    add_footnote(c(paste0(nrow(participants) - nrow(usable), " participant(s) excluded for missing/nonpositive exposure ",
-                          "or unknown ascertainment."), attr(participants, "notes")), notation = "number")
+  n_excluded <- nrow(participants) - nrow(usable)
+  footnotes <- c(safety_footnotes(participants, category_rows),
+                 if (n_excluded > 0) paste0(n_excluded, " participant(s) excluded for missing follow-up time or unknown ascertainment.") else NULL)
+  vis <- kable(out, format = "html", align = "l") %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+  if (length(footnotes) > 0) vis <- vis %>% add_footnote(footnotes, notation = "number")
+  vis
 }
 # ---- Repeated location measurements (open) ----------------------------------------------------
 

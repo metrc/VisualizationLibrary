@@ -20,10 +20,12 @@ sae_data, followup_data and the count and exposure constructs}
 
 \item{categories}{mapping from complication_categories()}
 
-\item{count_construct}{verified total event count per participant for the phase, or NULL to
-count the packed records (not de-duplicated)}
+\item{count_construct}{verified total event count per participant for the phase (several
+constructs are summed per participant), or NULL to count the packed records (not de-duplicated)}
 
-\item{exposure_construct}{verified person-days of follow-up per participant for the phase}
+\item{exposure_construct}{verified person-days of follow-up per participant for the phase;
+several constructs are summed per participant, a missing one adding zero, so
+c("last_followup_days", "last_followup_days_set_2") gives the whole-study exposure}
 
 \item{rate_unit}{person-days per rate unit (100 gives events per 100 person-days)}
 

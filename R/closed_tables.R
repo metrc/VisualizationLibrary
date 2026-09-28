@@ -7261,11 +7261,10 @@ closed_participants_w_complications <- function(analytic, categories = complicat
     example_types = c("Boolean", "TreatmentArm", complication_data_example_type, sae_data_example_type,
                       followup_data_example_type, if (!is.null(count_construct)) "Number", "Number"))
   if (example && !is.null(count_construct)) analytic <- example_verified_count(analytic, count_construct)
-  confirm_stability_of_related_visual('participants_w_complications', '59163aab75401232f9d6d449e5c51f7a')
+  confirm_stability_of_related_visual('participants_w_complications', '45373edb3cb01737e8f4694c79b19af1')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   arms <- closed_arm_levels(analytic)
   participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct, phase)
-  notes <- attr(participants, "notes")
   participants <- participants %>%
     left_join(analytic %>% transmute(study_id = as.character(study_id), treatment_arm), by = "study_id")
   fmt <- function(df) {
@@ -7288,9 +7287,12 @@ closed_participants_w_complications <- function(analytic, categories = complicat
   } else {
     c("Category", paste0(arms[1], " n/N (%)"), paste0(arms[2], " n/N (%)"), "Total n/N (%)", "Unknown ascertainment")
   }
-  kable(out, format = "html", align = "l", col.names = col_names) %>%
-    kable_styling("striped", full_width = FALSE, position = "left") %>%
-    add_footnote(notes, notation = "number")
+  footnotes <- c(safety_footnotes(participants, event_category_rows(categories, rows)),
+                 if (any(pooled$unknown_ascertainment > 0)) "Ascertainment is unknown when a participant has neither a complication record nor a completed follow-up form." else NULL)
+  vis <- kable(out, format = "html", align = "l", col.names = col_names) %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+  if (length(footnotes) > 0) vis <- vis %>% add_footnote(footnotes, notation = "number")
+  vis
 }
 #' n/N (%) cell
 #' @noRd
@@ -7350,7 +7352,7 @@ closed_participant_risk_analysis <- function(analytic, categories = complication
   ci_method <- match.arg(ci_method)
   assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
   participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct, phase)
-  notes <- attr(participants, "notes")
+  footnotes <- safety_footnotes(participants, event_category_rows(categories, rows))
   participants <- participants %>% left_join(assignment$map, by = "study_id")
   category_rows <- event_category_rows(categories, rows, attr(participants, "count_source"))
   trt <- assignment$treatment_arm
@@ -7382,9 +7384,14 @@ closed_participant_risk_analysis <- function(analytic, categories = complication
     col_names <- c("Category", paste0(trt, " n/N (%)"), paste0(ctl, " n/N (%)"), "Total n/N (%)",
                    paste0("Risk difference, ", assignment$contrast, " (95% CI)"), "Status")
   }
+  if (all(out$Status == "")) { out$Status <- NULL; col_names <- col_names[-length(col_names)] }
   result_table <- kable(out, format = "html", align = "l", col.names = col_names) %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
-    add_footnote(c(assignment_caption(assignment), paste0("Interval method: ", ci_method, " (percentage points)."), notes),
+    add_footnote(c(assignment_caption(assignment),
+                   paste0("Risk difference in percentage points with ",
+                          if (ci_method == "newcombe") "Newcombe hybrid score" else "Wald", " 95% CI."),
+                   footnotes,
+                   if (any(results$unknown_ascertainment > 0)) "Ascertainment is unknown when a participant has neither a complication record nor a completed follow-up form." else NULL),
                  notation = "number")
   if (!return_fit) return(result_table)
   list(result_table = result_table, endpoint = "Participants with safety events", results = results,
@@ -7435,7 +7442,7 @@ closed_event_rate_analysis <- function(analytic, categories = complication_categ
   if (example && !is.null(count_construct)) analytic <- example_verified_count(analytic, count_construct)
   assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
   participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct, phase)
-  notes <- attr(participants, "notes")
+  footnotes <- safety_footnotes(participants, event_category_rows(categories, rows))
   participants <- participants %>% left_join(assignment$map, by = "study_id")
   category_rows <- event_category_rows(categories, rows, attr(participants, "count_source"))
   usable <- participants %>% filter(exposure_valid, ascertained)
@@ -7468,19 +7475,22 @@ closed_event_rate_analysis <- function(analytic, categories = complication_categ
                    paste0("IRR ", trt, " over ", ctl, " (exact 95% CI)"), "Status")
   } else {
     out <- results %>% transmute(
-      Category = category, `Count source` = count_source,
+      Category = category,
       T = paste0(treatment_participants, " / ", treatment_events, " / ", treatment_person_days, " / ", fmt_number(treatment_rate)),
       C = paste0(control_participants, " / ", control_events, " / ", control_person_days, " / ", fmt_number(control_rate)),
       IRR = fmt_estimate(irr, lower, upper, 2), Status = ifelse(status == "ok", "", status))
-    col_names <- c("Category", "Count source", paste0(trt, ": n / events / person-days / ", rate_lab),
+    col_names <- c("Category", paste0(trt, ": n / events / person-days / ", rate_lab),
                    paste0(ctl, ": n / events / person-days / ", rate_lab),
                    paste0("IRR ", trt, " over ", ctl, " (exact 95% CI)"), "Status")
   }
+  if (all(out$Status == "")) { out$Status <- NULL; col_names <- col_names[-length(col_names)] }
   result_table <- kable(out, format = "html", align = "l", col.names = col_names) %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
-    add_footnote(c(assignment_caption(assignment), unique(results$method),
-                   paste0(nrow(excluded), " participant(s) excluded for missing/nonpositive exposure or unknown ascertainment."),
-                   notes), notation = "number")
+    add_footnote(c(assignment_caption(assignment),
+                   paste0("Incidence rate ratio, ", trt, " over ", ctl, ", with exact conditional Poisson 95% CI."),
+                   footnotes,
+                   if (nrow(excluded) > 0) paste0(nrow(excluded), " participant(s) excluded for missing follow-up time or unknown ascertainment.") else NULL),
+                 notation = "number")
   if (!return_fit) return(result_table)
   list(result_table = result_table, endpoint = "Total safety events and incidence rates", results = results,
        participants = participants, excluded = excluded, reconciliation = attr(participants, "reconciliation"),
@@ -7552,7 +7562,7 @@ closed_location_measurement_table <- function(analytic, readings_construct = "du
                                                paste0(followup_label, unit_label, " ", cell_lab), change_lab), 2))) %>%
     add_header_above(header) %>%
     kable_styling("striped", full_width = FALSE, position = "left")
-  if (cell_style == "paper") vis <- vis %>% add_footnote("Cells show the statistic only; N in the column header is the arm size.", notation = "number")
+
   note <- parse_failure_note(d$parse_failures, value_field)
   if (!is.null(note)) vis <- vis %>% add_footnote(note, notation = "symbol")
   vis
@@ -7669,7 +7679,7 @@ location_change_fit <- function(visit_means, assignment, endpoint, unit, baselin
              visit = factor(ifelse(event == followup_event, "followup", "baseline"), levels = c("baseline", "followup")),
              value = mean, study_id = factor(study_id), position = factor(position))
     fit <- lme_contrast_fit(value ~ arm_num * visit, ~ 1 | study_id/position, d, "arm_numtreatment:visitfollowup", conf_level)
-    description <- "location visit mean ~ arm * visit, random intercepts for participant and location within participant (nlme::lme, REML); contrast = arm-by-visit interaction (differential change)"
+    description <- "linear mixed model of the location visit means with arm, visit and their interaction, random intercepts for participant and for location within participant (REML); the estimate is the arm-by-visit interaction, the between-arm difference in change"
     n_loc <- nrow(distinct(d, study_id, position))
   } else {
     d <- change %>%
@@ -7677,7 +7687,7 @@ location_change_fit <- function(visit_means, assignment, endpoint, unit, baselin
       mutate(arm_num = factor(ifelse(treatment_arm == trt, "treatment", "control"), levels = c("control", "treatment")),
              study_id = factor(study_id))
     fit <- lme_contrast_fit(change ~ arm_num, ~ 1 | study_id, d, "arm_numtreatment", conf_level)
-    description <- "location change (follow-up minus baseline) ~ arm, random intercept for participant (nlme::lme, REML); contrast = arm coefficient; complete pairs only"
+    description <- "linear mixed model of the location changes (follow-up minus baseline) on arm with a random intercept for participant (REML); complete pairs only"
     n_loc <- nrow(d)
   }
   model_tbl <- tibble(formulation = model, description = description, estimate = fit$estimate, lower = fit$lower,
@@ -7685,8 +7695,7 @@ location_change_fit <- function(visit_means, assignment, endpoint, unit, baselin
                       n_participants = n_distinct(d$study_id), n_locations = n_loc, n_observations = nrow(d),
                       status = fit$status, messages = paste(fit$messages, collapse = "; "))
   list(endpoint = endpoint, unit = unit, population = paste0("enrolled participants with usable ", set, " measurements"),
-       outcome_definition = paste0("location mean of usable readings at ", baseline_event, " and ", followup_event,
-                                   "; change = follow-up minus baseline where both available"),
+       outcome_definition = "Location values are the mean of the readings at that location at each visit; change is follow-up minus pre-injection, calculated where both visits are available",
        assignment = assignment, contrast = assignment$contrast, method = description,
        descriptive = desc$descriptive, participant = desc$participant, contrasts = contrasts, model = model_tbl,
        model_fit = fit$fit, variance_components = fit$variance, visit_means = vm, change = change,
@@ -7733,14 +7742,11 @@ location_change_result_table <- function(result, followup_label, reference_diffe
   cell_lab <- if (cell_style == "paper") "mean (SD)" else "n; mean (SD)"
   change_lab <- if (cell_style == "paper") "change mean (SD)" else "paired n; change mean (SD)"
   footnotes <- c(assignment_caption(a),
-                 paste0("Units: ", result$unit, ". ", result$outcome_definition, "."),
-                 paste0("Location rows: ", unique(result$contrasts$method), " on participant location changes (two-sample comparison, not the model)."),
+                 paste0(if (nzchar(result$unit)) paste0("Values in ", result$unit, ". ") else "", result$outcome_definition, "."),
+                 paste0("Location rows: ", unique(result$contrasts$method), "-test on participant location changes."),
                  paste0("All locations row: mixed-effects model, not a t-test. ", model$description, "; participants ", model$n_participants,
                         ", locations ", model$n_locations, ", observations ", model$n_observations, "; status: ", model$status,
                         ifelse(nzchar(model$messages), paste0(" (", model$messages, ")"), ""), "."))
-  if (cell_style == "paper") {
-    footnotes <- c(footnotes, "Cells show the statistic only; N in the column header is the arm size. Observed and paired n per location are in the detailed descriptive panel.")
-  }
   if (!is.null(reference_difference)) {
     footnotes <- c(footnotes, paste0("The ", reference_difference, " ", result$unit,
                                      " value is the group-level efficacy reference for the overall between-arm difference in change, not a participant responder rule."))
@@ -7918,7 +7924,7 @@ closed_pre_post_course_analysis <- function(analytic, course = NULL, course_sour
            value = mean, study_id = factor(study_id), position = factor(position))
   fit <- lme_contrast_fit(value ~ visit, ~ 1 | study_id/position, d, "visitfollowup", conf_level)
   model <- tibble(formulation = "pre-post nested",
-                  description = "location visit mean ~ visit, random intercepts for participant and location within participant (nlme::lme, REML); contrast = follow-up minus pretreatment",
+                  description = "linear mixed model of the location visit means on visit with random intercepts for participant and for location within participant (REML); the estimate is the change from pretreatment to follow-up",
                   estimate = fit$estimate, lower = fit$lower, upper = fit$upper, se = fit$se, df = fit$df, p_value = fit$p_value,
                   n_participants = n_distinct(d$study_id), n_locations = nrow(distinct(d, study_id, position)),
                   n_observations = nrow(d), status = fit$status, messages = paste(fit$messages, collapse = "; "))
@@ -7937,15 +7943,12 @@ closed_pre_post_course_analysis <- function(analytic, course = NULL, course_sour
   result_table <- kable(out, format = "html", align = "l") %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
     add_footnote(c(caption,
-                   if (cell_style == "paper") paste0("Cells show the statistic only; N = ", n_treated, " participants with measurements in their treatment course.") else NULL,
-                   paste0("Course selection source: ", paste(unique(course$course_source), collapse = "; "),
-                          ". Participants by selected set: ",
+
+                   paste0("Participants by treatment course: ",
                           paste(paste0(course_counts$treatment_set, ": ", course_counts$participants_selected), collapse = "; "),
-                          ". Sets in the export: ", paste(available_sets, collapse = ", "),
                           if (length(available_sets) < 2) "; the second course will be included once its readings are exported" else "", "."),
-                   paste0("Units: ", unit, ". Location mean of usable readings at ", baseline_event, " and ", followup_event,
-                          " of the treatment course; the pretreatment visit of the treatment course, not the control period, ",
-                          "for initially controlled participants."),
+                   paste0(if (nzchar(unit)) paste0("Values in ", unit, ". ") else "",
+                          "Pretreatment and follow-up visits are those of each participant's own treatment course, not the control period."),
                    paste0(model$description, "; participants ", model$n_participants, ", locations ", model$n_locations,
                           ", observations ", model$n_observations, "; status: ", model$status, ".")),
                  notation = "number")
@@ -8013,7 +8016,7 @@ closed_patient_reported_outcomes_table <- function(analytic, score_families = de
   }))
   vis <- kable_indented_rows(table_raw, paste0(closed_column_names("Instrument / visit", df, arms),
                                                c("", rep(if (cell_style == "paper") ": mean (SD)" else ": n; mean (SD); missing", 3))))
-  if (cell_style == "paper") vis <- vis %>% add_footnote("Cells show mean (SD) only; n in the column header is the arm size. Observed and missing n per visit are in the detailed version.", notation = "number")
+
   vis
 }
 
@@ -8146,18 +8149,15 @@ closed_gee_visit_contrast_analysis <- function(analytic, score_families = defaul
               r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), T = .data[[a$treatment_arm]],
                               C = .data[[a$control_arm]], E = est, Is_Header = FALSE))
   }))
-  method <- paste0("GEE (geepack::geeglm), ", family$family, " family, ", family$link, " link, ", corstr,
-                   " working correlation, robust sandwich SE, Wald normal interval, no small-sample correction")
-  outcome_definition <- paste0("instrument score per visit as exported; contrast = ",
-                               ifelse(contrast == "visit_difference", "between-arm difference at the visit",
-                                      "between-arm difference in change from baseline"))
+  method <- paste0("GEE with ", family$family, " family, ", family$link, " link, ", corstr,
+                   " working correlation, robust sandwich SE and Wald normal 95% CI (no small-sample correction).")
+  outcome_definition <- ifelse(contrast == "visit_difference", "Contrast: between-arm difference at each follow-up visit.",
+                               "Contrast: between-arm difference in change from baseline at each follow-up visit.")
   result_table <- kable_indented_rows(table_raw, c("Instrument / visit",
                                                   arm_header(a$treatment_arm, sum(arm_n$arm_total[arm_n$treatment_arm == a$treatment_arm]), cell_style, "n; mean (SD); missing"),
                                                   arm_header(a$control_arm, sum(arm_n$arm_total[arm_n$treatment_arm == a$control_arm]), cell_style, "n; mean (SD); missing"),
                                                   paste0("GEE contrast, ", a$contrast, " (95% CI)"))) %>%
-    add_footnote(c(assignment_caption(a), method, outcome_definition,
-                   if (cell_style == "paper") "Cells show mean (SD) only; N in the column header is the arm size. Observed and missing n per visit are in the detailed version." else NULL),
-                 notation = "number")
+    add_footnote(c(assignment_caption(a), method, outcome_definition), notation = "number")
   if (!return_fit) return(result_table)
   list(result_table = result_table, endpoint = "Patient-reported outcomes", population = "enrolled participants with an observed score",
        outcome_definition = outcome_definition, assignment = assignment, contrast = assignment$contrast, method = method,
