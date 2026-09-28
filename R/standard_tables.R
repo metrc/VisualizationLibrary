@@ -8507,9 +8507,33 @@ measurement_table_rows <- function(change, positions) {
 
 #' Open measurement table from paired changes
 #' @noRd
-measurement_table_open <- function(change, followup_label, include_per_participant_values, unit) {
+measurement_table_open <- function(change, followup_label, include_per_participant_values, unit, cell_style = "detailed",
+                                   n_total = NULL) {
   positions <- measurement_positions(change$position)
   summary_rows <- measurement_table_rows(change, positions)
+  if (cell_style == "paper" && !include_per_participant_values) {
+    # Paper layout: the participant n goes in the header; a footnote lists any row where fewer
+    # participants contribute than the header says, so nothing is hidden by dropping the columns.
+    short <- summary_rows %>%
+      filter(Construct != "All locations (participant mean)", `Pre n` < n_total | `Follow-up n` < n_total | `Paired n` < n_total)
+    same_everywhere <- nrow(short) == length(positions) && nrow(distinct(short, `Pre n`, `Follow-up n`, `Paired n`)) == 1
+    short <- if (same_everywhere) {
+      tibble(txt = paste0("every location: pre-injection ", short$`Pre n`[1], ", ", followup_label, " ", short$`Follow-up n`[1],
+                          ", paired ", short$`Paired n`[1]))
+    } else {
+      short %>% transmute(txt = paste0(Construct, " (pre-injection ", `Pre n`, ", ", followup_label, " ", `Follow-up n`, ", paired ", `Paired n`, ")"))
+    }
+    out <- summary_rows %>% select(Construct, `Pre, mean (SD)`, `Follow-up, mean (SD)`, `Change, mean (SD)`, Is_Header)
+    unit_label <- if (nzchar(unit)) paste0(" ", unit) else ""
+    vis <- kable_indented_rows(out, c("Position", paste0("Pre-injection", unit_label, ", mean (SD)"),
+                                      paste0(followup_label, " post-injection", unit_label, ", mean (SD)"),
+                                      paste0("Change (", followup_label, " minus pre), mean (SD)")),
+                               header_above = c(" " = 1, setNames(3, paste0("Enrolled participants (n = ", n_total, ")"))))
+    if (nrow(short) > 0) {
+      vis <- vis %>% add_footnote(paste0("Fewer participants contribute at ", paste(short$txt, collapse = "; "), "."), notation = "number")
+    }
+    return(vis)
+  }
   if (include_per_participant_values) {
     indiv <- change %>%
       group_by(position) %>%
@@ -8588,23 +8612,29 @@ parse_failure_note <- function(n_failed, value_field) {
 #' list(orientation = "H")); NULL keeps every reading
 #' @param include_per_participant_values list shuffled per-participant values
 #' @param min_valid minimum usable readings for a location mean
+#' @param cell_style "detailed" shows observed and paired n columns; "paper" puts the enrolled n in
+#' the header, drops the n columns and lists in a footnote any location where fewer participants
+#' contribute
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' location_measurement_table("Replace with Analytic Tibble")
+#' location_measurement_table("Replace with Analytic Tibble", cell_style = "paper")
 location_measurement_table <- function(analytic, readings_construct = "durometer_readings_set_1",
                                        fields = c("set", "event", "position", "injection", "reading"),
                                        value_field = "reading", baseline_event = "injection_1",
                                        followup_event = "3_month", followup_label = "3 Month", set = "set_1",
                                        unit = "", keep = NULL, include_per_participant_values = FALSE,
-                                       min_valid = 1) {
+                                       min_valid = 1, cell_style = c("detailed", "paper")) {
+  cell_style <- match.arg(cell_style)
   analytic <- if_needed_generate_example_data(
     analytic, example_constructs = c("enrolled", readings_construct),
     example_types = c("Boolean", measurement_example_type(fields, value_field)))
   d <- location_change_data(analytic, readings_construct, fields, value_field, baseline_event, followup_event, set, keep, min_valid)
-  out <- measurement_table_open(d$change, followup_label, include_per_participant_values, unit)
+  out <- measurement_table_open(d$change, followup_label, include_per_participant_values, unit, cell_style,
+                                n_total = length(enrolled_study_ids(analytic)))
   note <- parse_failure_note(d$parse_failures, value_field)
   if (!is.null(note)) out <- out %>% add_footnote(note, notation = "symbol")
   out
@@ -8634,11 +8664,13 @@ mode_followup <- function(mode) {
 #'
 #' @examples
 #' durometer_readings_table("Replace with Analytic Tibble", mode = "3mo")
-durometer_readings_table <- function(analytic, mode = "3mo", include_per_participant_values = FALSE, min_valid = 1) {
+durometer_readings_table <- function(analytic, mode = "3mo", include_per_participant_values = FALSE, min_valid = 1,
+                                     cell_style = c("detailed", "paper")) {
   ev <- mode_followup(mode)
   ep <- default_measurement_endpoints()$durometer
   location_measurement_table(analytic, ep$readings_constructs[1], ep$fields, ep$value_field, "injection_1",
-                             ev[["event"]], ev[["label"]], "set_1", ep$unit, NULL, include_per_participant_values, min_valid)
+                             ev[["event"]], ev[["label"]], "set_1", ep$unit, NULL, include_per_participant_values, min_valid,
+                             match.arg(cell_style))
 }
 
 #' OCT Readings Summary Table
@@ -8658,12 +8690,13 @@ durometer_readings_table <- function(analytic, mode = "3mo", include_per_partici
 #' @examples
 #' oct_readings_table("Replace with Analytic Tibble", mode = "3mo")
 oct_readings_table <- function(analytic, mode = "3mo", include_per_participant_values = FALSE, orientations = NULL,
-                               min_valid = 1) {
+                               min_valid = 1, cell_style = c("detailed", "paper")) {
   ev <- mode_followup(mode)
   ep <- default_measurement_endpoints()$oct
   keep <- if (is.null(orientations)) NULL else list(orientation = orientations)
   location_measurement_table(analytic, ep$readings_constructs[1], ep$fields, ep$value_field, "injection_1",
-                             ev[["event"]], ev[["label"]], "set_1", "", keep, include_per_participant_values, min_valid)
+                             ev[["event"]], ev[["label"]], "set_1", "", keep, include_per_participant_values, min_valid,
+                             match.arg(cell_style))
 }
 
 # ---- Patient-reported outcomes (open) --------------------------------------------------------
@@ -8691,14 +8724,18 @@ score_family_rows <- function(long, n_total) {
 #' @param score_families named list from default_score_families
 #' @param promis_construct packed PROMIS-29 construct (visit, domain, items_answered,
 #' raw_score, t_score); NULL to omit
+#' @param cell_style "detailed" shows observed n, mean (SD) and missing n; "paper" puts the enrolled
+#' n in the header and keeps mean (SD) and missing n
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' patient_reported_outcomes_table("Replace with Analytic Tibble")
+#' patient_reported_outcomes_table("Replace with Analytic Tibble", cell_style = "paper")
 patient_reported_outcomes_table <- function(analytic, score_families = default_score_families(),
-                                            promis_construct = "promis_data") {
+                                            promis_construct = "promis_data", cell_style = c("detailed", "paper")) {
+  cell_style <- match.arg(cell_style)
   constructs <- unlist(score_families, use.names = FALSE)
   analytic <- if_needed_generate_example_data(
     analytic, example_constructs = c("enrolled", constructs, promis_construct),
@@ -8712,6 +8749,11 @@ patient_reported_outcomes_table <- function(analytic, score_families = default_s
               r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), n = as.character(n),
                               `Mean (SD)` = msd, Missing = as.character(missing), Is_Header = FALSE))
   }))
+  if (cell_style == "paper") {
+    # Paper layout: enrolled n in the header, missing n per visit, observed n is the difference.
+    return(kable_indented_rows(table_raw %>% select(-n), c("Instrument / visit", "Mean (SD)", "Missing n"),
+                               header_above = c(" " = 1, setNames(2, paste0("Enrolled participants (n = ", n_total, ")")))))
+  }
   kable_indented_rows(table_raw, c("Instrument / visit", "Observed n", "Mean (SD)", "Missing n")) %>%
     add_footnote(c(paste0("Enrolled participants: ", n_total, ".")), notation = "number")
 }

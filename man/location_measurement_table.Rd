@@ -16,7 +16,8 @@ location_measurement_table(
   unit = "",
   keep = NULL,
   include_per_participant_values = FALSE,
-  min_valid = 1
+  min_valid = 1,
+  cell_style = c("detailed", "paper")
 )
 }
 \arguments{
@@ -43,6 +44,10 @@ list(orientation = "H")); NULL keeps every reading}
 \item{include_per_participant_values}{list shuffled per-participant values}
 
 \item{min_valid}{minimum usable readings for a location mean}
+
+\item{cell_style}{"detailed" shows observed and paired n columns; "paper" puts the enrolled n in
+the header, drops the n columns and lists in a footnote any location where fewer participants
+contribute}
 }
 \value{
 An HTML table.
@@ -61,4 +66,5 @@ are convenience wrappers for the default endpoints.
 }
 \examples{
 location_measurement_table("Replace with Analytic Tibble")
+location_measurement_table("Replace with Analytic Tibble", cell_style = "paper")
 }

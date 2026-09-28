@@ -7532,7 +7532,7 @@ closed_location_measurement_table <- function(analytic, readings_construct = "du
   analytic <- if_needed_generate_example_data(
     analytic, example_constructs = c("enrolled", "treatment_arm", readings_construct),
     example_types = c("Boolean", "TreatmentArm", measurement_example_type(fields, value_field)))
-  confirm_stability_of_related_visual('location_measurement_table', '57ff930433c0319e089346ed6e478cbd')
+  confirm_stability_of_related_visual('location_measurement_table', 'f5e0d4280b45a1c6893b74a8b48b8350')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   arms <- closed_arm_levels(analytic)
   d <- location_change_data(analytic, readings_construct, fields, value_field, baseline_event, followup_event, set, keep, min_valid)
@@ -7996,7 +7996,7 @@ closed_patient_reported_outcomes_table <- function(analytic, score_families = de
     analytic, example_constructs = c("enrolled", "treatment_arm", constructs, promis_construct),
     example_types = c("Boolean", "TreatmentArm", rep("Number", length(constructs)),
                       if (!is.null(promis_construct)) promis_data_example_type))
-  confirm_stability_of_related_visual('patient_reported_outcomes_table', '88693f6d96a0d47e5008644463fc52d3')
+  confirm_stability_of_related_visual('patient_reported_outcomes_table', '4683d232578e4a6c2b1c7d39f5c4ce88')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   arms <- closed_arm_levels(analytic)
   long <- unpack_score_families(analytic, score_families, promis_construct = promis_construct) %>%

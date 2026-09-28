@@ -9,7 +9,8 @@ oct_readings_table(
   mode = "3mo",
   include_per_participant_values = FALSE,
   orientations = NULL,
-  min_valid = 1
+  min_valid = 1,
+  cell_style = c("detailed", "paper")
 )
 }
 \arguments{
@@ -23,6 +24,10 @@ construct}
 \item{orientations}{optional orientations to include; NULL uses all images}
 
 \item{min_valid}{minimum usable readings for a location mean}
+
+\item{cell_style}{"detailed" shows observed and paired n columns; "paper" puts the enrolled n in
+the header, drops the n columns and lists in a footnote any location where fewer participants
+contribute}
 }
 \value{
 An HTML table.

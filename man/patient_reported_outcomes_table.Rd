@@ -7,7 +7,8 @@
 patient_reported_outcomes_table(
   analytic,
   score_families = default_score_families(),
-  promis_construct = "promis_data"
+  promis_construct = "promis_data",
+  cell_style = c("detailed", "paper")
 )
 }
 \arguments{
@@ -18,6 +19,9 @@ constructs named in score_families}
 
 \item{promis_construct}{packed PROMIS-29 construct (visit, domain, items_answered,
 raw_score, t_score); NULL to omit}
+
+\item{cell_style}{"detailed" shows observed n, mean (SD) and missing n; "paper" puts the enrolled
+n in the header and keeps mean (SD) and missing n}
 }
 \value{
 An HTML table.
@@ -31,4 +35,5 @@ PROMIS construct and a shorter score_families list omits a family.
 }
 \examples{
 patient_reported_outcomes_table("Replace with Analytic Tibble")
+patient_reported_outcomes_table("Replace with Analytic Tibble", cell_style = "paper")
 }
