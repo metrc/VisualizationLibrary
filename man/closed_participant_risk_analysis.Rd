@@ -9,11 +9,14 @@ closed_participant_risk_analysis(
   categories = complication_categories(),
   count_construct = "complication_count",
   exposure_construct = "last_followup_days",
+  phase = c("all", "set_1", "set_2"),
+  rows = NULL,
   blinded = FALSE,
   assignment_map = NULL,
   seed = 20260922,
   control_arm = "Group A",
   ci_method = c("newcombe", "wald"),
+  cell_style = c("detailed", "paper"),
   return_fit = FALSE
 )
 }
@@ -24,9 +27,15 @@ blinded}
 
 \item{categories}{mapping from complication_categories()}
 
-\item{count_construct}{verified total event count per participant}
+\item{count_construct}{verified total event count per participant for the phase, or NULL to
+count the packed records (not de-duplicated)}
 
-\item{exposure_construct}{verified person-days of follow-up per participant}
+\item{exposure_construct}{verified person-days of follow-up per participant for the phase}
+
+\item{phase}{"all", "set_1" or "set_2"}
+
+\item{rows}{optional category keys to show (any, minor_expected, minor_unexpected, serious,
+other, sae_any, sae_related); NULL shows all}
 
 \item{blinded}{when TRUE, ignores any real treatment_arm and uses a reproducible dummy
 assignment (see resolve_treatment_assignment)}
@@ -39,6 +48,9 @@ treatment_arm; it must cover every enrolled participant exactly once with two ar
 \item{control_arm}{value of treatment_arm treated as the control group}
 
 \item{ci_method}{"newcombe" or "wald"}
+
+\item{cell_style}{"detailed" shows n/N (%) per arm; "paper" shows the percentage only and puts
+the arm denominator in the column header}
 
 \item{return_fit}{when TRUE, returns a list with the result table (as result_table), the
 per-category results, the pooled counts, the participant-level inputs, the reconciliation
@@ -56,4 +68,6 @@ SAE category. Blinded results demonstrate pipeline behaviour only.
 }
 \examples{
 closed_participant_risk_analysis("Replace with Analytic Tibble", blinded = TRUE)
+closed_participant_risk_analysis("Replace with Analytic Tibble", blinded = TRUE, phase = "set_1",
+                                 count_construct = NULL, rows = "any", cell_style = "paper")
 }

@@ -8,7 +8,9 @@ participants_w_complications(
   analytic,
   categories = complication_categories(),
   count_construct = "complication_count",
-  exposure_construct = "last_followup_days"
+  exposure_construct = "last_followup_days",
+  phase = c("all", "set_1", "set_2"),
+  rows = NULL
 )
 }
 \arguments{
@@ -17,9 +19,15 @@ sae_data, followup_data and the count and exposure constructs}
 
 \item{categories}{mapping from complication_categories()}
 
-\item{count_construct}{verified total event count per participant}
+\item{count_construct}{verified total event count per participant for the phase, or NULL to
+count the packed records (not de-duplicated)}
 
-\item{exposure_construct}{verified person-days of follow-up per participant}
+\item{exposure_construct}{verified person-days of follow-up per participant for the phase}
+
+\item{phase}{"all", "set_1" or "set_2"}
+
+\item{rows}{optional category keys to show (any, minor_expected, minor_unexpected, serious,
+other, sae_any, sae_related); NULL shows all}
 }
 \value{
 An HTML table.
@@ -30,7 +38,12 @@ complication_categories(): category, participants with events, denominator with 
 ascertainment, percent and the number with unknown ascertainment. Counting participants
 is numerically different from counting complications, since one participant can have
 several. The first row (any complication) uses the verified count construct together with
-the long records; all-SAE coverage is shown separately from the narrower related SAE row.
+the packed records; all-SAE coverage is shown separately from the narrower related SAE row.
+phase restricts the records to one course: "set_1" is the randomized phase (events whose
+redcap_event_name has no set2_ prefix), "set_2" the second course after the blinded control
+period; "all" keeps every record. A phase-specific run needs a count construct verified for
+that course, or count_construct = NULL to count the packed records, and an exposure construct
+measured over the same phase. SAE-form records carry no course and are counted in every phase.
 }
 \examples{
 participants_w_complications("Replace with Analytic Tibble")

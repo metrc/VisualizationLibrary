@@ -9,7 +9,9 @@ event_rate_summary(
   categories = complication_categories(),
   count_construct = "complication_count",
   exposure_construct = "last_followup_days",
-  rate_unit = 100
+  rate_unit = 100,
+  phase = c("all", "set_1", "set_2"),
+  rows = NULL
 )
 }
 \arguments{
@@ -18,11 +20,17 @@ sae_data, followup_data and the count and exposure constructs}
 
 \item{categories}{mapping from complication_categories()}
 
-\item{count_construct}{verified total event count per participant}
+\item{count_construct}{verified total event count per participant for the phase, or NULL to
+count the packed records (not de-duplicated)}
 
-\item{exposure_construct}{verified person-days of follow-up per participant}
+\item{exposure_construct}{verified person-days of follow-up per participant for the phase}
 
 \item{rate_unit}{person-days per rate unit (100 gives events per 100 person-days)}
+
+\item{phase}{"all", "set_1" or "set_2"}
+
+\item{rows}{optional category keys to show (any, minor_expected, minor_unexpected, serious,
+other, sae_any, sae_related); NULL shows all}
 }
 \value{
 An HTML table.
@@ -37,4 +45,5 @@ exposure are excluded and counted.
 }
 \examples{
 event_rate_summary("Replace with Analytic Tibble")
+event_rate_summary("Replace with Analytic Tibble", phase = "set_1", count_construct = NULL, rows = "any")
 }

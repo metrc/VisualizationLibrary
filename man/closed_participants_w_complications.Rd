@@ -9,6 +9,8 @@ closed_participants_w_complications(
   categories = complication_categories(),
   count_construct = "complication_count",
   exposure_construct = "last_followup_days",
+  phase = c("all", "set_1", "set_2"),
+  rows = NULL,
   blinded = FALSE,
   seed = 20260922
 )
@@ -19,9 +21,15 @@ complication_data, sae_data, followup_data and the count and exposure constructs
 
 \item{categories}{mapping from complication_categories()}
 
-\item{count_construct}{verified total event count per participant}
+\item{count_construct}{verified total event count per participant for the phase, or NULL to
+count the packed records (not de-duplicated)}
 
-\item{exposure_construct}{verified person-days of follow-up per participant}
+\item{exposure_construct}{verified person-days of follow-up per participant for the phase}
+
+\item{phase}{"all", "set_1" or "set_2"}
+
+\item{rows}{optional category keys to show (any, minor_expected, minor_unexpected, serious,
+other, sae_any, sae_related); NULL shows all}
 
 \item{blinded}{when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
 built from the sorted enrolled IDs and seed (the same map every closed function builds)}

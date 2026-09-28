@@ -7249,27 +7249,31 @@ closed_amputation_characteristics_table <- function(analytic, anchor = c("first_
 closed_participants_w_complications <- function(analytic, categories = complication_categories(),
                                                 count_construct = "complication_count",
                                                 exposure_construct = "last_followup_days",
-                                                 blinded = FALSE, seed = 20260922) {
+                                                phase = c("all", "set_1", "set_2"), rows = NULL,
+                                                blinded = FALSE, seed = 20260922) {
+  phase <- match.arg(phase)
   example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("enrolled", "treatment_arm", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
     example_types = c("Boolean", "TreatmentArm", complication_data_example_type, sae_data_example_type,
-                      followup_data_example_type, "Number", "Number"))
-  if (example) analytic <- example_verified_count(analytic, count_construct)
-  confirm_stability_of_related_visual('participants_w_complications', '1ba973b518c0001a4ca02fa45bc9d657')
+                      followup_data_example_type, if (!is.null(count_construct)) "Number", "Number"))
+  if (example && !is.null(count_construct)) analytic <- example_verified_count(analytic, count_construct)
+  confirm_stability_of_related_visual('participants_w_complications', '59163aab75401232f9d6d449e5c51f7a')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   arms <- closed_arm_levels(analytic)
-  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct) %>%
+  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct, phase)
+  notes <- attr(participants, "notes")
+  participants <- participants %>%
     left_join(analytic %>% transmute(study_id = as.character(study_id), treatment_arm), by = "study_id")
   fmt <- function(df) {
-    p <- pooled_event_risks(df, categories)
+    p <- pooled_event_risks(df, categories, rows)
     ifelse(p$denominator > 0,
            paste0(p$participants_with_event, "/", p$denominator, " (",
                   trimws(format(round(100 * p$participants_with_event / p$denominator, 1), nsmall = 1)), "%)"),
            paste0(p$participants_with_event, "/", p$denominator))
   }
-  pooled <- pooled_event_risks(participants, categories)
+  pooled <- pooled_event_risks(participants, categories, rows)
   out <- tibble(Category = pooled$category,
                 A = fmt(participants %>% filter(treatment_arm %in% arms[1])),
                 B = fmt(participants %>% filter(treatment_arm %in% arms[2])),
@@ -7277,9 +7281,9 @@ closed_participants_w_complications <- function(analytic, categories = complicat
   kable(out, format = "html", align = "l",
         col.names = c("Category", paste0(arms[1], " n/N (%)"), paste0(arms[2], " n/N (%)"), "Total n/N (%)",
                       "Unknown ascertainment")) %>%
-    kable_styling("striped", full_width = FALSE, position = "left")
+    kable_styling("striped", full_width = FALSE, position = "left") %>%
+    add_footnote(notes, notation = "number")
 }
-
 #' n/N (%) cell
 #' @noRd
 fmt_n_of_total <- function(x, n) {
@@ -7306,6 +7310,8 @@ fmt_n_of_total <- function(x, n) {
 #' @param seed seed for the dummy map
 #' @param control_arm value of treatment_arm treated as the control group
 #' @param ci_method "newcombe" or "wald"
+#' @param cell_style "detailed" shows n/N (%) per arm; "paper" shows the percentage only and puts
+#' the arm denominator in the column header
 #' @param return_fit when TRUE, returns a list with the result table (as result_table), the
 #' per-category results, the pooled counts, the participant-level inputs, the reconciliation
 #' with the verified count, the assignment and the settings
@@ -7315,56 +7321,72 @@ fmt_n_of_total <- function(x, n) {
 #'
 #' @examples
 #' closed_participant_risk_analysis("Replace with Analytic Tibble", blinded = TRUE)
+#' closed_participant_risk_analysis("Replace with Analytic Tibble", blinded = TRUE, phase = "set_1",
+#'                                  count_construct = NULL, rows = "any", cell_style = "paper")
 closed_participant_risk_analysis <- function(analytic, categories = complication_categories(),
                                              count_construct = "complication_count",
                                              exposure_construct = "last_followup_days",
+                                             phase = c("all", "set_1", "set_2"), rows = NULL,
                                              blinded = FALSE, assignment_map = NULL, seed = 20260922,
                                              control_arm = "Group A", ci_method = c("newcombe", "wald"),
-                                             return_fit = FALSE) {
+                                             cell_style = c("detailed", "paper"), return_fit = FALSE) {
+  phase <- match.arg(phase)
+  cell_style <- match.arg(cell_style)
   example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
       analytic,
       example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
-      example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type, "Number", "Number"))
-  if (example) analytic <- example_verified_count(analytic, count_construct)
+      example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type,
+                        if (!is.null(count_construct)) "Number", "Number"))
+  if (example && !is.null(count_construct)) analytic <- example_verified_count(analytic, count_construct)
   ci_method <- match.arg(ci_method)
   assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
-  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct) %>%
-    left_join(assignment$map, by = "study_id")
-  rows <- event_category_rows(categories)
+  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct, phase)
+  notes <- attr(participants, "notes")
+  participants <- participants %>% left_join(assignment$map, by = "study_id")
+  category_rows <- event_category_rows(categories, rows, attr(participants, "count_source"))
   trt <- assignment$treatment_arm
   ctl <- assignment$control_arm
-  results <- bind_rows(lapply(seq_len(nrow(rows)), function(i) {
-    flag <- participants[[rows$flag[i]]]
+  results <- bind_rows(lapply(seq_len(nrow(category_rows)), function(i) {
+    flag <- participants[[category_rows$flag[i]]]
     arm <- participants$treatment_arm
     x1 <- sum(flag %in% TRUE & arm == trt)
     n1 <- sum(!is.na(flag) & arm == trt)
     x2 <- sum(flag %in% TRUE & arm == ctl)
     n2 <- sum(!is.na(flag) & arm == ctl)
     rd <- risk_difference_interval(x1, n1, x2, n2, method = ci_method)
-    tibble(key = rows$key[i], category = rows$category[i], treatment_events = x1, treatment_n = n1,
+    tibble(key = category_rows$key[i], category = category_rows$category[i], treatment_events = x1, treatment_n = n1,
            control_events = x2, control_n = n2, total_events = x1 + x2, total_n = n1 + n2,
            unknown_ascertainment = sum(is.na(flag)), risk_difference = rd$estimate, lower = rd$lower,
            upper = rd$upper, method = rd$method, status = rd$status)
   }))
-  out <- results %>% transmute(Category = category, T = fmt_n_of_total(treatment_events, treatment_n),
-                               C = fmt_n_of_total(control_events, control_n), Total = fmt_n_of_total(total_events, total_n),
-                               RD = fmt_estimate(risk_difference, lower, upper, 1), Status = ifelse(status == "ok", "", status))
-  result_table <- kable(out, format = "html", align = "l",
-                        col.names = c("Category", paste0(trt, " n/N (%)"), paste0(ctl, " n/N (%)"), "Total n/N (%)",
-                                      paste0("Risk difference, ", assignment$contrast, " (95% CI)"), "Status")) %>%
+  pct <- function(x, n) ifelse(n > 0, paste0(trimws(format(round(100 * x / n, 1), nsmall = 1)), "%"), "")
+  if (cell_style == "paper") {
+    out <- results %>% transmute(Category = category, T = pct(treatment_events, treatment_n),
+                                 C = pct(control_events, control_n), Total = pct(total_events, total_n),
+                                 RD = fmt_estimate(risk_difference, lower, upper, 1), Status = ifelse(status == "ok", "", status))
+    col_names <- c("Category", paste0(trt, " (N = ", max(results$treatment_n), ")"), paste0(ctl, " (N = ", max(results$control_n), ")"),
+                   paste0("Total (N = ", max(results$total_n), ")"), paste0("Risk difference, ", assignment$contrast, " (95% CI)"), "Status")
+  } else {
+    out <- results %>% transmute(Category = category, T = fmt_n_of_total(treatment_events, treatment_n),
+                                 C = fmt_n_of_total(control_events, control_n), Total = fmt_n_of_total(total_events, total_n),
+                                 RD = fmt_estimate(risk_difference, lower, upper, 1), Status = ifelse(status == "ok", "", status))
+    col_names <- c("Category", paste0(trt, " n/N (%)"), paste0(ctl, " n/N (%)"), "Total n/N (%)",
+                   paste0("Risk difference, ", assignment$contrast, " (95% CI)"), "Status")
+  }
+  result_table <- kable(out, format = "html", align = "l", col.names = col_names) %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
-    add_footnote(c(assignment_caption(assignment), paste0("Interval method: ", ci_method, " (percentage points).")),
+    add_footnote(c(assignment_caption(assignment), paste0("Interval method: ", ci_method, " (percentage points)."), notes),
                  notation = "number")
   if (!return_fit) return(result_table)
   list(result_table = result_table, endpoint = "Participants with safety events", results = results,
-       pooled = pooled_event_risks(participants, categories), participants = participants,
+       pooled = pooled_event_risks(participants, categories, rows), participants = participants,
        reconciliation = attr(participants, "reconciliation"), assignment = assignment,
-       population = "enrolled participants with known safety ascertainment",
+       population = paste0("enrolled participants with known safety ascertainment, ", safety_phase_label[[phase]]),
        outcome_definition = "participant with one or more events in the category",
-       settings = list(ci_method = ci_method, count_construct = count_construct, exposure_construct = exposure_construct))
+       settings = list(ci_method = ci_method, count_construct = count_construct, exposure_construct = exposure_construct,
+                       phase = phase, rows = rows, cell_style = cell_style))
 }
-
 #' Total safety events and exact incidence rate ratios by arm
 #'
 #' @description
@@ -7378,6 +7400,8 @@ closed_participant_risk_analysis <- function(analytic, categories = complication
 #'
 #' @inheritParams closed_participant_risk_analysis
 #' @param rate_unit person-days per rate unit (100 gives events per 100 person-days)
+#' @param cell_style "detailed" shows n / events / person-days / rate per arm; "paper" shows the
+#' rate only and puts the arm n and person-days in the column header
 #'
 #' @return An HTML table, or a list when return_fit = TRUE (result_table, results, pooled,
 #' participants, excluded, reconciliation, assignment and settings).
@@ -7385,20 +7409,27 @@ closed_participant_risk_analysis <- function(analytic, categories = complication
 #'
 #' @examples
 #' closed_event_rate_analysis("Replace with Analytic Tibble", blinded = TRUE)
+#' closed_event_rate_analysis("Replace with Analytic Tibble", blinded = TRUE, phase = "set_1",
+#'                            count_construct = NULL, rows = "any", cell_style = "paper")
 closed_event_rate_analysis <- function(analytic, categories = complication_categories(),
                                        count_construct = "complication_count", exposure_construct = "last_followup_days",
+                                       phase = c("all", "set_1", "set_2"), rows = NULL,
                                        blinded = FALSE, assignment_map = NULL, seed = 20260922, control_arm = "Group A",
-                                       rate_unit = 100, return_fit = FALSE) {
+                                       rate_unit = 100, cell_style = c("detailed", "paper"), return_fit = FALSE) {
+  phase <- match.arg(phase)
+  cell_style <- match.arg(cell_style)
   example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
       analytic,
       example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
-      example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type, "Number", "Number"))
-  if (example) analytic <- example_verified_count(analytic, count_construct)
+      example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type,
+                        if (!is.null(count_construct)) "Number", "Number"))
+  if (example && !is.null(count_construct)) analytic <- example_verified_count(analytic, count_construct)
   assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
-  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct) %>%
-    left_join(assignment$map, by = "study_id")
-  rows <- event_category_rows(categories)
+  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct, phase)
+  notes <- attr(participants, "notes")
+  participants <- participants %>% left_join(assignment$map, by = "study_id")
+  category_rows <- event_category_rows(categories, rows, attr(participants, "count_source"))
   usable <- participants %>% filter(exposure_valid, ascertained)
   excluded <- participants %>% filter(!exposure_valid | !ascertained) %>%
     transmute(study_id, treatment_arm, exposure_valid, ascertained)
@@ -7407,11 +7438,11 @@ closed_event_rate_analysis <- function(analytic, categories = complication_categ
   arm_totals <- function(df, count_col) {
     tibble(participants = nrow(df), events = sum(df[[count_col]], na.rm = TRUE), person_days = sum(df$exposure_days))
   }
-  results <- bind_rows(lapply(seq_len(nrow(rows)), function(i) {
-    t_arm <- arm_totals(usable %>% filter(treatment_arm == trt), rows$count[i])
-    c_arm <- arm_totals(usable %>% filter(treatment_arm == ctl), rows$count[i])
+  results <- bind_rows(lapply(seq_len(nrow(category_rows)), function(i) {
+    t_arm <- arm_totals(usable %>% filter(treatment_arm == trt), category_rows$count[i])
+    c_arm <- arm_totals(usable %>% filter(treatment_arm == ctl), category_rows$count[i])
     rr <- exact_rate_ratio(t_arm$events, t_arm$person_days, c_arm$events, c_arm$person_days)
-    tibble(key = rows$key[i], category = rows$category[i], count_source = rows$count_source[i],
+    tibble(key = category_rows$key[i], category = category_rows$category[i], count_source = category_rows$count_source[i],
            treatment_participants = t_arm$participants, treatment_events = t_arm$events,
            treatment_person_days = t_arm$person_days, treatment_rate = rate_unit * t_arm$events / t_arm$person_days,
            control_participants = c_arm$participants, control_events = c_arm$events,
@@ -7420,27 +7451,37 @@ closed_event_rate_analysis <- function(analytic, categories = complication_categ
            status = rr$status)
   }))
   rate_lab <- paste0("rate per ", rate_unit, " person-days")
-  out <- results %>% transmute(
-    Category = category, `Count source` = count_source,
-    T = paste0(treatment_participants, " / ", treatment_events, " / ", treatment_person_days, " / ", fmt_number(treatment_rate)),
-    C = paste0(control_participants, " / ", control_events, " / ", control_person_days, " / ", fmt_number(control_rate)),
-    IRR = fmt_estimate(irr, lower, upper, 2), Status = ifelse(status == "ok", "", status))
-  result_table <- kable(out, format = "html", align = "l",
-                        col.names = c("Category", "Count source", paste0(trt, ": n / events / person-days / ", rate_lab),
-                                      paste0(ctl, ": n / events / person-days / ", rate_lab),
-                                      paste0("IRR ", trt, " over ", ctl, " (exact 95% CI)"), "Status")) %>%
+  if (cell_style == "paper") {
+    out <- results %>% transmute(Category = category, T = fmt_number(treatment_rate), C = fmt_number(control_rate),
+                                 IRR = fmt_estimate(irr, lower, upper, 2), Status = ifelse(status == "ok", "", status))
+    col_names <- c("Category",
+                   paste0(trt, " (n = ", max(results$treatment_participants), "; ", max(results$treatment_person_days), " person-days): ", rate_lab),
+                   paste0(ctl, " (n = ", max(results$control_participants), "; ", max(results$control_person_days), " person-days): ", rate_lab),
+                   paste0("IRR ", trt, " over ", ctl, " (exact 95% CI)"), "Status")
+  } else {
+    out <- results %>% transmute(
+      Category = category, `Count source` = count_source,
+      T = paste0(treatment_participants, " / ", treatment_events, " / ", treatment_person_days, " / ", fmt_number(treatment_rate)),
+      C = paste0(control_participants, " / ", control_events, " / ", control_person_days, " / ", fmt_number(control_rate)),
+      IRR = fmt_estimate(irr, lower, upper, 2), Status = ifelse(status == "ok", "", status))
+    col_names <- c("Category", "Count source", paste0(trt, ": n / events / person-days / ", rate_lab),
+                   paste0(ctl, ": n / events / person-days / ", rate_lab),
+                   paste0("IRR ", trt, " over ", ctl, " (exact 95% CI)"), "Status")
+  }
+  result_table <- kable(out, format = "html", align = "l", col.names = col_names) %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
     add_footnote(c(assignment_caption(assignment), unique(results$method),
-                   paste0(nrow(excluded), " participant(s) excluded for missing/nonpositive exposure or unknown ascertainment.")),
-                 notation = "number")
+                   paste0(nrow(excluded), " participant(s) excluded for missing/nonpositive exposure or unknown ascertainment."),
+                   notes), notation = "number")
   if (!return_fit) return(result_table)
   list(result_table = result_table, endpoint = "Total safety events and incidence rates", results = results,
        participants = participants, excluded = excluded, reconciliation = attr(participants, "reconciliation"),
-       assignment = assignment, population = "enrolled participants with known ascertainment and positive verified exposure",
+       assignment = assignment,
+       population = paste0("enrolled participants with known ascertainment and positive exposure, ", safety_phase_label[[phase]]),
        outcome_definition = paste0("event counts per participant with ", exposure_construct, " as exposure"),
-       settings = list(rate_unit = rate_unit, count_construct = count_construct, exposure_construct = exposure_construct))
+       settings = list(rate_unit = rate_unit, count_construct = count_construct, exposure_construct = exposure_construct,
+                       phase = phase, rows = rows, cell_style = cell_style))
 }
-
 # ---- Closed repeated-measurement displays and analyses ----------------------------------------
 
 #' Location Measurement Summary Table by Treatment Arm

@@ -7518,11 +7518,14 @@ unpack_complication_data <- function(analytic, categories = complication_categor
                           row_sep = ";new_row: ", field_sep = "\\|", population = population) %>%
     filter(!is.na(complication)) %>%
     mutate(diagnosis_date = suppressWarnings(as.Date(diagnosis_date)),
+           # The course is the event-name prefix: set2_ events are the second course, everything
+           # else the first (randomized) course.
+           set = ifelse(str_detect(redcap_event_name, "^set\\d+_"),
+                        paste0("set_", str_extract(redcap_event_name, "(?<=^set)\\d+")), "set_1"),
            category = assign_complication_category(complication, severity, categories),
            serious = tolower(severity) %in% tolower(categories$serious_severities),
            related = tolower(relatedness) %in% tolower(categories$related_levels))
 }
-
 #' Unpack serious adverse event records
 #' @noRd
 unpack_sae_data <- function(analytic, population = c("enrolled", "all")) {
@@ -7727,22 +7730,38 @@ unpack_score_families <- function(analytic, score_families = default_score_famil
            visit = factor(visit, levels = unname(visit_labels)))
 }
 
+#' Safety phase labels
+#' @noRd
+safety_phase_label <- c(all = "all courses",
+                        set_1 = "randomized phase (set 1: first injection through the 3-month visit)",
+                        set_2 = "second course (set 2, after the blinded control period)")
+
 #' Participant-level safety inputs
+#'
+#' One row per enrolled participant in the requested phase. phase = "all" keeps every
+#' complication record and uses the verified count construct as the total; "set_1" or
+#' "set_2" keep the records of that course (from the set2_ event-name prefix) and need a
+#' count construct verified for that course, or count_construct = NULL to count the packed
+#' records (not de-duplicated). The exposure construct must match the phase. SAE-form records
+#' carry no course and are counted in every phase. For set 2 only participants with second-course
+#' records or exposure are in the population.
 #' @noRd
 participant_event_summary <- function(analytic, categories = complication_categories(),
                                       count_construct = "complication_count",
-                                      exposure_construct = "last_followup_days") {
+                                      exposure_construct = "last_followup_days",
+                                      phase = c("all", "set_1", "set_2")) {
+  phase <- match.arg(phase)
   require_constructs(analytic, c("study_id", "enrolled", "complication_data", "sae_data", "followup_data",
                                  count_construct, exposure_construct), "participant_event_summary")
   ids <- enrolled_study_ids(analytic)
   base <- analytic %>%
     filter(enrolled %in% TRUE) %>%
     transmute(study_id = as.character(study_id),
-              event_count = parse_packed_number(.data[[count_construct]])$value,
-              exposure_days = parse_packed_number(.data[[exposure_construct]])$value,
-              has_complication_record = !is.na(packed_na(complication_data)))
+              event_count = if (is.null(count_construct)) NA_real_ else parse_packed_number(.data[[count_construct]])$value,
+              exposure_days = parse_packed_number(.data[[exposure_construct]])$value)
 
-  events <- unpack_complication_data(analytic, categories)
+  events_all <- unpack_complication_data(analytic, categories)
+  events <- if (phase == "all") events_all else events_all %>% filter(set == phase)
   event_counts <- events %>%
     group_by(study_id) %>%
     summarise(n_records = n(),
@@ -7771,55 +7790,79 @@ participant_event_summary <- function(analytic, categories = complication_catego
     mutate(across(c(n_records, n_minor_expected, n_minor_unexpected, n_serious, n_other, n_sae, n_sae_related),
                   ~ replace_na(.x, 0L)),
            any_completed_form = replace_na(any_completed_form, FALSE),
-           ascertained = has_complication_record | any_completed_form,
+           exposure_valid = !is.na(exposure_days) & exposure_days > 0,
+           has_phase_record = n_records > 0,
+           # Set 2 has no follow-up status rows; a participant enters the phase through its
+           # records or its exposure. Set 1 and all courses use the follow-up forms as well.
+           in_phase = if (phase == "set_2") has_phase_record | exposure_valid else TRUE,
+           ascertained = if (phase == "set_2") in_phase else has_phase_record | any_completed_form,
            ascertainment_unknown = !ascertained,
            event_count_verified = event_count,
-           event_count_source = case_when(!is.na(event_count) ~ "verified",
+           event_count_source = case_when(!is.null(count_construct) & !is.na(event_count) ~ "verified",
+                                          is.null(count_construct) ~ "packed records (not de-duplicated)",
                                           ascertained ~ "no records (verified zero)",
                                           TRUE ~ "unknown"),
-           event_count = ifelse(is.na(event_count) & ascertained, 0, event_count),
+           event_count = if (is.null(count_construct)) as.numeric(n_records) else
+             ifelse(is.na(event_count) & ascertained, 0, event_count),
            any_complication = ifelse(ascertained, n_records > 0 | event_count > 0, NA),
            any_minor_expected = ifelse(ascertained, n_minor_expected > 0, NA),
            any_minor_unexpected = ifelse(ascertained, n_minor_unexpected > 0, NA),
            any_serious = ifelse(ascertained, n_serious > 0 | n_sae > 0, NA),
            any_other = ifelse(ascertained, n_other > 0, NA),
            any_sae = ifelse(ascertained, n_sae > 0, NA),
-           any_sae_related = ifelse(ascertained, n_sae_related > 0, NA),
-           exposure_valid = !is.na(exposure_days) & exposure_days > 0)
+           any_sae_related = ifelse(ascertained, n_sae_related > 0, NA))
+  n_not_in_phase <- sum(!out$in_phase)
+  out <- out %>% filter(in_phase)
 
-  inconsistent <- out %>% filter(is.na(event_count_verified) & n_records > 0)
-  if (nrow(inconsistent) > 0) {
-    stop(count_construct, " is missing although complication_data has records for study_id ",
-         paste(inconsistent$study_id, collapse = ", "), "; reconcile the verified count with complication_data")
+  if (!is.null(count_construct)) {
+    inconsistent <- out %>% filter(is.na(event_count_verified) & n_records > 0)
+    if (nrow(inconsistent) > 0) {
+      stop(count_construct, " is missing although complication_data has records for study_id ",
+           paste(inconsistent$study_id, collapse = ", "), "; reconcile the verified count with complication_data")
+    }
+    attr(out, "reconciliation") <- out %>%
+      filter(event_count_source == "verified") %>%
+      summarise(participants = n(), verified_total = sum(event_count, na.rm = TRUE),
+                long_record_total = sum(n_records), participants_differing = sum(event_count != n_records))
   }
-  attr(out, "reconciliation") <- out %>%
-    filter(event_count_source == "verified") %>%
-    summarise(participants = n(), verified_total = sum(event_count, na.rm = TRUE),
-              long_record_total = sum(n_records), participants_differing = sum(event_count != n_records))
   attr(out, "events") <- events
   attr(out, "saes") <- saes
+  attr(out, "phase") <- phase
+  attr(out, "n_not_in_phase") <- n_not_in_phase
+  attr(out, "count_source") <- if (is.null(count_construct)) "packed complication records (not de-duplicated)" else
+    paste0("verified ", count_construct)
+  attr(out, "notes") <- c(
+    paste0("Phase: ", safety_phase_label[[phase]], ". Any complication row counted from ", attr(out, "count_source"),
+           "; category rows from the packed records. Exposure: ", exposure_construct, "."),
+    "SAE-form records carry no course and are counted in every phase.",
+    if (n_not_in_phase > 0) paste0(n_not_in_phase, " enrolled participant(s) without second-course records or exposure are not in this phase.") else NULL)
   out
 }
-
 #' Category rows shared by the safety displays and analyses
 #' @noRd
-event_category_rows <- function(categories) {
+event_category_rows <- function(categories, rows = NULL, count_source = "verified count construct") {
   labels <- categories$labels
   keys <- c("any", "minor_expected", "minor_unexpected", "serious", "other", "sae_any", "sae_related")
-  tibble(key = keys, category = unname(labels[keys]),
+  if (!is.null(rows)) {
+    unknown <- setdiff(rows, keys)
+    if (length(unknown) > 0) stop("rows must be among ", paste(keys, collapse = ", "), "; unknown: ", paste(unknown, collapse = ", "))
+  }
+  out <- tibble(key = keys, category = unname(labels[keys]),
          flag = c("any_complication", "any_minor_expected", "any_minor_unexpected", "any_serious",
                   "any_other", "any_sae", "any_sae_related"),
          count = c("event_count", "n_minor_expected", "n_minor_unexpected", "n_serious", "n_other",
                    "n_sae", "n_sae_related"),
-         count_source = c("verified count construct", "long complication records", "long complication records",
-                          "long complication records", "long complication records", "SAE form records",
+         count_source = c(count_source, "packed complication records", "packed complication records",
+                          "packed complication records", "packed complication records", "SAE form records",
                           "SAE form records"))
+  if (!is.null(rows)) out <- out %>% filter(key %in% rows)
+  out
 }
 
 #' Pooled participants-with-event counts by category
 #' @noRd
-pooled_event_risks <- function(participants, categories) {
-  rows <- event_category_rows(categories)
+pooled_event_risks <- function(participants, categories, rows = NULL) {
+  rows <- event_category_rows(categories, rows)
   bind_rows(lapply(seq_len(nrow(rows)), function(i) {
     flag <- participants[[rows$flag[i]]]
     tibble(key = rows$key[i], category = rows$category[i],
@@ -8257,13 +8300,22 @@ followup_data_example_type <- "(';', ',')FollowupPeriod|FollowupPeriod|Form|Foll
 #' ascertainment, percent and the number with unknown ascertainment. Counting participants
 #' is numerically different from counting complications, since one participant can have
 #' several. The first row (any complication) uses the verified count construct together with
-#' the long records; all-SAE coverage is shown separately from the narrower related SAE row.
+#' the packed records; all-SAE coverage is shown separately from the narrower related SAE row.
+#' phase restricts the records to one course: "set_1" is the randomized phase (events whose
+#' redcap_event_name has no set2_ prefix), "set_2" the second course after the blinded control
+#' period; "all" keeps every record. A phase-specific run needs a count construct verified for
+#' that course, or count_construct = NULL to count the packed records, and an exposure construct
+#' measured over the same phase. SAE-form records carry no course and are counted in every phase.
 #'
 #' @param analytic analytic data set that must include study_id, enrolled, complication_data,
 #' sae_data, followup_data and the count and exposure constructs
 #' @param categories mapping from complication_categories()
-#' @param count_construct verified total event count per participant
-#' @param exposure_construct verified person-days of follow-up per participant
+#' @param count_construct verified total event count per participant for the phase, or NULL to
+#' count the packed records (not de-duplicated)
+#' @param exposure_construct verified person-days of follow-up per participant for the phase
+#' @param phase "all", "set_1" or "set_2"
+#' @param rows optional category keys to show (any, minor_expected, minor_unexpected, serious,
+#' other, sae_any, sae_related); NULL shows all
 #'
 #' @return An HTML table.
 #' @export
@@ -8272,16 +8324,18 @@ followup_data_example_type <- "(';', ',')FollowupPeriod|FollowupPeriod|Form|Foll
 #' participants_w_complications("Replace with Analytic Tibble")
 participants_w_complications <- function(analytic, categories = complication_categories(),
                                          count_construct = "complication_count",
-                                         exposure_construct = "last_followup_days") {
+                                         exposure_construct = "last_followup_days",
+                                         phase = c("all", "set_1", "set_2"), rows = NULL) {
+  phase <- match.arg(phase)
   example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
     example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type,
-                      "Number", "Number"))
-  if (example) analytic <- example_verified_count(analytic, count_construct)
-  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct)
-  pooled <- pooled_event_risks(participants, categories)
+                      if (!is.null(count_construct)) "Number", "Number"))
+  if (example && !is.null(count_construct)) analytic <- example_verified_count(analytic, count_construct)
+  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct, phase)
+  pooled <- pooled_event_risks(participants, categories, rows)
   out <- pooled %>%
     transmute(Category = category,
               `Participants with >=1 event` = participants_with_event,
@@ -8292,10 +8346,10 @@ participants_w_complications <- function(analytic, categories = complication_cat
               `Unknown ascertainment` = unknown_ascertainment)
   kable(out, format = "html", align = "l") %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
-    add_footnote(c(paste0("Enrolled participants: ", nrow(participants), ". Ascertainment is unknown when a participant ",
-                          "has neither a complication record nor a completed follow-up form.")), notation = "number")
+    add_footnote(c(paste0("Participants in this phase: ", nrow(participants), ". Ascertainment is unknown when a participant ",
+                          "has neither a complication record nor a completed follow-up form."), attr(participants, "notes")),
+                 notation = "number")
 }
-
 #' Total events and incidence rates
 #'
 #' @description
@@ -8314,32 +8368,34 @@ participants_w_complications <- function(analytic, categories = complication_cat
 #'
 #' @examples
 #' event_rate_summary("Replace with Analytic Tibble")
+#' event_rate_summary("Replace with Analytic Tibble", phase = "set_1", count_construct = NULL, rows = "any")
 event_rate_summary <- function(analytic, categories = complication_categories(),
                                count_construct = "complication_count",
-                               exposure_construct = "last_followup_days", rate_unit = 100) {
+                               exposure_construct = "last_followup_days", rate_unit = 100,
+                               phase = c("all", "set_1", "set_2"), rows = NULL) {
+  phase <- match.arg(phase)
   example <- identical(analytic, "Replace with Analytic Tibble")
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = c("enrolled", "complication_data", "sae_data", "followup_data", count_construct, exposure_construct),
     example_types = c("Boolean", complication_data_example_type, sae_data_example_type, followup_data_example_type,
-                      "Number", "Number"))
-  if (example) analytic <- example_verified_count(analytic, count_construct)
-  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct)
+                      if (!is.null(count_construct)) "Number", "Number"))
+  if (example && !is.null(count_construct)) analytic <- example_verified_count(analytic, count_construct)
+  participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct, phase)
   usable <- participants %>% filter(exposure_valid, ascertained)
-  rows <- event_category_rows(categories)
-  out <- bind_rows(lapply(seq_len(nrow(rows)), function(i) {
-    events <- sum(usable[[rows$count[i]]], na.rm = TRUE)
+  category_rows <- event_category_rows(categories, rows, attr(participants, "count_source"))
+  out <- bind_rows(lapply(seq_len(nrow(category_rows)), function(i) {
+    events <- sum(usable[[category_rows$count[i]]], na.rm = TRUE)
     days <- sum(usable$exposure_days)
-    tibble(Category = rows$category[i], `Count source` = rows$count_source[i], Participants = nrow(usable),
+    tibble(Category = category_rows$category[i], `Count source` = category_rows$count_source[i], Participants = nrow(usable),
            Events = events, `Person-days` = days, Rate = fmt_number(rate_unit * events / days))
   }))
   names(out)[names(out) == "Rate"] <- paste0("Rate per ", rate_unit, " person-days")
   kable(out, format = "html", align = "l") %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
     add_footnote(c(paste0(nrow(participants) - nrow(usable), " participant(s) excluded for missing/nonpositive exposure ",
-                          "or unknown ascertainment.")), notation = "number")
+                          "or unknown ascertainment."), attr(participants, "notes")), notation = "number")
 }
-
 # ---- Repeated location measurements (open) ----------------------------------------------------
 
 #' Descriptive summary of paired location changes by group
