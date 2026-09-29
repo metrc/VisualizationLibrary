@@ -9280,26 +9280,177 @@ constented_enrolled_reg_tally <- function(analytic, last_review_dt, initial_appr
   
   #build the styled table
   tally_table <- kable(table_df, format = "html", align = "lllll", row.names = FALSE,
-                       #small gap between cells inside a grey outer frame
-                       table.attr = 'style="border-collapse: separate; border-spacing: 2px; border: 1px solid #999;"',
                        col.names = c("",
                                      "Participants consented since the last review",
                                      "Participants accrued since the last review",
                                      "Participants consented since the initial approval",
                                      "Participants accrued since the initial approval")) %>%
-    kable_styling(bootstrap_options = c("bordered", "condensed"),
-                  full_width = FALSE, html_font = "Arial", font_size = 13) %>%
-    #bold centered header
-    row_spec(0, bold = TRUE, color = "black",
-             extra_css = "text-align: center; vertical-align: middle; border: 1px solid #666; padding: 2px 6px;") %>%
-    #grey section title rows, categories indented under them
+    #clean serif style: rules on top, under the header, and at the bottom only
+    kable_classic(full_width = FALSE, html_font = "Georgia", font_size = 15) %>%
+    #bold header sitting at the bottom of its cell
+    row_spec(0, bold = TRUE, extra_css = "vertical-align: bottom;") %>%
+    #bold section titles with a thin line under them, categories indented
     pack_rows(index = section_sizes,
-              label_row_css = "background-color: #E6E6E6; color: black; font-weight: bold; border: 1px solid #666; padding: 10px 6px 3px 6px;") %>%
-    #compact cells, numbers at the top like the original
-    column_spec(1:5, color = "black",
-                extra_css = "border: 1px solid #666; padding: 1px 4px; vertical-align: top;") %>%
-    column_spec(1, width = "14em", extra_css = "padding-left: 14px;") %>%
-    column_spec(2:5, width = "12em")
+              label_row_css = "border-bottom: 1px solid; padding-top: 6px; padding-bottom: 6px;") %>%
+    #roomier rows like the examples
+    column_spec(1:5, extra_css = "padding-top: 6px; padding-bottom: 6px;") %>%
+    column_spec(1, width = "16em") %>%
+    column_spec(2:5, width = "10em")
   
   return(tally_table)
+}
+
+#' Categorizes participant Ethnicity based on their gender
+#'
+#' @description 
+#' Creates a table to model/compare the ethnicity, races, and genders of all particpants in a study
+#'
+#' @param analytic analytic data set that must include, race, ethnicity, and sex, and enrolled
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' reg_categories_table("Analytic Tibble)
+#' 
+reg_categories_table <- function(analytic){
+  #columns of interest
+  field_columns <- c(
+    race      = "race",
+    ethnicity = "ethnicity",
+    sex       = "sex",
+    enrolled  = "enrolled"
+  )
+  
+  #check to make sure all the columns of interest are found
+  missing_cols <- setdiff(c("study_id", field_columns), names(analytic))
+  if (length(missing_cols) > 0) {
+    stop("analytic is missing column(s): ", paste(missing_cols, collapse = ", "))
+  }
+  
+  
+  #keep only the columns we need
+  #treat blank strings as missing and the na too
+  concerned_analytic <- analytic %>%
+    select(study_id, all_of(field_columns)) %>%
+    mutate(across(c(race, ethnicity, sex), ~ na_if(trimws(as.character(.x)), ""))) %>%
+    filter(enrolled == TRUE) %>%
+    select(study_id, field_columns[1:3])
+  
+  #one row per race, one column per sex
+  race_categories <- c(
+    "American Indian or Alaskan Native",
+    "Asian",
+    "Native Hawaiian or Other Pacific Islander",
+    "African American",
+    "White",
+    "More than one race",
+    "Unknown or Not Reported"
+  )
+  
+  sex_cols <- c("female", "male", "unknown")
+  
+  #not hispanic tally
+  not_hispanic_tally <- data.frame(category = race_categories, female = 0L, male = 0L, unknown = 0L)
+  
+  
+  for (i in seq_len(nrow(concerned_analytic))) {
+    p <- concerned_analytic[i, ]
+    if (!(tolower(p$ethnicity) %in% "non-hispanic")) next
+    
+    #a comma means multiple races, na or no match means unknown
+    if (grepl(",", p$race)) {
+      row <- which(race_categories == "More than one race")
+    } else {
+      row <- match(tolower(p$race), tolower(race_categories),
+                   nomatch = which(race_categories == "Unknown or Not Reported"))
+    }
+    
+    #na or anything besides female/male means unknown
+    col <- sex_cols[match(tolower(p$sex), sex_cols[1:2], nomatch = 3)]
+    
+    not_hispanic_tally[row, col] <- not_hispanic_tally[row, col] + 1L
+    
+    
+  }
+  
+  #hispanic tally
+  hispanic_tally <- data.frame(category = race_categories, female = 0L, male = 0L, unknown = 0L)
+  
+  for (i in seq_len(nrow(concerned_analytic))) {
+    p <- concerned_analytic[i, ]
+    if (!(tolower(p$ethnicity) %in% "hispanic")) next
+    
+    #a comma means multiple races, na or no match means unknown
+    if (grepl(",", p$race)) {
+      row <- which(race_categories == "More than one race")
+    } else {
+      row <- match(tolower(p$race), tolower(race_categories),
+                   nomatch = which(race_categories == "Unknown or Not Reported"))
+    }
+    #na or anything besides female/male means unknown
+    col <- sex_cols[match(tolower(p$sex), sex_cols[1:2], nomatch = 3)]
+    
+    hispanic_tally[row, col] <- hispanic_tally[row, col] + 1L
+  }
+  
+  #unknown ethnicity tally (na or anything besides hispanic/non-hispanic)
+  unknown_ethnicity_tally <- data.frame(category = race_categories, female = 0L, male = 0L, unknown = 0L)
+  
+  for (i in seq_len(nrow(concerned_analytic))) {
+    p <- concerned_analytic[i, ]
+    if (tolower(p$ethnicity) %in% c("hispanic", "non-hispanic")) next
+    
+    #a comma means multiple races, na or no match means unknown
+    if (grepl(",", p$race)) {
+      row <- which(race_categories == "More than one race")
+    } else {
+      row <- match(tolower(p$race), tolower(race_categories),
+                   nomatch = which(race_categories == "Unknown or Not Reported"))
+    }
+    #na or anything besides female/male means unknown
+    col <- sex_cols[match(tolower(p$sex), sex_cols[1:2], nomatch = 3)]
+    
+    unknown_ethnicity_tally[row, col] <- unknown_ethnicity_tally[row, col] + 1L
+  }
+  
+  #put the 3 tallies side by side, then add the totals
+  table_df <- data.frame(
+    category = race_categories,
+    not_hispanic_tally[sex_cols],
+    hispanic_tally[sex_cols],
+    unknown_ethnicity_tally[sex_cols]
+  )
+  
+  
+  table_df$total <- rowSums(table_df[-1])
+  table_df <- bind_rows(table_df, data.frame(category = "Total", t(colSums(table_df[-1]))))
+  
+  
+  #build the styled table
+  sex_labels <- c("Female", "Male", "Unknown/ Not Reported")
+  cross_table <- kable(table_df, format = "html", align = "l", row.names = FALSE,
+                       col.names = c("Racial Categories", rep(sex_labels, 3), "Total")) %>%
+    #clean serif style: rules on top, under the header, and at the bottom only
+    kable_classic(full_width = FALSE, html_font = "Georgia", font_size = 15) %>%
+    #ethnicity headers over their 3 sex columns, thin line under each
+    add_header_above(c(" " = 1,
+                       "Not Hispanic or Latino" = 3,
+                       "Hispanic or Latino" = 3,
+                       "Unknown/Not Reported Ethnicity" = 3,
+                       " " = 1), bold = TRUE) %>%
+    add_header_above(c(" " = 1, "Ethnic Categories" = 9, " " = 1), bold = TRUE) %>%
+    #bold header sitting at the bottom of its cell
+    row_spec(0, bold = TRUE, extra_css = "vertical-align: bottom;") %>%
+    #thin line above the total row
+    row_spec(nrow(table_df), extra_css = "border-top: 1px solid;") %>%
+    #roomier rows like the examples
+    column_spec(1:11, extra_css = "padding-top: 6px; padding-bottom: 6px;") %>%
+    column_spec(1, width = "14em") %>%
+    column_spec(2:11, width = "6.5em")
+  
+  return(cross_table)
+  
+  
+  
 }
