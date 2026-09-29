@@ -9053,3 +9053,253 @@ report_manifest <- function(analytic, sap_version, data_cutoff, input_file = NA_
   kable(df, format = "html", align = "l") %>%
     kable_styling("striped", full_width = FALSE, position = "left")
 }
+
+#' Race-Ethnicity-Gender Tally's for Enrolled and Consented Participants
+#'
+#' @description 
+#' Tallys up the Races, Etnicities, and Genders for participants who are consented/enrolled since the last review
+#' and participants who are consented/enrolled since the initial approval
+#'
+#' @param analytic analytic data set that must include, enrolled, consented, consent_date, race, ethnicity, and sex
+#' @param last_review_dt pass in the YYYY:MM:dd date time for the last review of this study {MUST HAVE}
+#' @param initial_approval_dt pass in the YYYY:MM:dd date time for the last review of this study {MUST HAVE}
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' constented_enrolled_reg_tally(analytic, last_review_dt = "2024-06-01", initial_approval_dt = "2024-05-20")
+#' 
+constented_enrolled_reg_tally <- function(analytic, last_review_dt, initial_approval_dt){
+  #columns of interest
+  field_columns <- c(
+    race           = "race",
+    ethnicity      = "ethnicity",
+    sex            = "sex",
+    enrolled       = "enrolled",
+    consented      = "consented",
+    enrolled_date  = "treatment_assign_date",
+    consented_date = "consent_date"
+  )
+  
+  #check to make sure all the columns of interest are found
+  missing_cols <- setdiff(c("study_id", field_columns), names(analytic))
+  if (length(missing_cols) > 0) {
+    stop("analytic is missing column(s): ", paste(missing_cols, collapse = ", "))
+  }
+  
+  #keep only the columns we need
+  #treat blank strings as missing and the na too
+  concerned_analytic <- analytic %>%
+    select(study_id, all_of(field_columns)) %>%
+    mutate(across(c(race, ethnicity, sex, enrolled_date, consented_date),
+                  ~ na_if(trimws(as.character(.x)), "")),
+           across(c(enrolled, consented), as.logical))
+  
+  #reformat the dates so they are comparable
+  date_format <- "%Y-%m-%d"
+  concerned_analytic <- concerned_analytic %>%
+    mutate(across(c(enrolled_date, consented_date), ~ as.Date(.x, format = date_format)))
+  last_review_dt      <- as.Date(last_review_dt, format = date_format)
+  initial_approval_dt <- as.Date(initial_approval_dt, format = date_format)
+  
+  #race tallies
+  race_review_tally <- data.frame(
+    category = c(
+      "American Indian or Alaska Native",
+      "Asian",
+      "Black or African American",
+      "More than one race",
+      "Native Hawaiian or Other Pacific Islander",
+      "White",
+      "Unknown",
+      "Other"
+    ),
+    consented_count = 0L,
+    accrued_count   = 0L
+  )
+  race_approval_tally <- race_review_tally
+  
+  for (i in seq_len(nrow(concerned_analytic))) {
+    p <- concerned_analytic[i, ]
+    if (is.na(p$race)) next
+    
+    #a comma means multiple races, no match means other
+    if (grepl(",", p$race)) {
+      row <- which(race_review_tally$category == "More than one race")
+    } else {
+      row <- match(tolower(p$race), tolower(race_review_tally$category),
+                   nomatch = which(race_review_tally$category == "Other"))
+    }
+    
+    #consented with a consent date
+    if (isTRUE(p$consented) && !is.na(p$consented_date)) {
+      if (p$consented_date > last_review_dt) {
+        race_review_tally$consented_count[row] <- race_review_tally$consented_count[row] + 1L
+      }
+      if (p$consented_date > initial_approval_dt) {
+        race_approval_tally$consented_count[row] <- race_approval_tally$consented_count[row] + 1L
+      }
+    }
+    
+    #enrolled with an enrolled date
+    if (isTRUE(p$enrolled) && !is.na(p$enrolled_date)) {
+      if (p$enrolled_date > last_review_dt) {
+        race_review_tally$accrued_count[row] <- race_review_tally$accrued_count[row] + 1L
+      }
+      if (p$enrolled_date > initial_approval_dt) {
+        race_approval_tally$accrued_count[row] <- race_approval_tally$accrued_count[row] + 1L
+      }
+    }
+    
+  }
+  #ethnicity tallies
+  ethnicity_review_tally <- data.frame(
+    category = c(
+      "Hispanic",
+      "Non-Hispanic",
+      "Unknown",
+      "Other"
+    ),
+    consented_count = 0L,
+    accrued_count   = 0L
+  )
+  
+  ethnicity_approval_tally <- ethnicity_review_tally
+  
+  for (i in seq_len(nrow(concerned_analytic))) {
+    p <- concerned_analytic[i, ]
+    if (is.na(p$ethnicity)) next
+    
+    #no match means other
+    row <- match(tolower(p$ethnicity), tolower(ethnicity_review_tally$category),
+                 nomatch = which(ethnicity_review_tally$category == "Other")) 
+    
+    #copied logic from before
+    #consented with a consent date
+    if (isTRUE(p$consented) && !is.na(p$consented_date)) {
+      if (p$consented_date > last_review_dt) {
+        ethnicity_review_tally$consented_count[row] <- ethnicity_review_tally$consented_count[row] + 1L
+      }
+      if (p$consented_date > initial_approval_dt) {
+        ethnicity_approval_tally$consented_count[row] <- ethnicity_approval_tally$consented_count[row] + 1L
+      }
+    }
+    #enrolled with an enrolled date
+    if (isTRUE(p$enrolled) && !is.na(p$enrolled_date)) {
+      if (p$enrolled_date > last_review_dt) {
+        ethnicity_review_tally$accrued_count[row] <- ethnicity_review_tally$accrued_count[row] + 1L
+      }
+      if (p$enrolled_date > initial_approval_dt) {
+        ethnicity_approval_tally$accrued_count[row] <- ethnicity_approval_tally$accrued_count[row] + 1L
+      }
+    }
+  }
+  
+  #gender tallies
+  gender_review_tally <- data.frame(
+    category = c(
+      "Male",
+      "Female",
+      "Non-binary",
+      "Transgender",
+      "Unknown",
+      "Other"
+    ),
+    consented_count = 0L,
+    accrued_count   = 0L
+  )
+  gender_approval_tally <- gender_review_tally
+  
+  for (i in seq_len(nrow(concerned_analytic))) {
+    p <- concerned_analytic[i, ]
+    if (is.na(p$sex)) next
+    
+    #no match means other
+    row <- match(tolower(p$sex), tolower(gender_review_tally$category),
+                 nomatch = which(gender_review_tally$category == "Other"))
+    
+    #consented with a consent date
+    if (isTRUE(p$consented) && !is.na(p$consented_date)) {
+      if (p$consented_date > last_review_dt) {
+        gender_review_tally$consented_count[row] <- gender_review_tally$consented_count[row] + 1L
+      }
+      if (p$consented_date > initial_approval_dt) {
+        gender_approval_tally$consented_count[row] <- gender_approval_tally$consented_count[row] + 1L
+      }
+    }
+    
+    #enrolled with an enrolled date
+    if (isTRUE(p$enrolled) && !is.na(p$enrolled_date)) {
+      if (p$enrolled_date > last_review_dt) {
+        gender_review_tally$accrued_count[row] <- gender_review_tally$accrued_count[row] + 1L
+      }
+      if (p$enrolled_date > initial_approval_dt) {
+        gender_approval_tally$accrued_count[row] <- gender_approval_tally$accrued_count[row] + 1L
+      }
+    }
+  }
+  
+  #chaning the names and collecting in a central place
+  tallies <- list(
+    race_review         = race_review_tally,
+    race_approval       = race_approval_tally,
+    ethnicity_review    = ethnicity_review_tally,
+    ethnicity_approval  = ethnicity_approval_tally,
+    gender_review       = gender_review_tally,
+    gender_approval     = gender_approval_tally
+  )
+  
+  #section title -> its review and approval tallies
+  sections <- list(
+    "ADULTS RACE"      = list(tallies$race_review,      tallies$race_approval),
+    "ADULTS ETHNICITY" = list(tallies$ethnicity_review, tallies$ethnicity_approval),
+    "ADULTS GENDER"    = list(tallies$gender_review,    tallies$gender_approval)
+  )
+  
+  #stack each section's category rows, remembering how many rows each has
+  table_rows    <- list()
+  section_sizes <- c()
+  
+  for (title in names(sections)) {
+    review   <- sections[[title]][[1]]
+    approval <- sections[[title]][[2]]
+    
+    table_rows[[title]] <- data.frame(
+      label              = review$category,
+      consented_review   = review$consented_count,
+      accrued_review     = review$accrued_count,
+      consented_approval = approval$consented_count,
+      accrued_approval   = approval$accrued_count
+    )
+    
+    section_sizes[title] <- nrow(review)
+  }
+  
+  table_df <- bind_rows(table_rows)
+  
+  #build the styled table
+  tally_table <- kable(table_df, format = "html", align = "lllll", row.names = FALSE,
+                       #small gap between cells inside a grey outer frame
+                       table.attr = 'style="border-collapse: separate; border-spacing: 2px; border: 1px solid #999;"',
+                       col.names = c("",
+                                     "Participants consented since the last review",
+                                     "Participants accrued since the last review",
+                                     "Participants consented since the initial approval",
+                                     "Participants accrued since the initial approval")) %>%
+    kable_styling(bootstrap_options = c("bordered", "condensed"),
+                  full_width = FALSE, html_font = "Arial", font_size = 13) %>%
+    #bold centered header
+    row_spec(0, bold = TRUE, color = "black",
+             extra_css = "text-align: center; vertical-align: middle; border: 1px solid #666; padding: 2px 6px;") %>%
+    #grey section title rows, categories indented under them
+    pack_rows(index = section_sizes,
+              label_row_css = "background-color: #E6E6E6; color: black; font-weight: bold; border: 1px solid #666; padding: 10px 6px 3px 6px;") %>%
+    #compact cells, numbers at the top like the original
+    column_spec(1:5, color = "black",
+                extra_css = "border: 1px solid #666; padding: 1px 4px; vertical-align: top;") %>%
+    column_spec(1, width = "14em", extra_css = "padding-left: 14px;") %>%
+    column_spec(2:5, width = "12em")
+  
+  return(tally_table)
+}
