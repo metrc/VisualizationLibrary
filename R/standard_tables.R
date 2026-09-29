@@ -9106,9 +9106,9 @@ constented_enrolled_reg_tally <- function(analytic, last_review_dt, initial_appr
   #race tallies
   race_review_tally <- data.frame(
     category = c(
-      "American Indian or Alaska Native",
+      "American Indian or Alaskan Native",
       "Asian",
-      "Black or African American",
+      "African American",
       "More than one race",
       "Native Hawaiian or Other Pacific Islander",
       "White",
