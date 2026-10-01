@@ -8046,7 +8046,7 @@ kable_indented_rows <- function(table_raw, col_names, indent_flag = NULL, header
   is_header <- table_raw$Is_Header
   indent_rows <- if (is.null(indent_flag)) which(!is_header) else which(table_raw[[indent_flag]])
   table_print <- table_raw %>% select(-any_of(c("Is_Header", "Is_Subheader")))
-  out <- kable(table_print, format = "html", col.names = col_names, align = "l", escape = FALSE) %>%
+  out <- kable(table_print, format = "html", col.names = col_names, align = "l") %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
     column_spec(1, bold = is_header)
   if (length(indent_rows) > 0) out <- out %>% add_indent(indent_rows)

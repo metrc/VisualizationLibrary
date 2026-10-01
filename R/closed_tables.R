@@ -8136,7 +8136,7 @@ closed_gee_visit_contrast_analysis <- function(analytic, score_families = defaul
     mutate(cell = if (cell_style == "paper") ifelse(n > 0, paste0(fmt_number(mean, 1), " (", fmt_number(sd, 1), ")"), "-") else
       ifelse(n > 0, paste0(n, "; ", fmt_number(mean, 1), " (", fmt_number(sd, 1), "); ", missing), paste0("0; -; ", missing))) %>%
     select(instrument, visit, treatment_arm, cell) %>%
-    pivot_wider(names_from = treatment_arm, values_from = cell)
+    pivot_wider(names_from = treatment_arm, values_from = cell, names_prefix = "arm: ")
   con <- contrasts %>%
     mutate(visit = factor(visit, levels = levels(desc_cells$visit)),
            instrument = factor(instrument, levels = levels(desc_cells$instrument)),
@@ -8146,8 +8146,8 @@ closed_gee_visit_contrast_analysis <- function(analytic, score_families = defaul
   table_raw <- bind_rows(lapply(levels(desc_cells$instrument), function(inst) {
     r <- desc_cells %>% filter(instrument == inst) %>% arrange(visit)
     bind_rows(tibble(Construct = inst, T = "", C = "", E = "", Is_Header = TRUE),
-              r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), T = .data[[a$treatment_arm]],
-                              C = .data[[a$control_arm]], E = est, Is_Header = FALSE))
+              r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), T = .data[[paste0("arm: ", a$treatment_arm)]],
+                              C = .data[[paste0("arm: ", a$control_arm)]], E = est, Is_Header = FALSE))
   }))
   method <- paste0("GEE with ", family$family, " family, ", family$link, " link, ", corstr,
                    " working correlation, robust sandwich SE and Wald normal 95% CI (no small-sample correction).")
