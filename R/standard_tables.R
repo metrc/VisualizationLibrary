@@ -7479,6 +7479,8 @@ complication_categories <- function(minor_expected = c("Local injection reaction
                                                            "Life-threatening or disabling", "Fatal"),
                                     related_levels = c("Definitely related", "Probably related",
                                                        "Possibly related"),
+                                    pre_treatment_forms = c("crf06"),
+                                    pre_treatment_label = "suture-removal visit",
                                     labels = c(any = "Any complication",
                                                minor_expected = "Minor expected complication",
                                                minor_unexpected = "Minor unexpected complication",
@@ -7487,7 +7489,8 @@ complication_categories <- function(minor_expected = c("Local injection reaction
                                                sae_any = "Any SAE (SAE form, all relatedness)",
                                                sae_related = "SAE related or possibly related to treatment")) {
   list(minor_expected = minor_expected, minor_unexpected = minor_unexpected,
-       serious_severities = serious_severities, related_levels = related_levels, labels = labels)
+       serious_severities = serious_severities, related_levels = related_levels,
+       pre_treatment_forms = pre_treatment_forms, pre_treatment_label = pre_treatment_label, labels = labels)
 }
 
 #' Assign each complication record to a category
@@ -7523,6 +7526,9 @@ unpack_complication_data <- function(analytic, categories = complication_categor
            set = ifelse(str_detect(redcap_event_name, "^set\\d+_"),
                         paste0("set_", str_extract(redcap_event_name, "(?<=^set)\\d+")), "set_1"),
            category = assign_complication_category(complication, severity, categories),
+           # Complications are reported post treatment: findings on a pre-treatment form (the
+           # suture-removal visit) are kept in the long table but flagged so they are not counted.
+           pre_treatment = form_name %in% categories$pre_treatment_forms,
            serious = tolower(severity) %in% tolower(categories$serious_severities),
            related = tolower(relatedness) %in% tolower(categories$related_levels))
 }
@@ -7744,7 +7750,7 @@ sum_constructs <- function(df, constructs) {
 #' Safety phase labels
 #' @noRd
 safety_phase_label <- c(all = "all courses",
-                        set_1 = "randomized phase (set 1: first injection through the 3-month visit)",
+                        set_1 = "randomized phase (set 1)",
                         set_2 = "second course (set 2, after the blinded control period)")
 
 #' Participant-level safety inputs
@@ -7773,7 +7779,7 @@ participant_event_summary <- function(analytic, categories = complication_catego
            exposure_days = sum_constructs(pick(everything()), exposure_construct)) %>%
     select(study_id, event_count, exposure_days)
 
-  events_all <- unpack_complication_data(analytic, categories)
+  events_all <- unpack_complication_data(analytic, categories) %>% filter(!pre_treatment)
   events <- if (phase == "all") events_all else events_all %>% filter(set == phase)
   event_counts <- events %>%
     group_by(study_id) %>%
@@ -7845,7 +7851,9 @@ participant_event_summary <- function(analytic, categories = complication_catego
   attr(out, "count_source") <- if (is.null(count_construct)) "packed complication records (not de-duplicated)" else
     paste0("verified ", paste(count_construct, collapse = " + "))
   attr(out, "notes") <- list(
-    phase = if (phase == "all") NULL else paste0("Complications in the ", safety_phase_label[[phase]], "."),
+    phase = paste0("Complications recorded after treatment",
+                   if (phase == "all") "" else paste0(" in the ", safety_phase_label[[phase]]),
+                   if (length(categories$pre_treatment_forms) > 0) paste0("; findings at the ", categories$pre_treatment_label, ", before treatment, are not counted") else "", "."),
     sae = "SAE rows count serious adverse events from the SAE form in either course.",
     not_in_phase = if (n_not_in_phase > 0) paste0(n_not_in_phase, " enrolled participant(s) did not enter the second course and are not in this table.") else NULL)
   out
@@ -8073,7 +8081,7 @@ category_levels <- function(x, sep = NULL, order = NULL) {
   unique(lev)
 }
 
-#' Header plus n (%) rows for one categorical construct
+#' Header plus n (\%) rows for one categorical construct
 #' @noRd
 category_count_rows <- function(df, construct, header, levels, sep = NULL, denominator = nrow(df)) {
   x <- packed_na(df[[construct]])
@@ -8147,7 +8155,7 @@ characteristics_rows <- function(df, levels, constructs, health_label) {
 #'
 #' @description
 #' Pooled participant characteristics for enrolled participants: age, sex, race/ethnicity,
-#' education, insurance and body mass index, comorbidities (split on semicolon, so percentages may exceed 100%), tobacco use and a
+#' education, insurance and body mass index, comorbidities (split on semicolon, so percentages may exceed 100\%), tobacco use and a
 #' single-item self-reported health measure. Numeric rows carry observed and missing n.
 #' Unknown, refused and missing responses are separate categories and no baseline
 #' significance tests are shown. The output does not depend on treatment assignment; see

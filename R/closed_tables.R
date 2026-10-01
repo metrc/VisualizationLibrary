@@ -7231,14 +7231,14 @@ closed_amputation_characteristics_table <- function(analytic, anchor = c("first_
 #'
 #' @description
 #' Closed version of participants_w_complications: participants with one or more events in
-#' each category as n/N (%) by treatment_arm and overall, with the unknown-ascertainment
+#' each category as n/N (\%) by treatment_arm and overall, with the unknown-ascertainment
 #' count. The risk-difference columns come from closed_participant_risk_analysis.
 #'
 #' @inheritParams participants_w_complications
 #' @param analytic analytic data set that must include study_id, enrolled, treatment_arm,
 #' complication_data, sae_data, followup_data and the count and exposure constructs
 #'
-#' @param cell_style "detailed" shows n/N (%) per arm; "paper" shows the percentage only with the arm N in the header
+#' @param cell_style "detailed" shows n/N (\%) per arm; "paper" shows the percentage only with the arm N in the header
 #' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
 #' built from the sorted enrolled IDs and seed (the same map every closed function builds)
 #' @param seed seed for the dummy assignment
@@ -7294,7 +7294,7 @@ closed_participants_w_complications <- function(analytic, categories = complicat
   if (length(footnotes) > 0) vis <- vis %>% add_footnote(footnotes, notation = "number")
   vis
 }
-#' n/N (%) cell
+#' n/N (\%) cell
 #' @noRd
 fmt_n_of_total <- function(x, n) {
   ifelse(n > 0, paste0(x, "/", n, " (", trimws(format(round(100 * x / n, 1), nsmall = 1)), "%)"), paste0(x, "/", n))
@@ -7320,7 +7320,7 @@ fmt_n_of_total <- function(x, n) {
 #' @param seed seed for the dummy map
 #' @param control_arm value of treatment_arm treated as the control group
 #' @param ci_method "newcombe" or "wald"
-#' @param cell_style "detailed" shows n/N (%) per arm; "paper" shows the percentage only and puts
+#' @param cell_style "detailed" shows n/N (\%) per arm; "paper" shows the percentage only and puts
 #' the arm denominator in the column header
 #' @param return_fit when TRUE, returns a list with the result table (as result_table), the
 #' per-category results, the pooled counts, the participant-level inputs, the reconciliation
