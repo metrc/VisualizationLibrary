@@ -7231,14 +7231,14 @@ closed_amputation_characteristics_table <- function(analytic, anchor = c("first_
 #'
 #' @description
 #' Closed version of participants_w_complications: participants with one or more events in
-#' each category as n/N (%) by treatment_arm and overall, with the unknown-ascertainment
+#' each category as n/N (\%) by treatment_arm and overall, with the unknown-ascertainment
 #' count. The risk-difference columns come from closed_participant_risk_analysis.
 #'
 #' @inheritParams participants_w_complications
 #' @param analytic analytic data set that must include study_id, enrolled, treatment_arm,
 #' complication_data, sae_data, followup_data and the count and exposure constructs
 #'
-#' @param cell_style "detailed" shows n/N (%) per arm; "paper" shows the percentage only with the arm N in the header
+#' @param cell_style "detailed" shows n/N (\%) per arm; "paper" shows the percentage only with the arm N in the header
 #' @param blinded when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
 #' built from the sorted enrolled IDs and seed (the same map every closed function builds)
 #' @param seed seed for the dummy assignment
@@ -7294,7 +7294,7 @@ closed_participants_w_complications <- function(analytic, categories = complicat
   if (length(footnotes) > 0) vis <- vis %>% add_footnote(footnotes, notation = "number")
   vis
 }
-#' n/N (%) cell
+#' n/N (\%) cell
 #' @noRd
 fmt_n_of_total <- function(x, n) {
   ifelse(n > 0, paste0(x, "/", n, " (", trimws(format(round(100 * x / n, 1), nsmall = 1)), "%)"), paste0(x, "/", n))
@@ -7320,7 +7320,7 @@ fmt_n_of_total <- function(x, n) {
 #' @param seed seed for the dummy map
 #' @param control_arm value of treatment_arm treated as the control group
 #' @param ci_method "newcombe" or "wald"
-#' @param cell_style "detailed" shows n/N (%) per arm; "paper" shows the percentage only and puts
+#' @param cell_style "detailed" shows n/N (\%) per arm; "paper" shows the percentage only and puts
 #' the arm denominator in the column header
 #' @param return_fit when TRUE, returns a list with the result table (as result_table), the
 #' per-category results, the pooled counts, the participant-level inputs, the reconciliation
@@ -8136,7 +8136,7 @@ closed_gee_visit_contrast_analysis <- function(analytic, score_families = defaul
     mutate(cell = if (cell_style == "paper") ifelse(n > 0, paste0(fmt_number(mean, 1), " (", fmt_number(sd, 1), ")"), "-") else
       ifelse(n > 0, paste0(n, "; ", fmt_number(mean, 1), " (", fmt_number(sd, 1), "); ", missing), paste0("0; -; ", missing))) %>%
     select(instrument, visit, treatment_arm, cell) %>%
-    pivot_wider(names_from = treatment_arm, values_from = cell)
+    pivot_wider(names_from = treatment_arm, values_from = cell, names_prefix = "arm: ")
   con <- contrasts %>%
     mutate(visit = factor(visit, levels = levels(desc_cells$visit)),
            instrument = factor(instrument, levels = levels(desc_cells$instrument)),
@@ -8146,8 +8146,8 @@ closed_gee_visit_contrast_analysis <- function(analytic, score_families = defaul
   table_raw <- bind_rows(lapply(levels(desc_cells$instrument), function(inst) {
     r <- desc_cells %>% filter(instrument == inst) %>% arrange(visit)
     bind_rows(tibble(Construct = inst, T = "", C = "", E = "", Is_Header = TRUE),
-              r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), T = .data[[a$treatment_arm]],
-                              C = .data[[a$control_arm]], E = est, Is_Header = FALSE))
+              r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), T = .data[[paste0("arm: ", a$treatment_arm)]],
+                              C = .data[[paste0("arm: ", a$control_arm)]], E = est, Is_Header = FALSE))
   }))
   method <- paste0("GEE with ", family$family, " family, ", family$link, " link, ", corstr,
                    " working correlation, robust sandwich SE and Wald normal 95% CI (no small-sample correction).")

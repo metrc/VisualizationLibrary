@@ -34,7 +34,7 @@ c("last_followup_days", "last_followup_days_set_2") gives the whole-study exposu
 \item{rows}{optional category keys to show (any, minor_expected, minor_unexpected, serious,
 other, sae_any, sae_related); NULL shows all}
 
-\item{cell_style}{"detailed" shows n/N (%) per arm; "paper" shows the percentage only with the arm N in the header}
+\item{cell_style}{"detailed" shows n/N (\%) per arm; "paper" shows the percentage only with the arm N in the header}
 
 \item{blinded}{when TRUE, ignores any real treatment_arm and uses the reproducible dummy assignment
 built from the sorted enrolled IDs and seed (the same map every closed function builds)}
@@ -46,7 +46,7 @@ An HTML table.
 }
 \description{
 Closed version of participants_w_complications: participants with one or more events in
-each category as n/N (%) by treatment_arm and overall, with the unknown-ascertainment
+each category as n/N (\%) by treatment_arm and overall, with the unknown-ascertainment
 count. The risk-difference columns come from closed_participant_risk_analysis.
 }
 \examples{

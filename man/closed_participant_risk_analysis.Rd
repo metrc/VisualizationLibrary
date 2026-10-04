@@ -51,7 +51,7 @@ treatment_arm; it must cover every enrolled participant exactly once with two ar
 
 \item{ci_method}{"newcombe" or "wald"}
 
-\item{cell_style}{"detailed" shows n/N (%) per arm; "paper" shows the percentage only and puts
+\item{cell_style}{"detailed" shows n/N (\%) per arm; "paper" shows the percentage only and puts
 the arm denominator in the column header}
 
 \item{return_fit}{when TRUE, returns a list with the result table (as result_table), the

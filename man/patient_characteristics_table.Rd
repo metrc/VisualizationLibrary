@@ -33,7 +33,7 @@ An HTML table.
 }
 \description{
 Pooled participant characteristics for enrolled participants: age, sex, race/ethnicity,
-education, insurance and body mass index, comorbidities (split on semicolon, so percentages may exceed 100%), tobacco use and a
+education, insurance and body mass index, comorbidities (split on semicolon, so percentages may exceed 100\%), tobacco use and a
 single-item self-reported health measure. Numeric rows carry observed and missing n.
 Unknown, refused and missing responses are separate categories and no baseline
 significance tests are shown. The output does not depend on treatment assignment; see
