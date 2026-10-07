@@ -9130,15 +9130,19 @@ constented_enrolled_reg_tally <- function(analytic, last_review_dt, initial_appr
   
   for (i in seq_len(nrow(concerned_analytic))) {
     p <- concerned_analytic[i, ]
-    if (is.na(p$race)) next
     
-    #a comma means multiple races, no match means other
-    if (grepl(",", p$race)) {
+    #na means unknown, a comma means multiple races, no match means other
+    if (is.na(p$race)) {
+      row <- which(race_review_tally$category == "Unknown")
+    } else if (grepl(",", p$race)) {
       row <- which(race_review_tally$category == "More than one race")
     } else {
       row <- match(tolower(p$race), tolower(race_review_tally$category),
                    nomatch = which(race_review_tally$category == "Other"))
     }
+    
+    #stop if this person doesn't land on exactly one row
+    if (length(row) != 1 || is.na(row)) stop("no tally row for race value: ", p$race)
     
     #consented with a consent date
     if (isTRUE(p$consented) && !is.na(p$consented_date)) {
@@ -9177,11 +9181,17 @@ constented_enrolled_reg_tally <- function(analytic, last_review_dt, initial_appr
   
   for (i in seq_len(nrow(concerned_analytic))) {
     p <- concerned_analytic[i, ]
-    if (is.na(p$ethnicity)) next
     
-    #no match means other
-    row <- match(tolower(p$ethnicity), tolower(ethnicity_review_tally$category),
-                 nomatch = which(ethnicity_review_tally$category == "Other")) 
+    #na means unknown, no match means other
+    if (is.na(p$ethnicity)) {
+      row <- which(ethnicity_review_tally$category == "Unknown")
+    } else {
+      row <- match(tolower(p$ethnicity), tolower(ethnicity_review_tally$category),
+                   nomatch = which(ethnicity_review_tally$category == "Other"))
+    }
+    
+    #stop if this person doesn't land on exactly one row
+    if (length(row) != 1 || is.na(row)) stop("no tally row for ethnicity value: ", p$ethnicity)
     
     #copied logic from before
     #consented with a consent date
@@ -9221,11 +9231,17 @@ constented_enrolled_reg_tally <- function(analytic, last_review_dt, initial_appr
   
   for (i in seq_len(nrow(concerned_analytic))) {
     p <- concerned_analytic[i, ]
-    if (is.na(p$sex)) next
     
-    #no match means other
-    row <- match(tolower(p$sex), tolower(gender_review_tally$category),
-                 nomatch = which(gender_review_tally$category == "Other"))
+    #na means unknown, no match means other
+    if (is.na(p$sex)) {
+      row <- which(gender_review_tally$category == "Unknown")
+    } else {
+      row <- match(tolower(p$sex), tolower(gender_review_tally$category),
+                   nomatch = which(gender_review_tally$category == "Other"))
+    }
+    
+    #stop if this person doesn't land on exactly one row
+    if (length(row) != 1 || is.na(row)) stop("no tally row for sex value: ", p$sex)
     
     #consented with a consent date
     if (isTRUE(p$consented) && !is.na(p$consented_date)) {
@@ -9247,6 +9263,8 @@ constented_enrolled_reg_tally <- function(analytic, last_review_dt, initial_appr
       }
     }
   }
+  
+  
   
   #chaning the names and collecting in a central place
   tallies <- list(
@@ -9458,7 +9476,5 @@ reg_categories_table <- function(analytic){
     column_spec(2:11, width = "6.5em")
   
   return(cross_table)
-  
-  
   
 }
