@@ -13,6 +13,7 @@ closed_missing_data_sensitivity(
   seed = 20260922,
   control_arm = "Group A",
   model = c("repeated", "change"),
+  model_interval = c("t", "z"),
   baseline_event = "injection_1",
   followup_event = "3_month",
   set = "set_1",
@@ -41,7 +42,12 @@ treatment_arm; it must cover every enrolled participant exactly once with two ar
 
 \item{control_arm}{value of treatment_arm treated as the control group}
 
-\item{model}{"repeated" or "change"}
+\item{model}{"repeated" (location visit means with arm, visit and their interaction, random
+intercepts for participant and for location within participant) or "change" (location change
+scores on arm with a random intercept for participant, locations nested within participant)}
+
+\item{model_interval}{interval for the mixed-model contrast: "t" uses the model degrees of
+freedom; "z" uses the Wald normal interval, as Stata's mixed command reports}
 
 \item{baseline_event, followup_event}{event labels of the two visits compared}
 

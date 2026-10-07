@@ -19,6 +19,7 @@ closed_pre_post_course_analysis(
   keep = NULL,
   min_valid = 1,
   conf_level = 0.95,
+  model_interval = c("t", "z"),
   seed = 20260922,
   cell_style = c("detailed", "paper"),
   return_fit = FALSE
@@ -58,6 +59,9 @@ list(orientation = "H")); NULL keeps every reading}
 \item{min_valid}{minimum usable readings for a location mean}
 
 \item{conf_level}{confidence level}
+
+\item{model_interval}{interval for the mixed-model estimate: "t" uses the model degrees of
+freedom; "z" uses the Wald normal interval, as Stata's mixed command reports}
 
 \item{seed}{seed for the synthetic course}
 

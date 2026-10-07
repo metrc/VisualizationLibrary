@@ -21,6 +21,7 @@ closed_location_change_analysis(
   seed = 20260922,
   control_arm = "Group A",
   model = c("repeated", "change"),
+  model_interval = c("t", "z"),
   location_test = c("student", "welch"),
   include_p_values = FALSE,
   min_valid = 1,
@@ -63,7 +64,12 @@ treatment_arm; it must cover every enrolled participant exactly once with two ar
 
 \item{control_arm}{value of treatment_arm treated as the control group}
 
-\item{model}{"repeated" or "change"}
+\item{model}{"repeated" (location visit means with arm, visit and their interaction, random
+intercepts for participant and for location within participant) or "change" (location change
+scores on arm with a random intercept for participant, locations nested within participant)}
+
+\item{model_interval}{interval for the mixed-model contrast: "t" uses the model degrees of
+freedom; "z" uses the Wald normal interval, as Stata's mixed command reports}
 
 \item{location_test}{"student" (pooled variance) or "welch" for the location t-tests}
 

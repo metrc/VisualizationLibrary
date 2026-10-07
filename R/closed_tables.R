@@ -7612,7 +7612,8 @@ two_sample_difference <- function(x_trt, x_ctl, var_equal = TRUE, conf_level = 0
 
 #' Fit a linear mixed model with nlme and extract one fixed-effect contrast
 #' @noRd
-lme_contrast_fit <- function(formula, random, data, term, conf_level = 0.95) {
+lme_contrast_fit <- function(formula, random, data, term, conf_level = 0.95, interval = c("t", "z")) {
+  interval <- match.arg(interval)
   messages <- character()
   fit <- withCallingHandlers(
     tryCatch(nlme::lme(fixed = formula, random = random, data = data, method = "REML", na.action = stats::na.omit),
@@ -7620,7 +7621,7 @@ lme_contrast_fit <- function(formula, random, data, term, conf_level = 0.95) {
     warning = function(w) { messages <<- c(messages, conditionMessage(w)); invokeRestart("muffleWarning") })
   not_estimable <- function(status) {
     list(estimate = NA_real_, se = NA_real_, df = NA_real_, lower = NA_real_, upper = NA_real_, p_value = NA_real_,
-         status = status, messages = messages, fit = NULL, variance = NULL)
+         interval = interval, status = status, messages = messages, fit = NULL, variance = NULL)
   }
   if (inherits(fit, "error")) return(not_estimable(paste("fit failed:", conditionMessage(fit))))
   tt <- summary(fit)$tTable
@@ -7630,22 +7631,31 @@ lme_contrast_fit <- function(formula, random, data, term, conf_level = 0.95) {
   est <- tt[term, "Value"]
   se <- tt[term, "Std.Error"]
   df <- tt[term, "DF"]
-  crit <- stats::qt(1 - (1 - conf_level) / 2, df)
+  crit <- if (interval == "z") stats::qnorm(1 - (1 - conf_level) / 2) else stats::qt(1 - (1 - conf_level) / 2, df)
+  p_value <- if (interval == "z") 2 * stats::pnorm(-abs(est / se)) else tt[term, "p-value"]
   vc <- tryCatch(nlme::VarCorr(fit), error = function(e) NULL)
   variance <- if (!is.null(vc)) {
     tibble(component = rownames(vc), variance = suppressWarnings(as.numeric(vc[, "Variance"])),
            std_dev = suppressWarnings(as.numeric(vc[, "StdDev"])))
   } else NULL
   near_zero <- !is.null(variance) && any(variance$std_dev[!is.na(variance$std_dev)] < 1e-6)
-  list(estimate = est, se = se, df = df, lower = est - crit * se, upper = est + crit * se, p_value = tt[term, "p-value"],
-       status = if (near_zero) "converged; a random-effect variance is near zero (boundary fit)" else "converged",
+  list(estimate = est, se = se, df = df, lower = est - crit * se, upper = est + crit * se, p_value = p_value,
+       interval = interval, status = if (near_zero) "converged; a random-effect variance is near zero (boundary fit)" else "converged",
        messages = messages, fit = fit, variance = variance)
+}
+
+#' Wording for the mixed-model interval in footnotes
+#' @noRd
+mixed_interval_label <- function(interval, conf_level = 0.95) {
+  pct <- paste0(round(100 * conf_level), "% CI")
+  if (interval == "z") paste0("Wald normal (z) ", pct, ", as in Stata's mixed command")
+  else paste0("t-based ", pct, " on the model degrees of freedom")
 }
 
 #' Core between-arm change analysis on location visit means
 #' @noRd
 location_change_fit <- function(visit_means, assignment, endpoint, unit, baseline_event, followup_event, set, model,
-                                location_test, include_p_values, conf_level, settings = list()) {
+                                location_test, include_p_values, conf_level, settings = list(), model_interval = "t") {
   vm <- visit_means %>% filter(set == !!set, event %in% c(baseline_event, followup_event))
   change <- measurement_visit_change(vm, baseline_event, followup_event) %>% inner_join(assignment$map, by = "study_id")
   positions <- measurement_positions(change$position)
@@ -7678,7 +7688,8 @@ location_change_fit <- function(visit_means, assignment, endpoint, unit, baselin
       mutate(arm_num = factor(ifelse(treatment_arm == trt, "treatment", "control"), levels = c("control", "treatment")),
              visit = factor(ifelse(event == followup_event, "followup", "baseline"), levels = c("baseline", "followup")),
              value = mean, study_id = factor(study_id), position = factor(position))
-    fit <- lme_contrast_fit(value ~ arm_num * visit, ~ 1 | study_id/position, d, "arm_numtreatment:visitfollowup", conf_level)
+    fit <- lme_contrast_fit(value ~ arm_num * visit, ~ 1 | study_id/position, d, "arm_numtreatment:visitfollowup", conf_level,
+                            interval = model_interval)
     description <- "linear mixed model of the location visit means with arm, visit and their interaction, random intercepts for participant and for location within participant (REML); the estimate is the arm-by-visit interaction, the between-arm difference in change"
     n_loc <- nrow(distinct(d, study_id, position))
   } else {
@@ -7686,10 +7697,11 @@ location_change_fit <- function(visit_means, assignment, endpoint, unit, baselin
       filter(paired) %>%
       mutate(arm_num = factor(ifelse(treatment_arm == trt, "treatment", "control"), levels = c("control", "treatment")),
              study_id = factor(study_id))
-    fit <- lme_contrast_fit(change ~ arm_num, ~ 1 | study_id, d, "arm_numtreatment", conf_level)
+    fit <- lme_contrast_fit(change ~ arm_num, ~ 1 | study_id, d, "arm_numtreatment", conf_level, interval = model_interval)
     description <- "linear mixed model of the location changes (follow-up minus baseline) on arm with a random intercept for participant (REML); complete pairs only"
     n_loc <- nrow(d)
   }
+  description <- paste0(description, "; ", mixed_interval_label(model_interval, conf_level))
   model_tbl <- tibble(formulation = model, description = description, estimate = fit$estimate, lower = fit$lower,
                       upper = fit$upper, se = fit$se, df = fit$df, p_value = if (include_p_values) fit$p_value else NA_real_,
                       n_participants = n_distinct(d$study_id), n_locations = n_loc, n_observations = nrow(d),
@@ -7699,9 +7711,9 @@ location_change_fit <- function(visit_means, assignment, endpoint, unit, baselin
        assignment = assignment, contrast = assignment$contrast, method = description,
        descriptive = desc$descriptive, participant = desc$participant, contrasts = contrasts, model = model_tbl,
        model_fit = fit$fit, variance_components = fit$variance, visit_means = vm, change = change,
-       settings = c(list(model = model, location_test = location_test, baseline_event = baseline_event,
-                         followup_event = followup_event, set = set, include_p_values = include_p_values,
-                         conf_level = conf_level), settings),
+       settings = c(list(model = model, model_interval = model_interval, location_test = location_test,
+                         baseline_event = baseline_event, followup_event = followup_event, set = set,
+                         include_p_values = include_p_values, conf_level = conf_level), settings),
        status = fit$status)
 }
 
@@ -7780,7 +7792,11 @@ location_change_result_table <- function(result, followup_label, reference_diffe
 #' @param analytic analytic data set that must include study_id, enrolled, the readings
 #' construct, and treatment_arm unless blinded
 #' @param endpoint_label label used in the result
-#' @param model "repeated" or "change"
+#' @param model "repeated" (location visit means with arm, visit and their interaction, random
+#' intercepts for participant and for location within participant) or "change" (location change
+#' scores on arm with a random intercept for participant, locations nested within participant)
+#' @param model_interval interval for the mixed-model contrast: "t" uses the model degrees of
+#' freedom; "z" uses the Wald normal interval, as Stata's mixed command reports
 #' @param location_test "student" (pooled variance) or "welch" for the location t-tests
 #' @param include_p_values add p-values to the contrasts (off unless agreed)
 #' @param conf_level confidence level
@@ -7804,12 +7820,14 @@ closed_location_change_analysis <- function(analytic, readings_construct = "duro
                                             followup_label = "3 Month", set = "set_1", keep = NULL,
                                             blinded = FALSE, assignment_map = NULL, seed = 20260922,
                                             control_arm = "Group A", model = c("repeated", "change"),
+                                            model_interval = c("t", "z"),
                                             location_test = c("student", "welch"), include_p_values = FALSE,
                                             min_valid = 1, conf_level = 0.95, reference_difference = NULL,
                                             cell_style = c("detailed", "paper"), return_fit = FALSE) {
   analytic <- if_needed_generate_example_data(analytic, example_constructs = c("enrolled", readings_construct),
       example_types = c("Boolean", measurement_example_type(fields, value_field)))
   model <- match.arg(model)
+  model_interval <- match.arg(model_interval)
   location_test <- match.arg(location_test)
   cell_style <- match.arg(cell_style)
   assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
@@ -7820,7 +7838,8 @@ closed_location_change_analysis <- function(analytic, readings_construct = "duro
                                 location_test, include_p_values, conf_level,
                                 settings = list(readings_construct = readings_construct, value_field = value_field,
                                                 keep = keep, min_valid = min_valid, reference_difference = reference_difference,
-                                                parse_failures = sum(long$parse_failed)))
+                                                parse_failures = sum(long$parse_failed)),
+                                model_interval = model_interval)
   result$settings$cell_style <- cell_style
   result$result_table <- location_change_result_table(result, followup_label, reference_difference, cell_style)
   result$pooled_change_sd <- pooled_change_sd(result)
@@ -7852,6 +7871,8 @@ closed_location_change_analysis <- function(analytic, readings_construct = "duro
 #' course was initially controlled), which reveals allocation and belongs only in the restricted report. A
 #' supplied or derived course stops with an error when it names a set whose readings are not exported
 #' @param seed seed for the synthetic course
+#' @param model_interval interval for the mixed-model estimate: "t" uses the model degrees of
+#' freedom; "z" uses the Wald normal interval, as Stata's mixed command reports
 #' @param cell_style "detailed" keeps n in every cell; "paper" shows mean (SD) only
 #' @param readings_constructs packed constructs for every course; all must be exported unless
 #' course_source = "synthetic", which uses the ones present
@@ -7871,9 +7892,11 @@ closed_pre_post_course_analysis <- function(analytic, course = NULL, course_sour
                                             value_field = "reading", endpoint_label = "Location measurement, all treated",
                                             unit = "", baseline_event = "injection_1", followup_event = "3_month",
                                             followup_label = "3 Month", keep = NULL, min_valid = 1, conf_level = 0.95,
-                                            seed = 20260922, cell_style = c("detailed", "paper"), return_fit = FALSE) {
+                                            model_interval = c("t", "z"), seed = 20260922,
+                                            cell_style = c("detailed", "paper"), return_fit = FALSE) {
   analytic <- if_needed_generate_example_data(analytic, example_constructs = c("enrolled", readings_constructs[1]),
       example_types = c("Boolean", measurement_example_type(fields, value_field)))
+  model_interval <- match.arg(model_interval)
   course_source <- match.arg(course_source)
   cell_style <- match.arg(cell_style)
   if (course_source == "synthetic") {
@@ -7922,9 +7945,10 @@ closed_pre_post_course_analysis <- function(analytic, course = NULL, course_sour
     filter(!is.na(mean)) %>%
     mutate(visit = factor(ifelse(event == followup_event, "followup", "baseline"), levels = c("baseline", "followup")),
            value = mean, study_id = factor(study_id), position = factor(position))
-  fit <- lme_contrast_fit(value ~ visit, ~ 1 | study_id/position, d, "visitfollowup", conf_level)
+  fit <- lme_contrast_fit(value ~ visit, ~ 1 | study_id/position, d, "visitfollowup", conf_level, interval = model_interval)
   model <- tibble(formulation = "pre-post nested",
-                  description = "linear mixed model of the location visit means on visit with random intercepts for participant and for location within participant (REML); the estimate is the change from pretreatment to follow-up",
+                  description = paste0("linear mixed model of the location visit means on visit with random intercepts for participant and for location within participant (REML); the estimate is the change from pretreatment to follow-up; ",
+                                       mixed_interval_label(model_interval, conf_level)),
                   estimate = fit$estimate, lower = fit$lower, upper = fit$upper, se = fit$se, df = fit$df, p_value = fit$p_value,
                   n_participants = n_distinct(d$study_id), n_locations = nrow(distinct(d, study_id, position)),
                   n_observations = nrow(d), status = fit$status, messages = paste(fit$messages, collapse = "; "))
@@ -8196,20 +8220,21 @@ closed_gee_visit_contrast_analysis <- function(analytic, score_families = defaul
 #' closed_missing_data_sensitivity("Replace with Analytic Tibble", blinded = TRUE, delta_values = list(durometer = c(-6.4, 0, 6.4)))
 closed_missing_data_sensitivity <- function(analytic, endpoints = default_measurement_endpoints(), delta_values = NULL,
                                             blinded = FALSE, assignment_map = NULL, seed = 20260922, control_arm = "Group A",
-                                            model = c("repeated", "change"), baseline_event = "injection_1",
-                                            followup_event = "3_month", set = "set_1", min_valid = 1, conf_level = 0.95,
-                                            return_fit = FALSE) {
+                                            model = c("repeated", "change"), model_interval = c("t", "z"),
+                                            baseline_event = "injection_1", followup_event = "3_month", set = "set_1",
+                                            min_valid = 1, conf_level = 0.95, return_fit = FALSE) {
   analytic <- if_needed_generate_example_data(
       analytic, example_constructs = c("enrolled", vapply(endpoints, function(ep) ep$readings_constructs[1], character(1))),
       example_types = c("Boolean", vapply(endpoints, function(ep) measurement_example_type(ep$fields, ep$value_field), character(1))))
   model <- match.arg(model)
+  model_interval <- match.arg(model_interval)
   assignment <- resolve_treatment_assignment(analytic, blinded, assignment_map, seed, control_arm)
   results <- bind_rows(lapply(names(endpoints), function(name) {
     ep <- endpoints[[name]]
     vm <- measurement_visit_means(unpack_measurement_readings(analytic, ep$readings_constructs[1], ep$fields, ep$value_field), min_valid)
     run <- function(vm_in, analysis, assumption, imputed_n = 0L) {
       r <- location_change_fit(vm_in, assignment, ep$label, ep$unit, baseline_event, followup_event, set, model,
-                               "student", FALSE, conf_level)
+                               "student", FALSE, conf_level, model_interval = model_interval)
       tibble(endpoint = ep$label, analysis = analysis, assumption = assumption, included_n = r$model$n_participants,
              included_locations = r$model$n_locations, imputed_n = imputed_n, estimate = r$model$estimate,
              lower = r$model$lower, upper = r$model$upper, status = r$model$status)
@@ -8242,12 +8267,13 @@ closed_missing_data_sensitivity <- function(analytic, endpoints = default_measur
     kable_styling("striped", full_width = FALSE, position = "left") %>%
     collapse_rows(columns = 1, valign = "top") %>%
     add_footnote(c(assignment_caption(assignment),
-                   "Mixed model re-fitted under each assumption; delta-adjusted single imputation when delta values are supplied.",
+                   paste0("Mixed model re-fitted under each assumption (", mixed_interval_label(model_interval, conf_level),
+                          "); delta-adjusted single imputation when delta values are supplied."),
                    "Missing at random is a working assumption of the primary mixed model; it is not established by a statistical test."),
                  notation = "number")
   if (!return_fit) return(result_table)
   list(result_table = result_table, results = results, assignment = assignment,
-       settings = list(delta_values = delta_values, model = model, baseline_event = baseline_event,
+       settings = list(delta_values = delta_values, model = model, model_interval = model_interval, baseline_event = baseline_event,
                        followup_event = followup_event, set = set, min_valid = min_valid, conf_level = conf_level))
 }
 
