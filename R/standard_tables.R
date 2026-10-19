@@ -350,8 +350,8 @@ enrollment_status_by_site_var_discontinued_ii <- function(analytic, discontinued
               !!discontinued_colname := sum(discontinued),
               "Enrolled" = sum(enrolled)) 
   
-  table_raw <- full_join(df_consented_totals, df_main, by = 'Facility') %>% 
-    mutate_all(~ifelse(is.na(.), 0, .)) %>% 
+  table_raw <- full_join(df_consented_totals, df_main, by = 'Facility') %>%
+    mutate(across(-Facility, ~coalesce(as.numeric(.), 0))) %>%
     adorn_totals("row") %>% 
     mutate(is_total=Facility=="Total") %>% 
     arrange(desc(is_total), Facility) %>% 
