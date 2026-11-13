@@ -9236,3 +9236,72 @@ reg_categories_table <- function(analytic){
 }
 
 
+
+
+#' Early Discontinuation Adjudication Status
+#'
+#' @description
+#' Study management listing of every participant with an early discontinuation case: a site-reported
+#' reason on the Early Discontinuation form (AF00) or a completed adjudication result. One row per
+#' participant showing the AF00 reason, the adjudicated reason (filled in once the committee reaches
+#' consensus), days in study, which adjudicators have submitted and their calls, which adjudicator
+#' slots are still pending, and whether consensus has been reached. Open cases (no consensus) are
+#' listed first, longest in study first. Originally made for NSAID.
+#'
+#' @param analytic analytic data set that must include early_discontinuation_reason,
+#' early_discontinuation_adjudicated_reason, days_in_study, early_discontinuation_adjudicators_submitted,
+#' early_discontinuation_adjudicators_pending, early_discontinuation_consensus
+#'
+#' @return An HTML table.
+#' @export
+#'
+#' @examples
+#' early_discontinuation_adjudication_status("Replace with Analytic Tibble")
+#'
+early_discontinuation_adjudication_status <- function(analytic){
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c('early_discontinuation_reason', 'early_discontinuation_adjudicated_reason',
+                           'days_in_study', 'early_discontinuation_adjudicators_submitted',
+                           'early_discontinuation_adjudicators_pending', 'early_discontinuation_consensus'),
+    example_types = c('Category', 'Category', 'Number', 'Category', 'Category', 'Boolean'))
+
+  df <- analytic %>%
+    select(study_id, early_discontinuation_reason, early_discontinuation_adjudicated_reason, days_in_study,
+           early_discontinuation_adjudicators_submitted, early_discontinuation_adjudicators_pending,
+           early_discontinuation_consensus) %>%
+    mutate(early_discontinuation_consensus = as.logical(early_discontinuation_consensus),
+           early_discontinuation_consensus = ifelse(is.na(early_discontinuation_consensus), FALSE,
+                                                    early_discontinuation_consensus)) %>%
+    filter(!is.na(early_discontinuation_reason) | early_discontinuation_consensus) %>%
+    mutate(days_in_study = suppressWarnings(as.numeric(days_in_study))) %>%
+    arrange(early_discontinuation_consensus, desc(days_in_study), study_id)
+
+  total <- nrow(df)
+  n_open <- sum(!df$early_discontinuation_consensus)
+
+  df_final <- df %>%
+    mutate(early_discontinuation_reason = replace_na(early_discontinuation_reason, ''),
+           early_discontinuation_adjudicated_reason = replace_na(early_discontinuation_adjudicated_reason, ''),
+           days_in_study = ifelse(is.na(days_in_study), '', format(days_in_study, big.mark = ',', trim = TRUE)),
+           early_discontinuation_adjudicators_submitted = gsub('; ', '<br>', replace_na(early_discontinuation_adjudicators_submitted, ''), fixed = TRUE),
+           early_discontinuation_adjudicators_pending = gsub('; ', '<br>', replace_na(early_discontinuation_adjudicators_pending, ''), fixed = TRUE),
+           early_discontinuation_consensus = ifelse(early_discontinuation_consensus, 'Yes', 'No'))
+
+  cnames <- c('ID', 'AF00 Status', 'Adjudicated AF00 Status', 'Days in Study', 'Adjudicators Submitted',
+              'Adjudicators Pending', 'Consensus')
+
+  header <- c(7)
+  names(header) <- paste0('n = ', total, ' (', n_open, ' open)')
+
+  vis <- kable(df_final, format = 'html', align = 'l', col.names = cnames, escape = FALSE) %>%
+    add_header_above(header, align = 'l') %>%
+    row_spec(0, extra_css = 'border-bottom: 1px solid') %>%
+    kable_styling('striped', full_width = F, position = 'left')
+
+  if (n_open > 0 && n_open < total) {
+    vis <- vis %>% row_spec(n_open, extra_css = 'border-bottom: 1px solid')
+  }
+
+  return(vis)
+}
