@@ -2086,13 +2086,17 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
   
   date_today <- Sys.Date()
   
-  cols <- c('Facility', 'Local (or sIRB)  Approval Date', 'DoD Approval Date',
-            'Certified by MCC to Start Screening', 
-            paste0('Days Number of Days Certified (as of ', as.character(date_today), ')'))
+  #site_certification_data is zipped as site;dod;local;metrc;days
+  zipped_cols <- c('Facility', 'DoD Approval Date', 'Local (or sIRB)  Approval Date',
+                   'Certified by MCC to Start Screening', 
+                   paste0('Days Number of Days Certified (as of ', as.character(date_today), ')'))
+  
+  cols <- zipped_cols[c(1, 3, 2, 4, 5)]
   
   site_data <- df %>%
-    separate(site_certification_data, cols, sep = ';') %>%
-    filter(!is.na(Facility))
+    separate(site_certification_data, zipped_cols, sep = ';') %>%
+    filter(!is.na(Facility)) %>%
+    select(all_of(cols))
   
   site_data <- rbind(site_data %>% filter(.[[5]]!="NA days"),site_data %>% filter(.[[5]]=="NA days"))
   

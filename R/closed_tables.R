@@ -1869,29 +1869,33 @@ closed_certification_date_data <- function(analytic){
     example_constructs = c('treatment_arm', "site_certification_data"), 
     example_types = c('TreatmentArm', 'FacilityCode;Date;Date;Boolean;Number'))
 
-  confirm_stability_of_related_visual('certification_date_data', 'ec273479786ed418d9e7b40ff5a619d7')
+  confirm_stability_of_related_visual('certification_date_data', '8e0a6458445bc6bf9c8cbb72bb9a53b8')
 
   date_today <- Sys.Date()
   
-  cols <- c('Facility', 'Local (or sIRB) Approval Date', 'DoD Approval Date',
-            'Certified by MCC to Start Screening',
-            paste0('Number of Days Certified (as of ', as.character(date_today), ')'))
+  #site_certification_data is zipped as site;dod;local;metrc;days
+  zipped_cols <- c('Facility', 'DoD Approval Date', 'Local (or sIRB) Approval Date',
+                   'Certified by MCC to Start Screening',
+                   paste0('Number of Days Certified (as of ', as.character(date_today), ')'))
+  
+  cols <- zipped_cols[c(1, 3, 2, 4, 5)]
   
   df <- analytic %>%
     filter(!is.na(treatment_arm)) %>%
-    group_by(treatment_arm) %>%
     mutate(site_certification_data = na_if(site_certification_data, "NA")) %>%
-    separate(site_certification_data, cols, sep = ';') %>%
-    select(treatment_arm, Facility, `Local (or sIRB) Approval Date`, `DoD Approval Date`,
-           `Certified by MCC to Start Screening`, `Days Number of Days Certified (as of Thursday, March 07, 2024)`) %>%
-    filter(!is.na(Facility))
+    separate(site_certification_data, zipped_cols, sep = ';') %>%
+    select(treatment_arm, all_of(cols)) %>%
+    filter(!is.na(Facility)) %>%
+    distinct() %>%
+    arrange(`Certified by MCC to Start Screening`)
   
   df_a <- df %>% filter(treatment_arm == "Group A") %>% select(-treatment_arm)
   df_b <- df %>% filter(treatment_arm == "Group B") %>% select(-treatment_arm)
   
-  vis <- bind_rows(df_a, df_b) %>%
-    kable(align='l') %>%
-    add_header_above(c(" " = 1, format="html", "Group A" = 4, "Group B" = 4)) %>%
+  output <- full_join(df_a, df_b, by = 'Facility', suffix = c('_a', '_b'))
+  
+  vis <- kable(output, format="html", align='l', col.names = c(cols, cols[-1])) %>%
+    add_header_above(c(" " = 1, "Group A" = 4, "Group B" = 4)) %>%
     kable_styling("striped", full_width = F, position="left")
   
   return(vis)
