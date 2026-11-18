@@ -9309,3 +9309,89 @@ early_discontinuation_adjudication_status <- function(analytic){
 
   return(vis)
 }
+
+#' Patient Outcomes Score Table
+#'
+#' @description 
+#' Visualizes the mean (SD) of the DASH, BPI pain interference, BPI pain severity and PSQ-18 overall scores 
+#' at each follow up event (4 Week, 3 Month, 6 Month, 12 Month). Only enrolled participants are included.
+#' Each score is unzipped from its long file construct (dash_scores, bpi_scores, psq_scores) with 
+#' generic_long_file_unzip in the "mean_sd" mode. Events where no one has a score are left blank.
+#' The n for each measure is the number of enrolled patients with at least one of its scores.
+#' 
+#' NOTE: The following function has been created to be used for the peg fusion long files for BPI, PSQ, and DASH score data.
+#' It is coded to match its column names and construct name. Generalization is possible but not yet implemented.
+#' 
+#' For the general long file visualization, please see: generic_long_file_unzip
+#'
+#' @param analytic This is the analytic data set 
+#'
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' 
+#' patient_outcomes_score_table("Replace with Analytic Tibble")
+#' }
+patient_outcomes_score_table <- function(analytic){
+  
+  event_levels <- c("4 Week", "3 Month", "6 Month", "12 Month")
+  measure_levels <- c("DASH", "BPI - Pain Interference", "BPI - Pain Severity", "PSQ-18")
+  
+  dash_df <- generic_long_file_unzip(analytic, construct = "dash_scores", column_names = c("event", "value"),
+                                     group_col = "event", target_col = "value",
+                                     mode = "mean_sd", return_df = TRUE, group_levels = event_levels) %>%
+    mutate(measure = "DASH")
+  
+  #every bpi answer carries a copy of its score, so one answer per type is kept to count each score once
+  interference_df <- generic_long_file_unzip(analytic, construct = "bpi_scores", column_names = c("event", "type", "name", "response", "value"),
+                                             group_col = "event", target_col = "value",
+                                             mode = "mean_sd", return_df = TRUE, group_levels = event_levels,
+                                             filter_cols = c(type = "Interference", name = "General activity")) %>%
+    mutate(measure = "BPI - Pain Interference")
+  
+  severity_df <- generic_long_file_unzip(analytic, construct = "bpi_scores", column_names = c("event", "type", "name", "response", "value"),
+                                         group_col = "event", target_col = "value",
+                                         mode = "mean_sd", return_df = TRUE, group_levels = event_levels,
+                                         filter_cols = c(type = "Severity", name = "Worst pain")) %>%
+    mutate(measure = "BPI - Pain Severity")
+  
+  psq_df <- generic_long_file_unzip(analytic, construct = "psq_scores", column_names = c("event", "score", "value"),
+                                    group_col = "event", target_col = "value",
+                                    mode = "mean_sd", return_df = TRUE, group_levels = event_levels,
+                                    filter_cols = c(score = "Overall")) %>%
+    mutate(measure = "PSQ-18")
+  
+  #every measure gets all four events, blank where no one has a score
+  table_df <- bind_rows(dash_df, interference_df, severity_df, psq_df) %>%
+    select(measure, event, value = `Mean (SD)`) %>%
+    complete(measure = measure_levels, event = event_levels, fill = list(value = "")) %>%
+    arrange(factor(measure, levels = measure_levels), factor(event, levels = event_levels))
+  
+  #the n for each measure is the number of enrolled patients with at least one of its scores
+  enrolled <- analytic %>%
+    filter(enrolled %in% TRUE)
+  
+  measure_n <- c(
+    sum(!is.na(enrolled$dash_scores)),
+    sum(str_detect(enrolled$bpi_scores, "Interference"), na.rm = TRUE),
+    sum(str_detect(enrolled$bpi_scores, "Severity"), na.rm = TRUE),
+    sum(str_detect(enrolled$psq_scores, "Overall"), na.rm = TRUE)
+  )
+  
+  #each measure is always four rows, one per event
+  index_vec <- c(4, 4, 4, 4)
+  names(index_vec) <- paste0(measure_levels, ' (n=', measure_n, '), mean (SD)')
+  
+  vis <- table_df %>%
+    select(event, value) %>%
+    kable(format="html", align=c('l', 'r'), col.names = c('', ''),
+          table.attr = "style='width:100% !important;'") %>%
+    add_indent(c(seq(nrow(table_df)))) %>%
+    row_spec(c(1, 5, 9, 13), extra_css = "border-top: 1px solid") %>%
+    pack_rows(index = index_vec, label_row_css = "text-align:left", escape = FALSE) %>%
+    kable_styling("striped", full_width = T, position="left")
+  
+  return(vis)
+}
