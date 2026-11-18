@@ -25,7 +25,8 @@ generic_long_file_unzip(
 
 \item{column_names}{The names of the columns in the construct, in order (see the construct's UNZIPPING INSTRUCTIONS)}
 
-\item{group_col}{The column to group the entries by. Each group becomes a header in the final visualization}
+\item{group_col}{One or two columns. The first column splits the table into sections, each with its own header. 
+The optional second column names the items listed inside each section (for example c("event", "name"))}
 
 \item{target_col}{The column to count the values of within each group. Each value becomes a row in the final visualization}
 
@@ -55,8 +56,6 @@ given the value "Missing."
 Groups are shown in the order they first appear in the long file. Target values are 
 sorted numerically when they are numbers, then alphabetically, with "Missing" kept at 
 the bottom of each group.
-
-For other relevant characteristics counting visualizations, please see: generic_characteristics
 }
 \examples{
 \dontrun{

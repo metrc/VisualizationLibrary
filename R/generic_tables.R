@@ -10,14 +10,14 @@
 #' sorted numerically when they are numbers, then alphabetically, with "Missing" kept at 
 #' the bottom of each group.
 #' 
-#' For other relevant characteristics counting visualizations, please see: generic_characteristics
 #'
 #' @param analytic This is the analytic data set 
 #' @param construct The long file construct to unzip
 #' @param column_names The names of the columns in the construct, in order (see the construct's UNZIPPING INSTRUCTIONS)
 #' @param mode The type of statistics to calculate. Currently supports "n_percent", which gives the count 
 #' and percentage of each target value within each group. Any other mode returns the unzipped data frame.
-#' @param group_col The column to group the entries by. Each group becomes a header in the final visualization
+#' @param group_col One or two columns. The first column splits the table into sections, each with its own header. 
+#' The optional second column names the items listed inside each section (for example c("event", "name"))
 #' @param target_col The column to count the values of within each group. Each value becomes a row in the final visualization
 #' @param column_sep The character separating columns in the construct (see the construct's UNZIPPING INSTRUCTIONS). Defaults to "┘"
 #' @param row_sep The character separating rows in the construct (see the construct's UNZIPPING INSTRUCTIONS).  Defaults to "¶"
@@ -56,99 +56,193 @@ generic_long_file_unzip <- function(analytic, construct, column_names, group_col
     }
   }
   
-  #group levels choose which groups are shown and in what order,
-  #otherwise groups are shown in the order they first appear in the long file
+  #group_col[1] splits the table into sections (like event)
+  #group_col[2] is optional and names the items listed inside each section (like the motion)
+  #the columns get standard names here so each mode is only written once
+  if(length(group_col) == 2){
+    working <- unzipped %>%
+      semi_join(enrolled_ids, by = "study_id") %>%
+      select(study_id, section = all_of(group_col[1]), item = all_of(group_col[2]), target = all_of(target_col))
+  } else {
+    working <- unzipped %>%
+      semi_join(enrolled_ids, by = "study_id") %>%
+      select(study_id, section = all_of(group_col[1]), target = all_of(target_col)) %>%
+      mutate(item = target_col)
+  }
+  
+  working <- working %>%
+    filter(!is.na(section) & !is.na(item))
+  
+  #group levels choose which sections are shown and in what order,
+  #otherwise sections are shown in the order they first appear in the long file
   if(!is.null(group_levels)){
-    unzipped <- unzipped %>%
-      filter(!!sym(group_col) %in% group_levels)
+    working <- working %>%
+      filter(section %in% group_levels)
     
     group_order <- group_levels
   } else {
-    group_order <- unzipped %>%
-      semi_join(enrolled_ids, by = "study_id") %>%
-      filter(!is.na(!!sym(group_col))) %>%
-      pull(!!sym(group_col)) %>%
+    group_order <- working %>%
+      pull(section) %>%
       unique()
   }
   
   #every mode builds two data frames:
   #df_return (what return_df gives back) and
-  #result for the renderer with three columns: group (factor in display order), temp (row label), value (cell text)
+  #result for the renderer with the columns: group (section), temp (row label), value (cell text), sub (TRUE for indented rows)
   if(mode == "n_percent"){
+    #the denominator is every reading of that item in that section, missing included
+    denoms <- working %>%
+      group_by(section, item) %>%
+      summarize(denom = n(), missing = sum(is.na(target)), .groups = "drop")
     
-    result <- unzipped %>%
-      semi_join(enrolled_ids, by = "study_id") %>%
-      filter(!is.na(!!sym(group_col))) %>%
-      group_by(!!sym(group_col)) %>%
-      mutate(denom = n()) %>%
-      ungroup() %>%
-      filter(!is.na(!!sym(target_col))) %>%
-      group_by(!!sym(group_col), !!sym(target_col)) %>%
-      summarize(n = n(), denom = first(denom), .groups = "drop") %>%
-      mutate(result = sprintf("%d (%.1f%%)", n, round(100 * n / denom, 1))) %>%
-      select(!!sym(group_col), !!sym(target_col), result) %>%
-      pivot_wider(
-        names_from  = all_of(target_col),
-        values_from = result,
-        values_fill = "0 (0.0%)"
-      )
+    counts <- working %>%
+      filter(!is.na(target)) %>%
+      group_by(section, item, target) %>%
+      summarize(n = n(), .groups = "drop") %>%
+      left_join(denoms, by = c("section", "item")) %>%
+      mutate(result = format_count_percent(n, denom)) %>%
+      select(section, item, target, result)
     
-    missing_df <- unzipped %>%
-      semi_join(enrolled_ids, by = "study_id") %>%
-      filter(!is.na(!!sym(group_col))) %>%
-      group_by(!!sym(group_col)) %>%
-      summarize(missing = sum(is.na(!!sym(target_col))), denom = n(), .groups = "drop") %>%
-      mutate(Missing = sprintf("%d (%.1f%%)", missing, round(100 * missing / denom, 1))) %>%
-      select(!!sym(group_col), Missing)
+    missing_rows <- denoms %>%
+      mutate(target = "Missing") %>%
+      mutate(result = format_count_percent(missing, denom)) %>%
+      select(section, item, target, result)
     
-    target_temps <- sort(setdiff(names(result), group_col))
+    target_temps <- sort(unique(counts$target))
     numeric_temps <- suppressWarnings(as.numeric(target_temps))
     is_numeric <- !is.na(numeric_temps)
     custom_levels <- c(target_temps[is_numeric][order(numeric_temps[is_numeric])],
                        target_temps[!is_numeric], "Missing")
     
-    df_return <- result %>%
-      left_join(missing_df, by = group_col) %>%
-      select(all_of(group_col), all_of(custom_levels)) %>%
-      arrange(factor(!!sym(group_col), levels = group_order))
+    #each item gets every value seen for that item, with 0 (0%) where nobody has it
+    combined <- bind_rows(counts, missing_rows) %>%
+      group_by(item) %>%
+      complete(section, target, fill = list(result = "0 (0%)")) %>%
+      ungroup() %>%
+      arrange(factor(section, levels = group_order), item, factor(target, levels = custom_levels))
     
-    result <- result %>%
-      left_join(missing_df, by = group_col) %>%
-      pivot_longer(-all_of(group_col), names_to = "temp", values_to = "value") %>%
-      mutate(group = factor(!!sym(group_col), levels = group_order)) %>%
-      mutate(temp = factor(temp, levels = custom_levels)) %>%
-      arrange(group, temp) %>%
-      mutate(temp = as.character(temp)) %>%
-      select(group, temp, value)
+    df_return <- combined %>%
+      pivot_wider(names_from = target, values_from = result) %>%
+      select(section, item, all_of(custom_levels))
+    
+    result <- combined %>%
+      mutate(sub = length(group_col) == 2) %>%
+      select(group = section, item, temp = target, value = result, sub)
+    
+    #with an item column, each item gets a label row and its values sit indented under it
+    if(length(group_col) == 2){
+      item_rows <- combined %>%
+        distinct(section, item) %>%
+        mutate(temp = item, value = "", sub = FALSE) %>%
+        select(group = section, item, temp, value, sub)
+      
+      result <- bind_rows(item_rows, result) %>%
+        arrange(factor(group, levels = group_order), item, sub)
+    }
+    
+  } else if(mode %in% c("mean_range", "mean_sd")){
+    
+    #the two modes only differ in how the numbers are summarized
+    if(mode == "mean_sd"){
+      mean_label <- "Mean (SD)"
+    } else {
+      mean_label <- "Mean (range)"
+    }
+    
+    #everything comes in as text, values that convert to a number are numbers, the rest are text values
+    readings <- working %>%
+      filter(!is.na(target)) %>%
+      mutate(number = suppressWarnings(as.numeric(target)))
+    
+    #numeric readings become the mean row for each item
+    means <- readings %>%
+      filter(!is.na(number)) %>%
+      group_by(section, item) %>%
+      summarize(result = if(mode == "mean_sd") format_mean_sd(number) else format_mean_range(number), .groups = "drop") %>%
+      mutate(row_type = "mean")
+    
+    #text readings (like "Unable to perform") become an n (%) row under each item
+    texts <- readings %>%
+      group_by(section, item) %>%
+      mutate(denom = n()) %>%
+      ungroup() %>%
+      filter(is.na(number)) %>%
+      group_by(section, item, target) %>%
+      summarize(n = n(), denom = first(denom), .groups = "drop") %>%
+      mutate(result = as.character(format_count_percent(n, denom))) %>%
+      select(section, item, row_type = target, result)
+    
+    #every item always gets a mean row, even if all of its readings are text
+    combined <- bind_rows(means, texts) %>%
+      complete(section, item, row_type = c("mean", unique(texts$row_type))) %>%
+      mutate(result = case_when(
+        !is.na(result) ~ result,
+        row_type == "mean" ~ "",
+        TRUE ~ "0 (0%)"
+      )) %>%
+      arrange(factor(section, levels = group_order), item, row_type != "mean", row_type)
+    
+    df_return <- combined %>%
+      mutate(row_type = if_else(row_type == "mean", mean_label, row_type)) %>%
+      pivot_wider(names_from = row_type, values_from = result)
+    
+    result <- combined %>%
+      mutate(temp = if_else(row_type == "mean", item, row_type)) %>%
+      mutate(sub = row_type != "mean") %>%
+      select(group = section, temp, value = result, sub)
     
   } else {
     return(unzipped)
   }
   
+  #restoring of original names
   if(return_df){
+    df_return <- df_return %>%
+      rename(!!group_col[1] := section)
+    
+    if(length(group_col) == 2){
+      df_return <- df_return %>%
+        rename(!!group_col[2] := item)
+    } else {
+      df_return <- df_return %>%
+        select(-item)
+    }
+    
     return(df_return)
   }
   
   #general rendering of the mode's data frame
-  group_totals <- unzipped %>%
-    semi_join(enrolled_ids, by = "study_id") %>%
-    filter(!is.na(!!sym(group_col))) %>%
-    count(!!sym(group_col), name = "total")
+  #the header n is the number of readings in each section,
+  #or the number of patients when items are listed inside each section
+  if(length(group_col) == 2){
+    group_totals <- working %>%
+      group_by(section) %>%
+      summarize(total = n_distinct(study_id), .groups = "drop")
+  } else {
+    group_totals <- working %>%
+      count(section, name = "total")
+  }
+  
+  result <- result %>%
+    mutate(group = factor(group, levels = group_order))
   
   group_counts <- result %>%
     count(group)
   
   index_vec <- group_counts$n
   names(index_vec) <- paste0(as.character(group_counts$group), ' (n=',
-                             group_totals$total[match(as.character(group_counts$group), group_totals[[group_col]])], ')')
+                             group_totals$total[match(as.character(group_counts$group), group_totals$section)], ')')
   
   border_rows <- if(length(index_vec) > 1) c(1, cumsum(index_vec[1:(length(index_vec)-1)]) + 1) else c(1)
+  
+  sub_rows <- which(result$sub)
   
   vis <- result %>%
     select(temp, value) %>%
     kable(format="html", align=c('l', 'r'), col.names = c('', ''),
           table.attr = "style='width:100% !important;'") %>%
     add_indent(c(seq(nrow(result)))) %>%
+    { if(length(sub_rows) > 0) add_indent(., sub_rows) else . } %>%
     row_spec(border_rows, extra_css = "border-top: 1px solid") %>%
     pack_rows(index = index_vec, label_row_css = "text-align:left", escape = FALSE) %>%
     kable_styling("striped", full_width = T, position="left")
