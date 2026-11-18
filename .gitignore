@@ -5,3 +5,6 @@
 .DS_Store
 .idea
 .positai
+
+# Cached study data belongs in ADS Workspace/Coding Workspace, never in a repo
+*cached_data/
