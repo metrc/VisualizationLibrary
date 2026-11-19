@@ -28,14 +28,20 @@ generic_long_file_unzip(
 \item{group_col}{One or two columns. The first column splits the table into sections, each with its own header. 
 The optional second column names the items listed inside each section (for example c("event", "name"))}
 
-\item{target_col}{The column to count the values of within each group. Each value becomes a row in the final visualization}
+\item{target_col}{One or two columns to calculate the statistics on. Two columns are calculated separately}
 
 \item{column_sep}{The character separating columns in the construct (see the construct's UNZIPPING INSTRUCTIONS). Defaults to "┘"}
 
 \item{row_sep}{The character separating rows in the construct (see the construct's UNZIPPING INSTRUCTIONS).  Defaults to "¶"}
 
-\item{mode}{The type of statistics to calculate. Currently supports "n_percent", which gives the count 
-and percentage of each target value within each group. Any other mode returns the unzipped data frame.}
+\item{mode}{The type of statistics to calculate. Supports:
+"n_percent", the count and percentage of each target value, with a "Missing" row for entries with no value.
+Values are sorted numerically when they are numbers, then alphabetically, with "Missing" kept at the bottom.
+"n_percent_of : 'value', 'value'", the same as "n_percent" but only shows the listed values, in the order listed.
+The values must be written exactly as they appear in the long file, in single quotes and separated by commas.
+Percentages are still out of every reading, missing included.
+"mean_range", the mean (min-max) of the numeric target values, with an n (%) row for each text value.
+"mean_sd", the same as "mean_range" but gives the mean (SD) of the numeric target values.}
 
 \item{return_df}{When TRUE, returns a data frame with one row per group and one column per target value instead of the html table. Defaults to FALSE.}
 
