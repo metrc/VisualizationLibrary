@@ -4,13 +4,22 @@
 \alias{enrollment_status_by_site_consent_pre_screening_i}
 \title{enrollment_status_by_site_consent_pre_screening_i}
 \usage{
-enrollment_status_by_site_consent_pre_screening_i(analytic, only_total = FALSE)
+enrollment_status_by_site_consent_pre_screening_i(
+  analytic,
+  only_total = FALSE,
+  pre_screened_name = "Pre-Operative Screened",
+  screened_name = "Intra-Operative Screened"
+)
 }
 \arguments{
 \item{analytic}{Analytic data set. Must include: screened, eligible, ineligible, 
 consented, facilitycode, site_certification_date, pre_screened, pre_eligible.}
 
 \item{only_total}{hide all the site specific rows}
+
+\item{pre_screened_name}{label for the first screening stage (default "Pre-Operative Screened")}
+
+\item{screened_name}{label for the second screening stage (default "Intra-Operative Screened")}
 }
 \value{
 An HTML table.

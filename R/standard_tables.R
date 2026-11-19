@@ -5061,10 +5061,14 @@ enrollment_status_by_site_consent_pre_screening <- function(analytic, discontinu
 #' @param analytic Analytic data set. Must include: screened, eligible, ineligible, 
 #' consented, facilitycode, site_certification_date, pre_screened, pre_eligible.
 #' @param only_total hide all the site specific rows
+#' @param pre_screened_name label for the first screening stage (default "Pre-Operative Screened")
+#' @param screened_name label for the second screening stage (default "Intra-Operative Screened")
 #'
 #' @return An HTML table.
 #' @export
-enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_total=FALSE){
+enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_total=FALSE,
+                                                              pre_screened_name = "Pre-Operative Screened",
+                                                              screened_name = "Intra-Operative Screened"){
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -5114,6 +5118,9 @@ enrollment_status_by_site_consent_pre_screening_i <- function(analytic, only_tot
     table_raw <- table_raw %>% filter(Facility=="Total")
   }
   
+  names(table_raw) <- sub("^Pre-Operative Screened", pre_screened_name, names(table_raw))
+  names(table_raw) <- sub("^Intra-Operative Screened$", screened_name, names(table_raw))
+
   header <- c(" " = 5, "Among Consented" = 3)
   
   table <- kable(table_raw, format="html", align='l') %>%
@@ -9393,5 +9400,63 @@ patient_outcomes_score_table <- function(analytic){
     pack_rows(index = index_vec, label_row_css = "text-align:left", escape = FALSE) %>%
     kable_styling("striped", full_width = T, position="left")
   
+  return(vis)
+}
+
+
+#' Expected and Completed Assessments
+#'
+#' @description
+#' Counts how many repeated assessments (for example, daily post-operative 3D-CAM
+#' delirium assessments) were expected and how many were completed, among enrolled
+#' participants with at least one expected assessment. Each participant's expected and
+#' completed counts come from two Number constructs.
+#'
+#' @param analytic This is the analytic data set that must include enrolled and the
+#'   expected and completed constructs
+#' @param expected name of the construct holding each participant's number of
+#'   expected assessments
+#' @param completed name of the construct holding each participant's number of
+#'   completed assessments
+#' @param assessment_name label for the assessment in the table
+#'
+#' @return html table
+#' @export
+#'
+#' @examples
+#' \dontrun{
+#' expected_and_completed_assessments("Replace with Analytic Tibble")
+#' }
+expected_and_completed_assessments <- function(analytic, expected = "three_d_cam_expected",
+                                               completed = "three_d_cam_completed",
+                                               assessment_name = "3D-CAM") {
+  analytic <- if_needed_generate_example_data(
+    analytic,
+    example_constructs = c("enrolled", expected, completed),
+    example_types = c("Boolean", "Number", "Number"))
+
+  df <- analytic %>%
+    select(study_id, enrolled, all_of(c(expected, completed))) %>%
+    rename(expected_n = all_of(expected), completed_n = all_of(completed)) %>%
+    mutate(expected_n = suppressWarnings(as.numeric(expected_n)),
+           completed_n = suppressWarnings(as.numeric(completed_n))) %>%
+    filter(enrolled %in% TRUE & !is.na(expected_n) & expected_n > 0)
+
+  n_participants <- nrow(df)
+  n_expected <- sum(df$expected_n)
+  n_completed <- sum(pmin(df$completed_n, df$expected_n), na.rm = TRUE)
+  pct <- ifelse(n_expected > 0, sprintf("%.1f%%", 100 * n_completed / n_expected), "-")
+
+  output <- tibble(
+    Measure = c("Participants with expected assessments, n",
+                paste(assessment_name, "assessments expected, n"),
+                paste(assessment_name, "assessments completed, n (%)")),
+    Value = c(as.character(n_participants), as.character(n_expected),
+              paste0(n_completed, " (", pct, ")"))
+  )
+
+  vis <- kable(output, format = "html", align = "l", col.names = c("", "n")) %>%
+    kable_styling("striped", full_width = FALSE, position = "left")
+
   return(vis)
 }
