@@ -1152,7 +1152,7 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
 #' }
 closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, category_defaults=c("Safety","Informed Consent","Eligibility","Protocol Implementation","Other"), include_ae=FALSE){
   
-  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', '2fbc335654f8621f9561f2772adc1b39')
+  confirm_stability_of_related_visual('not_complete_sae_deviation_by_type_auto_categories', '41602125a3b4aca9d869c80babb39169')
   
   analytic <- if_needed_generate_example_data(
     analytic, 
@@ -1229,9 +1229,9 @@ closed_not_complete_sae_deviation_by_type_auto_categories <- function(analytic, 
     
     deviations_df <- inner_analytic %>% 
       select(study_id, consented, protocol_deviation_data) %>% 
-      separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
-      separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
-                                                 "deviation_description"), sep='\\|') %>% 
+      unzip_long_file(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
+                                                 "deviation_description"),
+                      row_sep = ";new_row: ", col_sep = '\\|') %>% 
       filter(consented & !is.na(protocol_deviation)) %>% 
       mutate(protocol_deviation = ifelse(str_detect(protocol_deviation,"^Other:"), "Other", protocol_deviation)) %>% 
       count(category, protocol_deviation) %>%
@@ -1386,7 +1386,7 @@ closed_complications_by_severity_relatedness <- function(analytic){
                                               example_constructs = c("complication_data", "treatment_arm"),
                                               example_types = c("(';new_row: ', '|')FollowupPeriod|Date|Category|Date|Category|Category|Boolean|Category|Character|Character", "TreatmentArm"))
   
-  confirm_stability_of_related_visual('complications_by_severity_relatedness', '700d582721890a426efbcfba0720f055')
+  confirm_stability_of_related_visual('complications_by_severity_relatedness', 'a4bbc640f0a6bf43b38bc6dd536cd7ad')
 
 
   inner_closed_complications_by_severity_relatedness <- function(analytic){
@@ -1395,11 +1395,11 @@ closed_complications_by_severity_relatedness <- function(analytic){
     
     
     unzipped_comp <- comp %>%
-      separate_rows(complication_data, sep = ";new_row: ") %>%
-      separate(complication_data, into = c("redcap_event_name", "visit_date", "complications", 
+      unzip_long_file(complication_data, into = c("redcap_event_name", "visit_date", "complications", 
                                            "diagnosis_date", 
                                            "relatedness", "severity", "treatment_related", "new_or_previous_diagnosis",
-                                           "form_notes","other_info"), sep = '\\|')  %>% 
+                                           "form_notes","other_info"),
+                      row_sep = ";new_row: ", col_sep = '\\|')  %>% 
       select(study_id, severity, relatedness, complications) %>% 
       mutate(severity = case_when(
         severity %in% c('Mild', 'Moderate') ~ "Grade 2,1",
@@ -1578,9 +1578,9 @@ closed_appendix_A_SAEs <- function(analytic){
     filter(!is.na(sae_data))
   
   unzipped_sae <- df %>%
-    separate_rows(sae_data, sep = ";new_row: ") %>% 
-    separate(sae_data, into = c("facilitycode", "treatment_arm", "treatment_received", "consent_date", "sae_dt_event", "age", "sae_relatedness_injury",
-                                "sae_relatedness_treatment", "sae_outcome", "sae_describe"), sep='\\|') 
+    unzip_long_file(sae_data, into = c("facilitycode", "treatment_arm", "treatment_received", "consent_date", "sae_dt_event", "age", "sae_relatedness_injury",
+                                "sae_relatedness_treatment", "sae_outcome", "sae_describe"),
+                    row_sep = ";new_row: ", col_sep = '\\|') 
 
   
   output_df <- unzipped_sae %>% 
@@ -1637,9 +1637,9 @@ closed_appendix_B_deaths <- function(analytic){
     select(study_id, sae_data, death_date) 
   
   unzipped_death <- df %>%
-    separate_rows(sae_data, sep = ";new_row: ") %>% 
-    separate(sae_data, into = c("facilitycode","treatment_arm", "treatment_received", "consent_date", "sae_dt_event", "age", "sae_relatedness_injury", 
-                                "sae_relatedness_treatment", "sae_outcome", "sae_describe"), sep='\\|') %>% 
+    unzip_long_file(sae_data, into = c("facilitycode","treatment_arm", "treatment_received", "consent_date", "sae_dt_event", "age", "sae_relatedness_injury", 
+                                "sae_relatedness_treatment", "sae_outcome", "sae_describe"),
+                    row_sep = ";new_row: ", col_sep = '\\|') %>% 
     filter(sae_outcome == "Death" | !is.na(death_date))
   
   if (nrow(unzipped_death) == 0) {
@@ -1760,9 +1760,9 @@ closed_appendix_D_protocol_deviation <- function(analytic){
       filter(!is.na(protocol_deviation_data))
     
     unzipped_protocol_deviation <- df %>% 
-      separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
-      separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "deviation_date", "protocol_deviation", 
-                                                 "deviation_description"), sep='\\|')
+      unzip_long_file(protocol_deviation_data, into = c("facilitycode", "consent_date", "deviation_date", "protocol_deviation", 
+                                                 "deviation_description"),
+                      row_sep = ";new_row: ", col_sep = '\\|')
   } else{
     df <- analytic %>% 
       mutate(protocol_deviation_data = protocol_deviation_full_data) %>%
@@ -1770,9 +1770,9 @@ closed_appendix_D_protocol_deviation <- function(analytic){
       filter(!is.na(protocol_deviation_data))
     
     unzipped_protocol_deviation <- df %>% 
-      separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
-      separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
-                                                 "deviation_description"), sep='\\|') %>% 
+      unzip_long_file(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
+                                                 "deviation_description"),
+                      row_sep = ";new_row: ", col_sep = '\\|') %>% 
       select(-category)
   }
 
@@ -1869,7 +1869,7 @@ closed_certification_date_data <- function(analytic){
     example_constructs = c('treatment_arm', "site_certification_data"), 
     example_types = c('TreatmentArm', 'FacilityCode;Date;Date;Boolean;Number'))
 
-  confirm_stability_of_related_visual('certification_date_data', '8e0a6458445bc6bf9c8cbb72bb9a53b8')
+  confirm_stability_of_related_visual('certification_date_data', 'ebbc1abb135524b922a03f233adce043')
 
   date_today <- Sys.Date()
   
@@ -1883,7 +1883,7 @@ closed_certification_date_data <- function(analytic){
   df <- analytic %>%
     filter(!is.na(treatment_arm)) %>%
     mutate(site_certification_data = na_if(site_certification_data, "NA")) %>%
-    separate(site_certification_data, zipped_cols, sep = ';') %>%
+    unzip_long_file(site_certification_data, into = zipped_cols, col_sep = ';') %>%
     select(treatment_arm, all_of(cols)) %>%
     filter(!is.na(Facility)) %>%
     distinct() %>%
@@ -2153,10 +2153,9 @@ closed_complications_overall <- function(analytic, min_days=NULL, cutoff_days = 
       filter(!is.na(complication_data))
     
     unzipped_complication <- df %>%
-      separate_rows(complication_data, sep = ";new_row: ") %>% 
-      separate(complication_data, into = c('redcap_event_name', 'form_name', 'event_type', 'complication',
-                                           'notes', 'diagnosis_date', 'relatedness', 'severity', 'treatment', 'other_info'), 
-               sep='\\|') 
+      unzip_long_file(complication_data, into = c('redcap_event_name', 'form_name', 'event_type', 'complication',
+                                           'notes', 'diagnosis_date', 'relatedness', 'severity', 'treatment', 'other_info'),
+                      row_sep = ";new_row: ", col_sep = '\\|') 
     
     
     if(is.null(min_days)){
@@ -2594,12 +2593,12 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
     example_types = c("(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date",
                       "Boolean")) 
   
-  confirm_stability_of_related_visual('expected_and_followup_visit_overall', 'a8c0b0ed170f28b517d378e7facfdae3')
+  confirm_stability_of_related_visual('expected_and_followup_visit_overall', '3899aae0a055a8c38e6a4aa469aeeee9')
   
   pull <- analytic %>% 
     select(study_id, followup_data, treatment_arm) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate(status = as.character(status)) %>% 
     mutate(across(where(is.character), ~ na_if(.x, "NA")))
   
@@ -2867,7 +2866,7 @@ closed_fracture_characteristics <- function(analytic){
 #' closed_followup_form_at_timepoint_by_site("Replace with Analytic Tibble")
 #' 
 closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selection, name = NULL){
-  confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', '6a2456bb4c37cdd1867fec6465c8f6e7')
+  confirm_stability_of_related_visual('followup_form_at_timepoint_by_site', 'e505710b726380fb126ce4fdf48fb551')
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
                                               example_types = c('FacilityCode', "(';new_row: ', '|')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 'TreatmentArm'))
@@ -2882,8 +2881,8 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate_all(na_if, 'NA')
   
   df <- df %>%
@@ -3024,7 +3023,7 @@ closed_followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_
 closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection = 'Overall', 
                                                         included_columns=c("Not Expected", "Expected", "Complete", "Early", "Late", 'Missed', 'Not Started', 'Incomplete'),
                                                         footnotes = NULL){
-  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', 'd54c216b2882543c6166efbdbf5ea20d')
+  confirm_stability_of_related_visual('followup_form_all_timepoints_by_site', 'ca5da2e4e34734d5bf41885f5167b401')
   analytic <- if_needed_generate_example_data(analytic, 
                                           example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
                                           example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 
@@ -3032,8 +3031,8 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate_all(na_if, 'NA')
   
   df <- df %>%
@@ -3191,7 +3190,7 @@ closed_followup_form_all_timepoints_by_site <- function(analytic, form_selection
 #' closed_followup_forms_at_timepoint_by_site("Replace with Analytic Tibble", "3 Month", c("Form 2", "Form 4"))
 #' 
 closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, names = NULL){
-  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', 'e8a49a54a0eb3c2450c1cbd9ec81360a')
+  confirm_stability_of_related_visual('followup_forms_at_timepoint_by_site', 'f1e3f03df378ca69d2cc94af30b009d9')
   analytic <- if_needed_generate_example_data(analytic, 
                                               example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
                                               example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", 
@@ -3199,8 +3198,8 @@ closed_followup_forms_at_timepoint_by_site <- function(analytic, timepoint, form
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate_all(na_if, 'NA')
   
   df <- df %>%
@@ -3351,12 +3350,12 @@ closed_followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoi
     example_constructs = c('facilitycode', "followup_data", "treatment_arm"), 
     example_types = c('FacilityCode', "(';', ',')FollowupPeriod|FollowupPeriod|Form|FollowupStatus|Date", "TreatmentArm"))
   
-  confirm_stability_of_related_visual('followup_forms_all_timepoints', '27949b7079687998ff6b3e78257b4b40')
+  confirm_stability_of_related_visual('followup_forms_all_timepoints', '5721c91c5337d6b9cc85ff976186750b')
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data, treatment_arm) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate_all(na_if, 'NA')
   
   df <- df %>%
@@ -4789,22 +4788,22 @@ closed_pathogen_characteristics <- function(analytic){
 #' @export
 closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, breakout_other=FALSE, cols_spec=NULL){
   
-  confirm_stability_of_related_visual('overall_complications', '472f5788831b0a590c14948270e9c270')
+  confirm_stability_of_related_visual('overall_complications', 'd7f60fa888f343b367ca11bf74556a5f')
   
   if (is.null(WB)) {
     df <- analytic %>%
       select(study_id, treatment_arm, complication_data) %>% 
-      separate_rows(complication_data, sep = ';new_row: ') %>%
-      separate(complication_data, into = c("redcap_event_name", "form_name", "event_type",
+      unzip_long_file(complication_data, into = c("redcap_event_name", "form_name", "event_type",
                                            "complication", "notes", "diagnosis_date", "relatedness_val",
-                                           "severity_val", "treatment", "other_info"), sep = '\\|', fill = "right")
+                                           "severity_val", "treatment", "other_info"),
+                      row_sep = ';new_row: ', col_sep = '\\|', fill = "right")
   } else {
     df <- analytic %>%
       select(study_id, treatment_arm, complication_data) %>% 
-      separate_rows(complication_data, sep = ';new_row: ') %>%
-      separate(complication_data, into = c("redcap_event_name", "visit_date", "complication", "diagnosis_date", 
+      unzip_long_file(complication_data, into = c("redcap_event_name", "visit_date", "complication", "diagnosis_date", 
                                            "relatedness_val", "severity_val", "treatment_related", "new_or_previous_diagnosis", 
-                                           "form_notes", "other_info"), sep = '\\|', fill = "right")
+                                           "form_notes", "other_info"),
+                      row_sep = ';new_row: ', col_sep = '\\|', fill = "right")
   }
   
   rel_levels <- c("Definitely related", 

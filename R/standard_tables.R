@@ -488,8 +488,8 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   df1_ankle <- analytic %>% 
     filter(injury_type=="ankle") %>% 
     select(followup_data) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate_all(na_if, 'NA') %>% 
     filter(form == 'Clinical Follow-up') %>% 
     mutate(status = ifelse(str_detect(status,"Complete"),"Complete",status)) %>% 
@@ -624,8 +624,8 @@ ankle_and_plateau_x_ray_and_measurement_status <- function(analytic){
   df1_plateau <- analytic %>% 
     filter(injury_type=="plateau") %>% 
     select(followup_data) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate_all(na_if, 'NA') %>% 
     filter(form == 'Clinical Follow-up') %>% 
     mutate(status = ifelse(str_detect(status,"Complete"),"Complete",status)) %>% 
@@ -1650,9 +1650,9 @@ not_complete_sae_deviation_by_type_auto_categories <- function(analytic,
   
   deviations_df <- analytic %>% 
     select(study_id, consented, protocol_deviation_data) %>% 
-    separate_rows(protocol_deviation_data, sep = ";new_row: ") %>% 
-    separate(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
-                                               "deviation_description"), sep='\\|') %>% 
+    unzip_long_file(protocol_deviation_data, into = c("facilitycode", "consent_date", "category", "deviation_date", "protocol_deviation", 
+                                               "deviation_description"),
+                    row_sep = ";new_row: ", col_sep = '\\|') %>% 
     filter(consented & !is.na(protocol_deviation)) %>% 
     mutate(protocol_deviation = ifelse(str_detect(protocol_deviation,"^Other:"), "Other", protocol_deviation)) %>% 
     count(category, protocol_deviation) %>%
@@ -2094,7 +2094,7 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
   cols <- zipped_cols[c(1, 3, 2, 4, 5)]
   
   site_data <- df %>%
-    separate(site_certification_data, zipped_cols, sep = ';') %>%
+    unzip_long_file(site_certification_data, into = zipped_cols, col_sep = ';') %>%
     filter(!is.na(Facility)) %>%
     select(all_of(cols))
   
@@ -2150,11 +2150,11 @@ complications_by_severity_relatedness <- function(analytic){
     filter(!is.na(complication_data))
   
   unzipped_comp <- comp %>%
-    separate_rows(complication_data, sep = ";new_row: ") %>%
-    separate(complication_data, into = c("redcap_event_name", "visit_date", "complications", 
+    unzip_long_file(complication_data, into = c("redcap_event_name", "visit_date", "complications", 
                                          "first_complication_note", "another_complication_note", "diagnosis_date", 
                                          "relatedness", "severity", "treatment_related", "new_or_previous_diagnosis",
-                                         "form_notes"), sep = '\\|')  %>% 
+                                         "form_notes"),
+                    row_sep = ";new_row: ", col_sep = '\\|')  %>% 
     select(study_id, severity, relatedness, complications) %>% 
     mutate(severity = case_when(
       severity %in% c('Mild', 'Moderate') ~ "Grade 2,1",
@@ -3684,8 +3684,8 @@ expected_and_followup_visit_overall <- function(analytic, pretty_cols = c()){
 
   df <- analytic %>% 
     select(study_id, followup_data) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate(status = as.character(status)) %>% 
     mutate_all(na_if, 'NA')
   
@@ -3800,8 +3800,8 @@ followup_form_at_timepoint_by_site <- function(analytic, timepoint, form_selecti
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate_all(na_if, 'NA')
   
   df <- df %>%
@@ -3932,8 +3932,8 @@ followup_form_all_timepoints_by_site <- function(
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate_all(na_if, 'NA')
   
   df <- df %>%
@@ -4081,8 +4081,8 @@ followup_forms_at_timepoint_by_site <- function(analytic, timepoint, forms, name
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate_all(na_if, 'NA')
   
   df <- df %>%
@@ -4224,8 +4224,8 @@ followup_forms_all_timepoints <- function(analytic, forms = NULL, timepoints = N
   
   df <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate_all(na_if, 'NA')
   
   df <- df %>%
@@ -4410,9 +4410,9 @@ enrollment_and_followup_activities_overview <- function(analytic, form_name = 'O
   
    followups <- analytic %>%
     select(study_id, facilitycode, followup_data) %>% 
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 
-                              'status', 'form_dates'), sep=",") %>% 
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 
+                              'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>% 
     mutate_all(na_if, 'NA') %>%
     filter(form == form_name)
   
@@ -4541,8 +4541,8 @@ followup_completion_time_stats <- function(analytic, timepoints = c('6mo', '12mo
            enrolled) %>%
     mutate(across(matches("_date$|_date_"), ~ as.Date(., format = "%Y-%m-%d"))) %>%
     mutate(time_zero = as.Date(sapply(str_split(time_zero, ";"), `[`, 1))) %>%
-    separate_rows(followup_data, sep=";") %>% 
-    separate(followup_data, c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'), sep=",") %>%
+    unzip_long_file(followup_data, into = c('redcap_event_name', 'followup_period', 'form', 'status', 'form_dates'),
+                    row_sep = ";", col_sep = ",") %>%
     separate(status, c('status', 'timing'), sep = ':') %>%
     filter(form == form_selection) %>%
     select(-form, -redcap_event_name, -timing)
@@ -6217,17 +6217,17 @@ overall_complications <- function(analytic, relatedness = TRUE, WB = NULL, break
     if (is.null(WB)) {
       df <- analytic %>%
         select(study_id, complication_data) %>% 
-        separate_rows(complication_data, sep = ';new_row: ') %>%
-        separate(complication_data, into = c("redcap_event_name", "form_name", "event_type",
+        unzip_long_file(complication_data, into = c("redcap_event_name", "form_name", "event_type",
                                              "complication", "notes", "diagnosis_date", "relatedness_val",
-                                             "severity_val", "treatment", "other_info"), sep = '\\|', fill = "right")
+                                             "severity_val", "treatment", "other_info"),
+                        row_sep = ';new_row: ', col_sep = '\\|', fill = "right")
     } else {
       df <- analytic %>%
         select(study_id, complication_data) %>% 
-        separate_rows(complication_data, sep = ';new_row: ') %>%
-        separate(complication_data, into = c("redcap_event_name", "visit_date", "complication", "diagnosis_date", 
+        unzip_long_file(complication_data, into = c("redcap_event_name", "visit_date", "complication", "diagnosis_date", 
                                              "relatedness_val", "severity_val", "treatment_related", "new_or_previous_diagnosis", 
-                                             "form_notes", "other_info"), sep = '\\|', fill = "right")
+                                             "form_notes", "other_info"),
+                        row_sep = ';new_row: ', col_sep = '\\|', fill = "right")
     }
     
     rel_levels <- c("Definitely related", 
