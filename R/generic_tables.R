@@ -14,11 +14,17 @@
 #' @param analytic This is the analytic data set 
 #' @param construct The long file construct to unzip
 #' @param column_names The names of the columns in the construct, in order (see the construct's UNZIPPING INSTRUCTIONS)
-#' @param mode The type of statistics to calculate. Currently supports "n_percent", which gives the count 
-#' and percentage of each target value within each group. Any other mode returns the unzipped data frame.
+#' @param mode The type of statistics to calculate. Supports:
+#' "n_percent", the count and percentage of each target value, with a "Missing" row for entries with no value.
+#' Values are sorted numerically when they are numbers, then alphabetically, with "Missing" kept at the bottom.
+#' "n_percent_of : 'value', 'value'", the same as "n_percent" but only shows the listed values, in the order listed.
+#' The values must be written exactly as they appear in the long file, in single quotes and separated by commas.
+#' Percentages are still out of every reading, missing included.
+#' "mean_range", the mean (min-max) of the numeric target values, with an n (%) row for each text value.
+#' "mean_sd", the same as "mean_range" but gives the mean (SD) of the numeric target values.
 #' @param group_col One or two columns. The first column splits the table into sections, each with its own header. 
 #' The optional second column names the items listed inside each section (for example c("event", "name"))
-#' @param target_col The column to count the values of within each group. Each value becomes a row in the final visualization
+#' @param target_col One or two columns to calculate the statistics on. Two columns are calculated separately 
 #' @param column_sep The character separating columns in the construct (see the construct's UNZIPPING INSTRUCTIONS). Defaults to "┘"
 #' @param row_sep The character separating rows in the construct (see the construct's UNZIPPING INSTRUCTIONS).  Defaults to "¶"
 #' @param return_df When TRUE, returns a data frame with one row per group and one column per target value instead of the html table. Defaults to FALSE.
@@ -56,21 +62,37 @@ generic_long_file_unzip <- function(analytic, construct, column_names, group_col
     }
   }
   
+  #n_percent_of is followed by the exact values to show, like "n_percent_of : '6.65', 'Unable to Perform'"
+  if(str_starts(mode, "n_percent_of")){
+    of_values <- mode %>%
+      str_remove("n_percent_of") %>%
+      str_remove(":") %>%
+      str_split(",") %>%
+      unlist() %>%
+      str_trim() %>%
+      str_remove_all("'")
+    
+    mode <- "n_percent_of"
+  }
+  
   #group_col[1] splits the table into sections (like event)
   #group_col[2] is optional and names the items listed inside each section (like the motion)
   #the columns get standard names here so each mode is only written once
   if(length(group_col) == 2){
     working <- unzipped %>%
       semi_join(enrolled_ids, by = "study_id") %>%
-      select(study_id, section = all_of(group_col[1]), item = all_of(group_col[2]), target = all_of(target_col))
+      select(study_id, section = all_of(group_col[1]), item = all_of(group_col[2]), all_of(target_col))
   } else {
     working <- unzipped %>%
       semi_join(enrolled_ids, by = "study_id") %>%
-      select(study_id, section = all_of(group_col[1]), target = all_of(target_col)) %>%
-      mutate(item = target_col)
+      select(study_id, section = all_of(group_col[1]), all_of(target_col)) %>%
+      mutate(item = paste(target_col, collapse = " / "))
   }
   
+  #each target column becomes its own set of rows, compare holds the name of the column it came from
+  #with one target column, compare is the same on every row and every mode works as before
   working <- working %>%
+    pivot_longer(all_of(target_col), names_to = "compare", values_to = "target") %>%
     filter(!is.na(section) & !is.na(item))
   
   #group levels choose which sections are shown and in what order,
@@ -88,53 +110,68 @@ generic_long_file_unzip <- function(analytic, construct, column_names, group_col
   
   #every mode builds two data frames:
   #df_return (what return_df gives back) and
-  #result for the renderer with the columns: group (section), temp (row label), value (cell text), sub (TRUE for indented rows)
-  if(mode == "n_percent"){
+  #result for the renderer with the columns: group (section), item, compare (target column), temp (row label), 
+  #value (cell text), sub (TRUE for indented rows)
+  if(mode %in% c("n_percent", "n_percent_of")){
     #the denominator is every reading of that item in that section, missing included
     denoms <- working %>%
-      group_by(section, item) %>%
+      group_by(section, item, compare) %>%
       summarize(denom = n(), missing = sum(is.na(target)), .groups = "drop")
     
     counts <- working %>%
       filter(!is.na(target)) %>%
-      group_by(section, item, target) %>%
+      group_by(section, item, compare, target) %>%
       summarize(n = n(), .groups = "drop") %>%
-      left_join(denoms, by = c("section", "item")) %>%
+      left_join(denoms, by = c("section", "item", "compare")) %>%
       mutate(result = format_count_percent(n, denom)) %>%
-      select(section, item, target, result)
+      select(section, item, compare, target, result)
     
     missing_rows <- denoms %>%
       mutate(target = "Missing") %>%
       mutate(result = format_count_percent(missing, denom)) %>%
-      select(section, item, target, result)
+      select(section, item, compare, target, result)
     
-    target_temps <- sort(unique(counts$target))
-    numeric_temps <- suppressWarnings(as.numeric(target_temps))
-    is_numeric <- !is.na(numeric_temps)
-    custom_levels <- c(target_temps[is_numeric][order(numeric_temps[is_numeric])],
-                       target_temps[!is_numeric], "Missing")
+    if(mode == "n_percent_of"){
+      #only the listed values are shown, in the order they were listed,
+      #every item gets each of them with 0 (0%) where nobody has it
+      custom_levels <- of_values
+      
+      combined <- denoms %>%
+        select(section, item, compare) %>%
+        crossing(target = of_values) %>%
+        left_join(bind_rows(counts, missing_rows), by = c("section", "item", "compare", "target")) %>%
+        mutate(result = replace_na(result, "0 (0%)"))
+    } else {
+      target_temps <- sort(unique(counts$target))
+      numeric_temps <- suppressWarnings(as.numeric(target_temps))
+      is_numeric <- !is.na(numeric_temps)
+      custom_levels <- c(target_temps[is_numeric][order(numeric_temps[is_numeric])],
+                         target_temps[!is_numeric], "Missing")
+      
+      #each item gets every value seen for that item in every target column, with 0 (0%) where nobody has it
+      combined <- bind_rows(counts, missing_rows) %>%
+        group_by(item) %>%
+        complete(section, compare, target, fill = list(result = "0 (0%)")) %>%
+        ungroup()
+    }
     
-    #each item gets every value seen for that item, with 0 (0%) where nobody has it
-    combined <- bind_rows(counts, missing_rows) %>%
-      group_by(item) %>%
-      complete(section, target, fill = list(result = "0 (0%)")) %>%
-      ungroup() %>%
+    combined <- combined %>%
       arrange(factor(section, levels = group_order), item, factor(target, levels = custom_levels))
     
     df_return <- combined %>%
       pivot_wider(names_from = target, values_from = result) %>%
-      select(section, item, all_of(custom_levels))
+      select(section, item, compare, all_of(custom_levels))
     
     result <- combined %>%
       mutate(sub = length(group_col) == 2) %>%
-      select(group = section, item, temp = target, value = result, sub)
+      select(group = section, item, compare, temp = target, value = result, sub)
     
     #with an item column, each item gets a label row and its values sit indented under it
     if(length(group_col) == 2){
       item_rows <- combined %>%
-        distinct(section, item) %>%
+        distinct(section, item, compare) %>%
         mutate(temp = item, value = "", sub = FALSE) %>%
-        select(group = section, item, temp, value, sub)
+        select(group = section, item, compare, temp, value, sub)
       
       result <- bind_rows(item_rows, result) %>%
         arrange(factor(group, levels = group_order), item, sub)
@@ -157,24 +194,24 @@ generic_long_file_unzip <- function(analytic, construct, column_names, group_col
     #numeric readings become the mean row for each item
     means <- readings %>%
       filter(!is.na(number)) %>%
-      group_by(section, item) %>%
+      group_by(section, item, compare) %>%
       summarize(result = if(mode == "mean_sd") format_mean_sd(number) else format_mean_range(number), .groups = "drop") %>%
       mutate(row_type = "mean")
     
     #text readings (like "Unable to perform") become an n (%) row under each item
     texts <- readings %>%
-      group_by(section, item) %>%
+      group_by(section, item, compare) %>%
       mutate(denom = n()) %>%
       ungroup() %>%
       filter(is.na(number)) %>%
-      group_by(section, item, target) %>%
+      group_by(section, item, compare, target) %>%
       summarize(n = n(), denom = first(denom), .groups = "drop") %>%
       mutate(result = as.character(format_count_percent(n, denom))) %>%
-      select(section, item, row_type = target, result)
+      select(section, item, compare, row_type = target, result)
     
     #every item always gets a mean row, even if all of its readings are text
     combined <- bind_rows(means, texts) %>%
-      complete(section, item, row_type = c("mean", unique(texts$row_type))) %>%
+      complete(section, item, compare, row_type = c("mean", unique(texts$row_type))) %>%
       mutate(result = case_when(
         !is.na(result) ~ result,
         row_type == "mean" ~ "",
@@ -189,7 +226,7 @@ generic_long_file_unzip <- function(analytic, construct, column_names, group_col
     result <- combined %>%
       mutate(temp = if_else(row_type == "mean", item, row_type)) %>%
       mutate(sub = row_type != "mean") %>%
-      select(group = section, temp, value = result, sub)
+      select(group = section, item, compare, temp, value = result, sub)
     
   } else {
     return(unzipped)
@@ -208,6 +245,11 @@ generic_long_file_unzip <- function(analytic, construct, column_names, group_col
         select(-item)
     }
     
+    if(length(target_col) == 1){
+      df_return <- df_return %>%
+        select(-compare)
+    }
+    
     return(df_return)
   }
   
@@ -223,7 +265,9 @@ generic_long_file_unzip <- function(analytic, construct, column_names, group_col
       count(section, name = "total")
   }
   
+  #each target column becomes its own value column
   result <- result %>%
+    pivot_wider(names_from = compare, values_from = value) %>%
     mutate(group = factor(group, levels = group_order))
   
   group_counts <- result %>%
@@ -237,9 +281,16 @@ generic_long_file_unzip <- function(analytic, construct, column_names, group_col
   
   sub_rows <- which(result$sub)
   
+  #two target columns are headed by their names, one target column has no header
+  if(length(target_col) == 2){
+    header_names <- c('', target_col)
+  } else {
+    header_names <- c('', '')
+  }
+  
   vis <- result %>%
-    select(temp, value) %>%
-    kable(format="html", align=c('l', 'r'), col.names = c('', ''),
+    select(temp, all_of(target_col)) %>%
+    kable(format="html", align=c('l', rep('r', length(target_col))), col.names = header_names,
           table.attr = "style='width:100% !important;'") %>%
     add_indent(c(seq(nrow(result)))) %>%
     { if(length(sub_rows) > 0) add_indent(., sub_rows) else . } %>%
