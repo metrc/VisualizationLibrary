@@ -784,21 +784,27 @@ closed_baseline_characteristics_percent_plus <- function(analytic, sex="sex", ra
     df_final
   }
 
-  # The two arm labels are detected from the treatment_arm column (sorted);
-  # anything but exactly two non-missing levels stops loudly instead of
-  # rendering a table of zeros.
-  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
-  if (length(arms) != 2) {
-    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
-                 length(arms), paste(arms, collapse = ", ")))
-  }
+  # The two arm labels come from treatment_arm (sorted). With only one arm, a
+  # fake arm is added and its column is filled with "." at the end.
+  arm_info <- closed_arms_with_fake(analytic$treatment_arm)
+  arms <- arm_info$arms
+  fake_arm_added <- arm_info$fake_arm_added
+  fake_arm <- arm_info$fake_arm
 
   df_a <- analytic %>% filter(treatment_arm == arms[1])
   df_b <- analytic %>% filter(treatment_arm == arms[2])
 
-  output_a <- inner_baseline_characteristics_percent_plus(df_a) %>% mutate(percentage = replace_na(percentage, "NA"))
-  output_b <- inner_baseline_characteristics_percent_plus(df_b) %>% mutate(percentage = replace_na(percentage, "NA"))
+  # The fake arm has no one to count, so it takes the Total rows; its column is
+  # filled with "." below. The Total runs last so the section row counts are its own.
+  arm_output <- function(df, arm) {
+    if (fake_arm_added && arm == fake_arm) return(NULL)
+    inner_baseline_characteristics_percent_plus(df) %>% mutate(percentage = replace_na(percentage, "NA"))
+  }
+  output_a <- arm_output(df_a, arms[1])
+  output_b <- arm_output(df_b, arms[2])
   output_total <- inner_baseline_characteristics_percent_plus(analytic) %>% mutate(percentage = replace_na(percentage, "NA")) %>% ungroup() %>% mutate(o=row_number())
+  if (is.null(output_a)) output_a <- output_total %>% select(-o)
+  if (is.null(output_b)) output_b <- output_total %>% select(-o)
 
   full_output <- full_join(output_a, output_b, by = c('Category', 'type'))
 
@@ -809,6 +815,10 @@ closed_baseline_characteristics_percent_plus <- function(analytic, sex="sex", ra
     select(-o)
 
   colnames(full_output) <- c(" ", paste0(arms[1], " (n=",nrow(df_a %>% filter(enrolled)),")"), paste0(arms[2], " (n=",nrow(df_b %>% filter(enrolled)),")"), paste0("Total (n=",nrow(df_a %>% filter(enrolled))+nrow(df_b %>% filter(enrolled)),")"))
+
+  if (fake_arm_added) {
+    full_output[[match(fake_arm, arms) + 1]] <- "."
+  }
 
   vis <- kable(full_output, format="html", align='l') %>%
     pack_rows(index = c('Sex' = nrow(sex_df), 'Age' = (nrow(age_df) + nrow(age_group_df)), 'Race/Ethnicity' = nrow(race_df),
@@ -859,14 +869,12 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
   
   df_full <- analytic
   
-  # The two arm labels are detected from the treatment_arm column (sorted);
-  # anything but exactly two non-missing levels stops loudly instead of
-  # rendering a table of zeros.
-  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
-  if (length(arms) != 2) {
-    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
-                 length(arms), paste(arms, collapse = ", ")))
-  }
+  # The two arm labels come from treatment_arm (sorted). With only one arm, a
+  # fake arm is added and its column is filled with "." at the end.
+  arm_info <- closed_arms_with_fake(analytic$treatment_arm)
+  arms <- arm_info$arms
+  fake_arm_added <- arm_info$fake_arm_added
+  fake_arm <- arm_info$fake_arm
 
   df_a <- analytic  %>%
     filter(treatment_arm == arms[1])
@@ -1083,9 +1091,13 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
   # indent every non-parent row (i.e., children under each section)
   indent_idx <- which(!(df_final$type %in% parents))
   second_indent_idx <- which(df_final$cat_order > 9 & df_final$cat_order <19)
-  
-  df_final <- df_final %>% 
+
+  df_final <- df_final %>%
     select(-cat_order)
+
+  if (fake_arm_added) {
+    df_final[[c("n_a", "n_b")[match(fake_arm, arms)]]] <- "."
+  }
   
   # end-of-block rows computed from actual row positions + child counts
   r_not_completed_parent <- which(df_final$type == "Not Completed")
@@ -2602,14 +2614,12 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
     mutate(status = as.character(status)) %>% 
     mutate(across(where(is.character), ~ na_if(.x, "NA")))
   
-  # The two arm labels are detected from the treatment_arm column (sorted);
-  # anything but exactly two non-missing levels stops loudly instead of
-  # rendering a table of zeros.
-  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
-  if (length(arms) != 2) {
-    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
-                 length(arms), paste(arms, collapse = ", ")))
-  }
+  # The two arm labels come from treatment_arm (sorted). With only one arm, a
+  # fake arm is added and its column is filled with "." at the end.
+  arm_info <- closed_arms_with_fake(analytic$treatment_arm)
+  arms <- arm_info$arms
+  fake_arm_added <- arm_info$fake_arm_added
+  fake_arm <- arm_info$fake_arm
 
   df_a <- pull %>%
     filter(treatment_arm == arms[1])
@@ -2708,6 +2718,11 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
   
   colnames(combined_statuses) <- c('Status', a_cols[2:length(a_cols)],
                                    b_cols[2:length(b_cols)])
+
+  if (fake_arm_added) {
+    fake_cols <- if (fake_arm == arms[1]) seq(2, length(a_cols)) else seq(length(a_cols) + 1, ncol(combined_statuses))
+    combined_statuses[, fake_cols] <- "."
+  }
   
   
   vis <- kable(combined_statuses, format = "html", align = 'l') %>%
@@ -3561,16 +3576,14 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
                                            mean_sd = c(), include_overall = FALSE,
                                            collapse_other_entries = FALSE){
   confirm_stability_of_related_visual('generic_characteristics', '10b0d14ace6fca7a516ef7657e90fcc9')
-  
+
   out <- NULL
-  # The two arm labels are detected from the treatment_arm column (sorted);
-  # anything but exactly two non-missing levels stops loudly instead of
-  # rendering a table of zeros.
-  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
-  if (length(arms) != 2) {
-    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
-                 length(arms), paste(arms, collapse = ", ")))
-  }
+  # The two arm labels come from treatment_arm (sorted). With only one arm, a
+  # fake arm is added and its column is filled with "." at the end.
+  arm_info <- closed_arms_with_fake(analytic$treatment_arm)
+  arms <- arm_info$arms
+  fake_arm_added <- arm_info$fake_arm_added
+  fake_arm <- arm_info$fake_arm
 
   index_vec <- c()
   sub_index_vec <- c()
@@ -3782,9 +3795,9 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           values_from = percentage,
           values_fill = "0 (0%)"
         )%>%
-        select(temp, header, all_of(arms))
-      
-      inner_all <- inner %>% 
+        select(temp, header, any_of(arms))
+
+      inner_all <- inner %>%
         group_by(temp) %>% 
         count(temp) %>% 
         mutate(Total = format_count_percent(n, total)) %>% 
@@ -3794,7 +3807,13 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
         arrange(temp) %>%
         mutate(temp = as.character(temp))
       
-      inner <- full_join(inner_all, inner_some)%>%
+      inner <- full_join(inner_all, inner_some)
+      # The fake arm has no rows, so pivot_wider gives it no column; it is
+      # filled with "." at the end.
+      if (fake_arm_added && !fake_arm %in% colnames(inner)) {
+        inner[[fake_arm]] <- NA_character_
+      }
+      inner <- inner %>%
         select(temp, header, all_of(arms), Total)
       
       
@@ -3817,7 +3836,11 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
   }
   out <- out %>%
     select(-header)
-  
+
+  if (fake_arm_added) {
+    out[[fake_arm]] <- "."
+  }
+
   all_group_starts <- if(length(index_vec) > 1) c(1, cumsum(index_vec[1:(length(index_vec)-1)]) + 1) else c(1)
   border_rows <- all_group_starts[has_border]
   
@@ -4836,14 +4859,12 @@ closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, br
         TRUE ~ complication))
   }
   
-  # The two arm labels are detected from the treatment_arm column (sorted);
-  # anything but exactly two non-missing levels stops loudly instead of
-  # rendering a table of zeros.
-  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
-  if (length(arms) != 2) {
-    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
-                 length(arms), paste(arms, collapse = ", ")))
-  }
+  # The two arm labels come from treatment_arm (sorted). With only one arm, a
+  # fake arm is added and its column is filled with "." at the end.
+  arm_info <- closed_arms_with_fake(analytic$treatment_arm)
+  arms <- arm_info$arms
+  fake_arm_added <- arm_info$fake_arm_added
+  fake_arm <- arm_info$fake_arm
 
   if (relatedness) {
     table_data <- clean_df %>%
@@ -4883,7 +4904,11 @@ closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, br
   if(relatedness) {
     final_table <- final_table %>% rename(`Relatedness` = relatedness_val)
   }
-  
+
+  if (fake_arm_added) {
+    final_table[[paste0(fake_arm, " (N[PTs])")]] <- "."
+  }
+
   if (!is.null(cols_spec)) {
     final_table <- final_table %>%
       rename_with(~ unlist(cols_spec)[.x], .cols = names(cols_spec))
@@ -7108,6 +7133,30 @@ closed_arm_levels <- function(analytic) {
                  length(arms), paste(arms, collapse = ", ")))
   }
   arms
+}
+
+#' The two arm labels, with a fake arm when only one has participants
+#'
+#' Stops when there are no arm labels, or more than two. With only one, a fake arm is
+#' added: "Group B", or "Group A" when the real arm is already "Group B". This assumes the
+#' arms are named Group A and Group B, not uniquely named treatment groups. Callers fill
+#' the fake arm's column with "." at the end.
+#' @noRd
+closed_arms_with_fake <- function(arm_values, context = "") {
+  arms <- sort(unique(stats::na.omit(as.character(arm_values))))
+  if (length(arms) == 0) {
+    stop("no treatment_arm values found", context)
+  }
+  fake_arm <- NULL
+  if (length(arms) == 1) {
+    fake_arm <- if (arms == "Group B") "Group A" else "Group B"
+    arms <- sort(c(arms, fake_arm))
+  }
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels%s, found %d (%s)",
+                 context, length(arms), paste(arms, collapse = ", ")))
+  }
+  list(arms = arms, fake_arm_added = !is.null(fake_arm), fake_arm = fake_arm)
 }
 
 #' Arm, Arm, Overall column names with n
