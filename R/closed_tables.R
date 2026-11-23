@@ -5581,12 +5581,14 @@ closed_persistent_pain <- function(analytic, include_severe = TRUE){
            bpi_interference_score_3mo, bpi_interference_score_6mo, bpi_interference_score_12mo) %>%
     filter(enrolled)
 
-  # The two arm labels come from treatment_arm (sorted). With only one arm, a
-  # fake arm is added and its column is filled with "." at the end.
-  arm_info <- closed_arms_with_fake(analytic$treatment_arm)
-  arms <- arm_info$arms
-  fake_arm_added <- arm_info$fake_arm_added
-  fake_arm <- arm_info$fake_arm
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # rendering a table of zeros.
+  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
 
   df_a <- df %>% filter(treatment_arm == arms[1])
   df_b <- df %>% filter(treatment_arm == arms[2])
@@ -5650,10 +5652,6 @@ closed_persistent_pain <- function(analytic, include_severe = TRUE){
       'n ', 'Score, Mean (SD)')
   }
 
-  if (fake_arm_added) {
-    final[, endsWith(colnames(final), paste0('(', fake_arm, ')'))] <- "."
-  }
-
   index_vec_a <- c("BPI Severity" = nrow(sev_final),
                    "BPI Interference" = nrow(int_final))
 
@@ -5664,7 +5662,6 @@ closed_persistent_pain <- function(analytic, include_severe = TRUE){
     kable_styling("striped", full_width = FALSE, position = 'left') %>%
     row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
 
-  table_raw <- add_fake_arm_footnote(table_raw, fake_arm)
   return(table_raw)
 }
 
@@ -5699,12 +5696,14 @@ closed_opioid_days <- function(analytic){
            opioid_days_6mo, opioid_days_12mo) %>%
     filter(enrolled)
 
-  # The two arm labels come from treatment_arm (sorted). With only one arm, a
-  # fake arm is added and its column is filled with "." at the end.
-  arm_info <- closed_arms_with_fake(analytic$treatment_arm)
-  arms <- arm_info$arms
-  fake_arm_added <- arm_info$fake_arm_added
-  fake_arm <- arm_info$fake_arm
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # rendering a table of zeros.
+  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
 
   df_a <- df %>% filter(treatment_arm == arms[1])
   df_b <- df %>% filter(treatment_arm == arms[2])
@@ -5743,10 +5742,6 @@ closed_opioid_days <- function(analytic){
                        paste0('n (', arms[2], ')'), paste0('Opioid Days, Mean (SD) (', arms[2], ')'),
                        'n ', 'Opioid Days, Mean (SD)')
 
-  if (fake_arm_added) {
-    final[, endsWith(colnames(final), paste0('(', fake_arm, ')'))] <- "."
-  }
-
   index_vec_a <- c("Days of Reported Opioid Use" = nrow(final))
 
   border_rows <- c(0, cumsum(index_vec_a))
@@ -5756,7 +5751,6 @@ closed_opioid_days <- function(analytic){
     kable_styling("striped", full_width = FALSE, position = 'left') %>%
     row_spec(border_rows, extra_css = "border-bottom: 1px solid;")
 
-  table_raw <- add_fake_arm_footnote(table_raw, fake_arm)
   return(table_raw)
 }
 
@@ -5823,22 +5817,20 @@ closed_reported_side_effects <- function(analytic, max_days = 90, include_deaths
     counts
   }
 
-  # The two arm labels come from treatment_arm (sorted). With only one arm, a
-  # fake arm is added and its column is filled with "." at the end.
-  arm_info <- closed_arms_with_fake(analytic$treatment_arm)
-  arms <- arm_info$arms
-  fake_arm_added <- arm_info$fake_arm_added
-  fake_arm <- arm_info$fake_arm
+  # The two arm labels are detected from the treatment_arm column (sorted);
+  # anything but exactly two non-missing levels stops loudly instead of
+  # rendering a table of zeros.
+  arms <- sort(unique(stats::na.omit(analytic$treatment_arm)))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
 
   final <- arm_counts(analytic %>% filter(treatment_arm == arms[1])) %>%
     left_join(arm_counts(analytic %>% filter(treatment_arm == arms[2])), by = 'Category') %>%
     left_join(arm_counts(analytic), by = 'Category')
 
   colnames(final) <- c('', paste0('N (%) (', arms[1], ')'), paste0('N (%) (', arms[2], ')'), 'N (%)')
-
-  if (fake_arm_added) {
-    final[[paste0('N (%) (', fake_arm, ')')]] <- "."
-  }
 
   if (is.null(group_label)) {
     group_label <- if (is.null(max_days)) "Reported Side Effects and Adverse Events, Whole Study"
@@ -5852,7 +5844,6 @@ closed_reported_side_effects <- function(analytic, max_days = 90, include_deaths
     kable_styling("striped", full_width = FALSE, position = 'left') %>%
     row_spec(c(0, nrow(final)), extra_css = "border-bottom: 1px solid;")
 
-  table_raw <- add_fake_arm_footnote(table_raw, fake_arm)
   return(table_raw)
 }
 
@@ -7141,10 +7132,11 @@ closed_arm_levels <- function(analytic) {
     stop(sum(is.na(enrolled_arms)), " enrolled participant(s) have no treatment_arm; a closed display needs every enrolled ",
          "participant assigned (or blinded = TRUE for the dummy assignment)")
   }
-  arm_info <- closed_arms_with_fake(enrolled_arms, " among enrolled participants")
-  arms <- arm_info$arms
-  # The fake arm (NULL when both arms are real) rides along so callers can fill its column with ".".
-  attr(arms, "fake_arm") <- arm_info$fake_arm
+  arms <- sort(unique(enrolled_arms))
+  if (length(arms) != 2) {
+    stop(sprintf("expected exactly two treatment_arm levels among enrolled participants, found %d (%s)",
+                 length(arms), paste(arms, collapse = ", ")))
+  }
   arms
 }
 
@@ -7231,17 +7223,13 @@ closed_patient_characteristics_table <- function(analytic, age = "age", sex = "s
                      comorbidities = comorbidities, tobacco = tobacco, health = health)
   require_constructs(analytic, c("enrolled", unlist(constructs)), "closed_patient_characteristics_table")
   arms <- closed_arm_levels(analytic)
-  fake_arm <- attr(arms, "fake_arm")
   df <- analytic %>% filter(enrolled %in% TRUE)
   levels <- characteristics_levels(df, constructs)
   all_rows <- characteristics_rows(df, levels, constructs, health_label)
   a <- characteristics_rows(df %>% filter(treatment_arm %in% arms[1]), levels, constructs, health_label)
   b <- characteristics_rows(df %>% filter(treatment_arm %in% arms[2]), levels, constructs, health_label)
   out <- tibble(Construct = all_rows$Construct, A = a$Value, B = b$Value, Total = all_rows$Value, Is_Header = all_rows$Is_Header)
-  # Every value gets ".": all non-header rows, and header rows that carry a number
-  # (e.g. Age, mean (SD)). Header labels such as "n (%)" stay.
-  if (!is.null(fake_arm)) out[[c("A", "B")[match(fake_arm, arms)]]][!out$Is_Header | grepl("[0-9]", out$Total)] <- "."
-  add_fake_arm_footnote(kable_indented_rows(out, closed_column_names("Characteristic", df, arms)), fake_arm)
+  kable_indented_rows(out, closed_column_names("Characteristic", df, arms))
 }
 
 #' Amputation, Residual Limb and Prostheses Characteristics by Treatment Arm
@@ -7299,20 +7287,13 @@ closed_amputation_characteristics_table <- function(analytic, anchor = c("first_
                                                                 "prosthesis_type", "comfort_sit", "comfort_stand", "comfort_walk",
                                                                 "medications", "skin_treatments")])), "closed_amputation_characteristics_table")
   arms <- closed_arm_levels(analytic)
-  fake_arm <- attr(arms, "fake_arm")
   df <- analytic %>% filter(enrolled %in% TRUE)
   levels <- amputation_levels(df, constructs)
   all_rows <- amputation_rows(df, levels, constructs, anchor, display_years, regular_levels)
-  # The fake arm has no one to summarize, so it takes the overall rows; its column is filled with "." below.
-  arm_rows <- function(arm) if (identical(arm, fake_arm)) all_rows else
-    amputation_rows(df %>% filter(treatment_arm %in% arm), levels, constructs, anchor, display_years, regular_levels)
-  a <- arm_rows(arms[1])
-  b <- arm_rows(arms[2])
+  a <- amputation_rows(df %>% filter(treatment_arm %in% arms[1]), levels, constructs, anchor, display_years, regular_levels)
+  b <- amputation_rows(df %>% filter(treatment_arm %in% arms[2]), levels, constructs, anchor, display_years, regular_levels)
   out <- tibble(Construct = all_rows$Construct, A = a$Value, B = b$Value, Total = all_rows$Value, Is_Header = all_rows$Is_Header)
-  # Every value gets ".": all non-header rows, and header rows that carry a number
-  # (e.g. Age, mean (SD)). Header labels such as "n (%)" stay.
-  if (!is.null(fake_arm)) out[[c("A", "B")[match(fake_arm, arms)]]][!out$Is_Header | grepl("[0-9]", out$Total)] <- "."
-  add_fake_arm_footnote(kable_indented_rows(out, closed_column_names("Characteristic", df, arms)), fake_arm)
+  kable_indented_rows(out, closed_column_names("Characteristic", df, arms))
 }
 
 # ---- Closed safety displays and analyses ------------------------------------------------------
@@ -7354,7 +7335,6 @@ closed_participants_w_complications <- function(analytic, categories = complicat
   confirm_stability_of_related_visual('participants_w_complications', '45373edb3cb01737e8f4694c79b19af1')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   arms <- closed_arm_levels(analytic)
-  fake_arm <- attr(arms, "fake_arm")
   participants <- participant_event_summary(analytic, categories, count_construct, exposure_construct, phase)
   participants <- participants %>%
     left_join(analytic %>% transmute(study_id = as.character(study_id), treatment_arm), by = "study_id")
@@ -7371,7 +7351,6 @@ closed_participants_w_complications <- function(analytic, categories = complicat
                 A = fmt(participants %>% filter(treatment_arm %in% arms[1])),
                 B = fmt(participants %>% filter(treatment_arm %in% arms[2])),
                 Total = fmt(participants), `Unknown ascertainment` = pooled$unknown_ascertainment)
-  if (!is.null(fake_arm)) out[[c("A", "B")[match(fake_arm, arms)]]] <- "."
   col_names <- if (cell_style == "paper") {
     c("Category", paste0(arms[1], " (N = ", denominators(participants %>% filter(treatment_arm %in% arms[1])), ")"),
       paste0(arms[2], " (N = ", denominators(participants %>% filter(treatment_arm %in% arms[2])), ")"),
@@ -7380,8 +7359,7 @@ closed_participants_w_complications <- function(analytic, categories = complicat
     c("Category", paste0(arms[1], " n/N (%)"), paste0(arms[2], " n/N (%)"), "Total n/N (%)", "Unknown ascertainment")
   }
   footnotes <- c(safety_footnotes(participants, event_category_rows(categories, rows)),
-                 if (any(pooled$unknown_ascertainment > 0)) "Ascertainment is unknown when a participant has neither a complication record nor a completed follow-up form." else NULL,
-                 fake_arm_note(fake_arm))
+                 if (any(pooled$unknown_ascertainment > 0)) "Ascertainment is unknown when a participant has neither a complication record nor a completed follow-up form." else NULL)
   vis <- kable(out, format = "html", align = "l", col.names = col_names) %>%
     kable_styling("striped", full_width = FALSE, position = "left")
   if (length(footnotes) > 0) vis <- vis %>% add_footnote(footnotes, notation = "number")
@@ -7628,7 +7606,6 @@ closed_location_measurement_table <- function(analytic, readings_construct = "du
   confirm_stability_of_related_visual('location_measurement_table', 'f5e0d4280b45a1c6893b74a8b48b8350')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   arms <- closed_arm_levels(analytic)
-  fake_arm <- attr(arms, "fake_arm")
   d <- location_change_data(analytic, readings_construct, fields, value_field, baseline_event, followup_event, set, keep, min_valid)
   change <- d$change %>%
     inner_join(analytic %>% transmute(study_id = as.character(study_id), treatment_arm), by = "study_id") %>%
@@ -7645,7 +7622,6 @@ closed_location_measurement_table <- function(analytic, readings_construct = "du
   out <- tibble(position = c(positions, "All locations (participant mean)")) %>%
     left_join(block(arms[1]), by = "position") %>%
     left_join(block(arms[2]), by = "position")
-  if (!is.null(fake_arm)) out[paste0(fake_arm, c("_pre", "_fu", "_ch"))] <- "."
   header <- c(" " = 1, 3, 3)
   df <- analytic %>% filter(enrolled %in% TRUE)
   names(header)[2:3] <- if (cell_style == "paper") paste0(arms, " (N = ", c(sum(df$treatment_arm %in% arms[1]), sum(df$treatment_arm %in% arms[2])), ")") else arms
@@ -7660,7 +7636,7 @@ closed_location_measurement_table <- function(analytic, readings_construct = "du
 
   note <- parse_failure_note(d$parse_failures, value_field)
   if (!is.null(note)) vis <- vis %>% add_footnote(note, notation = "symbol")
-  add_fake_arm_footnote(vis, fake_arm)
+  vis
 }
 
 #' @rdname closed_location_measurement_table
@@ -8118,7 +8094,6 @@ closed_patient_reported_outcomes_table <- function(analytic, score_families = de
   confirm_stability_of_related_visual('patient_reported_outcomes_table', '4683d232578e4a6c2b1c7d39f5c4ce88')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   arms <- closed_arm_levels(analytic)
-  fake_arm <- attr(arms, "fake_arm")
   long <- unpack_score_families(analytic, score_families, promis_construct = promis_construct) %>%
     left_join(analytic %>% transmute(study_id = as.character(study_id), treatment_arm), by = "study_id")
   df <- analytic %>% filter(enrolled %in% TRUE)
@@ -8134,11 +8109,10 @@ closed_patient_reported_outcomes_table <- function(analytic, score_families = de
     bind_rows(tibble(Construct = inst, A = "", B = "", Total = "", Is_Header = TRUE),
               r %>% transmute(Construct = paste0(as.character(visit), ", mean (SD)"), A, B, Total, Is_Header = FALSE))
   }))
-  if (!is.null(fake_arm)) table_raw[[c("A", "B")[match(fake_arm, arms)]]][!table_raw$Is_Header | grepl("[0-9]", table_raw$Total)] <- "."
   vis <- kable_indented_rows(table_raw, paste0(closed_column_names("Instrument / visit", df, arms),
                                                c("", rep(if (cell_style == "paper") ": mean (SD)" else ": n; mean (SD); missing", 3))))
 
-  add_fake_arm_footnote(vis, fake_arm)
+  vis
 }
 
 #' GEE fit with visit-specific arm contrasts
@@ -8405,27 +8379,22 @@ closed_endpoint_availability_table <- function(analytic, measurements = default_
   confirm_stability_of_related_visual('endpoint_availability_table', 'd7da2ce7c6c0cc8b4208dd1c212b4c2d')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   arms <- closed_arm_levels(analytic)
-  fake_arm <- attr(arms, "fake_arm")
   ids <- enrolled_study_ids(analytic)
   arm_of <- analytic %>% transmute(study_id = as.character(study_id), treatment_arm)
   fmt <- function(r) paste0(r$expected, " / ", r$visit_completed, " / ", r$outcome_available, " / ", r$outcome_missing, " / ",
                             r$not_expected, " / ", r$paired_with_baseline)
   rows_for <- function(arm) endpoint_availability_rows(analytic, ids[ids %in% arm_of$study_id[arm_of$treatment_arm %in% arm]],
                                                        measurements, score_families, periods, followup_form, promis_construct)
+  a <- rows_for(arms[1])
+  b <- rows_for(arms[2])
   tot <- endpoint_availability_rows(analytic, ids, measurements, score_families, periods, followup_form, promis_construct)
-  # The fake arm has no one to count, so it takes the overall rows with n = 0; its column is filled with "." below.
-  arm_rows <- function(arm) if (identical(arm, fake_arm)) tot %>% mutate(enrolled = 0) else rows_for(arm)
-  a <- arm_rows(arms[1])
-  b <- arm_rows(arms[2])
   out <- tibble(Visit = tot$period, Endpoint = tot$endpoint, A = fmt(a), B = fmt(b), Total = fmt(tot))
-  if (!is.null(fake_arm)) out[[c("A", "B")[match(fake_arm, arms)]]] <- "."
   kable(out, format = "html", align = "l",
         col.names = c("Visit", "Endpoint", paste0(arms[1], " (n = ", a$enrolled[1], ")"), paste0(arms[2], " (n = ", b$enrolled[1], ")"),
                       paste0("Overall (n = ", tot$enrolled[1], ")"))) %>%
     add_header_above(c(" " = 2, "expected / visit completed / outcome available / expected but missing / not expected / paired with baseline" = 3)) %>%
     kable_styling("striped", full_width = FALSE, position = "left") %>%
-    collapse_rows(columns = 1, valign = "top") %>%
-    add_fake_arm_footnote(fake_arm)
+    collapse_rows(columns = 1, valign = "top")
 }
 
 #' Qualitative Review Summary Table by Treatment Arm
@@ -8457,9 +8426,7 @@ closed_qualitative_review_summary <- function(analytic, review_construct = "appe
   confirm_stability_of_related_visual('qualitative_review_summary', '7b88c87cd6bca67376957dcbfcefcd4c')
   if (blinded) analytic <- apply_treatment_assignment(analytic, dummy_assignment_map(analytic, seed = seed))
   require_constructs(analytic, c("enrolled", review_construct), "closed_qualitative_review_summary")
-  # Arms are rows here, not columns, so a fake arm adds no rows; only its footnote.
   arms <- closed_arm_levels(analytic)
-  fake_arm <- attr(arms, "fake_arm")
   with_arm <- analytic %>% mutate(study_id = as.character(study_id)) %>% filter(treatment_arm %in% arms)
   review <- qualitative_review_data(with_arm, review_construct, fields, features, quality_field, visit_field)
   long <- review$long %>% left_join(with_arm %>% transmute(study_id, treatment_arm), by = "study_id")
@@ -8475,6 +8442,5 @@ closed_qualitative_review_summary <- function(analytic, review_construct = "appe
       summarise(images_reviewed = n(), participants_reviewed = n_distinct(study_id),
                 images_adequate = sum(.data[[quality_field]] %in% "Adequate"), .groups = "drop"))
   qualitative_review_table(grouped, visit_field, group_col = "treatment_arm",
-                           footnotes = c("Reviewer findings per image, counted by visit and treatment arm; participants may contribute several locations.",
-                                         fake_arm_note(fake_arm)))
+                           footnotes = c("Reviewer findings per image, counted by visit and treatment arm; participants may contribute several locations."))
 }
