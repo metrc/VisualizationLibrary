@@ -825,7 +825,6 @@ closed_baseline_characteristics_percent_plus <- function(analytic, sex="sex", ra
                         'Education' = nrow(education_df), 'Military' = nrow(military_df), 'Insurance' = nrow(insurance_df)), label_row_css = "text-align:left") %>%
     kable_styling("striped", full_width = F, position="left")
 
-  vis <- add_fake_arm_footnote(vis, fake_arm)
   return(vis)
 }
 
@@ -1138,7 +1137,6 @@ closed_not_complete_sae_deviation_by_type <- function(analytic, include_ae=FALSE
   if (length(r_admin_end)) {
     vis <- vis %>% kableExtra::row_spec(r_admin_end, extra_css = "border-bottom: 1px solid")
   }
-  vis <- add_fake_arm_footnote(vis, fake_arm)
   
   return(vis)
 }
@@ -2740,7 +2738,6 @@ closed_expected_and_followup_visit_overall <- function(analytic, footnotes = NUL
     vis <- add_footnote(vis, footnotes)
   }
   
-  vis <- add_fake_arm_footnote(vis, fake_arm)
   return(vis)
 }
 
@@ -3863,7 +3860,6 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       kable_styling("striped", full_width = F, position="left")
   }
   
-  vis <- add_fake_arm_footnote(vis, fake_arm)
   return(vis)
 }
 
@@ -4921,7 +4917,6 @@ closed_overall_complications <- function(analytic, relatedness=TRUE, WB=NULL, br
   output <- kable(final_table, format = "html", align = 'l') %>%
     kable_styling("striped", full_width = F, position = "left") 
   
-  output <- add_fake_arm_footnote(output, fake_arm)
   return(output)
 }
 
@@ -7162,20 +7157,6 @@ closed_arms_with_fake <- function(arm_values, context = "") {
                  context, length(arms), paste(arms, collapse = ", ")))
   }
   list(arms = arms, fake_arm_added = !is.null(fake_arm), fake_arm = fake_arm)
-}
-
-#' Footnote text naming the fake arm, or NULL when there is none
-#' @noRd
-fake_arm_note <- function(fake_arm) {
-  if (is.null(fake_arm)) return(NULL)
-  paste0("No data was found for ", fake_arm, ".")
-}
-
-#' Add the fake-arm footnote to a table; leaves it alone when there is no fake arm
-#' @noRd
-add_fake_arm_footnote <- function(vis, fake_arm) {
-  if (is.null(fake_arm)) return(vis)
-  vis %>% add_footnote(fake_arm_note(fake_arm), notation = "none")
 }
 
 #' Arm, Arm, Overall column names with n
