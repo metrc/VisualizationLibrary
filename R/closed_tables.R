@@ -3636,7 +3636,9 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
       vec_a <- suppressWarnings(as.numeric(inner_analytic %>% filter(treatment_arm == arms[1]) %>% pull(!!sym(construct))))
       vec_b <- suppressWarnings(as.numeric(inner_analytic %>% filter(treatment_arm == arms[2]) %>% pull(!!sym(construct))))
       
-      inner <- tibble::tibble(temp = "Mean [SD]", header = name_str, !!arms[1] := format_mean_sd(vec_a), !!arms[2] := format_mean_sd(vec_b), Total = format_mean_sd(vec_all))
+      # An arm with no values (for example, no one in it yet) shows "." rather than "NaN (NA)".
+      mean_sd_or_dot <- function(v) if (all(is.na(v))) "." else format_mean_sd(v)
+      inner <- tibble::tibble(temp = "Mean [SD]", header = name_str, !!arms[1] := mean_sd_or_dot(vec_a), !!arms[2] := mean_sd_or_dot(vec_b), Total = mean_sd_or_dot(vec_all))
       
       if (is.na(name_str) || name_str == "") {
         if (length(index_vec) > 0) {
@@ -3781,7 +3783,17 @@ closed_generic_characteristics <- function(analytic, constructs = c(), names_vec
           names_from = treatment_arm,
           values_from = percentage,
           values_fill = "0 (0%)"
-        )%>%
+        )
+
+      # An arm with no one in the filtered rows gets no column from pivot_wider; it is
+      # added as zeros, as the subcategory branch above does.
+      for (arm in arms) {
+        if (!arm %in% colnames(inner_some)) {
+          inner_some <- inner_some %>% mutate(!!arm := "0 (0%)")
+        }
+      }
+
+      inner_some <- inner_some %>%
         select(temp, header, all_of(arms))
       
       inner_all <- inner %>% 
