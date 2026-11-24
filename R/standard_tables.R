@@ -6074,10 +6074,12 @@ hardware_duration_statistics <- function(analytic, delta = FALSE){
     df1 <- df1 %>% mutate(target = hardware_duration)
   }
   
+  # A same-day removal is a valid 0-day VAC time when counting by date; in hours a
+  # duration must be positive.
   filtered <- df1 %>%
+    mutate(target = as.numeric(target)) %>%
     filter(!is.na(target)) %>% 
-    filter(target > 0) %>%
-    mutate(target = as.numeric(target))
+    filter(if (delta) target >= 0 else target > 0)
   
   if (delta) {
     buckets <- c(1, 2, 3, 4)
@@ -6174,7 +6176,7 @@ hardware_duration_statistics_by_site <- function(analytic, delta = FALSE){
       pull(len) %>%
       as.numeric
     len_vec <- len_vec[!is.na(len_vec)]
-    len_vec <- len_vec[len_vec > 0]
+    len_vec <- if (delta) len_vec[len_vec >= 0] else len_vec[len_vec > 0]
     mean <- len_vec %>%
       mean() %>%
       round(2)
