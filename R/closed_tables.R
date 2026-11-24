@@ -1868,20 +1868,22 @@ closed_ih_and_dc_crossover_monitoring_by_site <- function(analytic, footnotes = 
 #' See certification_date_data for more information.
 #'
 #' @param analytic This is the analytic data set that must include site_certification_data
+#' @param exclude_dod whether to leave out the DoD Approval Date column, defaults to FALSE
 #'
 #' @return An HTML table.
 #' @export
 #'
 #' @examples
 #' closed_certification_date_data("Replace with Analytic Tibble")
+#' closed_certification_date_data("Replace with Analytic Tibble", exclude_dod = TRUE)
 #'
-closed_certification_date_data <- function(analytic){
+closed_certification_date_data <- function(analytic, exclude_dod = FALSE){
   analytic <- if_needed_generate_example_data(
     analytic, 
     example_constructs = c('treatment_arm', "site_certification_data"), 
     example_types = c('TreatmentArm', 'FacilityCode;Date;Date;Boolean;Number'))
 
-  confirm_stability_of_related_visual('certification_date_data', 'ebbc1abb135524b922a03f233adce043')
+  confirm_stability_of_related_visual('certification_date_data', 'bed3c8d6f6daf576921c145f68c0828f')
 
   date_today <- Sys.Date()
   
@@ -1891,6 +1893,9 @@ closed_certification_date_data <- function(analytic){
                    paste0('Number of Days Certified (as of ', as.character(date_today), ')'))
   
   cols <- zipped_cols[c(1, 3, 2, 4, 5)]
+  if (exclude_dod) {
+    cols <- setdiff(cols, 'DoD Approval Date')
+  }
   
   df <- analytic %>%
     filter(!is.na(treatment_arm)) %>%
@@ -1907,7 +1912,7 @@ closed_certification_date_data <- function(analytic){
   output <- full_join(df_a, df_b, by = 'Facility', suffix = c('_a', '_b'))
   
   vis <- kable(output, format="html", align='l', col.names = c(cols, cols[-1])) %>%
-    add_header_above(c(" " = 1, "Group A" = 4, "Group B" = 4)) %>%
+    add_header_above(c(" " = 1, "Group A" = length(cols) - 1, "Group B" = length(cols) - 1)) %>%
     kable_styling("striped", full_width = F, position="left")
   
   return(vis)

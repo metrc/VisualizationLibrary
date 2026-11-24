@@ -4,10 +4,12 @@
 \alias{closed_certification_date_data}
 \title{Closed Status of IRB Approvals and Certification by Site}
 \usage{
-closed_certification_date_data(analytic)
+closed_certification_date_data(analytic, exclude_dod = FALSE)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include site_certification_data}
+
+\item{exclude_dod}{whether to leave out the DoD Approval Date column, defaults to FALSE}
 }
 \value{
 An HTML table.
@@ -21,5 +23,6 @@ See certification_date_data for more information.
 }
 \examples{
 closed_certification_date_data("Replace with Analytic Tibble")
+closed_certification_date_data("Replace with Analytic Tibble", exclude_dod = TRUE)
 
 }

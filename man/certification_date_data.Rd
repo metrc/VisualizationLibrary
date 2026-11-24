@@ -4,12 +4,18 @@
 \alias{certification_date_data}
 \title{Status of IRB approvals and certification by site}
 \usage{
-certification_date_data(analytic, exclude_local_irb = FALSE)
+certification_date_data(
+  analytic,
+  exclude_local_irb = FALSE,
+  exclude_dod = FALSE
+)
 }
 \arguments{
 \item{analytic}{This is the analytic data set that must include site_certification_data}
 
 \item{exclude_local_irb}{whether Local (or iSRB) column is in output, defaults to false}
+
+\item{exclude_dod}{whether to leave out the DoD Approval Date column, defaults to FALSE}
 }
 \value{
 html table
@@ -22,5 +28,6 @@ certified by MCC to start screening, Number of days certified. To run this visua
 \examples{
 certification_date_data("Replace with Analytic Tibble")
 certification_date_data("Replace with Analytic Tibble", exclude_local_irb = TRUE)
+certification_date_data("Replace with Analytic Tibble", exclude_dod = TRUE)
 
 }

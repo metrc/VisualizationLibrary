@@ -2066,6 +2066,7 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
 #'
 #' @param analytic This is the analytic data set that must include site_certification_data
 #' @param exclude_local_irb whether Local (or iSRB) column is in output, defaults to false
+#' @param exclude_dod whether to leave out the DoD Approval Date column, defaults to FALSE
 #'
 #' @return html table
 #' @export
@@ -2073,8 +2074,9 @@ ineligibility_by_reasons <- function(analytic, pre_screened = FALSE, n_top_reaso
 #' @examples
 #' certification_date_data("Replace with Analytic Tibble")
 #' certification_date_data("Replace with Analytic Tibble", exclude_local_irb = TRUE)
+#' certification_date_data("Replace with Analytic Tibble", exclude_dod = TRUE)
 #' 
-certification_date_data <- function(analytic, exclude_local_irb=FALSE){
+certification_date_data <- function(analytic, exclude_local_irb=FALSE, exclude_dod=FALSE){
   analytic <- if_needed_generate_example_data(
     analytic,
     example_constructs = "site_certification_data",
@@ -2102,6 +2104,12 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE){
   
   if(exclude_local_irb){
     cols <- cols[-2] 
+    site_data <- site_data %>% 
+      select(all_of(cols))
+  }
+  
+  if(exclude_dod){
+    cols <- setdiff(cols, 'DoD Approval Date')
     site_data <- site_data %>% 
       select(all_of(cols))
   }
