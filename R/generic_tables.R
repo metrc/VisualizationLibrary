@@ -57,8 +57,7 @@ generic_long_file_unzip <- function(analytic, construct, column_names, group_col
   
   if(!is.null(filter_cols)){
     for(filter_col in names(filter_cols)){
-      unzipped <- unzipped %>%
-        filter(!!sym(filter_col) == filter_cols[[filter_col]])
+      unzipped <- unzipped %>% filter(!!sym(filter_col) %in% filter_cols[[filter_col]])
     }
   }
   
