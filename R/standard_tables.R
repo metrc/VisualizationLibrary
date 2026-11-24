@@ -2091,7 +2091,7 @@ certification_date_data <- function(analytic, exclude_local_irb=FALSE, exclude_d
   #site_certification_data is zipped as site;dod;local;metrc;days
   zipped_cols <- c('Facility', 'DoD Approval Date', 'Local (or sIRB)  Approval Date',
                    'Certified by MCC to Start Screening', 
-                   paste0('Days Number of Days Certified (as of ', as.character(date_today), ')'))
+                   paste0('Number of Days Certified (as of ', as.character(date_today), ')'))
   
   cols <- zipped_cols[c(1, 3, 2, 4, 5)]
   
